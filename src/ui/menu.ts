@@ -6,6 +6,8 @@ export interface MenuItem {
   disabled?: boolean;
   /** Shown as a button at the bottom instead of a list row. "primary" is the main thing to do. */
   button?: "primary" | "secondary";
+  /** A main button that already makes its own sound (the bill of fare's paper tick): no confirm sound. */
+  quiet?: boolean;
   action: () => void;
 }
 
@@ -34,10 +36,23 @@ interface Open { spec: MenuSpec; index: number }
 const stack: Open[] = [];
 let root: HTMLElement;
 let onModalChange: (modal: boolean) => void = () => {};
+let onConfirm: () => void = () => {};
 
-export function initMenus(el: HTMLElement, modalChanged: (modal: boolean) => void): void {
+export function initMenus(el: HTMLElement, modalChanged: (modal: boolean) => void, confirmed?: () => void): void {
   root = el;
   onModalChange = modalChanged;
+  if (confirmed) onConfirm = confirmed;
+}
+
+/** For screens that confirm by their own keys (Enter on COOK): the same sound as a main button. */
+export function confirmed(): void {
+  onConfirm();
+}
+
+/** Run an item's action; a main button announces itself first (for the confirm sound). */
+function run(it: MenuItem): void {
+  if (it.button === "primary" && !it.quiet) onConfirm();
+  it.action();
 }
 
 export function menuOpen(): boolean {
@@ -95,7 +110,7 @@ export function menuKey(e: KeyboardEvent): boolean {
     case "ArrowDown": case "s": case "S": case "ArrowRight": case "d": case "D": move(1); return true;
     case "Enter": case " ": {
       const it = items[top.index];
-      if (it && !it.disabled) it.action();
+      if (it && !it.disabled) run(it);
       return true;
     }
     case "Backspace":
@@ -153,7 +168,7 @@ function render(): void {
     el.onclick = () => {
       const i = Number(el.dataset.i);
       const it = s.items[i];
-      if (it && !it.disabled) { top.index = i; it.action(); }
+      if (it && !it.disabled) { top.index = i; run(it); }
     };
   });
 }

@@ -96,7 +96,7 @@ export function initSound(g) {
                 door(g, e.state, e.quick);
                 break;
             case "PourStarted":
-                pours.set(e.id, play("pour", { ...g.keeper.pos }));
+                pours.set(e.id, play(e.from === "urn" ? "urnPour" : "pour", { ...g.keeper.pos }));
                 break;
             case "PourEnded":
                 stop(pours.get(e.id), e.done ? 250 : 120);
@@ -117,6 +117,10 @@ export function initSound(g) {
             }
             case "Paper":
                 paper();
+                break;
+            case "Confirmed":
+                if (T.snapOnConfirm)
+                    play("confirm", null);
                 break;
             case "PatronLeft":
                 if (e.early)

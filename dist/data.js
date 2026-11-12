@@ -243,6 +243,8 @@ export const SOUNDS = {
     doorCloses: { files: [SND + "door-closes.opus"], volume: 0.8, pitch: 0.05 },
     bell: { files: [SND + "shopkeeper-bell-1.opus", SND + "shopkeeper-bell-2.opus"], volume: 0.55, pitch: 0.05, heardEverywhere: true },
     pour: { files: [SND + "drink-pouring-1.opus", SND + "drink-pouring-2.opus", SND + "drink-pouring-3.opus"], volume: 0.7, pitch: 0.07 },
+    // A cup from the urn (TUNING.urnPourSeconds long, about 2 s).
+    urnPour: { files: [SND + "tea-pouring.opus"], volume: 0.6, pitch: 0.06 },
     kettle: { files: [SND + "kettle-water-boiling-looping.opus"], volume: 0.45, pitch: 0.04, loop: true },
     stewCooking: { files: [SND + "stew-cooking-loop.opus"], volume: 0.5, pitch: 0.04, loop: true },
     stewSimmering: { files: [SND + "stew-simmering-loop.opus"], volume: 0.4, pitch: 0.04, loop: true },
@@ -253,6 +255,8 @@ export const SOUNDS = {
     // Cues: the game telling you something. Chords barely vary in pitch, so they stay in tune.
     order: { files: [SND + "order-two-taps.opus", SND + "order-three-taps.opus"], volume: 0.5, pitch: 0.05, trim: true, heardEverywhere: true },
     paper: { files: [SND + "check-sound.opus"], volume: 0.45, pitch: 0.04, trim: true },
+    // Confirming with a menu's main (gold) button: COOK, GARNISH IT, TURN IN... Switch off with SOUND_TUNING.snapOnConfirm.
+    confirm: { files: [SND + "finger-snapping.opus"], volume: 0.4, pitch: 0.05, trim: true },
     servePositive: { files: [SND + "serving-outcome-positive-1-chord.opus", SND + "serving-outcome-positive-2-chord.opus"], volume: 0.5, pitch: 0.01, trim: true },
     serveNeutral: { files: [SND + "serving-outcome-neutral-1-chord.opus", SND + "serving-outcome-neutral-2-chord.opus"], volume: 0.45, pitch: 0.01, trim: true },
     serveNegative: { files: [SND + "serving-outcome-negative-1-chord.opus", SND + "serving-outcome-negative-2-chord.opus"], volume: 0.45, pitch: 0.01, trim: true },
@@ -280,6 +284,7 @@ export const SOUND_TUNING = {
     outcomeBreathMs: 300, // serving a whole table: each reaction rings out, then this pause, then the next
     outcomeBreathJitterMs: 70, // ...give or take, so it feels played rather than sequenced
     paperGapMs: 300, // two paper ticks closer than this sound as one
+    snapOnConfirm: true, // a finger snap when you press a menu's main (gold) button. Trying it out
     // The crowd
     crowdFadeMs: 3000,
     crowdSettleMs: 2500, // the headcount must hold this long before the murmur changes
@@ -351,7 +356,8 @@ export const TUNING = {
     tableDirtyAt: 2, // dirt units before a table counts as dirty
     spillChancePerHour: 0.5, // times messiness, while eating or drinking
     cleanSeconds: [2.4, 0.8], // real seconds of holding Space
-    pourSeconds: [3, 0.3], // real seconds to pour a drink at a tap or from the urn (an upgrade could shorten it)
+    pourSeconds: [3, 0.3], // real seconds to pour a drink at a tap (an upgrade could shorten it)
+    urnPourSeconds: [2, 0.2], // real seconds to pour a cup of tea from the urn at the kettle
     // Snack bowls
     bowlEatenPerHour: 0.35, // share of a bowl one patron who likes it picks at in an hour
     bowlCommentChance: 0.5, // chance someone who loves or hates the snack says so

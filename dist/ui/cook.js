@@ -3,7 +3,7 @@
 // COOK becomes available once enough ingredients are chosen.
 import { INGREDIENTS } from "../data.js";
 import { makeItem, startJob, ticketFor } from "../crafting.js";
-import { closeAll, openMenu, replaceMenu } from "./menu.js";
+import { closeAll, confirmed, openMenu, replaceMenu } from "./menu.js";
 import { chip, grid, gridKeys } from "./cards.js";
 export function openCookScreen(g, f, r) {
     const state = { chosen: [], focus: 0 };
@@ -74,6 +74,8 @@ function cookSpec(g, f, r, st) {
             onPick: toggle,
             onKey: (e) => {
                 if (e.key === "Enter") {
+                    if (ready)
+                        confirmed();
                     cook(true);
                     return true;
                 }

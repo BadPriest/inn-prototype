@@ -73,7 +73,7 @@ export function openBillOfFare(g: Game): void {
           return gridKeys(() => RECIPES.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, toggle)(e);
         },
       },
-      items: [{ label: "Put it up", sub: `${g.menu.size} on the board`, button: "primary", action: putUp }],
+      items: [{ label: "Put it up", sub: `${g.menu.size} on the board`, button: "primary", quiet: true, action: putUp }],
     };
   };
   openMenu(build());

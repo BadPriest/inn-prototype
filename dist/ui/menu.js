@@ -2,9 +2,22 @@
 const stack = [];
 let root;
 let onModalChange = () => { };
-export function initMenus(el, modalChanged) {
+let onConfirm = () => { };
+export function initMenus(el, modalChanged, confirmed) {
     root = el;
     onModalChange = modalChanged;
+    if (confirmed)
+        onConfirm = confirmed;
+}
+/** For screens that confirm by their own keys (Enter on COOK): the same sound as a main button. */
+export function confirmed() {
+    onConfirm();
+}
+/** Run an item's action; a main button announces itself first (for the confirm sound). */
+function run(it) {
+    if (it.button === "primary" && !it.quiet)
+        onConfirm();
+    it.action();
 }
 export function menuOpen() {
     return stack.length > 0;
@@ -77,7 +90,7 @@ export function menuKey(e) {
         case " ": {
             const it = items[top.index];
             if (it && !it.disabled)
-                it.action();
+                run(it);
             return true;
         }
         case "Backspace":
@@ -138,7 +151,7 @@ function render() {
             const it = s.items[i];
             if (it && !it.disabled) {
                 top.index = i;
-                it.action();
+                run(it);
             }
         };
     });

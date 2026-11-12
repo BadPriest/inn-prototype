@@ -6,7 +6,7 @@ import type { Game, Item, Patron } from "../game.js";
 import {
   applyGarnish, garnishableDrinks, iconFor, pickupFromHatch, removeFromTray, serveUnasked, setTrayDown, takeFromHatch, trayItems,
 } from "../serving.js";
-import { closeAll, openMenu, replaceMenu, type MenuSpec } from "./menu.js";
+import { closeAll, confirmed, openMenu, replaceMenu, type MenuSpec } from "./menu.js";
 import { chip, grid, gridKeys, type CardSpec } from "./cards.js";
 
 /** A dish or drink as a card. */
@@ -77,7 +77,7 @@ function garnishSpec(g: Game, st: GarnishState): MenuSpec {
       html,
       onPick: use,
       onKey: (e) => {
-        if (e.key === "Enter") { go(); return true; }
+        if (e.key === "Enter") { if (gar) confirmed(); go(); return true; }
         return gridKeys(() => picks.length, () => st.focus, (i) => { st.focus = i; refresh(); }, (i) => use(picks[i]))(e);
       },
     },

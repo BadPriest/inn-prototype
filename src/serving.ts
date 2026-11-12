@@ -122,13 +122,14 @@ export function trayRoomFor(g: Game, kind: Item["kind"]): boolean {
   return g.keeper.trays.some((t) => (t.kind === kind && t.items.length < cap) || t.kind === null);
 }
 
-// Pouring takes a moment (TUNING.pourSeconds). The drink lands on a tray when it's done;
+// Pouring takes a moment (TUNING.pourSeconds at a tap, TUNING.urnPourSeconds from the urn). The drink lands on a tray when it's done;
 // walking away stops it. `from` is "tap:<recipe>" or the id of a station holding a drink pot (the urn).
 export function startPour(g: Game, from: string, recipeId?: string): void {
   if (g.pouring) { g.say("Still pouring…"); return; }
   if (!trayRoomFor(g, "drink")) { g.say("No room for a drink on your trays."); return; }
-  g.pouring = { id: uid(), from, recipeId, at: { ...g.keeper.pos }, progress: 0, total: organic(TUNING.pourSeconds) };
-  g.bus.emit({ type: "PourStarted", id: g.pouring.id });
+  const tap = from.startsWith("tap:");
+  g.pouring = { id: uid(), from, recipeId, at: { ...g.keeper.pos }, progress: 0, total: organic(tap ? TUNING.pourSeconds : TUNING.urnPourSeconds) };
+  g.bus.emit({ type: "PourStarted", id: g.pouring.id, from: tap ? "tap" : "urn" });
 }
 
 /** Stop pouring (right-click). The drink isn't made. */

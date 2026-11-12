@@ -51,7 +51,8 @@ export type GameEvent =
   | { type: "InnClosed" }
   | { type: "FrontDoor"; state: "opening" | "closing"; quick: boolean }
   | { type: "Paper"; what: "objective" | "menu" | "journal" } // something written down or ticked off
-  | { type: "PourStarted"; id: number }
+  | { type: "Confirmed" } // a menu's main button was pressed
+  | { type: "PourStarted"; id: number; from: "tap" | "urn" }
   | { type: "PourEnded"; id: number; done: boolean }
   | { type: "TurnInPrompted" }
   | { type: "DayEnded"; day: number }

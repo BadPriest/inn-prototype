@@ -94,7 +94,7 @@ export function initSound(g: Game): void {
     switch (e.type) {
       // Opening and closing the inn: no sound yet.
       case "FrontDoor": door(g, e.state, e.quick); break;
-      case "PourStarted": pours.set(e.id, play("pour", { ...g.keeper.pos })); break;
+      case "PourStarted": pours.set(e.id, play(e.from === "urn" ? "urnPour" : "pour", { ...g.keeper.pos })); break;
       case "PourEnded": stop(pours.get(e.id), e.done ? 250 : 120); pours.delete(e.id); break;
       case "OrderPlaced": {
         // Heard anywhere, panned toward whoever ordered.
@@ -105,6 +105,7 @@ export function initSound(g: Game): void {
       }
       case "ServeOutcome": { const s = OUTCOME_SOUND[e.outcome]; if (s) reaction(s); break; }
       case "Paper": paper(); break;
+      case "Confirmed": if (T.snapOnConfirm) play("confirm", null); break;
       case "PatronLeft": if (e.early) synth.leave(); break;
       case "Log": if (e.text.startsWith("✦")) setTimeout(() => synth.moment(), 350); break;
       case "Paused": suspend(); break;

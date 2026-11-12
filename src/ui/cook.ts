@@ -6,7 +6,7 @@ import { INGREDIENTS, type Recipe } from "../data.js";
 import type { Game } from "../game.js";
 import type { Furniture } from "../world.js";
 import { makeItem, startJob, ticketFor } from "../crafting.js";
-import { closeAll, openMenu, replaceMenu, type MenuSpec } from "./menu.js";
+import { closeAll, confirmed, openMenu, replaceMenu, type MenuSpec } from "./menu.js";
 import { chip, grid, gridKeys } from "./cards.js";
 
 interface CookState { chosen: string[]; focus: number }
@@ -81,7 +81,7 @@ function cookSpec(g: Game, f: Furniture, r: Recipe, st: CookState): MenuSpec {
       html,
       onPick: toggle,
       onKey: (e) => {
-        if (e.key === "Enter") { cook(true); return true; }
+        if (e.key === "Enter") { if (ready) confirmed(); cook(true); return true; }
         return gridKeys(() => r.options.length, () => st.focus, (i) => { st.focus = i; refresh(); }, (i) => toggle(r.options[i]))(e);
       },
     },

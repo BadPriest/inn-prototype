@@ -29,7 +29,7 @@ let view: View = { ts: 24, ox: 0, oy: 0 };
 let target: Target | null = null;
 let clickDest: Vec | null = null;
 
-initMenus(document.getElementById("menu")!, (modal) => { g.modal = modal; });
+initMenus(document.getElementById("menu")!, (modal) => { g.modal = modal; }, () => g.bus.emit({ type: "Confirmed" }));
 initDebug(g);
 initSound(g);
 const wm = document.getElementById("watermark");

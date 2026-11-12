@@ -2,7 +2,7 @@
 // the kitchen hatch, and choosing which tray to set down. Same look and handling as cooking (cards.ts).
 import { GARNISHES } from "../data.js";
 import { applyGarnish, garnishableDrinks, iconFor, pickupFromHatch, removeFromTray, serveUnasked, setTrayDown, takeFromHatch, trayItems, } from "../serving.js";
-import { closeAll, openMenu, replaceMenu } from "./menu.js";
+import { closeAll, confirmed, openMenu, replaceMenu } from "./menu.js";
 import { chip, grid, gridKeys } from "./cards.js";
 /** A dish or drink as a card. */
 function itemCard(it, pick, focus, extra = {}) {
@@ -74,6 +74,8 @@ function garnishSpec(g, st) {
             onPick: use,
             onKey: (e) => {
                 if (e.key === "Enter") {
+                    if (gar)
+                        confirmed();
                     go();
                     return true;
                 }
