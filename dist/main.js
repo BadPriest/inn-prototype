@@ -588,7 +588,7 @@ function openPause() {
         title: "Paused",
         modal: true,
         items: [
-            { label: "▶ Resume", sub: "P", action: () => resume() },
+            { label: "▶ Resume", sub: "P", button: "primary", action: () => resume() },
             { label: "🔍 UI size", sub: uiLabel(), action: () => {
                     uiChoice = UI_STEPS[(UI_STEPS.indexOf(uiChoice) + 1) % UI_STEPS.length];
                     try {
@@ -600,7 +600,7 @@ function openPause() {
                 } },
             { label: "🔊 Sound", sub: isMuted() ? "off" : "on", action: () => { toggleMute(); replaceMenu(build()); } },
             { label: "✅ Objectives", sub: g.showObjectives ? "shown" : "hidden", action: () => { g.showObjectives = !g.showObjectives; replaceMenu(build()); } },
-            { label: "❔ How to play", sub: "", action: () => openMenu({ title: "How to play", body: welcomeBody(), items: [{ label: "Back", action: () => back() }] }) },
+            { label: "❔ How to play", sub: "", action: () => openMenu({ title: "How to play", body: welcomeBody(), items: [{ label: "Back", button: "secondary", action: () => back() }] }) },
         ],
     });
     openMenu(build());
@@ -623,7 +623,7 @@ openMenu({
     title: g.day > 1 ? `Welcome back: day ${g.day}` : "Welcome to the Travelling Inn",
     modal: true,
     body: welcomeBody(),
-    items: [{ label: g.day > 1 ? "Continue" : "Start game", action: () => { closeAll(); unlockAudio(); } }],
+    items: [{ label: g.day > 1 ? "Continue" : "Start game", button: "primary", action: () => { closeAll(); unlockAudio(); } }],
 });
 let last = performance.now();
 let hudTimer = 0;

@@ -43,7 +43,7 @@ The built `dist/` folder and `standalone.html` are committed, so a fresh clone r
 | `src/sound.ts` | What plays when (listens to game events). Which file plays for what is `SOUNDS` in `src/data.ts` |
 | `src/sound/` | `engine.ts` loads, evens out loudness, cuts footstep files into single steps, places sounds (distance, pan, walls); `loops.ts` kettle and stew; `footsteps.ts` a step per stride; `crowd.ts` taproom murmur by headcount |
 | `assets/sounds/` | Sound files, packed into `standalone.html` by the build. `assets/sounds/questionable/` is parked: not used, not packed |
-| `src/ui/` | Canvas rendering, side panel and debug view, keyboard menus |
+| `src/ui/` | Canvas rendering, side panel and debug view, menus. Card screens: `cards.ts` (shared pieces), `cook.ts` (cooking), `larder.ts` (snacks, pie safe), `trays.ts` (garnish, offer, bin, hatch, set down), `desk.ts` (desk, bill of fare, upgrades) |
 | `src/main.ts` | Input, settings, the welcome screen and the main loop |
 | `tools/build.mjs` | The build: build number, compile, standalone file |
 | `tools/standalone.mjs` | Packs `index.html` and `dist/` into `standalone.html` |
