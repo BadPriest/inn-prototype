@@ -277,8 +277,8 @@ export const SOUND_TUNING = {
     patronStride: 1.1,
     patronStepsAtOnce: 3, // at most this many guest footsteps sounding together
     // Cues
-    outcomeGapMs: 450, // serving a whole table: each guest's reaction follows the last by this much
-    delightGapMs: 800, // ...a little longer after a delight, so its tail can ring
+    outcomeBreathMs: 300, // serving a whole table: each reaction rings out, then this pause, then the next
+    outcomeBreathJitterMs: 70, // ...give or take, so it feels played rather than sequenced
     paperGapMs: 300, // two paper ticks closer than this sound as one
     // The crowd
     crowdFadeMs: 3000,

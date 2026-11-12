@@ -5,7 +5,7 @@
 //   sound/crowd.ts      the taproom murmur, by headcount
 // This file listens to game events and calls soundscape() every frame. M mutes; pause silences everything.
 import { DOOR_TUNING, OUTCOME_SOUND, SOUND_TUNING as T } from "./data.js";
-import { attach, output, play, ready, resume, stop, suspend, updateVoices, vary } from "./sound/engine.js";
+import { attach, output, play, ready, resume, ringsOut, stop, suspend, updateVoices, vary } from "./sound/engine.js";
 import { cookingLoops } from "./sound/loops.js";
 import { footsteps } from "./sound/footsteps.js";
 import { crowd } from "./sound/crowd.js";
@@ -30,16 +30,29 @@ function door(g, state, quick) {
     if (state === "opening")
         setTimeout(() => play("bell", at, { rate }), DOOR_TUNING.bellDelayMs / rate);
 }
-// Serving reactions play one after the other, even when a whole table is served at once.
-let nextCueAt = 0; // performance.now() when the next reaction may start
+// Serving reactions play one after the other, like someone playing chords: each rings out,
+// then a breath, then the next. A whole table served at once queues up.
+const reactions = [];
+let reacting = false;
 function reaction(sound) {
-    const t = performance.now();
-    const at = Math.max(t, nextCueAt);
-    nextCueAt = at + (sound === "delight" ? T.delightGapMs : T.outcomeGapMs);
-    if (at <= t)
-        play(sound, null);
-    else
-        setTimeout(() => play(sound, null), at - t);
+    reactions.push(sound);
+    if (!reacting)
+        nextReaction();
+}
+function nextReaction() {
+    if (reactions.length && !ready()) {
+        setTimeout(nextReaction, 200);
+        return;
+    } // paused: wait, don't pile up
+    const sound = reactions.shift();
+    if (!sound) {
+        reacting = false;
+        return;
+    }
+    reacting = true;
+    const v = play(sound, null);
+    const breath = T.outcomeBreathMs + (Math.random() * 2 - 1) * T.outcomeBreathJitterMs;
+    setTimeout(nextReaction, ringsOut(v) * 1000 + breath);
 }
 // Paper: ticking the checklist, the bill of fare, a new journal note. Two at once sound as one.
 let lastPaper = 0;

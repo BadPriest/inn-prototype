@@ -13,6 +13,7 @@ let game: Game | null = null;
 const buffers = new Map<string, AudioBuffer>(); // file, or "file#n" for the nth slice of a sliced file
 const evenOut = new Map<string, number>(); // buffer key -> gain that brings it to T.targetLoudness
 const slices = new Map<string, string[]>(); // sliced file -> its slice keys
+const ringsFor = new Map<string, number>(); // buffer key -> seconds until it has faded to near silence
 let loading = false;
 
 export function attach(g: Game): void {
@@ -101,6 +102,11 @@ function trimStart(buf: AudioBuffer): AudioBuffer {
 }
 
 function store(key: string, buf: AudioBuffer): void {
+  const w = windows(buf, 10);
+  const thr = Math.max(0.002, Math.max(...w) * 0.03); // about 30 dB below its peak
+  let last = w.length - 1;
+  while (last > 0 && w[last] < thr) last--;
+  ringsFor.set(key, ((last + 1) * 10) / 1000);
   const l = loudness(buf);
   evenOut.set(key, l > 0 ? Math.min(6, Math.max(0.25, T.targetLoudness / l)) : 1);
   buffers.set(key, buf);
@@ -227,7 +233,7 @@ export function placement(at: Vec | null, def: SoundDef): { gain: number; pan: n
 // ---------------------------------------------------------------------------
 // Voices: a sound playing from somewhere. Loops with several files take turns, crossfading.
 
-interface Source { src: AudioBufferSourceNode; gain: GainNode; endsAt: number }
+interface Source { src: AudioBufferSourceNode; gain: GainNode; endsAt: number; rings: number }
 export interface Voice {
   key: string;
   def: SoundDef;
@@ -263,7 +269,8 @@ function startSource(v: Voice, when: number, offsetRandom: boolean, fadeIn: numb
   // Loops start somewhere in the middle, so two pots never sound in step.
   const offset = offsetRandom ? Math.random() * buf.duration * 0.9 : 0;
   src.start(when, offset);
-  const s: Source = { src, gain, endsAt: when + (buf.duration - offset) / src.playbackRate.value };
+  const rate = src.playbackRate.value;
+  const s: Source = { src, gain, endsAt: when + (buf.duration - offset) / rate, rings: (ringsFor.get(keyPick) ?? buf.duration) / rate };
   src.onended = () => { if (!src.loop && (v.stopped || !v.turns) && v.current === s) voices.delete(v); };
   return s;
 }
@@ -303,6 +310,11 @@ export function stop(v: Voice | null | undefined, fadeMs = 70): void {
   v.level.gain.linearRampToValueAtTime(0, t + fadeMs / 1000);
   try { v.current?.src.stop(t + fadeMs / 1000 + 0.02); } catch { /* already stopped */ }
   setTimeout(() => voices.delete(v), fadeMs + 100);
+}
+
+/** How long a voice's sound rings before it has faded to near silence (seconds). */
+export function ringsOut(v: Voice | null): number {
+  return v?.current?.rings ?? 0;
 }
 
 /** How many of this sound are playing right now. */

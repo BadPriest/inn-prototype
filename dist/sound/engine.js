@@ -10,6 +10,7 @@ let game = null;
 const buffers = new Map(); // file, or "file#n" for the nth slice of a sliced file
 const evenOut = new Map(); // buffer key -> gain that brings it to T.targetLoudness
 const slices = new Map(); // sliced file -> its slice keys
+const ringsFor = new Map(); // buffer key -> seconds until it has faded to near silence
 let loading = false;
 export function attach(g) {
     game = g;
@@ -102,6 +103,12 @@ function trimStart(buf) {
     return out;
 }
 function store(key, buf) {
+    const w = windows(buf, 10);
+    const thr = Math.max(0.002, Math.max(...w) * 0.03); // about 30 dB below its peak
+    let last = w.length - 1;
+    while (last > 0 && w[last] < thr)
+        last--;
+    ringsFor.set(key, ((last + 1) * 10) / 1000);
     const l = loudness(buf);
     evenOut.set(key, l > 0 ? Math.min(6, Math.max(0.25, T.targetLoudness / l)) : 1);
     buffers.set(key, buf);
@@ -259,7 +266,8 @@ function startSource(v, when, offsetRandom, fadeIn) {
     // Loops start somewhere in the middle, so two pots never sound in step.
     const offset = offsetRandom ? Math.random() * buf.duration * 0.9 : 0;
     src.start(when, offset);
-    const s = { src, gain, endsAt: when + (buf.duration - offset) / src.playbackRate.value };
+    const rate = src.playbackRate.value;
+    const s = { src, gain, endsAt: when + (buf.duration - offset) / rate, rings: (ringsFor.get(keyPick) ?? buf.duration) / rate };
     src.onended = () => { if (!src.loop && (v.stopped || !v.turns) && v.current === s)
         voices.delete(v); };
     return s;
@@ -314,6 +322,10 @@ export function stop(v, fadeMs = 70) {
     }
     catch { /* already stopped */ }
     setTimeout(() => voices.delete(v), fadeMs + 100);
+}
+/** How long a voice's sound rings before it has faded to near silence (seconds). */
+export function ringsOut(v) {
+    return v?.current?.rings ?? 0;
 }
 /** How many of this sound are playing right now. */
 export function playingCount(key) {
