@@ -1,9 +1,10 @@
 // Trays, pickup, pouring, garnishing and delivery.
 
 import { GARNISHES, RECIPES, TUNING } from "./data.js";
-import { makeItem } from "./crafting.js";
+import { makeItem, serveFromPot } from "./crafting.js";
 import type { Game, Item, Patron, SetDownTray } from "./game.js";
-import { uid } from "./core.js";
+import { dist } from "./world.js";
+import { organic, uid } from "./core.js";
 import { afterServe, describeReaction, judge } from "./tastes.js";
 import { inspireOthers } from "./patrons.js";
 
@@ -113,6 +114,39 @@ export function pickUpTray(g: Game, s: SetDownTray): void {
   free.items = s.tray.items;
   g.setDown = g.setDown.filter((x) => x.id !== s.id);
   g.say("You pick the tray back up.");
+}
+
+/** Is there room on the trays for one more of this kind? */
+export function trayRoomFor(g: Game, kind: Item["kind"]): boolean {
+  const cap = g.trayCap(kind);
+  return g.keeper.trays.some((t) => (t.kind === kind && t.items.length < cap) || t.kind === null);
+}
+
+// Pouring takes a moment (TUNING.pourSeconds). The drink lands on a tray when it's done;
+// walking away stops it. `from` is "tap:<recipe>" or the id of a station holding a drink pot (the urn).
+export function startPour(g: Game, from: string, recipeId?: string): void {
+  if (g.pouring) { g.say("Still pouring…"); return; }
+  if (!trayRoomFor(g, "drink")) { g.say("No room for a drink on your trays."); return; }
+  g.pouring = { id: uid(), from, recipeId, at: { ...g.keeper.pos }, progress: 0, total: organic(TUNING.pourSeconds) };
+  g.bus.emit({ type: "PourStarted", id: g.pouring.id });
+}
+
+/** Called every frame the game isn't paused, with real seconds. */
+export function updatePour(g: Game, realDt: number): void {
+  const p = g.pouring;
+  if (!p) return;
+  if (dist(p.at, g.keeper.pos) > 0.3) {
+    g.pouring = null;
+    g.bus.emit({ type: "PourEnded", id: p.id, done: false });
+    g.say("You stop pouring.");
+    return;
+  }
+  p.progress += realDt;
+  if (p.progress < p.total) return;
+  g.pouring = null;
+  if (p.from.startsWith("tap:")) pour(g, p.recipeId!);
+  else serveFromPot(g, p.from);
+  g.bus.emit({ type: "PourEnded", id: p.id, done: true });
 }
 
 export function pour(g: Game, recipeId: string): void {

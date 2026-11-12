@@ -39,6 +39,7 @@ export function toggleInn(g) {
     else {
         g.open = false;
         g.lastCall = false;
+        g.bus.emit({ type: "InnClosed" });
         g.say("You bolt the front door.");
     }
 }

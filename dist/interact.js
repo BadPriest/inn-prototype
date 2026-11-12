@@ -4,7 +4,7 @@ import { GARNISHES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TUNING, UPGRADES } f
 import { dist } from "./world.js";
 import { recipesFor, returnSlice, startJob, makeItem, serveFromPot, takeSlice, ticketFor } from "./crafting.js";
 import { tableKey } from "./patrons.js";
-import { applyGarnish, removeFromTray, servePatron, serveTable, garnishableDrinks, iconFor, itemLabel, serveUnasked, trayItems, pickupFromHatch, pickUpTray, pour, setTrayDown, takeFromHatch } from "./serving.js";
+import { applyGarnish, removeFromTray, servePatron, serveTable, garnishableDrinks, iconFor, itemLabel, serveUnasked, trayItems, pickupFromHatch, pickUpTray, startPour, setTrayDown, takeFromHatch } from "./serving.js";
 import { endDay, startNextDay, toggleInn } from "./day.js";
 import { closeAll, openMenu, replaceMenu, back } from "./ui/menu.js";
 export function targetId(t) {
@@ -134,8 +134,10 @@ export function promptFor(g, t) {
             return d >= TUNING.tableDirtyAt ? "Hold Space: wipe the dirty table" : "Hold Space: wipe the table";
         }
         case "station":
+            if (pot && g.pouring && g.pouring.from === f.id)
+                return `Pouring… ${Math.round((g.pouring.progress / g.pouring.total) * 100)}%`;
             if (pot)
-                return `Space: take a serving of ${pot.item.name.toLowerCase()} (${pot.left} left)`;
+                return `Space: ${pot.item.kind === "drink" ? "pour a cup of" : "take a serving of"} ${pot.item.name.toLowerCase()} (${pot.left} left)`;
             if (job) {
                 const r = RECIPES.find((x) => x.id === job.recipeId);
                 return job.done ? `${r.name} ready, waiting for room (${r.storedIn === "piesafe" ? "pie safe" : "hatch"} full)` : `${r.name} ${Math.floor((job.progress / job.total) * 100)}% · hold Space to hurry`;
@@ -144,7 +146,10 @@ export function promptFor(g, t) {
         case "bin": return trayItems(g).length ? "Space: throw something away" : "Scrap bin";
         case "piesafe": return g.pieSafe.length ? `Space: take a slice (${g.pieSafe.map((p) => p.left).reduce((a, b) => a + b, 0)} slices)` : "The pie safe is empty";
         case "hatch": return g.hatch.length ? `Space: choose from the hatch (${g.hatch.length})` : "The hatch is empty";
-        case "tap": return `Space: pour ${RECIPES.find((r) => r.id === f.tap)?.name.toLowerCase()}`;
+        case "tap":
+            if (g.pouring)
+                return `Pouring… ${Math.round((g.pouring.progress / g.pouring.total) * 100)}%`;
+            return `Space: pour ${RECIPES.find((r) => r.id === f.tap)?.name.toLowerCase()}`;
         case "garnish": return "Space or E: garnish a drink";
         case "frontdoor": return g.open ? (g.lastCall ? "Space: bolt the door" : "Space: call last orders") : "Space: open the inn";
         case "fireplace": return g.fireLit ? "Space: put out the fire" : "Space: light the fire";
@@ -187,7 +192,10 @@ export function interact(g, t) {
         }
         case "station": {
             if (g.pots.has(f.id)) {
-                serveFromPot(g, f.id);
+                if (g.pots.get(f.id).item.kind === "drink")
+                    startPour(g, f.id); // a cup from the urn takes pouring
+                else
+                    serveFromPot(g, f.id);
                 return;
             }
             const job = g.jobs.get(f.id);
@@ -208,7 +216,7 @@ export function interact(g, t) {
             openBin(g);
             return;
         case "tap":
-            pour(g, f.tap);
+            startPour(g, `tap:${f.tap}`, f.tap);
             return;
         case "garnish":
             openGarnishMenu(g);
@@ -323,6 +331,7 @@ export function openBillOfFare(g) {
                     else
                         g.menu.add(r.id);
                     g.menuChosen = true;
+                    g.bus.emit({ type: "Paper", what: "menu" });
                     replaceMenu(build());
                 },
             })),

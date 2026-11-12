@@ -36,9 +36,13 @@ The built `dist/` folder and `standalone.html` are committed, so a fresh clone r
 | `src/patrons.ts` | Arrivals, regulars, ordering, waiting, mess, leaving |
 | `src/crafting.ts` | Stations, communal pots, single servings with names attached |
 | `src/serving.ts` | Trays, pickup, pouring, garnishing, delivery |
+| `src/objectives.ts` | The "Today" checklist, and noticing when an item gets ticked off |
+| `src/door.ts` | The front door: opens when someone is in the doorway, closes once it's clear (drives the door sounds) |
 | `src/day.ts` | Clock, open and close, turning in, saving |
 | `src/interact.ts` | What Space does on each thing; crafting, garnish and journal menus |
-| `src/sound.ts` | Synthesised placeholder sounds |
+| `src/sound.ts` | What plays when (listens to game events). Which file plays for what is `SOUNDS` in `src/data.ts` |
+| `src/sound/` | `engine.ts` loads, evens out loudness, cuts footstep files into single steps, places sounds (distance, pan, walls); `loops.ts` kettle and stew; `footsteps.ts` a step per stride; `crowd.ts` taproom murmur by headcount |
+| `assets/sounds/` | Sound files, packed into `standalone.html` by the build. `assets/sounds/questionable/` is parked: not used, not packed |
 | `src/ui/` | Canvas rendering, side panel and debug view, keyboard menus |
 | `src/main.ts` | Input, settings, the welcome screen and the main loop |
 | `tools/build.mjs` | The build: build number, compile, standalone file |

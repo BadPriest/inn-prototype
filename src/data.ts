@@ -357,6 +357,105 @@ export const TALK_TUNING = {
 };
 
 // ---------------------------------------------------------------------------
+// Sounds. Which files play for what, how loud, how much the pitch wanders.
+// Volumes are relative: every file is evened out to the same loudness when it loads.
+//   heardEverywhere: not muffled by walls (the shop bell is how you know someone came in)
+//   loop: plays continuously while its source is active (cooking: sound/loops.ts; crowd: sound/crowd.ts)
+//         with several files, they take turns instead of one repeating
+//   slice: the file holds several separate sounds (footsteps); it's cut at the quiet gaps when it
+//          loads and each piece is one pick
+//   room: the sound of a whole room rather than of a spot: not panned, muffled from the next room
+//   trim: cut the silence at the start when it loads, so a cue lands right on its action
+// Files in assets/sounds/questionable are parked: not used, not packed into standalone.html.
+export interface SoundDef {
+  files: string[]; volume: number; pitch: number;
+  loop?: boolean; heardEverywhere?: boolean; slice?: boolean; room?: string; trim?: boolean;
+}
+
+const SND = "assets/sounds/";
+export const SOUNDS: Record<string, SoundDef> = {
+  doorOpens: { files: [SND + "door-opens-1.opus"], volume: 0.8, pitch: 0.05 },
+  doorCloses: { files: [SND + "door-closes.opus"], volume: 0.8, pitch: 0.05 },
+  bell: { files: [SND + "shopkeeper-bell-1.opus", SND + "shopkeeper-bell-2.opus"], volume: 0.55, pitch: 0.05, heardEverywhere: true },
+  pour: { files: [SND + "drink-pouring-1.opus", SND + "drink-pouring-2.opus", SND + "drink-pouring-3.opus"], volume: 0.7, pitch: 0.07 },
+  kettle: { files: [SND + "kettle-water-boiling-looping.opus"], volume: 0.45, pitch: 0.04, loop: true },
+  stewCooking: { files: [SND + "stew-cooking-loop.opus"], volume: 0.5, pitch: 0.04, loop: true },
+  stewSimmering: { files: [SND + "stew-simmering-loop.opus"], volume: 0.4, pitch: 0.04, loop: true },
+  // Footsteps: one step per stride (see SOUND_TUNING), so the pace always matches the walking.
+  keeperWalk: { files: [SND + "indoors-walk-step-loop.opus", SND + "indoors-walk-cycle-4-step-loop.opus"], volume: 0.4, pitch: 0.06, slice: true },
+  keeperRun: { files: [SND + "indoors-run-cycle-loop.opus"], volume: 0.45, pitch: 0.06, slice: true },
+  patronStep: { files: [SND + "indoors-walk-step-loop.opus", SND + "indoors-walk-cycle-4-step-loop.opus"], volume: 0.16, pitch: 0.1, slice: true },
+  // Cues: the game telling you something. Chords barely vary in pitch, so they stay in tune.
+  order: { files: [SND + "order-two-taps.opus", SND + "order-three-taps.opus"], volume: 0.5, pitch: 0.05, trim: true, heardEverywhere: true },
+  paper: { files: [SND + "check-sound.opus"], volume: 0.45, pitch: 0.04, trim: true },
+  servePositive: { files: [SND + "serving-outcome-positive-1-chord.opus", SND + "serving-outcome-positive-2-chord.opus"], volume: 0.5, pitch: 0.01, trim: true },
+  serveNeutral: { files: [SND + "serving-outcome-neutral-1-chord.opus", SND + "serving-outcome-neutral-2-chord.opus"], volume: 0.45, pitch: 0.01, trim: true },
+  serveNegative: { files: [SND + "serving-outcome-negative-1-chord.opus", SND + "serving-outcome-negative-2-chord.opus"], volume: 0.45, pitch: 0.01, trim: true },
+  delight: { files: [SND + "delight-1.opus", SND + "delight-2.opus"], volume: 0.6, pitch: 0.01, trim: true },
+  // The murmur of the taproom, by how many people are in it (CROWD below).
+  crowdLow: { files: [SND + "occupancy-bg-low-1-loop.opus", SND + "occupancy-bg-low-2-loop.opus"], volume: 0.16, pitch: 0.02, loop: true, room: "taproom" },
+  crowdComfortable: { files: [SND + "occupancy-bg-comfortable-1-loop.opus"], volume: 0.22, pitch: 0.02, loop: true, room: "taproom" },
+  crowdBusy: { files: [SND + "occupancy-bg-busy-1-loop.opus"], volume: 0.27, pitch: 0.02, loop: true, room: "taproom" },
+  crowdPacked: { files: [SND + "occupancy-bg-packed-1-loop.opus"], volume: 0.32, pitch: 0.02, loop: true, room: "taproom" },
+};
+
+export const SOUND_TUNING = {
+  targetLoudness: 0.12, // every file is evened out to about this (RMS of its audible part)
+  fullVolumeWithin: 2.5, // tiles: full volume this close
+  fadeOverTiles: 16, // tiles beyond that over which it fades to quiet
+  quietest: 0.2, // a sound in the same room never fades below this
+  nextRoom: 0.35, // a sound in the next room over is this loud; two rooms away, silent
+  panWidth: 12, // tiles left or right for a full pan
+  loopFadeMs: 400,
+  // Footsteps
+  keeperStride: 1.5, // tiles per step when walking (4.2 tiles/s: about 2.8 steps a second)
+  keeperRunStride: 2.4, // tiles per step when running (7 tiles/s: about 2.9 steps a second)
+  patronStride: 1.1,
+  patronStepsAtOnce: 3, // at most this many guest footsteps sounding together
+  // Cues
+  outcomeGapMs: 450, // serving a whole table: each guest's reaction follows the last by this much
+  delightGapMs: 800, // ...a little longer after a delight, so its tail can ring
+  paperGapMs: 300, // two paper ticks closer than this sound as one
+  // The crowd
+  crowdFadeMs: 3000,
+  crowdSettleMs: 2500, // the headcount must hold this long before the murmur changes
+};
+
+/** Taproom murmur: the busiest level whose headcount is reached (people in the taproom). */
+/** Which cue answers each serving outcome. LEAVING is a guest giving up, not a serve: the synth tone covers it. */
+export const OUTCOME_SOUND: Record<string, string> = {
+  DELIGHT: "delight", PLEASED: "servePositive", FULFILLED: "serveNeutral", UNFINISHED: "serveNegative", COMPLAINS: "serveNegative",
+};
+
+export const CROWD: { sound: string; from: number }[] = [
+  { sound: "crowdLow", from: 1 },
+  { sound: "crowdComfortable", from: 6 },
+  { sound: "crowdBusy", from: 15 },
+  { sound: "crowdPacked", from: 27 },
+];
+
+/** Rooms, for which sounds carry where. Floor characters from MAP; furniture takes the room around it. */
+export const ROOM_OF_TILE: Record<string, string> = {
+  "~": "bedroom", ":": "hall", ",": "kitchen", ".": "taproom", "_": "taproom", "=": "taproom", g: "taproom",
+  s: "taproom", c: "taproom", t: "taproom", ";": "entry", b: "entry", E: "entry",
+};
+export const ROOM_LINKS: [string, string][] = [
+  ["bedroom", "hall"], ["hall", "taproom"], ["kitchen", "taproom"], ["entry", "taproom"],
+];
+
+// ---------------------------------------------------------------------------
+// The front door: it opens when someone is in the doorway and closes once the doorway is clear.
+export const DOOR_TUNING = {
+  doorwayRadius: 2.2, // tiles around the front door that count as "in the doorway"
+  holdOpenMs: 1800, // the door stays open at least this long for a group (real time)
+  holdOpenQuickMs: 900, // … and this long for one person on their own
+  settleMs: 300, // the doorway must be clear this long before the door closes
+  bellDelayMs: 400, // the shop bell rings this long after the door starts to open
+  quickRate: 1.25, // one person: door sounds play this much faster, and the bell comes sooner
+  fadeMs: 70, // a door sound that's cut off fades out this quickly
+};
+
+// ---------------------------------------------------------------------------
 // The bill of fare: what's on today. Set at the desk.
 export const DEFAULT_MENU = ["ale", "cider"];
 
@@ -398,6 +497,7 @@ export const TUNING = {
   tableDirtyAt: 2, // dirt units before a table counts as dirty
   spillChancePerHour: 0.5, // times messiness, while eating or drinking
   cleanSeconds: [2.4, 0.8] as Organic, // real seconds of holding Space
+  pourSeconds: [3, 0.3] as Organic, // real seconds to pour a drink at a tap or from the urn (an upgrade could shorten it)
   // Snack bowls
   bowlEatenPerHour: 0.35, // share of a bowl one patron who likes it picks at in an hour
   bowlCommentChance: 0.5, // chance someone who loves or hates the snack says so

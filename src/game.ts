@@ -191,6 +191,8 @@ export class Game {
   totalServed = 0; // across all days
   showObjectives = true;
   cleaning: Cleaning | null = null;
+  /** A drink being poured (at a tap, or a cup from the urn). Walking away stops it. */
+  pouring: { id: number; from: string; recipeId?: string; at: { x: number; y: number }; progress: number; total: number } | null = null;
   regulars = new Map<string, RegularState>();
   visitorNotes: JournalEntry[] = [];
   stats: DayStats = emptyStats(1);
@@ -198,6 +200,7 @@ export class Game {
   log: LogLine[] = [];
   holdingSpace = false;
   keeperLine?: { text: string; until: number };
+  frontDoor = { open: false, quick: false, openedAt: 0, clearSince: null as number | null };
   journalUnread = 0;
   journalToast?: { text: string; until: number }; // real-time ms
   /** Item ids that left the trays through a known path this frame (the watchdog checks the rest). */
@@ -258,6 +261,7 @@ export class Game {
     if (kind !== "serve") {
       this.journalUnread++;
       this.journalToast = { text: `📖 ${p.name}: ${text}`, until: performance.now() + 4000 };
+      this.bus.emit({ type: "Paper", what: "journal" });
     }
     const r = this.regular(p.regularId);
     if (r) {

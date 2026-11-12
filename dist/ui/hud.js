@@ -4,8 +4,7 @@ import { spawnRegular, spawnVisitors } from "../patrons.js";
 import { emptyTastes } from "../game.js";
 import { resetSave } from "../day.js";
 import { iconFor, itemLabel } from "../serving.js";
-import { stockOf } from "../crafting.js";
-import { RECIPES, SNACKS } from "../data.js";
+import { objectives } from "../objectives.js";
 const $ = (id) => document.getElementById(id);
 export function updateHud(g, prompt) {
     const status = g.open ? (g.lastCall ? "LAST CALL" : "OPEN") : "CLOSED";
@@ -60,18 +59,6 @@ export function updateHud(g, prompt) {
         updateDebug(g);
 }
 /** The optional morning checklist, so new players know where to start. */
-function objectives(g) {
-    const big = RECIPES.filter((r) => g.menu.has(r.id) && r.servings);
-    const bigText = big.length
-        ? `Prepare the big dishes on the menu: ${big.map((r) => `${r.icon} ${r.name.toLowerCase()}${stockOf(g, r.id) ? " ✓" : ""}`).join(", ")}`
-        : "Prepare the big dishes on the menu (none today)";
-    return [
-        { text: "Set the bill of fare at the desk in your room", done: g.menuChosen },
-        { text: bigText, done: big.every((r) => stockOf(g, r.id) > 0) },
-        { text: `Set out snacks on the tables ${SNACKS.map((x) => x.icon).join("")}`, done: [...g.bowls.values()].some((b) => b.left > 0), optional: true },
-        { text: "Open the inn at the front door", done: g.open },
-    ];
-}
 function updateObjectives(g) {
     const el = document.getElementById("objectives");
     if (!el)

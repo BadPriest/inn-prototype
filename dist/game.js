@@ -44,6 +44,8 @@ export class Game {
     totalServed = 0; // across all days
     showObjectives = true;
     cleaning = null;
+    /** A drink being poured (at a tap, or a cup from the urn). Walking away stops it. */
+    pouring = null;
     regulars = new Map();
     visitorNotes = [];
     stats = emptyStats(1);
@@ -51,6 +53,7 @@ export class Game {
     log = [];
     holdingSpace = false;
     keeperLine;
+    frontDoor = { open: false, quick: false, openedAt: 0, clearSince: null };
     journalUnread = 0;
     journalToast; // real-time ms
     /** Item ids that left the trays through a known path this frame (the watchdog checks the rest). */
@@ -104,6 +107,7 @@ export class Game {
         if (kind !== "serve") {
             this.journalUnread++;
             this.journalToast = { text: `📖 ${p.name}: ${text}`, until: performance.now() + 4000 };
+            this.bus.emit({ type: "Paper", what: "journal" });
         }
         const r = this.regular(p.regularId);
         if (r) {

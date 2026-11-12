@@ -6,11 +6,14 @@ import { dist, type Vec } from "./world.js";
 import { simDelta, updateClock, load, beginDay } from "./day.js";
 import { updateCrafting } from "./crafting.js";
 import { updatePatrons } from "./patrons.js";
+import { updateFrontDoor } from "./door.js";
+import { updatePour } from "./serving.js";
+import { watchObjectives } from "./objectives.js";
 import { askSetDown, offerUnasked, cleanable, cleanStep, findTarget, forcedTurnIn, interact, openGarnishMenu, openJournal, promptFor, targetId, type Target } from "./interact.js";
 import { draw, computeView, type View } from "./ui/render.js";
 import { updateHud, initDebug, toggleDebug } from "./ui/hud.js";
 import { back, initMenus, menuKey, menuOpen } from "./ui/menu.js";
-import { initSound, isMuted, toggleMute, unlockAudio } from "./sound.js";
+import { initSound, isMuted, soundscape, toggleMute, unlockAudio } from "./sound.js";
 import { BUILD } from "./version.js";
 import { openMenu, closeAll, replaceMenu } from "./ui/menu.js";
 
@@ -414,14 +417,18 @@ function frame(now: number): void {
   // Cleaning is a hold: progress while Space is held on something dirty.
   if (g.holdingSpace && !g.paused && !g.modal && !menuOpen() && cleanable(g, target)) cleanStep(g, target!, realDt);
   else if (g.cleaning && (!g.holdingSpace || targetId(target) !== g.cleaning.targetId)) g.cleaning = null;
+  if (!g.paused) updatePour(g, realDt);
   const sim = simDelta(g, realDt);
   if (sim > 0) {
     updateCrafting(g, sim, target?.type === "furniture" ? target.f : null);
     updatePatrons(g, sim);
+    updateFrontDoor(g, now);
     updateClock(g, sim, () => forcedTurnIn(g));
   }
 
   watchTrays();
+  watchObjectives(g);
+  soundscape(g, realDt);
   view = computeView(canvas, g);
   draw(ctx, g, view, target, clickDest);
   hudTimer -= realDt;

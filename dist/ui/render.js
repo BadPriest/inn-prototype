@@ -58,7 +58,15 @@ export function draw(ctx, g, v, target, clickDest) {
             }
             if (k === "front") {
                 ctx.fillStyle = g.open ? (g.lastCall ? "#c98a3a" : "#6fbf5f") : "#7a3a2a";
-                ctx.fillRect(x + ts * 0.08, y + ts * 0.08, ts * 0.84, ts * 0.84);
+                if (g.frontDoor.open) {
+                    // Ajar: the door swung to one side, the doorway dark behind it
+                    ctx.fillStyle = "#1a1410";
+                    ctx.fillRect(x + ts * 0.08, y + ts * 0.08, ts * 0.84, ts * 0.84);
+                    ctx.fillStyle = g.open ? (g.lastCall ? "#c98a3a" : "#6fbf5f") : "#7a3a2a";
+                    ctx.fillRect(x + ts * 0.08, y + ts * 0.08, ts * 0.22, ts * 0.84);
+                }
+                else
+                    ctx.fillRect(x + ts * 0.08, y + ts * 0.08, ts * 0.84, ts * 0.84);
             }
             if (k === "counter") {
                 ctx.fillStyle = "#5a3d28";
@@ -278,12 +286,13 @@ export function draw(ctx, g, v, target, clickDest) {
         ctx.fillText(t, X(k.pos.x), Y(k.pos.y) - ts * 0.62);
         ctx.lineWidth = 1;
     }
-    if (g.cleaning) {
-        const pct = Math.min(1, g.cleaning.progress / g.cleaning.total);
+    const busy = g.cleaning ?? g.pouring;
+    if (busy) {
+        const pct = Math.min(1, busy.progress / busy.total);
         const bx = X(k.pos.x) - ts * 0.5, by = Y(k.pos.y) - ts * 0.75;
         ctx.fillStyle = "rgba(0,0,0,0.65)";
         ctx.fillRect(bx, by, ts, ts * 0.16);
-        ctx.fillStyle = "#8fd3ff";
+        ctx.fillStyle = g.pouring ? "#e8b25a" : "#8fd3ff";
         ctx.fillRect(bx, by, ts * pct, ts * 0.16);
     }
     // Paused overlay

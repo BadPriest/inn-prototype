@@ -1,79 +1,123 @@
-// Placeholder sounds, synthesised so there are no files to load. Every sound varies
-// slightly in pitch and volume, so nothing repeats exactly. M mutes.
-let ac = null;
-let muted = false;
-export function unlockAudio() {
-    if (ac) {
-        if (ac.state === "suspended")
-            void ac.resume();
+// Sounds: what plays when. Which files, how loud: SOUNDS in data.ts.
+//   sound/engine.ts     loading, evening out loudness, playing from places (distance, pan, walls)
+//   sound/loops.ts      kettle and stew, while they're cooking
+//   sound/footsteps.ts  a step per stride, keeper and guests
+//   sound/crowd.ts      the taproom murmur, by headcount
+// This file listens to game events and calls soundscape() every frame. M mutes; pause silences everything.
+import { DOOR_TUNING, OUTCOME_SOUND, SOUND_TUNING as T } from "./data.js";
+import { attach, output, play, ready, resume, stop, suspend, updateVoices, vary } from "./sound/engine.js";
+import { cookingLoops } from "./sound/loops.js";
+import { footsteps } from "./sound/footsteps.js";
+import { crowd } from "./sound/crowd.js";
+export { isMuted, toggleMute, unlockAudio } from "./sound/engine.js";
+/** Call every frame with real seconds. */
+export function soundscape(g, realDt) {
+    if (!ready())
         return;
-    }
-    try {
-        ac = new AudioContext();
-    }
-    catch {
-        ac = null;
-    }
+    cookingLoops(g);
+    footsteps(g, realDt);
+    crowd(g);
+    updateVoices();
 }
-export function isMuted() {
-    return muted;
+// The door makes one sound at a time: opening and closing never overlap.
+let doorSound = null;
+function door(g, state, quick) {
+    const at = { x: g.world.frontDoor.x + 0.5, y: g.world.frontDoor.y + 0.5 };
+    stop(doorSound, DOOR_TUNING.fadeMs);
+    const rate = quick ? DOOR_TUNING.quickRate : 1;
+    doorSound = play(state === "opening" ? "doorOpens" : "doorCloses", at, { rate });
+    // The bell hangs on the door: it rings as the door swings, and isn't cut off by it.
+    if (state === "opening")
+        setTimeout(() => play("bell", at, { rate }), DOOR_TUNING.bellDelayMs / rate);
 }
-export function toggleMute() {
-    muted = !muted;
-    return muted;
+// Serving reactions play one after the other, even when a whole table is served at once.
+let nextCueAt = 0; // performance.now() when the next reaction may start
+function reaction(sound) {
+    const t = performance.now();
+    const at = Math.max(t, nextCueAt);
+    nextCueAt = at + (sound === "delight" ? T.delightGapMs : T.outcomeGapMs);
+    if (at <= t)
+        play(sound, null);
+    else
+        setTimeout(() => play(sound, null), at - t);
 }
-function vary(n, amount = 0.04) {
-    return n * (1 + (Math.random() * 2 - 1) * amount);
+// Paper: ticking the checklist, the bill of fare, a new journal note. Two at once sound as one.
+let lastPaper = 0;
+function paper() {
+    const t = performance.now();
+    if (t - lastPaper < T.paperGapMs)
+        return;
+    lastPaper = t;
+    play("paper", null);
 }
+// One pour at a time; its sound stops when the pour does (done or walked away).
+const pours = new Map();
+// ---------------------------------------------------------------------------
+// Synthesised placeholders (not from anywhere: these are the game talking to you)
 function tone(freq, start, dur, vol, type = "sine") {
-    if (!ac || muted)
+    const o = output();
+    if (!o)
         return;
-    const t0 = ac.currentTime + start;
-    const o = ac.createOscillator();
-    const g = ac.createGain();
-    o.type = type;
-    o.frequency.value = vary(freq);
-    g.gain.setValueAtTime(0, t0);
-    g.gain.linearRampToValueAtTime(vary(vol, 0.15), t0 + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    o.connect(g).connect(ac.destination);
-    o.start(t0);
-    o.stop(t0 + dur + 0.05);
+    const t0 = o.ac.currentTime + start;
+    const osc = o.ac.createOscillator();
+    const gn = o.ac.createGain();
+    osc.type = type;
+    osc.frequency.value = vary(freq, 0.04);
+    gn.gain.setValueAtTime(0, t0);
+    gn.gain.linearRampToValueAtTime(vary(vol, 0.15), t0 + 0.01);
+    gn.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(gn).connect(o.out);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.05);
 }
-const sounds = {
-    chime: () => { tone(1320, 0, 0.9, 0.07); tone(1760, 0.09, 1.1, 0.05); }, // door bell: a patron walks in
-    ding: () => tone(988, 0, 0.5, 0.06, "triangle"), // an order comes in
-    deliver: [
-        () => tone(520, 0, 0.12, 0.08, "triangle"),
-        () => { tone(440, 0, 0.1, 0.06, "triangle"); tone(660, 0.06, 0.14, 0.05, "triangle"); },
-        () => tone(380, 0, 0.18, 0.07, "sine"),
-    ],
-    delight: () => { tone(784, 0, 0.35, 0.06); tone(988, 0.08, 0.35, 0.05); tone(1175, 0.16, 0.5, 0.05); },
+const synth = {
     moment: () => { tone(659, 0, 0.6, 0.05); tone(880, 0.12, 0.8, 0.05); tone(1319, 0.24, 1.2, 0.04); },
     leave: () => tone(330, 0, 0.25, 0.03, "sine"),
 };
 export function initSound(g) {
+    attach(g);
     g.bus.on((e) => {
         switch (e.type) {
-            case "PatronArrived":
-                sounds.chime();
+            // Opening and closing the inn: no sound yet.
+            case "FrontDoor":
+                door(g, e.state, e.quick);
                 break;
-            case "OrderPlaced":
-                sounds.ding();
+            case "PourStarted":
+                pours.set(e.id, play("pour", { ...g.keeper.pos }));
                 break;
-            case "ServeOutcome":
-                if (e.outcome === "DELIGHT")
-                    sounds.delight();
-                else
-                    sounds.deliver[Math.floor(Math.random() * sounds.deliver.length)]();
+            case "PourEnded":
+                stop(pours.get(e.id), e.done ? 250 : 120);
+                pours.delete(e.id);
+                break;
+            case "OrderPlaced": {
+                // Heard anywhere, panned toward whoever ordered.
+                const o = g.order(e.orderId);
+                const p = o && g.patrons.find((x) => x.id === o.patronId);
+                play("order", p ? { ...p.pos } : null);
+                break;
+            }
+            case "ServeOutcome": {
+                const s = OUTCOME_SOUND[e.outcome];
+                if (s)
+                    reaction(s);
+                break;
+            }
+            case "Paper":
+                paper();
                 break;
             case "PatronLeft":
                 if (e.early)
-                    sounds.leave();
+                    synth.leave();
                 break;
             case "Log":
                 if (e.text.startsWith("✦"))
-                    setTimeout(() => sounds.moment(), 350);
+                    setTimeout(() => synth.moment(), 350);
+                break;
+            case "Paused":
+                suspend();
+                break;
+            case "Resumed":
+                resume();
                 break;
         }
     });

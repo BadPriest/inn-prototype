@@ -48,6 +48,11 @@ export type GameEvent =
   | { type: "ServeOutcome"; patronId: number; outcome: Outcome; score: number }
   | { type: "InnOpened" }
   | { type: "LastCall" }
+  | { type: "InnClosed" }
+  | { type: "FrontDoor"; state: "opening" | "closing"; quick: boolean }
+  | { type: "Paper"; what: "objective" | "menu" | "journal" } // something written down or ticked off
+  | { type: "PourStarted"; id: number }
+  | { type: "PourEnded"; id: number; done: boolean }
   | { type: "TurnInPrompted" }
   | { type: "DayEnded"; day: number }
   | { type: "DayStarted"; day: number }

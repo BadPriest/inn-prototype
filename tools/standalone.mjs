@@ -26,7 +26,28 @@ for (const file of walk(dist)) {
   modules[name] = src;
 }
 
+// Files from assets/ (and its subfolders), packed in as data URLs so the single file still has them.
+// A folder named "questionable" is left out: parked files that the game doesn't use.
+const assetsDir = join(root, "assets");
+const SKIP_DIRS = new Set(["questionable"]);
+const MIME = { ".opus": "audio/ogg", ".ogg": "audio/ogg", ".mp3": "audio/mpeg", ".wav": "audio/wav", ".m4a": "audio/mp4" };
+const assets = {};
+function packDir(dir, prefix) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (entry.isDirectory()) {
+      if (!SKIP_DIRS.has(entry.name)) packDir(join(dir, entry.name), `${prefix}${entry.name}/`);
+      continue;
+    }
+    const f = entry.name;
+    const ext = f.slice(f.lastIndexOf(".")).toLowerCase();
+    if (!MIME[ext]) continue;
+    assets[`${prefix}${f}`] = `data:${MIME[ext]};base64,${readFileSync(join(dir, f)).toString("base64")}`;
+  }
+}
+try { packDir(assetsDir, "assets/"); } catch { /* no assets folder: fine */ }
+
 const loader = `
+<script>window.__INN_ASSETS = ${JSON.stringify(assets)};</script>
 <script>
 (function () {
   var mods = ${JSON.stringify(modules).replace(/<\/script/gi, "<\\/script")};
@@ -49,4 +70,4 @@ let html = readFileSync(join(root, "index.html"), "utf8");
 html = html.replace(/<script type="module" src="dist\/main\.js"><\/script>/, loader.trim());
 html = html.replace("<title>", "<!-- Built from index.html + dist/ by tools/standalone.mjs. Edit those, not this. -->\n<title>");
 writeFileSync(join(root, "standalone.html"), html);
-console.log(`standalone.html: ${Object.keys(modules).length} modules, ${(html.length / 1024).toFixed(0)} KB`);
+console.log(`standalone.html: ${Object.keys(modules).length} modules, ${Object.keys(assets).length} sounds, ${(html.length / 1024).toFixed(0)} KB`);
