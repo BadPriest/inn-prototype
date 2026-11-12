@@ -255,8 +255,8 @@ export const SOUNDS = {
     // Cues: the game telling you something. Chords barely vary in pitch, so they stay in tune.
     order: { files: [SND + "order-two-taps.opus", SND + "order-three-taps.opus"], volume: 0.5, pitch: 0.05, trim: true, heardEverywhere: true },
     paper: { files: [SND + "check-sound.opus"], volume: 0.45, pitch: 0.04, trim: true },
-    // Confirming with a menu's main (gold) button: COOK, GARNISH IT, TURN IN... Switch off with SOUND_TUNING.snapOnConfirm.
-    confirm: { files: [SND + "finger-snapping.opus"], volume: 0.4, pitch: 0.05, trim: true },
+    // Confirming with a menu's main (gold) button: COOK, GARNISH IT, TURN IN... Switch off with SOUND_TUNING.confirmSound.
+    confirm: { files: [SND + "piano-confirm.opus"], volume: 0.45, pitch: 0.01, trim: true },
     servePositive: { files: [SND + "serving-outcome-positive-1-chord.opus", SND + "serving-outcome-positive-2-chord.opus"], volume: 0.5, pitch: 0.01, trim: true },
     serveNeutral: { files: [SND + "serving-outcome-neutral-1-chord.opus", SND + "serving-outcome-neutral-2-chord.opus"], volume: 0.45, pitch: 0.01, trim: true },
     serveNegative: { files: [SND + "serving-outcome-negative-1-chord.opus", SND + "serving-outcome-negative-2-chord.opus"], volume: 0.45, pitch: 0.01, trim: true },
@@ -284,7 +284,7 @@ export const SOUND_TUNING = {
     outcomeBreathMs: 300, // serving a whole table: each reaction rings out, then this pause, then the next
     outcomeBreathJitterMs: 70, // ...give or take, so it feels played rather than sequenced
     paperGapMs: 300, // two paper ticks closer than this sound as one
-    snapOnConfirm: true, // a finger snap when you press a menu's main (gold) button. Trying it out
+    confirmSound: true, // a piano note when you press a menu's main (gold) button (the "confirm" sound)
     // The crowd
     crowdFadeMs: 3000,
     crowdSettleMs: 2500, // the headcount must hold this long before the murmur changes

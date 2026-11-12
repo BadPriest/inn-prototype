@@ -119,7 +119,7 @@ export function initSound(g) {
                 paper();
                 break;
             case "Confirmed":
-                if (T.snapOnConfirm)
+                if (T.confirmSound)
                     play("confirm", null);
                 break;
             case "PatronLeft":

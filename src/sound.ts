@@ -105,7 +105,7 @@ export function initSound(g: Game): void {
       }
       case "ServeOutcome": { const s = OUTCOME_SOUND[e.outcome]; if (s) reaction(s); break; }
       case "Paper": paper(); break;
-      case "Confirmed": if (T.snapOnConfirm) play("confirm", null); break;
+      case "Confirmed": if (T.confirmSound) play("confirm", null); break;
       case "PatronLeft": if (e.early) synth.leave(); break;
       case "Log": if (e.text.startsWith("✦")) setTimeout(() => synth.moment(), 350); break;
       case "Paused": suspend(); break;
