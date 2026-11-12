@@ -89,7 +89,7 @@ export interface Job {
   total: number; // minutes
   progress: number; // minutes done
   done: boolean;
-  item?: Item; // waiting for hatch space
+  item?: Item; // finished, waiting for room on the shelf
   ticket?: number;
   ticketName?: string;
   batch?: boolean; // made as a batch (the tea urn)
@@ -175,7 +175,8 @@ export class Game {
   keeper: Keeper;
   patrons: Patron[] = [];
   orders: Order[] = [];
-  hatch: Item[] = [];
+  hatch: Item[] = []; // for a hired cook later; the keeper's own cooking waits on the station shelf
+  shelves = new Map<string, Item[]>(); // station id -> finished dishes waiting to be picked up
   jobs = new Map<string, Job>(); // furniture id -> job
   pots = new Map<string, Pot>(); // furniture id -> communal pot
   pieSafe: WholePie[] = [];

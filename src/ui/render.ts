@@ -180,6 +180,16 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
     if (f.kind === "piesafe" && g.pieSafe.length) {
       badge(ctx, px + pw - 2, py + 2, String(g.pieSafe.reduce((a, p) => a + p.left, 0)), ts);
     }
+    // Finished dishes waiting on a station: a warm outline and their icons, ready to pick up.
+    const shelf = g.shelves.get(f.id);
+    if (shelf?.length) {
+      ctx.strokeStyle = "#ffd34d";
+      ctx.lineWidth = Math.max(1, ts * 0.06);
+      ctx.strokeRect(px + 1, py + 1, pw - 2, ph - 2);
+      ctx.font = `${Math.floor(ts * 0.42)}px system-ui, sans-serif`;
+      ctx.textAlign = "center";
+      shelf.forEach((it, i) => ctx.fillText(iconFor(it.recipeId, it.garnish) || "🍽", px + ts * 0.3 + i * ts * 0.42, py - ts * 0.18));
+    }
     if (f.kind === "hatch" && g.hatch.length) {
       badge(ctx, px + pw - 2, py + 2, String(g.hatch.length), ts);
     }

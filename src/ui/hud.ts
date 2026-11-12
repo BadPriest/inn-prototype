@@ -50,9 +50,15 @@ export function updateHud(g: Game, prompt: string): void {
     }).join("");
   }
 
-  $("hatch").innerHTML = g.hatch.length
-    ? g.hatch.map((it) => `<div class="it">${itemLabel(it)}</div>`).join("")
-    : `<div class="muted">Empty.</div>`;
+  // Ready to pick up: on the station shelves (and the hatch, once there's a cook).
+  const ready = [
+    ...[...g.shelves].flatMap(([fid, items]) => {
+      const where = g.world.furniture.find((f) => f.id === fid)?.name.toLowerCase() ?? "station";
+      return items.map((it) => `<div class="it">${itemLabel(it)} <span class="muted">· ${where}</span></div>`);
+    }),
+    ...g.hatch.map((it) => `<div class="it">${itemLabel(it)} <span class="muted">· hatch</span></div>`),
+  ];
+  $("hatch").innerHTML = ready.length ? ready.join("") : `<div class="muted">Nothing waiting.</div>`;
 
   const pies = document.getElementById("pies");
   if (pies) pies.innerHTML = g.pieSafe.length

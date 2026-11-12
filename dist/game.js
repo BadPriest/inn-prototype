@@ -28,7 +28,8 @@ export class Game {
     keeper;
     patrons = [];
     orders = [];
-    hatch = [];
+    hatch = []; // for a hired cook later; the keeper's own cooking waits on the station shelf
+    shelves = new Map(); // station id -> finished dishes waiting to be picked up
     jobs = new Map(); // furniture id -> job
     pots = new Map(); // furniture id -> communal pot
     pieSafe = [];

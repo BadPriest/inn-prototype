@@ -1,6 +1,7 @@
 // Crafting at stations. Nothing ever burns.
-// Single servings go to the hatch, labelled for the order they were made for.
-// Communal pots stay on the station and are served from it, a serving at a time.
+// What you make waits where you made it: single servings on the station's shelf (labelled for the
+// order they were made for), pots on the station, whole pies in the pie safe. You pick them up there.
+// The hatch is for a hired cook, later.
 
 import { organic, uid } from "./core.js";
 import { INGREDIENTS, RECIPES, TUNING, type Recipe } from "./data.js";
@@ -28,7 +29,7 @@ export function ticketFor(g: Game, recipe: Recipe): { id: number; name: string }
   if (recipe.servings) return null; // pots feed the room, not a person
   const taken = new Set<number>();
   for (const j of g.jobs.values()) if (j.ticket) taken.add(j.ticket);
-  for (const i of [...g.hatch, ...trayItems(g)]) if (i.ticket) taken.add(i.ticket);
+  for (const i of [...g.hatch, ...shelfItems(g), ...trayItems(g)]) if (i.ticket) taken.add(i.ticket);
   const o = g.orders
     .filter((x) => x.open && x.recipeId === recipe.id && !taken.has(x.patronId))
     .sort((a, b) => a.placedAt - b.placedAt)[0];
@@ -39,7 +40,8 @@ export function ticketFor(g: Game, recipe: Recipe): { id: number; name: string }
 
 /** The tea urn: a batch version of tea, offered alongside the single cup once you have the upgrade. */
 export function urnTea(tea: Recipe): Recipe {
-  return { ...tea, name: "Tea, a whole urn", servings: [8, 1], minutes: [tea.minutes[0] * 2.5, tea.minutes[1]] };
+  return { ...tea, name: "Tea, a whole urn", servings: [8, 1], minutes: [tea.minutes[0] * 2.5, tea.minutes[1]],
+    blurb: "A whole urn, kept hot on the hearth and poured by the cup all evening. One leaf for everyone who asks." };
 }
 
 /** How a job's recipe is made: as itself, or as a batch (the urn). */
@@ -99,11 +101,35 @@ function finish(g: Game, fid: string, job: Job, recipe: Recipe): void {
     g.say(`A pot of ${job.item!.name.toLowerCase()} is ready: ${n} servings.`);
     return;
   }
-  if (g.hatch.length >= TUNING.hatchCapacity) return; // waits at the station
-  g.hatch.push(job.item!);
+  const shelf = g.shelves.get(fid) ?? [];
+  if (shelf.length >= TUNING.shelfCapacity) return; // stays on the fire until there's room on the shelf
+  shelf.push(job.item!);
+  g.shelves.set(fid, shelf);
   g.bus.emit({ type: "ItemCrafted", itemId: job.item!.id });
-  g.say(`${job.item!.name}${job.item!.ticketName ? ` (for ${job.item!.ticketName})` : ""} is at the hatch.`);
+  const f = g.world.furniture.find((x) => x.id === fid);
+  g.say(`${job.item!.name}${job.item!.ticketName ? ` (for ${job.item!.ticketName})` : ""} is ready at the ${f?.name.toLowerCase() ?? "station"}.`);
   g.jobs.delete(fid);
+}
+
+export function shelfItems(g: Game): Item[] {
+  return [...g.shelves.values()].flat();
+}
+
+/** Pick up what's waiting on a station's shelf, oldest first, as much as fits on the trays. */
+export function collectShelf(g: Game, fid: string): number {
+  const shelf = g.shelves.get(fid);
+  if (!shelf?.length) return 0;
+  let took = 0;
+  for (const item of [...shelf]) {
+    if (!addToTray(g, item)) break;
+    shelf.splice(shelf.indexOf(item), 1);
+    g.bus.emit({ type: "ItemPickedUp", itemId: item.id });
+    took++;
+  }
+  if (!shelf.length) g.shelves.delete(fid);
+  if (took) g.say(`Picked up ${took === 1 ? "one dish" : `${took} dishes`}${shelf.length ? ` (${shelf.length} still waiting)` : ""}.`);
+  else g.say("No room on your trays.");
+  return took;
 }
 
 /** How many servings of a batch dish (stew, pie, urn tea) are ready right now. */
@@ -156,6 +182,7 @@ export function ageFood(g: Game): void {
     return true;
   };
   g.hatch = g.hatch.filter(keep);
+  for (const [fid, shelf] of g.shelves) { const left = shelf.filter(keep); if (left.length) g.shelves.set(fid, left); else g.shelves.delete(fid); }
   for (const t of g.keeper.trays) { t.items = t.items.filter(keep); if (!t.items.length) t.kind = null; }
   for (const sd of g.setDown) sd.tray.items = sd.tray.items.filter(keep);
   g.setDown = g.setDown.filter((sd) => sd.tray.items.length);
@@ -176,7 +203,7 @@ export function serveFromPot(g: Game, fid: string): void {
   if (pot.left <= 0) { g.pots.delete(fid); g.say("The pot is empty."); }
 }
 
-/** End of day: anything still cooking finishes and goes to the hatch. Nothing is ruined. */
+/** End of day: anything still cooking finishes and waits on its shelf. Nothing is ruined. */
 export function finishAllJobs(g: Game): void {
   for (const [fid, job] of g.jobs) {
     const recipe = effectiveRecipe(g, RECIPES.find((r) => r.id === job.recipeId)!, job.batch);
@@ -190,9 +217,9 @@ export function finishAllJobs(g: Game): void {
     } else if (recipe.servings) {
       const n = Math.max(2, Math.round(organic(recipe.servings)));
       g.pots.set(fid, { item: job.item, left: n, total: n });
-    } else g.hatch.push(job.item);
+    } else g.shelves.set(fid, [...(g.shelves.get(fid) ?? []), job.item]);
     g.jobs.delete(fid);
   }
   // Tickets lapse overnight: yesterday's patrons have gone home.
-  for (const i of [...g.hatch, ...trayItems(g)]) { i.ticket = undefined; i.ticketName = undefined; }
+  for (const i of [...g.hatch, ...shelfItems(g), ...trayItems(g)]) { i.ticket = undefined; i.ticketName = undefined; }
 }

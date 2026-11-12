@@ -112,28 +112,28 @@ export const ROOM_LABELS: { text: string; x: number; y: number }[] = [
 
 export type StationKind = "stove" | "griddle" | "oven" | "kettle" | "prep";
 
-export interface Ingredient { id: string; name: string; tags: string[] }
+export interface Ingredient { id: string; name: string; icon: string; tags: string[] }
 
 export const INGREDIENTS: Ingredient[] = [
-  { id: "beef", name: "Beef", tags: ["rich"] },
-  { id: "mushroom", name: "Mushroom", tags: ["earthy"] },
-  { id: "roots", name: "Root veg", tags: ["sweet", "homely"] },
-  { id: "pepper", name: "Pepper", tags: ["fiery"] },
-  { id: "herbs", name: "Herbs", tags: ["fragrant"] },
-  { id: "sausage", name: "Smoked sausage", tags: ["smoky"] },
-  { id: "apple", name: "Apple", tags: ["sweet", "crisp"] },
-  { id: "berry", name: "Berries", tags: ["tart"] },
-  { id: "meat", name: "Minced meat", tags: ["rich", "savoury"] },
-  { id: "cheese", name: "Cheese & onion", tags: ["savoury"] },
-  { id: "walnut", name: "Walnut", tags: ["earthy", "crisp"] },
-  { id: "radish", name: "Radish", tags: ["fiery", "crisp"] },
-  { id: "herring", name: "Pickled herring", tags: ["briny"] },
-  { id: "crumb", name: "Breadcrumb", tags: ["crisp"] },
-  { id: "zest", name: "Lemon zest", tags: ["bright"] },
-  { id: "mint", name: "Mint", tags: ["fragrant"] },
-  { id: "chamomile", name: "Chamomile", tags: ["homely"] },
-  { id: "black", name: "Black leaf", tags: ["bitter"] },
-  { id: "smokedleaf", name: "Smoked leaf", tags: ["smoky"] },
+  { id: "beef", icon: "🥩", name: "Beef", tags: ["rich"] },
+  { id: "mushroom", icon: "🍄", name: "Mushroom", tags: ["earthy"] },
+  { id: "roots", icon: "🥕", name: "Root veg", tags: ["sweet", "homely"] },
+  { id: "pepper", icon: "🌶️", name: "Pepper", tags: ["fiery"] },
+  { id: "herbs", icon: "🌿", name: "Herbs", tags: ["fragrant"] },
+  { id: "sausage", icon: "🌭", name: "Smoked sausage", tags: ["smoky"] },
+  { id: "apple", icon: "🍎", name: "Apple", tags: ["sweet", "crisp"] },
+  { id: "berry", icon: "🫐", name: "Berries", tags: ["tart"] },
+  { id: "meat", icon: "🍖", name: "Minced meat", tags: ["rich", "savoury"] },
+  { id: "cheese", icon: "🧀", name: "Cheese & onion", tags: ["savoury"] },
+  { id: "walnut", icon: "🌰", name: "Walnut", tags: ["earthy", "crisp"] },
+  { id: "radish", icon: "🔴", name: "Radish", tags: ["fiery", "crisp"] },
+  { id: "herring", icon: "🐟", name: "Pickled herring", tags: ["briny"] },
+  { id: "crumb", icon: "🍞", name: "Breadcrumb", tags: ["crisp"] },
+  { id: "zest", icon: "🍋", name: "Lemon zest", tags: ["bright"] },
+  { id: "mint", icon: "🌱", name: "Mint", tags: ["fragrant"] },
+  { id: "chamomile", icon: "🌼", name: "Chamomile", tags: ["homely"] },
+  { id: "black", icon: "🍂", name: "Black leaf", tags: ["bitter"] },
+  { id: "smokedleaf", icon: "🪵", name: "Smoked leaf", tags: ["smoky"] },
 ];
 
 export type ItemKind = "food" | "drink";
@@ -144,8 +144,10 @@ export interface Recipe {
   kind: ItemKind;
   station: StationKind | "tap";
   baseTags: string[];
-  slots: number;
+  slots: number; // ingredients you must choose
+  maxSlots?: number; // ...and may choose, if more than that (default: the same). Meant to grow through progression or cards, not by default
   options: string[]; // ingredient ids allowed in the slots
+  blurb?: string; // shown when you choose it at the station
   minutes: Organic; // crafting time
   tended?: boolean; // only progresses while the keeper is at the station
   servings?: Organic; // made whole and served in portions: a pot of stew, a pie in slices
@@ -154,15 +156,15 @@ export interface Recipe {
 }
 
 export const RECIPES: Recipe[] = [
-  { id: "stew", icon: "🍲", name: "Stew", kind: "food", station: "stove", baseTags: ["warm", "hearty"], slots: 2,
+  { id: "stew", blurb: "A pot that keeps the whole room warm. Slow to make and generous once it's done: it feeds whoever asks, a ladle at a time, until the pot scrapes bottom.", icon: "🍲", name: "Stew", kind: "food", station: "stove", baseTags: ["warm", "hearty"], slots: 2,
     options: ["beef", "mushroom", "roots", "pepper", "herbs", "sausage"], minutes: [14, 3], servings: [7, 1] },
-  { id: "fish", icon: "🐟", name: "Fried fish", kind: "food", station: "griddle", baseTags: ["warm", "briny"], slots: 1,
+  { id: "fish", blurb: "Fresh from the morning boats, into a hot pan. It needs you standing over it the whole time, and it's worth it.", icon: "🐟", name: "Fried fish", kind: "food", station: "griddle", baseTags: ["warm", "briny"], slots: 1,
     options: ["crumb", "herbs", "zest"], minutes: [6, 1.5], tended: true },
-  { id: "pie", icon: "🥧", name: "Pie", kind: "food", station: "oven", baseTags: ["warm", "homely"], slots: 1,
+  { id: "pie", blurb: "Golden and lidded, cut into slices that keep in the pie safe. Tomorrow it's day-old, and still somebody's favourite.", icon: "🥧", name: "Pie", kind: "food", station: "oven", baseTags: ["warm", "homely"], slots: 1,
     options: ["apple", "berry", "meat", "cheese"], minutes: [20, 4], servings: [6, 1], storedIn: "piesafe" },
-  { id: "salad", icon: "🥗", name: "Salad", kind: "food", station: "prep", baseTags: ["cold", "light"], slots: 2,
+  { id: "salad", blurb: "Cold and crisp, put together by hand at the prep table. Quick to make, and easy to get just right.", icon: "🥗", name: "Salad", kind: "food", station: "prep", baseTags: ["cold", "light"], slots: 2,
     options: ["apple", "walnut", "radish", "herbs", "cheese", "herring"], minutes: [4, 1] },
-  { id: "tea", icon: "🍵", name: "Tea", kind: "drink", station: "kettle", baseTags: ["warm", "mild"], slots: 1,
+  { id: "tea", blurb: "A cup for one, steeped at the hearth. What goes in the pot decides who it comforts.", icon: "🍵", name: "Tea", kind: "drink", station: "kettle", baseTags: ["warm", "mild"], slots: 1,
     options: ["mint", "chamomile", "black", "smokedleaf"], minutes: [3, 1] },
   { id: "ale", icon: "🍺", name: "Ale", kind: "drink", station: "tap", baseTags: ["cold", "bitter", "hearty"], slots: 0,
     options: [], minutes: [0, 0] },
@@ -171,12 +173,12 @@ export const RECIPES: Recipe[] = [
 ];
 
 // Snack bowls: complimentary, set on a table. Their tags join the table's visit.
-export interface Snack { id: string; name: string; icon: string; tags: string[]; thirsty: number }
+export interface Snack { id: string; name: string; icon: string; tags: string[]; thirsty: number; blurb?: string }
 
 export const SNACKS: Snack[] = [
-  { id: "peanuts", name: "Salted peanuts", icon: "🥜", tags: ["salty", "crisp"], thirsty: 0.3 },
-  { id: "olives", name: "Olives", icon: "🫒", tags: ["briny", "salty"], thirsty: 0.25 },
-  { id: "eggs", name: "Pickled eggs", icon: "🥚", tags: ["tart", "savoury"], thirsty: 0.1 },
+  { id: "peanuts", name: "Salted peanuts", icon: "🥜", tags: ["salty", "crisp"], thirsty: 0.3, blurb: "Roasted and well salted. Nothing sends people to the bar faster." },
+  { id: "olives", name: "Olives", icon: "🫒", tags: ["briny", "salty"], thirsty: 0.25, blurb: "Brined and glossy, for those who like a sharp edge." },
+  { id: "eggs", name: "Pickled eggs", icon: "🥚", tags: ["tart", "savoury"], thirsty: 0.1, blurb: "From the big jar on the counter. An acquired taste, fondly acquired." },
 ];
 
 export interface Garnish { id: string; name: string; tags: string[]; icon: string }
@@ -481,6 +483,7 @@ export const TUNING = {
   keeperRun: 7,
   trayCapacity: { drink: 4, food: 2 },
   hatchCapacity: 8,
+  shelfCapacity: 2, // finished dishes a station can hold, waiting to be picked up
   pieSafeCapacity: 4, // whole pies
   // Freshness, first pass: food left over a night turns day-old (still servable, a bit less nice);
   // anything older goes to the hens.

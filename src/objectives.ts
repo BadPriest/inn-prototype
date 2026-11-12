@@ -13,7 +13,7 @@ export function objectives(g: Game): Objective[] {
     ? `Prepare the big dishes on the menu: ${big.map((r) => `${r.icon} ${r.name.toLowerCase()}${stockOf(g, r.id) ? " ✓" : ""}`).join(", ")}`
     : "Prepare the big dishes on the menu (none today)";
   return [
-    { text: "Set the bill of fare at the desk in your room", done: g.menuChosen },
+    { text: "Set the bill of fare (what's on the menu) at the desk in your room", done: g.menuChosen },
     { text: bigText, done: big.every((r) => stockOf(g, r.id) > 0) },
     { text: `Set out snacks on the tables ${SNACKS.map((x) => x.icon).join("")}`, done: [...g.bowls.values()].some((b) => b.left > 0), optional: true },
     { text: "Open the inn at the front door", done: g.open },

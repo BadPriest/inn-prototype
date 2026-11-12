@@ -4,11 +4,13 @@ import { organic } from "./core.js";
 import { GARNISHES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TUNING, UPGRADES, type Recipe } from "./data.js";
 import type { Game, Patron, SetDownTray, Spill } from "./game.js";
 import { dist, type Furniture } from "./world.js";
-import { recipesFor, returnSlice, startJob, makeItem, serveFromPot, takeSlice, ticketFor } from "./crafting.js";
+import { collectShelf, recipesFor, returnSlice, startJob, makeItem, serveFromPot, takeSlice, ticketFor } from "./crafting.js";
 import { tableKey } from "./patrons.js";
 import { applyGarnish, removeFromTray, servePatron, serveTable, garnishableDrinks, iconFor, itemLabel, serveUnasked, trayItems, pickupFromHatch, pickUpTray, startPour, setTrayDown, takeFromHatch } from "./serving.js";
 import { endDay, startNextDay, toggleInn } from "./day.js";
 import { closeAll, openMenu, replaceMenu, back } from "./ui/menu.js";
+import { openCookScreen } from "./ui/cook.js";
+import { openPieSafeScreen, openSnackScreen } from "./ui/larder.js";
 
 export type Target =
   | { type: "furniture"; f: Furniture }
@@ -62,17 +64,16 @@ export function cleanStep(g: Game, t: Target, realDt: number): void {
 const FURNITURE_RANGE = 1.45;
 const PATRON_RANGE = 2.3; // reaches across the counter
 
-/** The thing the keeper would interact with right now, preferring what they face. */
-export function findTarget(g: Game): Target | null {
+/** Everything in reach, best first (nearest, preferring what the keeper faces). */
+export function findTargets(g: Game): Target[] {
   const k = g.keeper;
-  let best: { t: Target; s: number } | null = null;
+  const found: { t: Target; s: number }[] = [];
   const consider = (t: Target, pos: { x: number; y: number }, range: number) => {
     const d = dist(k.pos, pos);
     if (d > range) return;
     const dx = pos.x - k.pos.x, dy = pos.y - k.pos.y;
     const facing = d > 0.01 ? (dx * k.facing.x + dy * k.facing.y) / d : 1;
-    const s = d - facing * 0.6;
-    if (!best || s < best.s) best = { t, s };
+    found.push({ t, s: d - facing * 0.6 });
   };
   for (const f of g.world.furniture) {
     // Distance to the nearest tile of the piece, not its centre.
@@ -91,7 +92,15 @@ export function findTarget(g: Game): Target | null {
   for (const s of g.spills) consider({ type: "spill", s }, { x: s.x + 0.5, y: s.y + 0.5 }, 1.1);
   // Set-down trays win over the table or counter they sit on.
   for (const t of g.setDown) consider({ type: "tray", t }, { x: t.x + 0.45, y: t.y + 0.45 }, 1.5);
-  return best ? (best as { t: Target }).t : null;
+  found.sort((a, b) => a.s - b.s);
+  // Uninteresting furniture (walls of the room, as it were) doesn't crowd the choice.
+  const quiet = new Set(["wardrobe", "coats", "pantry"]);
+  return found.map((x) => x.t).filter((t, i) => i === 0 || !(t.type === "furniture" && quiet.has(t.f.kind)));
+}
+
+/** The thing the keeper would interact with right now. */
+export function findTarget(g: Game): Target | null {
+  return findTargets(g)[0] ?? null;
 }
 
 export function promptFor(g: Game, t: Target | null): string {
@@ -102,7 +111,7 @@ export function promptFor(g: Game, t: Target | null): string {
     if (n) return `Space: serve the table from this tray (${n} waiting)`;
     return `Space: pick up the tray (${t.t.tray.items.map((i) => i.name).join(", ")})`;
   }
-  if (t.type === "spill") return g.cleaning ? `Mopping… ${Math.floor((g.cleaning.progress / g.cleaning.total) * 100)}%` : "Hold Space: mop up the spill";
+  if (t.type === "spill") return g.cleaning ? `Mopping… ${Math.floor((g.cleaning.progress / g.cleaning.total) * 100)}%` : "Hold Space or the mouse: mop up the spill";
   if (t.type === "patron") {
     const o = g.order(t.p.orderId);
     const seat = g.world.seats.find((x) => x.id === t.p.seatId);
@@ -117,22 +126,26 @@ export function promptFor(g: Game, t: Target | null): string {
     case "table": {
       const tk = `${f.tiles[0].x},${f.tiles[0].y}`;
       const n = waitingAt(g, tk);
-      if (n) return `Space: serve the table (${n} waiting)`;
       const bowl = g.bowls.get(tk);
-      if (tableDirt(g, f) <= 0.3) return bowl ? (bowl.left < 0.15 ? "Space: refill or clear the snack bowl" : "Space: swap or clear the snack bowl") : "Space: set out snacks";
-      const d = tableDirt(g, f);
-      if (d <= 0.3) return "A clean table";
+      const tap = n && trayItems(g).length ? `Space: serve the table (${n} waiting)`
+        : bowl ? (bowl.left < 0.15 ? "Space: refill or clear the snack bowl" : "Space: swap or clear the snack bowl") : "Space: set out snacks";
       if (g.cleaning) return `Wiping… ${Math.floor((g.cleaning.progress / g.cleaning.total) * 100)}%`;
-      return d >= TUNING.tableDirtyAt ? "Hold Space: wipe the dirty table" : "Hold Space: wipe the table";
+      if (cleanable(g, t)) return `${tap} · hold to wipe${tableDirt(g, f) >= TUNING.tableDirtyAt ? " (it's dirty)" : ""}`;
+      return n && !trayItems(g).length ? `${n} waiting here · ${tap}` : tap;
     }
     case "station":
       if (pot && g.pouring && g.pouring.from === f.id) return `Pouring… ${Math.round((g.pouring.progress / g.pouring.total) * 100)}%`;
       if (pot) return `Space: ${pot.item.kind === "drink" ? "pour a cup of" : "take a serving of"} ${pot.item.name.toLowerCase()} (${pot.left} left)`;
+    {
+      const shelf = g.shelves.get(f.id) ?? [];
+      const ready = shelf.length ? `Space: pick up ${shelf.map((i) => i.ticketName ? `${i.name} for ${i.ticketName}` : i.name).join(", ")}` : "";
       if (job) {
         const r = RECIPES.find((x) => x.id === job.recipeId)!;
-        return job.done ? `${r.name} ready, waiting for room (${r.storedIn === "piesafe" ? "pie safe" : "hatch"} full)` : `${r.name} ${Math.floor((job.progress / job.total) * 100)}% · hold Space to hurry`;
+        const cooking = job.done ? `${r.name} done, waiting for room ${r.storedIn === "piesafe" ? "in the pie safe" : "on the shelf"}` : `${r.name} ${Math.floor((job.progress / job.total) * 100)}% · hold Space to hurry`;
+        return ready ? `${ready} · ${cooking}` : cooking;
       }
-      return `Space: cook at the ${f.name.toLowerCase()}`;
+      return ready || `Space: cook at the ${f.name.toLowerCase()}`;
+    }
     case "bin": return trayItems(g).length ? "Space: throw something away" : "Scrap bin";
     case "piesafe": return g.pieSafe.length ? `Space: take a slice (${g.pieSafe.map((p) => p.left).reduce((a, b) => a + b, 0)} slices)` : "The pie safe is empty";
     case "hatch": return g.hatch.length ? `Space: choose from the hatch (${g.hatch.length})` : "The hatch is empty";
@@ -161,9 +174,10 @@ export function interact(g: Game, t: Target | null): void {
   const f = t.f;
   switch (f.kind) {
     case "table": {
+      // A tap serves (if you're carrying something and they're waiting) or sees to the snacks.
+      // Holding cleans: that's handled each frame, and never reaches here.
       const key = `${f.tiles[0].x},${f.tiles[0].y}`;
-      if (waitingAt(g, key)) { serveTable(g, key); return; }
-      if (tableDirt(g, f) > 0.3) return; // holding Space cleans (handled each frame)
+      if (waitingAt(g, key) && trayItems(g).length) { serveTable(g, key); return; }
       openSnackMenu(g, key);
       return;
     }
@@ -174,7 +188,9 @@ export function interact(g: Game, t: Target | null): void {
         return;
       }
       const job = g.jobs.get(f.id);
-      if (job) { g.say(job.done ? `It's done, waiting for room in the ${RECIPES.find((x) => x.id === job.recipeId)?.storedIn === "piesafe" ? "pie safe" : "hatch"}.` : "Still cooking. Hold Space here to hurry it a little."); return; }
+      // Finished dishes first: they wait on the station until you pick them up.
+      if (g.shelves.get(f.id)?.length && (collectShelf(g, f.id) > 0 || job)) return;
+      if (job) { g.say(job.done ? `It's done, waiting for room ${RECIPES.find((x) => x.id === job.recipeId)?.storedIn === "piesafe" ? "in the pie safe" : "on the shelf"}.` : "Still cooking. Hold Space here to hurry it a little."); return; }
       openCraftMenu(g, f);
       return;
     }
@@ -215,24 +231,7 @@ export function openHatchMenu(g: Game): void {
 // Snack bowls: set out from the table itself. Always optional.
 
 function openSnackMenu(g: Game, key: string): void {
-  const bowl = g.bowls.get(key);
-  const current = SNACKS.find((x) => x.id === bowl?.snack);
-  openMenu({
-    title: bowl ? "Snack bowl" : "Set out snacks",
-    body: bowl ? `${current?.icon ?? ""} ${current?.name ?? "A bowl"}, ${bowl.left < 0.15 ? "empty" : `${Math.round(bowl.left * 100)}% left`}.` : "Complimentary. Salty ones make people thirsty.",
-    items: [
-      ...SNACKS.map((sn) => ({
-        label: `${sn.icon} ${bowl ? (sn.id === bowl.snack ? "Top up the " : "Swap for ") : ""}${bowl ? sn.name.toLowerCase() : sn.name}`,
-        sub: sn.tags.join(", "),
-        action: () => {
-          closeAll();
-          g.bowls.set(key, { snack: sn.id, left: 1 });
-          g.say(`You set out a bowl of ${sn.name.toLowerCase()}.`);
-        },
-      })),
-      ...(bowl ? [{ label: "🧹 Clear the bowl away", sub: "", action: () => { closeAll(); g.bowls.delete(key); g.say("You clear the snack bowl away."); } }] : []),
-    ],
-  });
+  openSnackScreen(g, key);
 }
 
 /** The scrap bin: throw away anything on your trays. */
@@ -261,7 +260,7 @@ export function openDesk(g: Game): void {
   openMenu({
     title: "Desk",
     items: [
-      { label: "📜 Bill of fare", sub: `${g.menu.size} on today`, action: () => openBillOfFare(g) },
+      { label: "📜 Bill of fare", sub: `what's on the menu · ${g.menu.size} on today`, action: () => openBillOfFare(g) },
       { label: "🔧 Upgrades", sub: ready ? `${ready} ready to choose` : `${g.totalServed} served so far`, action: () => openUpgrades(g) },
       { label: "📖 Journal", sub: g.journalUnread ? `${g.journalUnread} new` : "", action: () => openJournal(g) },
     ],
@@ -271,7 +270,8 @@ export function openDesk(g: Game): void {
 export function openBillOfFare(g: Game): void {
   const build = () => ({
     title: "📜 Bill of fare",
-    body: "Tick what's on. Patrons only order what's on the board, even if it's run out.",
+    subtitle: "What's on the menu tonight?",
+    body: `<p class="explain"><b>Tick what goes up on the board.</b> Guests only order what's on it, and they'll still order it after it runs out. Put up what you're ready to make; leave off what you'd rather not.</p>`,
     items: [
       ...RECIPES.map((r) => ({
         label: `${g.menu.has(r.id) ? "☑" : "☐"} ${r.icon} ${r.name}`,
@@ -283,7 +283,12 @@ export function openBillOfFare(g: Game): void {
           replaceMenu(build());
         },
       })),
-      { label: "Done", sub: "", action: () => { g.menuChosen = true; back(); } },
+      { label: "Put it up", sub: `${g.menu.size} on the board`, button: "primary" as const, action: () => {
+        g.menuChosen = true;
+        g.bus.emit({ type: "Paper", what: "menu" });
+        g.say(`The bill of fare is up: ${RECIPES.filter((r) => g.menu.has(r.id)).map((r) => r.icon).join(" ") || "nothing yet"}.`);
+        back();
+      } },
     ],
   });
   openMenu(build());
@@ -308,26 +313,7 @@ function openUpgrades(g: Game): void {
 }
 
 export function openPieSafe(g: Game): void {
-  const slices = () => trayItems(g).filter((i) => i.recipeId === "pie");
-  if (!g.pieSafe.length && !slices().length) { g.say("The pie safe is empty. Bake one in the oven."); return; }
-  const build = () => ({
-    title: "Pie safe",
-    body: "Pies keep fresh here for the day they're baked.",
-    items: [
-      ...g.pieSafe.map((p) => ({
-        label: `🥧 Take a slice: ${p.item.name}`,
-        sub: `${p.left}/${p.total} · ${p.item.tags.join(", ")}`,
-        action: () => { takeSlice(g, p.id); refresh(); },
-      })),
-      ...slices().map((it) => ({
-        label: `↩ Put back: ${it.name}`,
-        sub: it.ticketName ? `was for ${it.ticketName}` : "",
-        action: () => { returnSlice(g, it); refresh(); },
-      })),
-    ],
-  });
-  const refresh = () => (g.pieSafe.length || slices().length ? replaceMenu(build()) : closeAll());
-  openMenu(build());
+  openPieSafeScreen(g);
 }
 
 /** The unasked-serve card (C). In this build it's always in hand and never spent. */
@@ -371,49 +357,12 @@ function openCraftMenu(g: Game, f: Furniture): void {
   const recipes = recipesFor(g, f);
   openMenu({
     title: f.name,
+    subtitle: "What will you make?",
     items: recipes.map((r) => ({
       label: `${r.icon} ${r.name}`,
       sub: `${r.servings ? `about ${r.servings[0]} servings · ` : ""}${r.baseTags.join(", ")} · ~${r.minutes[0]} min${r.tended ? " · tended" : ""}`,
-      action: () => chooseIngredients(g, f, r, []),
+      action: () => openCookScreen(g, f, r),
     })),
-  });
-}
-
-function chooseIngredients(g: Game, f: Furniture, r: Recipe, chosen: string[]): void {
-  if (chosen.length >= r.slots) { confirmCraft(g, f, r, chosen); return; }
-  const spec = {
-    title: `${r.name}: ingredient ${chosen.length + 1} of ${r.slots}`,
-    body: chosen.length ? `So far: ${chosen.map((id) => INGREDIENTS.find((i) => i.id === id)!.name).join(", ")}` : undefined,
-    items: r.options.map((id) => {
-      const ing = INGREDIENTS.find((i) => i.id === id)!;
-      return {
-        label: ing.name,
-        sub: ing.tags.join(", "),
-        disabled: chosen.includes(id),
-        action: () => chooseIngredients(g, f, r, [...chosen, id]),
-      };
-    }),
-  };
-  openMenu(spec);
-}
-
-function confirmCraft(g: Game, f: Furniture, base: Recipe, chosen: string[]): void {
-  const r = base;
-  const preview = makeItem(r, chosen);
-  const ticket = ticketFor(g, r);
-  const forLine = r.storedIn === "piesafe"
-    ? `A whole pie: about ${r.servings?.[0] ?? 6} slices. It goes into the pie safe behind the counter.`
-    : r.servings
-    ? `A batch: about ${r.servings[0]} servings, served straight from the ${f.name.toLowerCase()}.`
-    : ticket ? `For <b>${ticket.name}</b> (their order is the oldest one for this).` : "Nobody has ordered this yet: it'll go to whoever asks first.";
-  openMenu({
-    title: `Make ${preview.name}?`,
-    body: `Tags: <b>${preview.tags.join(", ")}</b><br>About ${r.minutes[0]} minutes${r.tended ? ", and it needs you at the station" : ""}.<br>${forLine}`,
-    items: [
-      { label: "Make it", action: () => { startJob(g, f, r, chosen, ticket); closeAll(); } },
-      ...(ticket ? [{ label: "Make it for nobody in particular", action: () => { startJob(g, f, r, chosen, null); closeAll(); } }] : []),
-      { label: "Back", action: () => back() },
-    ],
   });
 }
 

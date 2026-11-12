@@ -52,7 +52,7 @@ Systems talk through the event bus in `core.ts` rather than calling each other d
 
 ## Controls
 
-WASD walk · Shift run · right-click walk there (double: run) · Space or left-click interact · hold Space to hurry cooking or to clean · E garnish · J journal · M sound · P pause · − / = time speed · ` debug view
+Click floor: walk · click a thing or person: use it · double-click: run · right-click: stop · hold mouse or Space on a mess: clean · Tab or mouse wheel: pick between things in reach · WASD walk · Shift run · Space use · hold Space to hurry cooking · E garnish · J journal · M sound · P pause · − / = time speed · ` debug view
 
 ## Saving
 

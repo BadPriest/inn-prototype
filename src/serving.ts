@@ -131,6 +131,15 @@ export function startPour(g: Game, from: string, recipeId?: string): void {
   g.bus.emit({ type: "PourStarted", id: g.pouring.id });
 }
 
+/** Stop pouring (right-click). The drink isn't made. */
+export function cancelPour(g: Game): void {
+  const p = g.pouring;
+  if (!p) return;
+  g.pouring = null;
+  g.bus.emit({ type: "PourEnded", id: p.id, done: false });
+  g.say("You stop pouring.");
+}
+
 /** Called every frame the game isn't paused, with real seconds. */
 export function updatePour(g: Game, realDt: number): void {
   const p = g.pouring;
