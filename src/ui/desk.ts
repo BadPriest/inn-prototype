@@ -2,7 +2,7 @@
 
 import { RECIPES, UPGRADES } from "../data.js";
 import type { Game } from "../game.js";
-import { back, openMenu, replaceMenu, type MenuSpec } from "./menu.js";
+import { back, confirmed, openMenu, replaceMenu, type MenuSpec } from "./menu.js";
 import { grid, gridKeys, type CardSpec } from "./cards.js";
 
 export function openDeskScreen(g: Game, openJournal: () => void): void {
@@ -49,7 +49,7 @@ export function openBillOfFare(g: Game): void {
     };
     const putUp = () => {
       g.menuChosen = true;
-      g.bus.emit({ type: "Paper", what: "menu" });
+      confirmed(); // the piano, not the paper tick: putting it up is the decision
       g.say(`The bill of fare is up: ${RECIPES.filter((r) => g.menu.has(r.id)).map((r) => r.icon).join(" ") || "nothing yet"}.`);
       back();
     };
@@ -73,7 +73,7 @@ export function openBillOfFare(g: Game): void {
           return gridKeys(() => RECIPES.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, toggle)(e);
         },
       },
-      items: [{ label: "Put it up", sub: `${g.menu.size} on the board`, button: "primary", quiet: true, action: putUp }],
+      items: [{ label: "Put it up", sub: `${g.menu.size} on the board`, button: "primary", action: putUp }],
     };
   };
   openMenu(build());
@@ -89,6 +89,7 @@ export function openUpgrades(g: Game): void {
       const u = UPGRADES[i];
       if (g.upgrades.has(u.id) || g.totalServed < u.unlockAtServed) return;
       g.upgrades.add(u.id);
+      confirmed();
       g.say(`${u.icon} ${u.name}: ${u.desc}`);
       st.focus = i;
       replaceMenu(build());

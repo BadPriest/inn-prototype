@@ -6,8 +6,9 @@ export interface MenuItem {
   disabled?: boolean;
   /** Shown as a button at the bottom instead of a list row. "primary" is the main thing to do. */
   button?: "primary" | "secondary";
-  /** A main button that already makes its own sound (the bill of fare's paper tick): no confirm sound. */
-  quiet?: boolean;
+  /** Play the confirm sound (piano) when pressed. Only for decisions like the bill of fare or an
+   *  upgrade, not routine work (cooking, garnishing). */
+  confirmSound?: boolean;
   action: () => void;
 }
 
@@ -44,14 +45,14 @@ export function initMenus(el: HTMLElement, modalChanged: (modal: boolean) => voi
   if (confirmed) onConfirm = confirmed;
 }
 
-/** For screens that confirm by their own keys (Enter on COOK): the same sound as a main button. */
+/** The confirm sound, for decisions made by keys or card picks rather than a confirmSound button. */
 export function confirmed(): void {
   onConfirm();
 }
 
-/** Run an item's action; a main button announces itself first (for the confirm sound). */
+/** Run an item's action, with the confirm sound first if it asks for one. */
 function run(it: MenuItem): void {
-  if (it.button === "primary" && !it.quiet) onConfirm();
+  if (it.confirmSound) onConfirm();
   it.action();
 }
 

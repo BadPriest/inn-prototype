@@ -9,13 +9,13 @@ export function initMenus(el, modalChanged, confirmed) {
     if (confirmed)
         onConfirm = confirmed;
 }
-/** For screens that confirm by their own keys (Enter on COOK): the same sound as a main button. */
+/** The confirm sound, for decisions made by keys or card picks rather than a confirmSound button. */
 export function confirmed() {
     onConfirm();
 }
-/** Run an item's action; a main button announces itself first (for the confirm sound). */
+/** Run an item's action, with the confirm sound first if it asks for one. */
 function run(it) {
-    if (it.button === "primary" && !it.quiet)
+    if (it.confirmSound)
         onConfirm();
     it.action();
 }
