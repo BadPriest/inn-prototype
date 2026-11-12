@@ -20,8 +20,9 @@ Other commands:
 | Command | Does |
 | --- | --- |
 | `npm run build` | Bumps the build number (shown in-game), compiles `src/` to `dist/`, and regenerates `standalone.html` |
+| `npm run build -- --no-bump` | Same, but keeps the current build number |
 | `npm start` | Serves the folder without rebuilding |
-
+| `npm run deploy` | Builds, then deploys to Vercel production (password-protected via `middleware.js`; password is the `SITE_PASSWORD` env var on Vercel). Add `-- --no-bump` to keep the build number |
 The built `dist/` folder and `standalone.html` are committed, so a fresh clone runs without building. Rebuild after changing anything in `src/`. For itch.io, upload `standalone.html` on its own (or `index.html` with `dist/`).
 
 ## Where things are
@@ -47,6 +48,7 @@ The built `dist/` folder and `standalone.html` are committed, so a fresh clone r
 | `src/main.ts` | Input, settings, the welcome screen and the main loop |
 | `tools/build.mjs` | The build: build number, compile, standalone file |
 | `tools/standalone.mjs` | Packs `index.html` and `dist/` into `standalone.html` |
+| `tools/deploy.mjs` | The deploy: build, then `vercel --prod` |
 
 Systems talk through the event bus in `core.ts` rather than calling each other directly where possible.
 
