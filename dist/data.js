@@ -261,6 +261,10 @@ export const SOUNDS = {
     serveNeutral: { files: [SND + "serving-outcome-neutral-1-chord.opus", SND + "serving-outcome-neutral-2-chord.opus"], volume: 0.45, pitch: 0.01, trim: true },
     serveNegative: { files: [SND + "serving-outcome-negative-1-chord.opus", SND + "serving-outcome-negative-2-chord.opus"], volume: 0.45, pitch: 0.01, trim: true },
     delight: { files: [SND + "delight-1.opus", SND + "delight-2.opus"], volume: 0.6, pitch: 0.01, trim: true },
+    // The fire, heard from the fireplace. Which plays when: FIRE below.
+    fireSmall: { files: [SND + "fireplace-small-loop.opus"], volume: 0.25, pitch: 0.03, loop: true },
+    fireMedium: { files: [SND + "fireplace-med-loop.opus"], volume: 0.35, pitch: 0.03, loop: true },
+    fireLarge: { files: [SND + "fireplace-large-loop.opus"], volume: 0.42, pitch: 0.03, loop: true },
     // The murmur of the taproom, by how many people are in it (CROWD below).
     crowdLow: { files: [SND + "occupancy-bg-low-1-loop.opus", SND + "occupancy-bg-low-2-loop.opus"], volume: 0.16, pitch: 0.02, loop: true, room: "taproom" },
     crowdComfortable: { files: [SND + "occupancy-bg-comfortable-1-loop.opus"], volume: 0.22, pitch: 0.02, loop: true, room: "taproom" },
@@ -288,6 +292,11 @@ export const SOUND_TUNING = {
     // The crowd
     crowdFadeMs: 3000,
     crowdSettleMs: 2500, // the headcount must hold this long before the murmur changes
+};
+export const FIRE = {
+    lighting: [{ sound: "fireSmall", seconds: 4 }, { sound: "fireLarge", seconds: 25 }, { sound: "fireMedium" }],
+    dousing: [{ sound: "fireSmall", seconds: 12 }],
+    crossfadeMs: 2500,
 };
 /** Taproom murmur: the busiest level whose headcount is reached (people in the taproom). */
 /** Which cue answers each serving outcome. LEAVING is a guest giving up, not a serve: the synth tone covers it. */

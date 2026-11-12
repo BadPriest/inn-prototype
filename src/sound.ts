@@ -3,6 +3,7 @@
 //   sound/loops.ts      kettle and stew, while they're cooking
 //   sound/footsteps.ts  a step per stride, keeper and guests
 //   sound/crowd.ts      the taproom murmur, by headcount
+//   sound/fire.ts       the fire: catches, roars, settles; embers when put out
 // This file listens to game events and calls soundscape() every frame. M mutes; pause silences everything.
 
 import type { Game } from "./game.js";
@@ -11,6 +12,7 @@ import { attach, output, play, ready, resume, ringsOut, stop, suspend, updateVoi
 import { cookingLoops } from "./sound/loops.js";
 import { footsteps } from "./sound/footsteps.js";
 import { crowd } from "./sound/crowd.js";
+import { fire } from "./sound/fire.js";
 
 export { isMuted, toggleMute, unlockAudio } from "./sound/engine.js";
 
@@ -20,6 +22,7 @@ export function soundscape(g: Game, realDt: number): void {
   cookingLoops(g);
   footsteps(g, realDt);
   crowd(g);
+  fire(g, realDt);
   updateVoices();
 }
 
