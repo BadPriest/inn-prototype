@@ -106,6 +106,16 @@ window.addEventListener("keyup", (e) => {
   if (k === " ") { g.holdingSpace = false; release(); }
 });
 window.addEventListener("blur", () => { keys.clear(); g.holdingSpace = false; });
+// Out of sight pauses: another tab, a minimised window, or (Chrome/Edge) a window covering it.
+// Focus alone doesn't: the address bar or devtools take it too, and the game is still on screen.
+document.addEventListener("visibilitychange", () => { if (document.hidden) pauseIfAway(); });
+
+/** Pause for someone who's gone. Modal screens already hold the clock. */
+function pauseIfAway(): void {
+  if (g.paused || g.modal) return;
+  if (menuOpen()) closeAll(); // a card screen: the clock runs under those, so set it aside
+  openPause();
+}
 
 function toTile(e: { clientX: number; clientY: number }): Vec {
   const r = canvas.getBoundingClientRect();
