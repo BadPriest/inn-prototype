@@ -2,18 +2,26 @@
 import { RECIPES, UPGRADES } from "../data.js";
 import { back, confirmed, openMenu, replaceMenu } from "./menu.js";
 import { grid, gridKeys } from "./cards.js";
+import { openNewspaper } from "./newspaper.js";
+import { openCalendar } from "./calendar.js";
 export function openDeskScreen(g, openJournal) {
     const st = { focus: 0 };
     const build = () => {
         const ready = UPGRADES.filter((u) => !g.upgrades.has(u.id) && g.totalServed >= u.unlockAtServed).length;
         const cards = [
             { pick: "fare", icon: "📜", name: "Bill of fare", note: `what's on the menu<br>${g.menu.size} on today` },
+            { pick: "calendar", icon: "📅", name: "Calendar", note: `${g.date.seasonName} ${g.date.dayOfSeason}<br>the season ahead` },
+            { pick: "paper", icon: "📰", name: "Newspaper", note: g.paper?.read ? "read" : "today's, unread", on: !!g.paper && !g.paper.read },
             { pick: "upgrades", icon: "🔧", name: "Upgrades", note: ready ? `${ready} ready to choose` : `${g.totalServed} served so far`, on: ready > 0 },
             { pick: "journal", icon: "📖", name: "Journal", note: g.journalUnread ? `${g.journalUnread} new` : "the people you've met", on: g.journalUnread > 0 },
         ].map((c, i) => ({ ...c, focus: i === st.focus }));
         const go = (v) => {
             if (v === "fare")
                 openBillOfFare(g);
+            else if (v === "paper")
+                openNewspaper(g);
+            else if (v === "calendar")
+                openCalendar(g);
             else if (v === "upgrades")
                 openUpgrades(g);
             else

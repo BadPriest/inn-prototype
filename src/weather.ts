@@ -90,6 +90,12 @@ function moveSky(g: Game, to: SkyId, abrupt: boolean): void {
 
 export function updateWeather(g: Game, simDt: number): void {
   const w = g.weather;
+  if (!quiet) { // the day's weather, for the calendar (not the quiet runs: overnight, forecasts)
+    const s = (g.stats.weather ??= { rainMinutes: 0, storm: false, sky: {} });
+    s.sky[w.sky] = (s.sky[w.sky] ?? 0) + simDt;
+    if (w.sky === "rain") s.rainMinutes += simDt;
+    if (w.band === "storm") s.storm = true;
+  }
   const S = oddsFor(g.date.season, g.loc);
   const hours = simDt / 60;
   w.hours += hours;
@@ -137,6 +143,20 @@ export function updateWeather(g: Game, simDt: number): void {
   const options = S.to[w.sky];
   const to = weightedPick(Object.keys(options) as SkyId[], (k) => options[k] ?? 0);
   if (to) moveSky(g, to, w.sky === "cloudy" && to === "rain"); // a sudden shower
+}
+
+/** Run the weather ahead quietly from now, calling `look` every 10 minutes, then put it all back. */
+export function foresee(g: Game, minutes: number, look: (minute: number, w: WeatherState) => void): void {
+  const saved = structuredClone(g.weather);
+  const savedMinute = g.minute;
+  quiet = true;
+  try {
+    for (let m = 0; m < minutes; m += 10) { g.minute = savedMinute + m; updateWeather(g, 10); look(m, g.weather); }
+  } finally {
+    quiet = false;
+    g.weather = saved;
+    g.minute = savedMinute;
+  }
 }
 
 /** The hours between turning in and waking: the weather carries on, quietly. */

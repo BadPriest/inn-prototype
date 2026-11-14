@@ -166,7 +166,7 @@ export function promptFor(g, t) {
         case "frontdoor": return g.open ? (g.lastCall ? "Space: bolt the door" : "Space: call last orders") : "Space: open the inn";
         case "fireplace": return g.fireLit ? "Space: put out the fire" : "Space: light the fire";
         case "bed": return "Space: turn in";
-        case "desk": return "Space: bill of fare, upgrades, journal";
+        case "desk": return g.paper && !g.paper.read ? "Space: the desk (today's paper is here)" : "Space: bill of fare, paper, upgrades, journal";
         default: return `Space: ${f.name.toLowerCase()}`;
     }
 }

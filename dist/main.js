@@ -1,6 +1,7 @@
 // Wiring: input, the main loop, and the order systems run in.
 import { TUNING } from "./data.js";
 import { openLocationPicker } from "./ui/location.js";
+import { openCalendar } from "./ui/calendar.js";
 import { newWeather } from "./weather.js";
 import { Game } from "./game.js";
 import { dist } from "./world.js";
@@ -10,6 +11,7 @@ import { updateCrafting } from "./crafting.js";
 import { initTalk, updatePatrons } from "./patrons.js";
 import { updateNeeds } from "./needs.js";
 import { updateWeather } from "./weather.js";
+import { initLight, updateLamps } from "./ui/light.js";
 import { updateFrontDoor } from "./door.js";
 import { cancelPour, updatePour } from "./serving.js";
 import { watchObjectives } from "./objectives.js";
@@ -34,6 +36,9 @@ initMenus(document.getElementById("menu"), (modal) => { g.modal = modal; }, () =
 initDebug(g);
 initSound(g);
 initTalk(g);
+initLight(g);
+// For checking from the browser console (and screenshots): the game state.
+window.innGame = g;
 const wm = document.getElementById("watermark");
 if (wm)
     wm.textContent = `Travelling Inn · lofi prototype · ${BUILD}`;
@@ -102,6 +107,9 @@ window.addEventListener("keydown", (e) => {
             break;
         case "j":
             openJournal(g);
+            break;
+        case "k":
+            openCalendar(g);
             break;
         case "m":
             g.say(toggleMute() ? "Sound off." : "Sound on.");
@@ -327,6 +335,8 @@ bindButton("tb-setdown", () => { if (!menuOpen())
     askSetDown(g); });
 bindButton("tb-journal", () => { if (!menuOpen())
     openJournal(g); });
+document.getElementById("status")?.addEventListener("click", () => { if (!menuOpen() && !g.modal)
+    openCalendar(g); });
 bindButton("tb-sound", () => g.say(toggleMute() ? "Sound off." : "Sound on."));
 bindButton("tb-debug", () => toggleDebug());
 bindButton("tb-panel", () => document.body.classList.toggle("panel-open"));
@@ -692,6 +702,7 @@ function frame(now) {
         updatePatrons(g, sim);
         updateNeeds(g, sim);
         updateWeather(g, sim);
+        updateLamps(g);
         updateFrontDoor(g, now);
         updateClock(g, sim, () => forcedTurnIn(g));
     }

@@ -123,10 +123,22 @@
   .je.moment { color:var(--accent); }
   .je.said { font-style:italic; }
   .moments { margin-top:8px; color:var(--accent); }
+  .paper { font-family:Georgia, serif; max-width:440px; }
+  .cal { display:grid; grid-template-columns:repeat(7, 54px); gap:4px; margin-bottom:8px; }
+  .cal .cw { font:600 10px system-ui; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); text-align:center; }
+  .cal .cd { height:46px; border:1px solid #5a4636; border-radius:5px; padding:2px 4px; display:flex; flex-direction:column; justify-content:space-between; background:#2f251e; }
+  .cal .cd b { font:12px Georgia, serif; }
+  .cal .cd .ci { font-size:14px; text-align:right; }
+  .cal .cd.past { opacity:.55; }
+  .cal .cd.today { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); background:#3d3024; }
+  .cal .cd.blank { border:none; background:none; }
+  .paper h4 { margin:10px 0 4px; font:600 11px system-ui; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--line); padding-bottom:2px; }
+  .paper p { margin:4px 0; }
   #fade { position:absolute; inset:0; background:#000; opacity:0; pointer-events:none; transition:opacity .8s; z-index:4; }
   #fade.on { opacity:1; }
   /* The status card: who and when. Top-left over the map; the avatar slot waits for mood and art. */
-  #status { position:absolute; left:10px; top:10px; z-index:2; display:flex; align-items:center; gap:10px; background:rgba(26,20,16,.9); border:1px solid #5a4636; border-radius:10px; padding:7px 14px 7px 7px; pointer-events:none; box-shadow:0 4px 14px rgba(0,0,0,.4); zoom:var(--ui,1); }
+  #status { position:absolute; left:10px; top:10px; z-index:2; display:flex; align-items:center; gap:10px; background:rgba(26,20,16,.9); border:1px solid #5a4636; border-radius:10px; padding:7px 14px 7px 7px; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,.4); zoom:var(--ui,1); }
+  #status:hover { border-color:#c9a24a; }
   #status .st-face { width:52px; height:52px; border-radius:8px; background:#3a2e26; border:1px solid #c9a24a; display:flex; align-items:center; justify-content:center; font-size:30px; }
   #status .st-day { font:italic 12px Georgia, serif; color:#c9a24a; }
   #status .st-date { font:15px Georgia, serif; }
@@ -236,7 +248,7 @@
     <section id="help">
       <b>Click</b> the floor to walk, <b>click</b> things and people to use them · <b>double-click</b> runs · <b>right-click</b> stops<br>
       <b>WASD</b> walk · <b>Shift</b> run · <b>Space</b> use · hold <b>Space</b> to hurry cooking · hold <b>Space</b> or the <b>mouse</b> on a mess to clean · <b>Tab</b> / wheel: pick between things in reach<br>
-      <b>E</b> garnish at the counter · <b>C</b> offer unasked · <b>Q</b> set a tray down · <b>J</b> journal · <b>O</b> objectives · <b>M</b> sound · <b>P</b> pause &amp; settings · <b>− / =</b> time speed · <b>`</b> debug
+      <b>E</b> garnish at the counter · <b>C</b> offer unasked · <b>Q</b> set a tray down · <b>J</b> journal · <b>K</b> calendar · <b>O</b> objectives · <b>M</b> sound · <b>P</b> pause &amp; settings · <b>− / =</b> time speed · <b>`</b> debug
     </section>
   </div>
 </div>

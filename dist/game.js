@@ -8,7 +8,7 @@ export function emptyStats(day) {
     return {
         day, arrivals: 0, served: 0, leftEarly: 0, leftUnserved: 0, crafted: 0, garnished: 0, cleaned: 0,
         outcomes: { DELIGHT: 0, PLEASED: 0, FULFILLED: 0, UNFINISHED: 0, COMPLAINS: 0 },
-        moments: [], unmet: [],
+        moments: [], unmet: [], weather: { rainMinutes: 0, storm: false, sky: {} },
     };
 }
 export function emptyTastes() {
@@ -29,6 +29,9 @@ export class Game {
     open = false;
     lastCall = false;
     fireLit = false;
+    lampsLit = false;
+    /** This morning's paper (newspaper.ts). */
+    paper; // the keeper lights the lamps when it gets gloomy (ui/light.ts)
     flowMultiplier = 1;
     nextArrivalAt = 0;
     keeper;

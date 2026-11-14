@@ -4,8 +4,8 @@
 //   score         how a serve scores (the veiled add noise here)
 //   afterServe    what a strong reaction changes (locks, breakthroughs, opening up)
 
-import { chance, pick, type Outcome } from "./core.js";
-import { GARNISHES, SCHEMA_TUNING, TASTE_POOL, TUNING, type ItemKind, type Regular, type SchemaId, type TasteSet } from "./data.js";
+import { chance, pick, weightedPick, type Outcome } from "./core.js";
+import { GARNISHES, SCHEMA_TUNING, SEASONAL_TASTES, TASTE_POOL, TUNING, type CalendarSeasonId, type ItemKind, type Regular, type SchemaId, type TasteSet } from "./data.js";
 import { emptyTastes, type Game, type Item, type Order, type Patron, type RegularState, type Tastes } from "./game.js";
 
 export function tagScore(tags: string[], t: TasteSet): { score: number; hitLove: boolean } {
@@ -46,7 +46,18 @@ export function effectiveSchema(def: Regular, st: RegularState): SchemaId {
 // ---------------------------------------------------------------------------
 // prepareVisit
 
-export function prepareVisit(p: Patron, def: Regular, st: RegularState): void {
+/** Does this serve have a tag in season that they don't dislike? */
+export function inSeason(season: CalendarSeasonId, tags: string[], t: TasteSet): boolean {
+  return tags.some((tag) => SEASONAL_TASTES.inSeason[season].includes(tag) && !t.dislike.includes(tag));
+}
+
+/** Pick a craving from a list, leaning toward what's in season. */
+function seasonalPick(season: CalendarSeasonId, tags: string[]): string {
+  const now = SEASONAL_TASTES.inSeason[season];
+  return weightedPick(tags, (t) => (now.includes(t) ? SEASONAL_TASTES.cravingPull : 1)) ?? pick(tags);
+}
+
+export function prepareVisit(p: Patron, def: Regular, st: RegularState, season?: CalendarSeasonId): void {
   const schema = effectiveSchema(def, st);
   p.schema = schema;
   if (def.schema === "unformed") {
@@ -73,9 +84,9 @@ export function prepareVisit(p: Patron, def: Regular, st: RegularState): void {
       const pool = honest ? [...def.food.love, ...def.food.like, ...def.drink.love] : TASTE_POOL;
       p.craving = { tag: pick(pool), honest };
     } else if (def.schema === "unformed" && !st.resolved) {
-      p.craving = { tag: pick(def.cravings), honest: false };
+      p.craving = { tag: season ? seasonalPick(season, def.cravings) : pick(def.cravings), honest: false };
     } else {
-      p.craving = { tag: pick(def.cravings), honest: true };
+      p.craving = { tag: season ? seasonalPick(season, def.cravings) : pick(def.cravings), honest: true };
     }
   }
 }
@@ -143,6 +154,8 @@ export function judge(g: Game, p: Patron, item: Item, order: Order | null): Verd
   let { score, hitLove } = tagScore(item.tags, used);
   const hitCraving = !!p.craving && item.tags.includes(p.craving.tag);
   if (hitCraving) score += SCHEMA_TUNING.cravingBonus;
+  // In season: a little better, unless it's something they dislike.
+  if (inSeason(g.date.season, item.tags, truth)) score += SEASONAL_TASTES.scoreBonus;
   let missingGarnish = false;
   if (order?.wantGarnish && item.garnish !== order.wantGarnish) {
     score += TUNING.scoring.missingGarnish;

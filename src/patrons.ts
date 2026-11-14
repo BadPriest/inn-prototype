@@ -1,12 +1,13 @@
 // Patrons: arrivals, walking, ordering, waiting, eating, mess and leaving.
 
 import { chance, organic, pick, uid, weightedPick } from "./core.js";
-import { ARCHETYPES, CHATTER, GARNISHES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING, SHELTER, type NeedId, type Archetype, type ItemKind, type Regular } from "./data.js";
+import { ARCHETYPES, CHATTER, GARNISHES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING, SHELTER, SEASONAL_TASTES, MARKET, type NeedId, type Archetype, type ItemKind, type Regular } from "./data.js";
 import type { Game, Group, Order, Patron, RegularState } from "./game.js";
 import { emptyTastes } from "./game.js";
 import { appeal, prepareVisit, tagScore } from "./tastes.js";
 import { arrivalNeeds, closeAllStretches } from "./needs.js";
 import { cameIn, weatherTags } from "./weather.js";
+import { marketDay } from "./newspaper.js";
 import { dist, type Seat, type Table, type Vec } from "./world.js";
 
 const counts = new Map<string, number>();
@@ -148,6 +149,7 @@ export function spawnPatron(g: Game, archetype?: Archetype, forced?: { seat: Sea
     groupId: forced?.groupId,
   };
   if (soaked > SOAKING.warmCraving) p.craving = { tag: "warm", honest: true };
+  else if (chance(SEASONAL_TASTES.visitorCraving)) p.craving = { tag: pick(SEASONAL_TASTES.inSeason[g.date.season]), honest: true };
   return admit(g, p, seat);
 }
 
@@ -269,7 +271,7 @@ export function spawnRegular(g: Game, def: Regular, st: RegularState): Patron | 
     weatherTaste: def.weather,
     unmet: {},
   };
-  prepareVisit(p, def, st);
+  prepareVisit(p, def, st, g.date.season);
   if (soaked > SOAKING.warmCraving && !p.craving) p.craving = { tag: "warm", honest: true };
   st.visits++;
   st.visitedToday = true;
@@ -342,6 +344,8 @@ function placeOrder(g: Game, p: Patron): void {
     if (p.craving && (r.baseTags.includes(p.craving.tag) || r.options.some((o) => INGREDIENTS.find((i) => i.id === o)?.tags.includes(p.craving!.tag)))) w *= 2;
     // Cold (or wet through): something warm appeals more.
     if (r.baseTags.includes("warm")) w *= 1 + SOAKING.warmOrderPull * p.needs.warmth;
+    // What's in season sounds good.
+    w *= 1 + SEASONAL_TASTES.orderPull * r.baseTags.filter((tag) => SEASONAL_TASTES.inSeason[g.date.season].includes(tag)).length;
     return w;
   })!;
   let wantGarnish: string | undefined;
@@ -723,7 +727,8 @@ export function updatePatrons(g: Game, simDt: number): void {
   }
   // Visitors arrive at the flow rate.
   if (g.open && !g.lastCall && g.minute >= g.nextArrivalAt) {
-    const rate = TUNING.flowByHour[g.hour] * g.loc.traffic * shelterFactor(g) * g.flowMultiplier; // per hour
+    const market = marketDay(g) && g.hour >= MARKET.from && g.hour < MARKET.to ? MARKET.flow : 1;
+    const rate = TUNING.flowByHour[g.hour] * g.loc.traffic * shelterFactor(g) * market * g.flowMultiplier; // per hour
     if (rate > 0.01) {
       spawnVisitors(g);
       g.nextArrivalAt = g.minute + Math.max(3, organic([60 / rate, 30 / rate]));

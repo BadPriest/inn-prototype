@@ -4,6 +4,7 @@ import { EventBus, type Outcome } from "./core.js";
 import { World, type Vec } from "./world.js";
 import { dateOf, randomStartSeason, type GameDate } from "./calendar.js";
 import { newWeather, type CameIn, type WeatherState } from "./weather.js";
+import type { Paper } from "./newspaper.js";
 import { TIME_WORDS, TUNING, timeOfDayAt, type Archetype, type ItemKind, type Line, type NeedId, type Regular, type SchemaId, type TasteSet, type TimeOfDay, type WeatherTaste, type Location, type LocationId } from "./data.js";
 
 export interface Item {
@@ -154,13 +155,15 @@ export interface DayStats {
   cleaned: number;
   moments: string[]; // locks, breakthroughs, opening up
   unmet?: UnmetStretch[]; // missing in saves from before needs
+  /** The day's weather, while the keeper was up: minutes of rain, a storm or not, minutes per sky. */
+  weather?: { rainMinutes: number; storm: boolean; sky: Record<string, number> };
 }
 
 export function emptyStats(day: number): DayStats {
   return {
     day, arrivals: 0, served: 0, leftEarly: 0, leftUnserved: 0, crafted: 0, garnished: 0, cleaned: 0,
     outcomes: { DELIGHT: 0, PLEASED: 0, FULFILLED: 0, UNFINISHED: 0, COMPLAINS: 0 },
-    moments: [], unmet: [],
+    moments: [], unmet: [], weather: { rainMinutes: 0, storm: false, sky: {} },
   };
 }
 
@@ -208,6 +211,9 @@ export class Game {
   open = false;
   lastCall = false;
   fireLit = false;
+  lampsLit = false;
+  /** This morning's paper (newspaper.ts). */
+  paper?: Paper; // the keeper lights the lamps when it gets gloomy (ui/light.ts)
   flowMultiplier = 1;
   nextArrivalAt = 0;
   keeper: Keeper;

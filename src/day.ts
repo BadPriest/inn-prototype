@@ -8,6 +8,7 @@ import { closeAllStretches } from "./needs.js";
 import { CALENDAR } from "./data.js";
 import { longDate, seasonTurned } from "./calendar.js";
 import { morningLine, passNight, type WeatherState } from "./weather.js";
+import { deliverPaper, marketDay } from "./newspaper.js";
 
 const SAVE_KEY = "travelling-inn-proto-v3"; // v3: the calendar (older saves start fresh)
 
@@ -67,7 +68,9 @@ export function endDay(g: Game): DayStats {
 }
 
 export function startNextDay(g: Game): void {
+  const stormy = g.weather.band === "storm";
   passNight(g, 24 * 60 - TUNING.dayLengthMinutes); // turned in at 2, up at 6: the weather carried on
+  stormLastNight = stormy || g.weather.band === "storm";
   g.day++;
   g.minute = 0;
   g.turnInPrompted = false;
@@ -90,13 +93,18 @@ export function startNextDay(g: Game): void {
 }
 
 /** Morning bookkeeping: new regulars join, everyone's usual time is set. */
+let stormLastNight = false;
+
 export function beginDay(g: Game): void {
   const joined = unlockRegulars(g);
   scheduleRegulars(g);
+  deliverPaper(g, stormLastNight);
+  stormLastNight = false;
   if (g.seasonNews) g.say(g.seasonNews);
   g.say(`${longDate(g.date)}. You wake at 6.${g.day === 1 ? " The inn is closed; open the front door when you're ready." : ""}`);
   g.say(morningLine(g));
   if (joined.length && g.day > 1) g.say(`New in town: ${joined.join(", ")}. They may drop by.`);
+  g.say(marketDay(g) ? "The paper's come. It's market day." : "The paper's come; it's on the desk.");
 }
 
 export function save(g: Game): void {

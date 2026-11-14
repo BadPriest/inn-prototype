@@ -411,6 +411,24 @@ export const SOAKING = {
   tint: "#7fb0e0",
 };
 
+/**
+ * Seasonal tastes: what people fancy shifts through the year. A layer between long-term tastes and
+ * the day's craving: a serve with a tag in season scores a little better (unless they dislike it),
+ * dishes with one sound better when ordering, and cravings lean toward them.
+ */
+export const SEASONAL_TASTES = {
+  inSeason: {
+    spring: ["bright", "fragrant", "tart", "light"],
+    summer: ["light", "cold", "crisp", "bright"],
+    autumn: ["earthy", "hearty", "sweet", "homely"],
+    winter: ["warm", "hearty", "rich", "smoky"],
+  } as Record<CalendarSeasonId, string[]>,
+  scoreBonus: 1, // a serve with any tag in season (that they don't dislike)
+  orderPull: 0.5, // per tag in season: how much more a dish appeals when ordering
+  cravingPull: 2.5, // a regular's possible cravings in season are this much likelier
+  visitorCraving: 0.25, // chance a passing visitor craves something in season
+};
+
 /** Tags an unformed patron may roll each visit, and that cravings may name. */
 export const TASTE_POOL = [
   "sweet", "tart", "savoury", "bitter", "rich", "earthy", "smoky", "briny", "fiery", "salty",
@@ -466,24 +484,49 @@ export interface Location {
   traffic: number; // passing traffic, times the hour's flow
   shelter: number; // how much rain drives passers-by indoors (used by flow, inn#22)
   visitors: Partial<Record<string, number>>; // archetype id -> times its usual weight
+  marketDay?: string; // the weekday of the market (busier midday); none out on the mountain
   street: "streetTown" | "streetCountry"; // what's heard through the open door
 }
 
 export const LOCATIONS: Location[] = [
-  { id: "town", name: "Town centre", icon: "🏘️", traits: ["busy", "rain rush"], days: [28, 28, 28, 28], rain: 1, storm: 1, traffic: 1.3, shelter: 1.5, visitors: {}, street: "streetTown",
+  { id: "town", name: "Town centre", icon: "🏘️", traits: ["busy", "rain rush"], days: [28, 28, 28, 28], rain: 1, storm: 1, traffic: 1.3, shelter: 1.5, visitors: {}, street: "streetTown", marketDay: "Saturday",
     blurb: "On the market square. Busy all year; when it rains, half the street comes in." },
-  { id: "dockside", name: "Dockside", icon: "⚓", traits: ["dockworkers", "wet", "stormy"], days: [28, 28, 28, 28], rain: 1.3, storm: 1.6, traffic: 1.1, shelter: 1.1, visitors: { dock: 2.5, scholar: 0.6 }, street: "streetTown",
+  { id: "dockside", name: "Dockside", icon: "⚓", traits: ["dockworkers", "wet", "stormy"], days: [28, 28, 28, 28], rain: 1.3, storm: 1.6, traffic: 1.1, shelter: 1.1, visitors: { dock: 2.5, scholar: 0.6 }, street: "streetTown", marketDay: "Friday",
     blurb: "By the harbour, where the boats come in. Thirsty dockworkers, wet weather, the odd storm off the sea." },
   { id: "mountainside", name: "Mountainside", icon: "🏔️", traits: ["long winter", "quiet", "cold"], days: [21, 21, 28, 42], rain: 1.2, storm: 1.2, traffic: 0.6, shelter: 0.6, street: "streetCountry",
     cold: { seasons: ["autumn", "winter"], nights: ["spring", "summer"] },
     visitors: { traveller: 2, farmer: 1.5, dock: 0.3, scholar: 0.6 },
     blurb: "On the pass road, high up. Long winters, few passers-by, and everyone who comes in is glad of the fire." },
-  { id: "crossroads", name: "Crossroads", icon: "🪧", traits: ["travellers", "quiet"], days: [28, 28, 28, 28], rain: 1, storm: 1, traffic: 0.85, shelter: 0.4, visitors: { traveller: 2.5, dock: 0.4 }, street: "streetCountry",
+  { id: "crossroads", name: "Crossroads", icon: "🪧", traits: ["travellers", "quiet"], days: [28, 28, 28, 28], rain: 1, storm: 1, traffic: 0.85, shelter: 0.4, visitors: { traveller: 2.5, dock: 0.4 }, street: "streetCountry", marketDay: "Wednesday",
     blurb: "Where the roads meet, out among the fields. Travellers passing through; rain or shine, much the same." },
-  { id: "hills", name: "Hill country", icon: "🌳", traits: ["long summer", "gentle", "farmers"], days: [35, 35, 21, 21], rain: 0.8, storm: 0.4, traffic: 0.8, shelter: 0.7, visitors: { farmer: 2.5, traveller: 1.2, dock: 0.3 }, street: "streetCountry",
+  { id: "hills", name: "Hill country", icon: "🌳", traits: ["long summer", "gentle", "farmers"], days: [35, 35, 21, 21], rain: 0.8, storm: 0.4, traffic: 0.8, shelter: 0.7, visitors: { farmer: 2.5, traveller: 1.2, dock: 0.3 }, street: "streetCountry", marketDay: "Thursday",
     cold: { seasons: ["winter"], nights: ["autumn"] },
     blurb: "Among green hills and smallholdings. Long, gentle springs and summers; soft rain, hardly ever a storm." },
 ];
+
+/** Market day: busier around the middle of the day. */
+export const MARKET = { from: 9, to: 15, flow: 1.5 };
+
+/** The morning paper's town news (newspaper.ts). */
+export const NEWS = {
+  market: "Market day today: stalls on the square from nine. Expect a busy midday.",
+  marketSoon: "Market day is {day}, as ever.",
+  afterStorm: ["Branches down on the north road after last night's storm.", "The ferry was held at the far bank overnight, by the wind.", "A chimney pot came down on Weaver's Row in the night. Nobody hurt."],
+  seasons: {
+    spring: ["Lambing's begun up the valley.", "The orchards are in blossom along the river road.", "Spring cleaning at the chapel; volunteers wanted."],
+    summer: ["Hay's in early this year, they say.", "Swimming at the mill pond, for those who dare.", "Strawberries at the market, while they last."],
+    autumn: ["The apple harvest is under way; the cider presses are busy.", "Geese overhead, heading south.", "Mushroom pickers warned off the old wood."],
+    winter: ["Ice on the mill pond. Skaters warned off.", "Firewood prices up again.", "Carollers were heard on the high street last night."],
+  } as Record<CalendarSeasonId, string[]>,
+  gossip: [
+    "Electric lamps were lit on the high street for the first time. Opinions differ.",
+    "Lost: one grey cat, answers to Pudding.",
+    "The miller's wheel is mended at last.",
+    "A travelling tinker is in town, mending pots.",
+    "The council meets on the matter of the bridge. Again.",
+    "Letters: a reader asks why the church clock runs four minutes slow.",
+  ],
+};
 
 // ---------------------------------------------------------------------------
 // Time of day. One value that greetings, chatter, cravings, flow and (later) weather all read.
@@ -856,6 +899,36 @@ export const WEATHER = {
     stormBreaks: "A storm breaks!",
     easing: { "light-rain": "The rain's easing off.", rain: "The storm's passing. Still raining." } as Record<string, string>,
   },
+};
+
+// ---------------------------------------------------------------------------
+// Light (ui/light.ts). Daylight by the hour, shifted by the calendar season, dimmed by the weather;
+// lamps the keeper lights when it gets gloomy inside; candles on the tables; the fire.
+
+export const LIGHT = {
+  dawn: [5, 8] as [number, number], // daylight rises between these hours
+  dusk: [17, 20.5] as [number, number], // and falls between these
+  seasonShift: { winter: 1.5, autumn: 0.5, spring: 0, summer: -1 } as Record<string, number>, // hours: later dawn, earlier dusk
+  weather: { clear: 1, cloudy: 0.85, overcast: 0.65, rain: 0.6, rainPerIntensity: 0.3 } as Record<string, number> & { rainPerIntensity: number },
+  maxDark: 0.72, // how dark the inn gets with no light at all
+  nightTint: "12,14,32", // the colour of the dark (r,g,b)
+  lampsOnBelow: 0.45, // indoor light under this: the lamps go on
+  lampsOffAbove: 0.6, // over this: they go out (the gap stops flicker)
+  lampStrength: 0.85,
+  lampWarm: 0.12,
+  windowReach: 3.5, // tiles of daylight around a window
+  fire: { reach: 6, strength: 0.95, warm: 0.22 },
+  candle: { reach: 2, strength: 0.75, warm: 0.1 },
+  flash: { near: 0.55, far: 0.2, ms: 350 },
+  /** Hanging lamps: where they hang (tile coords) and how far their light reaches (tiles). */
+  lamps: [
+    { x: 4.5, y: 3.5, r: 4 }, // bedroom
+    { x: 10, y: 5, r: 2.5 }, // hall
+    { x: 17, y: 3.5, r: 5 }, { x: 27, y: 3.5, r: 5 }, // kitchen
+    { x: 5.5, y: 11, r: 5 }, // taproom, by the door side
+    { x: 16, y: 9.5, r: 5 }, { x: 26, y: 9.5, r: 5 }, // along the counter
+    { x: 3.5, y: 18.5, r: 3.5 }, // coat hall
+  ],
 };
 
 // ---------------------------------------------------------------------------

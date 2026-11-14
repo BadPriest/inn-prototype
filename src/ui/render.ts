@@ -4,6 +4,7 @@ import { RECIPES, ROOM_LABELS, SOAKING, TUNING } from "../data.js";
 import type { Game, Patron } from "../game.js";
 import type { Target } from "../interact.js";
 import { iconFor } from "../serving.js";
+import { drawLight } from "./light.js";
 
 export interface View { ts: number; ox: number; oy: number }
 
@@ -236,8 +237,8 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
     ctx.beginPath(); ctx.arc(X(clickDest.x), Y(clickDest.y), ts * 0.12, 0, Math.PI * 2); ctx.fill();
   }
 
-  // Patrons
-  for (const p of g.patrons) drawPatron(ctx, g, p, X, Y, ts);
+  // Patrons and keeper: bodies first, then the light, then what they say and carry (so it stays readable).
+  for (const p of g.patrons) drawPatron(ctx, g, p, X, Y, ts, "body");
 
   // Keeper
   const k = g.keeper;
@@ -248,6 +249,9 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
   ctx.lineWidth = 1;
   ctx.fillStyle = "#2a1d14";
   ctx.beginPath(); ctx.arc(X(k.pos.x + k.facing.x * 0.22), Y(k.pos.y + k.facing.y * 0.22), ts * 0.07, 0, Math.PI * 2); ctx.fill();
+
+  drawLight(ctx, g, X, Y, ts);
+  for (const p of g.patrons) drawPatron(ctx, g, p, X, Y, ts, "words");
   // Trays: one per arm, showing what's on them
   k.trays.forEach((tray, i) => {
     const side = i === 0 ? -1 : 1;
@@ -292,12 +296,14 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
   }
 }
 
-function drawPatron(ctx: CanvasRenderingContext2D, g: Game, p: Patron, X: (n: number) => number, Y: (n: number) => number, ts: number): void {
+/** "body": the circle (dimmed by the light, drawn after). "words": name, dish, order, marker, speech. */
+function drawPatron(ctx: CanvasRenderingContext2D, g: Game, p: Patron, X: (n: number) => number, Y: (n: number) => number, ts: number, part: "body" | "words"): void {
   // Soaked: a shiver, a cold tint, a drop falling. All fade as they dry.
   const wet = p.soaked ?? 0;
   const t = performance.now() / 1000;
   const shiver = wet > 0.08 ? Math.sin(t * 38 + p.id) * ts * 0.035 * Math.min(1, wet * 1.5) : 0;
   const x = X(p.pos.x) + shiver, y = Y(p.pos.y);
+  if (part === "body") {
   ctx.fillStyle = p.color;
   ctx.globalAlpha = p.state === "leaving" ? 0.6 : 1;
   ctx.beginPath(); ctx.arc(x, y, ts * 0.32, 0, Math.PI * 2); ctx.fill();
@@ -310,6 +316,8 @@ function drawPatron(ctx: CanvasRenderingContext2D, g: Game, p: Patron, X: (n: nu
     ctx.beginPath(); ctx.arc(x + ts * 0.18, y + ts * (0.2 + fall * 0.3), ts * 0.05, 0, Math.PI * 2); ctx.fill();
   }
   ctx.globalAlpha = 1;
+  return;
+  }
   ctx.fillStyle = "#f8f0e0";
   ctx.font = `${Math.floor(ts * 0.26)}px system-ui, sans-serif`;
   ctx.textAlign = "center";

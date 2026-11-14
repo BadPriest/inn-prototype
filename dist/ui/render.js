@@ -1,6 +1,7 @@
 // Canvas drawing. Basic shapes only: rectangles for furniture, circles for people.
 import { RECIPES, ROOM_LABELS, SOAKING, TUNING } from "../data.js";
 import { iconFor } from "../serving.js";
+import { drawLight } from "./light.js";
 /** Fit the whole inn if it's big enough to read; otherwise zoom in and follow the keeper. */
 /** `top`: canvas pixels kept clear at the top (the status card sits there). */
 export function computeView(canvas, g, minTile = 22, top = 0) {
@@ -268,9 +269,9 @@ export function draw(ctx, g, v, target, clickDest) {
         ctx.arc(X(clickDest.x), Y(clickDest.y), ts * 0.12, 0, Math.PI * 2);
         ctx.fill();
     }
-    // Patrons
+    // Patrons and keeper: bodies first, then the light, then what they say and carry (so it stays readable).
     for (const p of g.patrons)
-        drawPatron(ctx, g, p, X, Y, ts);
+        drawPatron(ctx, g, p, X, Y, ts, "body");
     // Keeper
     const k = g.keeper;
     ctx.fillStyle = "#f2e2c2";
@@ -285,6 +286,9 @@ export function draw(ctx, g, v, target, clickDest) {
     ctx.beginPath();
     ctx.arc(X(k.pos.x + k.facing.x * 0.22), Y(k.pos.y + k.facing.y * 0.22), ts * 0.07, 0, Math.PI * 2);
     ctx.fill();
+    drawLight(ctx, g, X, Y, ts);
+    for (const p of g.patrons)
+        drawPatron(ctx, g, p, X, Y, ts, "words");
     // Trays: one per arm, showing what's on them
     k.trays.forEach((tray, i) => {
         const side = i === 0 ? -1 : 1;
@@ -331,30 +335,34 @@ export function draw(ctx, g, v, target, clickDest) {
         ctx.fillText("Press P to resume", ctx.canvas.width / 2, ctx.canvas.height / 2 + ts);
     }
 }
-function drawPatron(ctx, g, p, X, Y, ts) {
+/** "body": the circle (dimmed by the light, drawn after). "words": name, dish, order, marker, speech. */
+function drawPatron(ctx, g, p, X, Y, ts, part) {
     // Soaked: a shiver, a cold tint, a drop falling. All fade as they dry.
     const wet = p.soaked ?? 0;
     const t = performance.now() / 1000;
     const shiver = wet > 0.08 ? Math.sin(t * 38 + p.id) * ts * 0.035 * Math.min(1, wet * 1.5) : 0;
     const x = X(p.pos.x) + shiver, y = Y(p.pos.y);
-    ctx.fillStyle = p.color;
-    ctx.globalAlpha = p.state === "leaving" ? 0.6 : 1;
-    ctx.beginPath();
-    ctx.arc(x, y, ts * 0.32, 0, Math.PI * 2);
-    ctx.fill();
-    if (wet > 0.05) {
-        ctx.fillStyle = SOAKING.tint;
-        ctx.globalAlpha *= Math.min(0.6, wet * 0.7);
+    if (part === "body") {
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.state === "leaving" ? 0.6 : 1;
         ctx.beginPath();
         ctx.arc(x, y, ts * 0.32, 0, Math.PI * 2);
         ctx.fill();
-        ctx.globalAlpha = Math.min(0.9, wet + 0.2);
-        const fall = (t * 1.4 + p.id * 0.37) % 1;
-        ctx.beginPath();
-        ctx.arc(x + ts * 0.18, y + ts * (0.2 + fall * 0.3), ts * 0.05, 0, Math.PI * 2);
-        ctx.fill();
+        if (wet > 0.05) {
+            ctx.fillStyle = SOAKING.tint;
+            ctx.globalAlpha *= Math.min(0.6, wet * 0.7);
+            ctx.beginPath();
+            ctx.arc(x, y, ts * 0.32, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = Math.min(0.9, wet + 0.2);
+            const fall = (t * 1.4 + p.id * 0.37) % 1;
+            ctx.beginPath();
+            ctx.arc(x + ts * 0.18, y + ts * (0.2 + fall * 0.3), ts * 0.05, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        return;
     }
-    ctx.globalAlpha = 1;
     ctx.fillStyle = "#f8f0e0";
     ctx.font = `${Math.floor(ts * 0.26)}px system-ui, sans-serif`;
     ctx.textAlign = "center";
