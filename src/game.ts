@@ -83,8 +83,13 @@ export interface Patron {
   marker?: { text: Outcome | string; until: number };
   line?: { text: string; until: number };
   leftEarly: boolean;
+  /** How wet they are, 0..1: from the rain they came in from, drying off inside. */
+  soaked: number;
   /** The weather they walked in from: sky, rain band and intensity. */
   cameIn?: CameIn;
+  /** Full, but having one more drink anyway (the soft edge of full); and when they last did. */
+  graceDrink?: boolean;
+  lastGraceAt?: number;
   /** Weather they love or dislike (by weather tag). */
   weatherTaste: WeatherTaste;
   /** 0 = fully met, 1 = desperate. Measured only, for now: nothing reacts to them yet. */

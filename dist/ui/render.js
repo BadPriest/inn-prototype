@@ -1,5 +1,5 @@
 // Canvas drawing. Basic shapes only: rectangles for furniture, circles for people.
-import { RECIPES, ROOM_LABELS, TUNING } from "../data.js";
+import { RECIPES, ROOM_LABELS, SOAKING, TUNING } from "../data.js";
 import { iconFor } from "../serving.js";
 /** Fit the whole inn if it's big enough to read; otherwise zoom in and follow the keeper. */
 /** `top`: canvas pixels kept clear at the top (the status card sits there). */
@@ -332,12 +332,28 @@ export function draw(ctx, g, v, target, clickDest) {
     }
 }
 function drawPatron(ctx, g, p, X, Y, ts) {
-    const x = X(p.pos.x), y = Y(p.pos.y);
+    // Soaked: a shiver, a cold tint, a drop falling. All fade as they dry.
+    const wet = p.soaked ?? 0;
+    const t = performance.now() / 1000;
+    const shiver = wet > 0.08 ? Math.sin(t * 38 + p.id) * ts * 0.035 * Math.min(1, wet * 1.5) : 0;
+    const x = X(p.pos.x) + shiver, y = Y(p.pos.y);
     ctx.fillStyle = p.color;
     ctx.globalAlpha = p.state === "leaving" ? 0.6 : 1;
     ctx.beginPath();
     ctx.arc(x, y, ts * 0.32, 0, Math.PI * 2);
     ctx.fill();
+    if (wet > 0.05) {
+        ctx.fillStyle = SOAKING.tint;
+        ctx.globalAlpha *= Math.min(0.6, wet * 0.7);
+        ctx.beginPath();
+        ctx.arc(x, y, ts * 0.32, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = Math.min(0.9, wet + 0.2);
+        const fall = (t * 1.4 + p.id * 0.37) % 1;
+        ctx.beginPath();
+        ctx.arc(x + ts * 0.18, y + ts * (0.2 + fall * 0.3), ts * 0.05, 0, Math.PI * 2);
+        ctx.fill();
+    }
     ctx.globalAlpha = 1;
     ctx.fillStyle = "#f8f0e0";
     ctx.font = `${Math.floor(ts * 0.26)}px system-ui, sans-serif`;

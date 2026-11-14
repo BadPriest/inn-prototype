@@ -1,11 +1,11 @@
 // Needs: hunger, thirst and warmth as real values. Groundwork for mood.
 //
-// Measured, not faked: nothing reacts to these yet (orders still come from foodBias). Every stretch a
+// Measured, not faked: orders grow from them (patrons.ts), nothing else reacts yet. Every stretch a
 // patron spends with a need unmet is logged, with its length and what was going on meanwhile, so the
 // logs tell us what mood must react to. Shown in the debug view.
 
 import { organic } from "./core.js";
-import { NEED_IDS, NEEDS, RECIPES, SNACKS, type NeedId, type NeedLevels } from "./data.js";
+import { NEED_IDS, NEEDS, RECIPES, SNACKS, SOAKING, type NeedId, type NeedLevels } from "./data.js";
 import type { Game, Patron, UnmetStretch } from "./game.js";
 import { dist } from "./world.js";
 
@@ -40,6 +40,7 @@ function circumstances(g: Game, p: Patron, need: NeedId): string[] {
     const at = firePos(g);
     if (!g.fireLit) out.push("fire out");
     else if (at && dist(p.pos, at) > NEEDS.fire.radius) out.push("far from the fire");
+    if (p.soaked > 0.2) out.push("soaked");
     return out;
   }
   const kind = need === "hunger" ? "food" : "drink";
@@ -84,7 +85,13 @@ export function updateNeeds(g: Game, simDt: number): void {
     const n = p.needs;
     // Slow drift.
     for (const need of NEED_IDS) n[need] += NEEDS.risePerHour[need] * hours;
-    n.warmth -= (NEEDS.indoorWarmthPerHour + NEEDS.fire.warmthPerHour * fireWarmth(g, p)) * hours;
+    const atFire = fireWarmth(g, p);
+    n.warmth -= (NEEDS.indoorWarmthPerHour + NEEDS.fire.warmthPerHour * atFire) * hours;
+    // Wet through: they dry off (fast by the fire), and until then the wet keeps them cold.
+    if (p.soaked > 0) {
+      n.warmth += SOAKING.chillPerHour * p.soaked * hours;
+      p.soaked = clamp01(p.soaked - (SOAKING.dryPerHour + SOAKING.fireDryPerHour * atFire) * hours);
+    }
     // A salty snack bowl on the table.
     const seat = g.world.seats.find((s) => s.id === p.seatId);
     const bowl = seat?.table ? g.bowls.get(`${seat.table.x},${seat.table.y}`) : undefined;

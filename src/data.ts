@@ -211,7 +211,7 @@ export interface Archetype {
   stay: Organic; // minutes they intend to stay
   consume: Organic; // minutes to eat or drink one serving
   walk: Organic; // tiles per real second at speed x1
-  foodBias: number; // at a table, chance an order is food
+  foodBias: number; // a leaning toward food (1) or drink (0), on top of hunger and thirst
   garnishAsk: number; // chance a drink order asks for a garnish
   messiness: Organic; // 0..1
 }
@@ -339,8 +339,8 @@ export const REGULARS: Regular[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// Needs: groundwork for mood. Real values, measured, not faked. Nothing reacts to them yet
-// (orders still come from foodBias); the debug view shows them and every unmet stretch is logged,
+// Needs: groundwork for mood. Real values, measured, not faked. Orders grow from hunger and thirst
+// (with foodBias as a personal leaning); the debug view shows them and every unmet stretch is logged,
 // so we learn what mood will have to react to. 0 = fully met, 1 = desperate.
 
 /** Weather someone loves or dislikes, by weather tag. Only talk for now; mood will read it. */
@@ -355,7 +355,7 @@ export const NEEDS = {
   risePerHour: { hunger: 0.08, thirst: 0.12, warmth: 0 } as Record<NeedId, number>,
   indoorWarmthPerHour: 0.05, // just being out of the weather eases the cold a little
   // The fire: full effect at the hearth, fading to nothing at the edge of the radius (tiles).
-  fire: { radius: 4.5, warmthPerHour: 0.45 },
+  fire: { radius: 6.5, warmthPerHour: 0.45 }, // reaches the nearest tables
   // A serving eases needs over the time it takes to eat or drink it.
   serving: {
     food: { hunger: 0.5, thirst: 0.05, warmth: 0 },
@@ -367,6 +367,29 @@ export const NEEDS = {
   unmetAt: 0.65,
   metAt: 0.55,
   logCap: 300, // stretches kept per day
+  // Ordering. Below `fullAt` they don't want that kind of thing (not even after a Delight nearby);
+  // above `wantAt` they surely do; in between, the chance ramps up. Everyone orders on sitting down.
+  fullAt: 0.2,
+  wantAt: 0.45,
+  // The soft edge of full: now and then, a full patron has one more drink anyway.
+  graceEvery: 45, // game minutes, at least, between one-more-drinks
+  graceChance: 0.3, // when they're done and full, chance of one more
+};
+
+// Soaked: guests in from the rain. How wet comes from the rain's intensity as they arrive; it fades as
+// they dry (faster by a lit fire). Wet guests get cold, want the fire and something warm, and drip.
+export const SOAKING = {
+  fromRain: [1, 0.2] as Organic, // soaked = rain intensity × this: a drizzle dampens, a storm drenches
+  warmthOnArrival: 0.35, // times soaked: added to the warmth need as they come in
+  chillPerHour: 0.12, // times soaked: wet clothes keep them cold
+  dryPerHour: 0.3, // drying off indoors: a drenched guest is dry in about three hours
+  fireDryPerHour: 0.9, // at the hearth, fading to nothing at the edge of the fire's reach (NEEDS.fire.radius)
+  dripPerHour: 2, // times soaked: drips that leave a puddle near them
+  fireSeatPull: 4, // soaked guests weigh a seat by a lit fire up to this much more
+  fireSeatRange: 7, // tiles from the fire that count as "by the fire" for choosing a seat
+  warmCraving: 0.5, // soaked past this: they crave something warm (if they had no craving)
+  warmOrderPull: 2, // times the warmth need: how much more a warm dish appeals
+  tint: "#7fb0e0",
 };
 
 /** Tags an unformed patron may roll each visit, and that cravings may name. */
@@ -800,7 +823,6 @@ export const TUNING = {
   speedUpFactor: 1.4, // holding Space at a crafting station
   delightThreshold: 3,
   scoring: { love: 2, like: 1, dislike: -2, missingGarnish: -2 },
-  reorderChance: 0.65,
   // Groups of visitors: chance of each size (1 to 6). Never larger than the biggest table.
   groupSizeWeights: [0.45, 0.28, 0.12, 0.08, 0.04, 0.03],
   outcomeShowMinutes: 10,

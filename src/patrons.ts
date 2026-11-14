@@ -1,7 +1,7 @@
 // Patrons: arrivals, walking, ordering, waiting, eating, mess and leaving.
 
 import { chance, organic, pick, uid, weightedPick } from "./core.js";
-import { ARCHETYPES, CHATTER, GARNISHES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, type Archetype, type ItemKind, type Regular } from "./data.js";
+import { ARCHETYPES, CHATTER, GARNISHES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING, type NeedId, type Archetype, type ItemKind, type Regular } from "./data.js";
 import type { Game, Group, Order, Patron, RegularState } from "./game.js";
 import { emptyTastes } from "./game.js";
 import { appeal, prepareVisit, tagScore } from "./tastes.js";
@@ -23,16 +23,44 @@ export function tableDirty(g: Game, seat: Seat): boolean {
   return !!seat.table && (g.dirt.get(tableKey(seat.table)) ?? 0) >= TUNING.tableDirtyAt;
 }
 
-function chooseSeat(g: Game, wantsFood: boolean, fussiness: number): Seat | undefined {
+/**
+ * How much they want something of this kind: 0 when full (below NEEDS.fullAt), 1 past NEEDS.wantAt.
+ * foodBias leans it a little toward food or drink.
+ */
+export function wants(needs: Record<NeedId, number>, foodBias: number, kind: ItemKind): number {
+  const n = kind === "food" ? needs.hunger : needs.thirst;
+  const w = Math.max(0, Math.min(1, (n - NEEDS.fullAt) / (NEEDS.wantAt - NEEDS.fullAt)));
+  return w * (kind === "food" ? 0.5 + foodBias : 1.5 - foodBias);
+}
+
+/** Would they sooner eat than drink, going by how they feel? (Chooses a chair or a stool.) */
+function hungrier(needs: Record<NeedId, number>, foodBias: number): boolean {
+  const f = wants(needs, foodBias, "food") + 0.05, d = wants(needs, foodBias, "drink") + 0.05;
+  return chance(f / (f + d));
+}
+
+/** How wet someone coming in now gets: the rain's intensity, give or take. */
+function soakedNow(g: Game): number {
+  return g.weather.sky === "rain" ? clamp01(g.weather.rain * organic(SOAKING.fromRain)) : 0;
+}
+
+/** Pick a seat: anyone, or for the soaked, one by a lit fire if they can. */
+function pickSeat(g: Game, seats: Seat[], soaked: number): Seat {
+  const fire = g.world.furniture.find((f) => f.kind === "fireplace")?.center;
+  if (!fire || !g.fireLit || soaked < 0.15) return pick(seats);
+  return weightedPick(seats, (s) => 1 + SOAKING.fireSeatPull * soaked * Math.max(0, 1 - dist(s.tile, fire) / SOAKING.fireSeatRange)) ?? pick(seats);
+}
+
+function chooseSeat(g: Game, wantsFood: boolean, fussiness: number, soaked = 0): Seat | undefined {
   const free = g.world.seats.filter((s) => s.occupant === null && s.kind !== "bench" && !(s.table && g.reservations.has(tableKey(s.table))));
   const stools = free.filter((s) => s.kind === "stool");
   // Dirty tables are skipped while a clean one is free; the fussy mind more.
   const chairsAll = free.filter((s) => s.kind === "chair");
   const clean = chairsAll.filter((s) => !tableDirty(g, s));
   const chairs = clean.length ? clean : fussiness > 0.6 ? [] : chairsAll;
-  if (!wantsFood && stools.length && chance(0.6)) return pick(stools);
-  if (chairs.length) return pick(chairs);
-  if (stools.length) return pick(stools);
+  if (!wantsFood && stools.length && chance(0.6)) return pickSeat(g, stools, soaked);
+  if (chairs.length) return pickSeat(g, chairs, soaked);
+  if (stools.length) return pickSeat(g, stools, soaked);
   return undefined;
 }
 
@@ -59,7 +87,10 @@ function admit(g: Game, p: Patron, seat: Seat): Patron {
 export function spawnPatron(g: Game, archetype?: Archetype, forced?: { seat: Seat; groupId: number }): Patron | null {
   const a = archetype ?? weightedPick(ARCHETYPES, (x) => x.weight)!;
   const fussiness = clamp01(organic(a.fussiness));
-  const seat = forced?.seat ?? chooseSeat(g, chance(a.foodBias), fussiness);
+  const needs = arrivalNeeds(a.needs);
+  const soaked = soakedNow(g);
+  needs.warmth = clamp01(needs.warmth + soaked * SOAKING.warmthOnArrival);
+  const seat = forced?.seat ?? chooseSeat(g, hungrier(needs, a.foodBias), fussiness, soaked);
   if (!seat) return null;
   const n = (counts.get(a.id) ?? 0) + 1;
   counts.set(a.id, n);
@@ -84,11 +115,13 @@ export function spawnPatron(g: Game, archetype?: Archetype, forced?: { seat: Sea
     foodBias: a.foodBias,
     garnishAsk: a.garnishAsk,
     stayUntil: g.minute + Math.max(20, organic(a.stay)),
-    needs: arrivalNeeds(a.needs),
+    needs,
+    soaked,
     weatherTaste: a.weather,
     unmet: {},
     groupId: forced?.groupId,
   };
+  if (soaked > SOAKING.warmCraving) p.craving = { tag: "warm", honest: true };
   return admit(g, p, seat);
 }
 
@@ -101,10 +134,14 @@ function rollGroupSize(g: Game): number {
   return weightedPick(sizes, (x) => x.w)?.n ?? 1;
 }
 
-function emptyTableFor(g: Game, size: number): Table | undefined {
+function emptyTableFor(g: Game, size: number, soaked = 0): Table | undefined {
   const fits = g.world.tables.filter((t) => t.chairs.length >= size && !g.reservations.has(t.key) && t.chairs.every((c) => c.occupant === null));
-  // Clean tables first, and the smallest table that fits.
-  fits.sort((a, b) => ((g.dirt.get(a.key) ?? 0) >= TUNING.tableDirtyAt ? 1 : 0) - ((g.dirt.get(b.key) ?? 0) >= TUNING.tableDirtyAt ? 1 : 0) || a.chairs.length - b.chairs.length);
+  // Clean tables first; then a party in from the rain heads for the fire, if it's lit; else the
+  // smallest table that fits.
+  const fire = g.world.furniture.find((f) => f.kind === "fireplace")?.center;
+  const toFire = (t: Table) => (fire && g.fireLit && soaked >= 0.15 ? dist(t.tile, fire) : 0);
+  const dirty = (t: Table) => ((g.dirt.get(t.key) ?? 0) >= TUNING.tableDirtyAt ? 1 : 0);
+  fits.sort((a, b) => dirty(a) - dirty(b) || toFire(a) - toFire(b) || a.chairs.length - b.chairs.length);
   return fits[0];
 }
 
@@ -118,7 +155,7 @@ export function spawnVisitors(g: Game, archetype?: Archetype): boolean {
   const size = rollGroupSize(g);
   if (size === 1 && spawnPatron(g, a)) return true;
   const group: Group = { id: uid(), members: [], waiting: false };
-  const table = size > 1 ? emptyTableFor(g, size) : undefined;
+  const table = size > 1 ? emptyTableFor(g, size, soakedNow(g)) : undefined;
   let seats: Seat[];
   if (table) {
     seats = table.chairs.slice(0, size);
@@ -180,7 +217,10 @@ function processQueue(g: Game): void {
 }
 
 export function spawnRegular(g: Game, def: Regular, st: RegularState): Patron | null {
-  const seat = chooseSeat(g, chance(def.foodBias), def.fussiness);
+  const needs = arrivalNeeds(def.needs);
+  const soaked = soakedNow(g);
+  needs.warmth = clamp01(needs.warmth + soaked * SOAKING.warmthOnArrival);
+  const seat = chooseSeat(g, hungrier(needs, def.foodBias), def.fussiness, soaked);
   if (!seat) return null;
   const p: Patron = {
     ...basePatron(g, seat),
@@ -197,11 +237,13 @@ export function spawnRegular(g: Game, def: Regular, st: RegularState): Patron | 
     foodBias: def.foodBias,
     garnishAsk: def.garnishAsk,
     stayUntil: g.minute + Math.max(20, organic(def.stay)),
-    needs: arrivalNeeds(def.needs),
+    needs,
+    soaked,
     weatherTaste: def.weather,
     unmet: {},
   };
   prepareVisit(p, def, st);
+  if (soaked > SOAKING.warmCraving && !p.craving) p.craving = { tag: "warm", honest: true };
   st.visits++;
   st.visitedToday = true;
   admit(g, p, seat);
@@ -240,17 +282,22 @@ function seatOf(g: Game, p: Patron): Seat | undefined {
 
 function placeOrder(g: Game, p: Patron): void {
   const seat = seatOf(g, p);
-  // A salty snack bowl on the table makes people thirstier.
-  const bowl = seat?.table ? g.bowls.get(tableKey(seat.table)) : undefined;
-  const thirst = bowl && bowl.left > 0 ? SNACKS.find((x) => x.id === bowl.snack)?.thirsty ?? 0 : 0;
   // Only what's on the bill of fare. If it's run out, that's the keeper's problem.
   const offered = (k: ItemKind) => RECIPES.filter((r) => r.kind === k && g.menu.has(r.id));
-  let kind: ItemKind = seat?.kind === "stool" ? "drink" : chance(Math.max(0, p.foodBias - thirst)) ? "food" : "drink";
-  if (!offered(kind).length) kind = kind === "food" ? "drink" : seat?.kind === "stool" ? "drink" : "food";
-  // Someone nearby was delighted by something: they might want the same.
+  // Food or drink, by how hungry and thirsty they are (salty snacks already showed up as thirst).
+  // Stools are for drinks. On sitting down everyone has something, even if they're hardly in need.
+  const stool = seat?.kind === "stool";
+  const grace = p.graceDrink === true;
+  p.graceDrink = false;
+  const wf = stool || grace ? 0 : wants(p.needs, p.foodBias, "food");
+  const wd = grace ? 1 : wants(p.needs, p.foodBias, "drink");
+  let kind: ItemKind = wf + wd <= 0 ? (stool || p.needs.thirst >= p.needs.hunger ? "drink" : "food") : chance(wf / (wf + wd)) ? "food" : "drink";
+  if (!offered(kind).length) kind = kind === "food" ? "drink" : stool ? "drink" : "food";
+  // Someone nearby was delighted by something: they might want the same, unless they're full of it.
   const insp = p.inspiredBy;
   p.inspiredBy = undefined;
-  const inspired = insp ? RECIPES.find((r) => r.id === insp.recipeId && g.menu.has(r.id) && (seat?.kind !== "stool" || r.kind === "drink")) : undefined;
+  const inspired = insp ? RECIPES.find((r) => r.id === insp.recipeId && g.menu.has(r.id) && (!stool || r.kind === "drink")
+    && (wants(p.needs, p.foodBias, r.kind) > 0 || (grace && r.kind === "drink"))) : undefined;
   if (inspired) {
     kind = inspired.kind;
   }
@@ -266,6 +313,8 @@ function placeOrder(g: Game, p: Patron): void {
   const recipe = inspired ?? weightedPick(menu, (r) => {
     let w = Math.exp(0.7 * appeal(r.baseTags, t)) + 0.25;
     if (p.craving && (r.baseTags.includes(p.craving.tag) || r.options.some((o) => INGREDIENTS.find((i) => i.id === o)?.tags.includes(p.craving!.tag)))) w *= 2;
+    // Cold (or wet through): something warm appeals more.
+    if (r.baseTags.includes("warm")) w *= 1 + SOAKING.warmOrderPull * p.needs.warmth;
     return w;
   })!;
   let wantGarnish: string | undefined;
@@ -288,6 +337,10 @@ function placeOrder(g: Game, p: Patron): void {
   g.bus.emit({ type: "OrderPlaced", orderId: o.id });
   g.say(`${p.name} would like ${o.label.toLowerCase()}.`);
   p.hadRecipes = [...(p.hadRecipes ?? []), recipe.id];
+  if (grace) {
+    p.lastGraceAt = g.minute;
+    p.line = { text: pick(["Go on then, one more.", "Just the one more.", "Well, since I'm here…"]), until: g.minute + 6 };
+  }
   if (inspired && insp) {
     p.inspiredTimes = (p.inspiredTimes ?? 0) + 1;
     const said = `I'll have what ${insp.from} had.`;
@@ -314,6 +367,7 @@ export function inspireOthers(g: Game, p: Patron, item: { recipeId: string; kind
     // another portion of the same thing is a bit less tempting, and three times a visit is plenty.
     const times = q.inspiredTimes ?? 0;
     if (q.inspiredBy || times >= 3) continue;
+    if (wants(q.needs, q.foodBias, item.kind) <= 0) continue; // full of that sort of thing
     if (dist(q.pos, p.pos) > TALK_TUNING.inspireRange) continue;
     const sounds = tagScore(item.tags, q.tastes[item.kind]).score;
     let pull = 0.2 + 0.12 * sounds - 0.25 * q.fussiness + (q.schema === "unformed" ? 0.15 : 0) - (q.schema === "reserved" ? 0.15 : 0);
@@ -353,6 +407,21 @@ function move(p: Patron, simDt: number): boolean {
     else { p.pos.x += (dx / d) * step; p.pos.y += (dy / d) * step; step = 0; }
   }
   return p.path.length === 0;
+}
+
+/**
+ * Done with what's in front of them: do they want anything else? Hunger and thirst decide. Full up,
+ * now and then one more drink anyway (the soft edge of full), but not too often.
+ */
+function wantsMore(g: Game, p: Patron): boolean {
+  const seat = seatOf(g, p);
+  const f = seat?.kind === "stool" ? 0 : wants(p.needs, p.foodBias, "food");
+  const d = wants(p.needs, p.foodBias, "drink");
+  const strongest = Math.min(1, Math.max(f, d));
+  if (strongest > 0) return chance(strongest);
+  const graceReady = g.minute - (p.lastGraceAt ?? -Infinity) >= NEEDS.graceEvery;
+  if (graceReady && chance(NEEDS.graceChance)) { p.graceDrink = true; return true; }
+  return false;
 }
 
 function groupOf(g: Game, p: Patron): Group | undefined {
@@ -479,6 +548,26 @@ function greetings(g: Game): void {
   }
 }
 
+/** A puddle on the floor next to them. False if there's nowhere to put it. */
+function spillNear(g: Game, p: Patron): boolean {
+  const near: Vec[] = [];
+  for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const t = g.world.tile(Math.floor(p.pos.x) + dx, Math.floor(p.pos.y) + dy);
+    if (t && t.def.kind === "floor") near.push({ x: t.x, y: t.y });
+  }
+  if (!near.length || g.spills.length >= 12) return false;
+  const s = pick(near);
+  if (g.spills.some((x) => x.x === s.x && x.y === s.y)) return false;
+  g.spills.push({ id: uid(), x: s.x, y: s.y });
+  return true;
+}
+
+/** Wet guests drip as they come in and while they dry. */
+function drip(g: Game, p: Patron, simDt: number): void {
+  if (p.soaked <= 0.05 || p.state === "leaving") return;
+  if (chance((SOAKING.dripPerHour * p.soaked / 60) * simDt)) spillNear(g, p);
+}
+
 function makeMess(g: Game, p: Patron, simDt: number): void {
   // Spills: occasional, while eating or drinking.
   const perMinute = (TUNING.spillChancePerHour * p.messiness) / 60;
@@ -563,6 +652,7 @@ export function updatePatrons(g: Game, simDt: number): void {
 
   for (const p of [...g.patrons]) {
     chatter(g, p);
+    drip(g, p, simDt);
     switch (p.state) {
       case "entering":
         if (move(p, simDt)) {
@@ -609,9 +699,8 @@ export function updatePatrons(g: Game, simDt: number): void {
         if (g.minute >= p.consumeUntil) {
           p.consuming = undefined;
           leaveTableMess(g, p);
-          const decay = Math.pow(0.75, p.ordersPlaced - 1);
           const group = groupOf(g, p);
-          const stay = !group?.leaving && g.open && !g.lastCall && g.minute < p.stayUntil && chance(TUNING.reorderChance * decay);
+          const stay = !group?.leaving && g.open && !g.lastCall && g.minute < p.stayUntil && wantsMore(g, p);
           if (stay) {
             p.state = "seated";
             p.nextThinkAt = g.minute + organic([4, 3]);

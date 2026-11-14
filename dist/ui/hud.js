@@ -159,7 +159,7 @@ function needsLine(g, p) {
         const v = p.needs[n].toFixed(2);
         const u = p.unmet[n];
         return u ? `<b style="color:#ff7a6a">${n} ${v} (${Math.floor(g.minute - u.since)}m)</b>` : `${n} ${v}`;
-    }).join(" · ");
+    }).join(" · ") + (p.soaked > 0.01 ? ` · <span style="color:#7fb0e0">soaked ${p.soaked.toFixed(2)}</span>` : "");
 }
 /** Count and average length per need, e.g. "hunger 4 × 23m · thirst 2 × 11m". */
 function unmetSummary(list, inline = false) {
