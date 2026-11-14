@@ -28,7 +28,7 @@ export function soundscape(g: Game, realDt: number): void {
   crowd(g);
   fire(g, realDt);
   weatherSound(g, realDt);
-  gramophoneSound(g);
+  gramophoneSound(g, realDt);
   updateVoices();
 }
 

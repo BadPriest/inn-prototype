@@ -216,7 +216,9 @@ export class Game {
   fireLit = false;
   lampsLit = false;
   /** The gramophone: playing or not, which record, and how many records the spring has left. */
-  gramophone = { on: false, record: 0, left: 0 };
+  gramophone = { on: false, record: 0, spring: 0 }; // spring: seconds of music left in it
+  /** The keeper winding the gramophone (real seconds; walking away stops it). */
+  winding: { progress: number; total: number; at: { x: number; y: number } } | null = null;
   /** This morning's paper (newspaper.ts). */
   paper?: Paper; // the keeper lights the lamps when it gets gloomy (ui/light.ts)
   flowMultiplier = 1;

@@ -1,0 +1,110 @@
+# Travelling Inn prototype: Sound
+
+Nov 15, 2026 · build 73 · Describes what's built and draws the line for what comes next.
+
+Markers: **Decided**, **Suggestion** (Claude, not decided), **Q** (open), **Later**.
+
+## Why sound is in a lofi prototype
+
+The prototype tests whether the loop is fun. Sound earns its place in two ways:
+
+1. **Cues: the game telling you something.** An order came in, how a serve landed, a guest gave up. These carry information the circles can't, so they belong in slice 1 without question.
+2. **Atmosphere: the inn as a place.** Fire, crowd, rain, music. These answer one of the slice's questions directly: *does it stay cozy?* (prototype spec §15, question 3). The vision says sound, light and small gestures carry the mood, so a cozy test without them is only half a test.
+
+Everything else waits for the real game.
+
+## The rule for what goes in
+
+**Decided:** a sound is in scope if it **reacts to state the game already has** (the fire being lit, the headcount, the weather, the door, which room the keeper is in). It waits if it needs **new authored content** per guest, per event or per line.
+
+Reacting costs a small listener and a row in `SOUNDS`. Authoring grows with the cast and the script, and that belongs to later specs (Spec 5 for voices, Spec 3 for mood-driven music).
+
+A second check: **would a playtester notice it on a top-down map of circles?** If not, it waits for the isometric game.
+
+## How it's built (Decided, in place)
+
+- **One listener.** `src/sound.ts` listens to game events and calls `soundscape()` every frame. Systems never call sound directly.
+- **Data, not code.** Which files, how loud, how much pitch variation: `SOUNDS` in `src/data.ts`. Behaviour tuning: `SOUND_TUNING`, `FIRE`, `CROWD`, `DOOR_TUNING`, `GRAMOPHONE`, `GRAMOPHONE_TONE`.
+- **The engine** (`src/sound/engine.ts`) loads files, evens out their loudness, slices footstep files into single steps, and places sounds: distance, pan, and muffling through walls (next room at 0.35, two rooms away silent).
+- **Organic repetition.** Every sound varies a little in pitch and volume. Loops start at a random point, so two pots never play in step.
+- **Pause silences everything** (the audio context is suspended). **M** mutes.
+- **Three volume groups (Decided, in place).** Every sound is a cue (the game telling you something), atmosphere, or music (`SoundDef.bus`). The pause screen sets **Cues** and **Atmosphere** volume (off to 100%) and switches **Music** off, kept in the browser. Cues: the bell, order taps, paper, confirm, serve outcomes, delight, and the synthesised placeholders. Music: the records and every gramophone sound. Everything else is atmosphere.
+- **Files stay clean.** Effects such as the gramophone's tone are applied live, so a file can be swapped or reused without re-exporting.
+- **Synthesised placeholders** cover cues that don't have a file yet (a guest leaving early, a resolution moment). They're marked as placeholders in `sound.ts`.
+
+## What's in (build 69)
+
+| Layer | What it does | Where |
+| --- | --- | --- |
+| Door and bell | Opens and closes with whoever is in the doorway; the bell rings as it swings. Quicker for one person | `sound.ts`, `DOOR_TUNING` |
+| Orders | Two or three taps, heard anywhere, panned toward who ordered | `sound.ts` |
+| Serve outcomes | Delight, positive, neutral, negative chords. A whole table plays one after another, like chords being played | `sound.ts`, `OUTCOME_SOUND` |
+| Paper and confirm | Checklist ticks, journal notes; a piano note on confirming a decision | `sound.ts` |
+| Pouring | Taps and the tea urn; stops when the pour stops | `sound.ts` |
+| Cooking | Kettle while brewing; stew cooking, then simmering while the pot has servings | `sound/loops.ts` |
+| Footsteps | One step per stride for the keeper and guests, at most 3 guest steps at once | `sound/footsteps.ts` |
+| Crowd | Taproom murmur in four levels by headcount (1, 6, 15, 27), crossfading once the count holds | `sound/crowd.ts`, `CROWD` |
+| Fire | Catches small, roars, settles; dies to embers when put out | `sound/fire.ts`, `FIRE` |
+| Weather | Rain indoors, through the open door, and at the windows, mixed by intensity; wind; thunder; street noise | `sound/weather.ts` |
+| Gramophone | Records through a horn and turntable effect; the spring runs a few minutes and sags the record when it gives out | `sound/gramophone.ts` (#9, in review) |
+
+## The gramophone
+
+### As built
+
+- **Music comes from the gramophone (Decided, design journal).** It stands in the taproom and is heard from there, muffled through walls like anything else.
+- **Wound by hand (Decided).** The keeper winds it, staying by it while the crank turns (a progress bar shows it; walking away leaves it unwound). The spring then runs `GRAMOPHONE.springSeconds` of music (240, about two records: short for testing, so the run-down comes round; the real game would run longer), counted only while music plays and the game isn't paused. Winding is a small chore with a reward, and optional. **Suggestion (journal):** because it's wound, it plays on through a power cut, once outages exist.
+- **The sequence:** the crank turns, the needle drops, the record plays with surface crackle underneath. At the end of a record: the run-out groove, then the next. Changing the record lifts the needle and drops it on the next. The record's title shows as a line (♪ *Go, Little Boat*). The prompt tells how the spring is doing (freshly wound, running a while yet, nearly spent, winding down).
+- **Running down (Decided).** If the spring gives out mid-record, the record sags over its last seconds (`GRAMOPHONE.sag`: speed to 0.45 and level to 0.35, so the pitch drags down) with the winding-down sound layered over it, as you'd hear the mechanism labour. If it's spent as a record ends, the run-out plays, then the winding-down sound. Either way it then goes **silent** until wound again: no run-out hiss, nothing that nags.
+- **Five records**, the in-house songs. The originals are in `assets/sounds/music/`; the copies the game plays are in `assets/sounds/gramophone/`.
+
+### The tone (in place)
+
+Applied live to each record, set in `GRAMOPHONE_TONE`:
+
+| Stage | Setting | What it does |
+| --- | --- | --- |
+| High-pass | 320 Hz | Removes the bass the horn can't make |
+| Low-pass | 3400 Hz | Dulls the top |
+| Horn resonance | +6 dB at 1400 Hz | The nasal, boxy middle |
+| Drive | 2.4 | Soft distortion on the louder parts |
+| Wow | 0.55 Hz, 0.6% | The slow wander of the turntable |
+| Flutter | 6.5 Hz, 0.18% | A faster shimmer |
+| Make-up gain | 1.6 | Brings the band-limited sound back to level |
+
+Crackle is a separate looped file, so it doesn't pass through the effect and can be mixed on its own.
+
+### Next for the gramophone
+
+- **Q:** How long the spring runs in the real game, once testing no longer needs the run-down to come round quickly.
+- **Later:** guests react to the music (Spec 7's foot-tap expression); requests from regulars; buying records.
+
+## Next, in scope
+
+| Item | Why it fits the rule | Task |
+| --- | --- | --- |
+| A base loop per calendar season (spring birdsong, summer insects, autumn wind and leaves, winter hush), maybe by time of day | Reacts to the calendar, which exists | #19 |
+| Outdoor storm loop through the open door | Reacts to weather; today a storm uses the medium rain, louder | optional |
+
+## Not now
+
+| Idea | Why it waits |
+| --- | --- |
+| Music that follows the game (tempo with how busy it is, chords with mood) | Mood isn't in the prototype; nothing to drive it |
+| Guest voices, murmurs or barks per guest | Authored content; belongs to Spec 5 |
+| Footsteps that change with the floor surface | Can't be noticed on circles; isometric game |
+| Full 3D positioning (beyond distance, pan and walls) | Same |
+| A tune heard in full during the quiet moment (Spec 7) | The quiet moment isn't in the prototype yet |
+| Radio | Parked until electricity is a system |
+| Sounds for cards (selected, played, spent) | Cards aren't in the prototype |
+
+## Watch for in playtests
+
+- **The music doing the work.** If notes praise the atmosphere but not the loop, test a session with music off.
+- **Cue fatigue.** Order taps and outcome chords repeat all day. Do they still feel good after an hour, or do players mute?
+- **Muddy mix on busy rainy days.** Crowd, rain, fire, cooking and music all at once. Can you still hear an order come in?
+- **The gramophone as a chore.** Does anyone feel they *have* to keep it wound?
+
+## Q
+
+- **Decided:** the crowd murmur keeps reaching the kitchen through the wall, as now; it doesn't annoy (Bruno, though business has been slow: revisit if busy days get muddy).

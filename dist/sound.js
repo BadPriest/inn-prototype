@@ -25,7 +25,7 @@ export function soundscape(g, realDt) {
     crowd(g);
     fire(g, realDt);
     weatherSound(g, realDt);
-    gramophoneSound(g);
+    gramophoneSound(g, realDt);
     updateVoices();
 }
 // The door makes one sound at a time: opening and closing never overlap.

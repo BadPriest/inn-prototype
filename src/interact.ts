@@ -9,7 +9,7 @@ import { tableKey } from "./patrons.js";
 import { applyGarnish, removeFromTray, servePatron, serveTable, garnishableDrinks, iconFor, itemLabel, serveUnasked, trayItems, pickupFromHatch, pickUpTray, startPour, setTrayDown, takeFromHatch } from "./serving.js";
 import { endDay, startNextDay, toggleInn } from "./day.js";
 import { compactDate, longDate } from "./calendar.js";
-import { gramophoneChanged, gramophoneWound, recordsReady } from "./sound/gramophone.js";
+import { gramophoneChanged, gramophoneWound, recordsReady, springLeft } from "./sound/gramophone.js";
 import { openSteepScreen } from "./ui/cook.js";
 import { closeAll, openMenu, replaceMenu, back } from "./ui/menu.js";
 import { openCookScreen } from "./ui/cook.js";
@@ -154,7 +154,8 @@ export function promptFor(g: Game, t: Target | null): string {
     }
     case "gramophone":
       if (!recordsReady()) return "The gramophone (no records yet)";
-      return g.gramophone.on ? `Space: change the record (${g.gramophone.left} left on this winding)` : "Space: wind it up and play a record";
+      if (g.winding) return `Winding… ${Math.round((g.winding.progress / g.winding.total) * 100)}%`;
+      return g.gramophone.on ? `Space: change the record (spring ${springLeft(g)})` : "Space: wind it up and play a record";
     case "snacks": {
       const bowl = g.bowls.get(`${f.tiles[0].x},${f.tiles[0].y}`);
       return bowl ? (bowl.left < 0.15 ? "Space: refill the counter bowl" : "Space: swap or clear the counter bowl") : "Space: set out snacks on the counter";
@@ -212,8 +213,9 @@ export function interact(g: Game, t: Target | null): void {
     case "gramophone": {
       const gr = g.gramophone;
       if (!recordsReady()) { g.say("No records to play yet."); return; }
-      if (!gr.on) { gr.on = true; gr.left = GRAMOPHONE.perWinding; gramophoneWound(g); g.say("You wind the gramophone and set the needle down."); }
-      else if (gr.left <= 0) g.say("It's winding down; give it a moment, then wind it again.");
+      if (g.winding) return; // already winding
+      if (!gr.on) { gr.on = true; gr.spring = GRAMOPHONE.springSeconds; gramophoneWound(g); g.say("You wind the gramophone. Stay with it while the crank turns."); }
+      else if (springLeft(g) === "winding down") g.say("It's winding down; give it a moment, then wind it again.");
       else { gr.record = (gr.record + 1) % GRAMOPHONE.records.length; gramophoneChanged(); g.say("You change the record."); }
       return;
     }

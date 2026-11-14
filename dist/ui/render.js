@@ -328,13 +328,13 @@ export function draw(ctx, g, v, target, clickDest) {
         ctx.fillText(t, X(k.pos.x), Y(k.pos.y) - ts * 0.62);
         ctx.lineWidth = 1;
     }
-    const busy = g.cleaning ?? g.pouring;
+    const busy = g.cleaning ?? g.pouring ?? g.winding;
     if (busy) {
         const pct = Math.min(1, busy.progress / busy.total);
         const bx = X(k.pos.x) - ts * 0.5, by = Y(k.pos.y) - ts * 0.75;
         ctx.fillStyle = "rgba(0,0,0,0.65)";
         ctx.fillRect(bx, by, ts, ts * 0.16);
-        ctx.fillStyle = g.pouring ? "#e8b25a" : "#8fd3ff";
+        ctx.fillStyle = g.winding ? "#c9a24a" : g.pouring ? "#e8b25a" : "#8fd3ff";
         ctx.fillRect(bx, by, ts * pct, ts * 0.16);
     }
     // Paused overlay

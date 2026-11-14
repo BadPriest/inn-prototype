@@ -538,7 +538,11 @@ export const GRAMOPHONE = {
     { sound: "recordApple", title: "The Apple Tree" },
     { sound: "recordRoad", title: "The Road Can Wait" },
   ],
-  perWinding: 3, // records it plays before the spring runs down
+  // The spring runs this many seconds of music per winding. Short for testing (about two records) so the
+  // run-down comes round; the real thing would run longer. Winding stays optional, a small chore.
+  springSeconds: 240,
+  // Giving out mid-record: the last seconds sag to this speed and level (pitch drags down with it).
+  sag: { seconds: 5, toRate: 0.45, toLevel: 0.35 },
 };
 
 /** Market day: busier around the middle of the day. */
@@ -686,13 +690,30 @@ export const TALK_TUNING = {
 export interface SoundDef {
   files: string[]; volume: number; pitch: number;
   loop?: boolean; heardEverywhere?: boolean; slice?: boolean; room?: string; trim?: boolean;
+  tone?: "gramophone"; // played through the gramophone's horn and turntable (GRAMOPHONE_TONE)
+  bus?: "cue" | "music"; // its own volume setting: cues tell you something, music is the gramophone. Else: atmosphere
 }
+
+/**
+ * The gramophone's sound, put on the records as they play (the files stay clean): a narrow band (no
+ * bass, dulled highs), the horn's nasal resonance, a soft edge of distortion, and the turntable's
+ * wow (slow speed wobble) and flutter (fast shimmer).
+ */
+export const GRAMOPHONE_TONE = {
+  highpass: 320, // Hz: below this, gone
+  lowpass: 3400, // Hz: above this, dulled
+  horn: { freq: 1400, gain: 6, q: 1.2 }, // the horn's resonance (dB)
+  drive: 2.4, // distortion: 1 is clean, higher is grittier
+  wow: { rate: 0.55, depth: 0.006 }, // Hz, and how far the speed wanders (fraction)
+  flutter: { rate: 6.5, depth: 0.0018 },
+  makeUp: 1.6, // the band-limiting makes it quieter: this brings it back up
+};
 
 const SND = "assets/sounds/";
 export const SOUNDS: Record<string, SoundDef> = {
   doorOpens: { files: [SND + "door-opens-1.opus"], volume: 0.8, pitch: 0.05 },
   doorCloses: { files: [SND + "door-closes.opus"], volume: 0.8, pitch: 0.05 },
-  bell: { files: [SND + "shopkeeper-bell-1.opus", SND + "shopkeeper-bell-2.opus"], volume: 0.55, pitch: 0.05, heardEverywhere: true },
+  bell: { bus: "cue", files: [SND + "shopkeeper-bell-1.opus", SND + "shopkeeper-bell-2.opus"], volume: 0.55, pitch: 0.05, heardEverywhere: true },
   pour: { files: [SND + "drink-pouring-1.opus", SND + "drink-pouring-2.opus", SND + "drink-pouring-3.opus"], volume: 0.7, pitch: 0.07 },
   // A cup from the urn (TUNING.urnPourSeconds long, about 2 s).
   urnPour: { files: [SND + "tea-pouring.opus"], volume: 0.6, pitch: 0.06 },
@@ -704,16 +725,16 @@ export const SOUNDS: Record<string, SoundDef> = {
   keeperRun: { files: [SND + "indoors-run-cycle-loop.opus"], volume: 0.45, pitch: 0.06, slice: true },
   patronStep: { files: [SND + "indoors-walk-step-loop.opus", SND + "indoors-walk-cycle-4-step-loop.opus"], volume: 0.16, pitch: 0.1, slice: true },
   // Cues: the game telling you something. Chords barely vary in pitch, so they stay in tune.
-  order: { files: [SND + "order-two-taps.opus", SND + "order-three-taps.opus"], volume: 0.5, pitch: 0.05, trim: true, heardEverywhere: true },
-  paper: { files: [SND + "check-sound.opus"], volume: 0.45, pitch: 0.04, trim: true },
+  order: { bus: "cue", files: [SND + "order-two-taps.opus", SND + "order-three-taps.opus"], volume: 0.5, pitch: 0.05, trim: true, heardEverywhere: true },
+  paper: { bus: "cue", files: [SND + "check-sound.opus"], volume: 0.45, pitch: 0.04, trim: true },
   // Confirming a decision: putting up the bill of fare, taking an upgrade. Not routine work (cooking,
   // garnishing). Which buttons play it: confirmSound on a MenuItem, or confirmed() in menu.ts.
   // Switch off with SOUND_TUNING.confirmSound.
-  confirm: { files: [SND + "piano-confirm.opus"], volume: 0.45, pitch: 0.01, trim: true },
-  servePositive: { files: [SND + "serving-outcome-positive-1-chord.opus", SND + "serving-outcome-positive-2-chord.opus"], volume: 0.5, pitch: 0.01, trim: true },
-  serveNeutral: { files: [SND + "serving-outcome-neutral-1-chord.opus", SND + "serving-outcome-neutral-2-chord.opus"], volume: 0.45, pitch: 0.01, trim: true },
-  serveNegative: { files: [SND + "serving-outcome-negative-1-chord.opus", SND + "serving-outcome-negative-2-chord.opus"], volume: 0.45, pitch: 0.01, trim: true },
-  delight: { files: [SND + "delight-1.opus", SND + "delight-2.opus"], volume: 0.6, pitch: 0.01, trim: true },
+  confirm: { bus: "cue", files: [SND + "piano-confirm.opus"], volume: 0.45, pitch: 0.01, trim: true },
+  servePositive: { bus: "cue", files: [SND + "serving-outcome-positive-1-chord.opus", SND + "serving-outcome-positive-2-chord.opus"], volume: 0.5, pitch: 0.01, trim: true },
+  serveNeutral: { bus: "cue", files: [SND + "serving-outcome-neutral-1-chord.opus", SND + "serving-outcome-neutral-2-chord.opus"], volume: 0.45, pitch: 0.01, trim: true },
+  serveNegative: { bus: "cue", files: [SND + "serving-outcome-negative-1-chord.opus", SND + "serving-outcome-negative-2-chord.opus"], volume: 0.45, pitch: 0.01, trim: true },
+  delight: { bus: "cue", files: [SND + "delight-1.opus", SND + "delight-2.opus"], volume: 0.6, pitch: 0.01, trim: true },
   // The fire, heard from the fireplace. Which plays when: FIRE below.
   fireSmall: { files: [SND + "fireplace-small-loop.opus"], volume: 0.25, pitch: 0.03, loop: true },
   fireMedium: { files: [SND + "fireplace-med-loop.opus"], volume: 0.35, pitch: 0.03, loop: true },
@@ -738,17 +759,17 @@ export const SOUNDS: Record<string, SoundDef> = {
   windMedium: { files: [SND + "wind-medium-outside-ambience-loop.opus"], volume: 0.45, pitch: 0.02, loop: true },
   windStrong: { files: [SND + "wind-strong-outside-ambience-loop.opus"], volume: 0.55, pitch: 0.02, loop: true },
   // The gramophone's records (assets/sounds/gramophone: smaller copies of the originals in music/).
-  recordBoat: { files: [SND + "gramophone/go-little-boat.opus"], volume: 0.34, pitch: 0 },
-  recordBlow: { files: [SND + "gramophone/let-it-blow.opus"], volume: 0.34, pitch: 0 },
-  recordRound: { files: [SND + "gramophone/round-we-go.opus"], volume: 0.34, pitch: 0 },
-  recordApple: { files: [SND + "gramophone/the-apple-tree.opus"], volume: 0.34, pitch: 0 },
-  recordRoad: { files: [SND + "gramophone/the-road-can-wait.opus"], volume: 0.34, pitch: 0 },
+  recordBoat: { tone: "gramophone", bus: "music", files: [SND + "gramophone/go-little-boat.opus"], volume: 0.34, pitch: 0 },
+  recordBlow: { tone: "gramophone", bus: "music", files: [SND + "gramophone/let-it-blow.opus"], volume: 0.34, pitch: 0 },
+  recordRound: { tone: "gramophone", bus: "music", files: [SND + "gramophone/round-we-go.opus"], volume: 0.34, pitch: 0 },
+  recordApple: { tone: "gramophone", bus: "music", files: [SND + "gramophone/the-apple-tree.opus"], volume: 0.34, pitch: 0 },
+  recordRoad: { tone: "gramophone", bus: "music", files: [SND + "gramophone/the-road-can-wait.opus"], volume: 0.34, pitch: 0 },
   // The gramophone's own sounds: winding it, the needle, the surface noise, the end of a record, the spring giving out.
-  gramoCrank: { files: [SND + "sfx-gramophone-winding-crank.opus"], volume: 0.5, pitch: 0.03 },
-  gramoNeedle: { files: [SND + "sfx-gramophone-needle-drop.opus"], volume: 0.45, pitch: 0.04, trim: true },
-  gramoCrackle: { files: [SND + "sfx-gramophone-surface-crackle-loop.opus", SND + "sfx-gramophone-surface-crackle-loop-2.opus"], volume: 0.12, pitch: 0.02, loop: true },
-  gramoRunout: { files: [SND + "sfx-gramophone-record-finished.opus"], volume: 0.4, pitch: 0.02 },
-  gramoWindDown: { files: [SND + "sfx-gramophone-winding-down.opus"], volume: 0.5, pitch: 0.02 },
+  gramoCrank: { bus: "music", files: [SND + "sfx-gramophone-winding-crank.opus"], volume: 0.5, pitch: 0.03 },
+  gramoNeedle: { bus: "music", files: [SND + "sfx-gramophone-needle-drop.opus"], volume: 0.45, pitch: 0.04, trim: true },
+  gramoCrackle: { bus: "music", files: [SND + "sfx-gramophone-surface-crackle-loop.opus", SND + "sfx-gramophone-surface-crackle-loop-2.opus"], volume: 0.12, pitch: 0.02, loop: true },
+  gramoRunout: { bus: "music", files: [SND + "sfx-gramophone-record-finished.opus"], volume: 0.4, pitch: 0.02 },
+  gramoWindDown: { bus: "music", files: [SND + "sfx-gramophone-winding-down.opus"], volume: 0.5, pitch: 0.02 },
   // Thunder in the storm band: a close crack now and then, otherwise a rumble nearby.
   thunderClose: { files: [SND + "sfx-thunder-close-1.opus", SND + "sfx-thunder-close-2.opus"], volume: 0.7, pitch: 0.06, heardEverywhere: true },
   thunderNearby: { files: [SND + "sfx-thunder-nearby-1.opus", SND + "sfx-thunder-nearby-2.opus"], volume: 0.5, pitch: 0.06, heardEverywhere: true },

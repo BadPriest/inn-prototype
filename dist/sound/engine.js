@@ -1,10 +1,12 @@
 // The sound engine: loads the files, evens out their loudness, cuts footstep files into single steps,
 // and plays sounds from places (distance, pan, muffled through walls). It knows nothing about the game
 // beyond where the keeper stands and which tile is in which room. What plays when: sound.ts and sound/*.
-import { ROOM_LINKS, ROOM_OF_TILE, SOUNDS, SOUND_TUNING as T } from "../data.js";
+import { GRAMOPHONE_TONE as GT, ROOM_LINKS, ROOM_OF_TILE, SOUNDS, SOUND_TUNING as T } from "../data.js";
 import { dist } from "../world.js";
 let ac = null;
 let master = null;
+const buses = {};
+const busLevel = { cue: 1, ambience: 1, music: 1 };
 let muted = false;
 let game = null;
 const buffers = new Map(); // file, or "file#n" for the nth slice of a sliced file
@@ -156,6 +158,12 @@ export function unlockAudio() {
         master = ac.createGain();
         master.gain.value = muted ? 0 : 1;
         master.connect(ac.destination);
+        for (const b of ["cue", "ambience", "music"]) {
+            const n = ac.createGain();
+            n.gain.value = busLevel[b];
+            n.connect(master);
+            buses[b] = n;
+        }
     }
     catch {
         ac = null;
@@ -178,7 +186,7 @@ export function vary(n, amount) {
 }
 /** For the synthesised placeholders: the context and where to plug in. */
 export function output() {
-    return ac && master ? { ac, out: master } : null;
+    return ac && master ? { ac, out: buses.cue ?? master } : null; // the placeholders are cues
 }
 // ---------------------------------------------------------------------------
 // Where sounds carry: which room each tile is in, and how many rooms apart two rooms are.
@@ -262,12 +270,29 @@ function startSource(v, when, offsetRandom, fadeIn) {
     }
     else
         gain.gain.setValueAtTime(target, when);
-    src.connect(gain).connect(v.level);
+    src.connect(gain).connect(v.input);
+    // The turntable: the speed wobbles slowly (wow) and shimmers fast (flutter).
+    let wobble;
+    if (v.def.tone === "gramophone") {
+        wobble = [GT.wow, GT.flutter].map(({ rate, depth }) => {
+            const osc = ac.createOscillator();
+            const amt = ac.createGain();
+            osc.frequency.value = rate * (0.9 + Math.random() * 0.2);
+            amt.gain.value = depth * src.playbackRate.value;
+            osc.connect(amt).connect(src.playbackRate);
+            osc.start(when);
+            return osc;
+        });
+        src.addEventListener("ended", () => wobble?.forEach((o) => { try {
+            o.stop();
+        }
+        catch { /* done */ } }));
+    }
     // Loops start somewhere in the middle, so two pots never sound in step.
     const offset = offsetRandom ? Math.random() * buf.duration * 0.9 : 0;
     src.start(when, offset);
     const rate = src.playbackRate.value;
-    const s = { src, gain, endsAt: when + (buf.duration - offset) / rate, rings: (ringsFor.get(keyPick) ?? buf.duration) / rate };
+    const s = { src, gain, endsAt: when + (buf.duration - offset) / rate, rings: (ringsFor.get(keyPick) ?? buf.duration) / rate, wobble };
     src.onended = () => { if (!src.loop && (v.stopped || !v.turns) && v.current === s)
         voices.delete(v); };
     return s;
@@ -300,15 +325,44 @@ export function play(key, at, opts = {}) {
         panner = null;
     }
     level.connect(spatial);
+    const out = buses[def.bus ?? "ambience"] ?? master;
     if (panner)
-        spatial.connect(panner).connect(master);
+        spatial.connect(panner).connect(out);
     else
-        spatial.connect(master);
-    const v = { key, def, at, rate: opts.rate ?? 1, level, spatial, panner, current: null,
+        spatial.connect(out);
+    const v = { key, def, at, rate: opts.rate ?? 1, level, input: def.tone === "gramophone" ? gramophoneChain(level) : level, spatial, panner, current: null,
         turns: def.loop === true && choices(def).length > 1, stopped: false };
     v.current = startSource(v, t, def.loop === true, 0);
     voices.add(v);
     return v;
+}
+/** The horn: band-limit, resonance, a soft edge. Returns the node sources plug into; it feeds `out`. */
+function gramophoneChain(out) {
+    const c = ac;
+    const hp = c.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.value = GT.highpass;
+    hp.Q.value = 0.8;
+    const lp = c.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = GT.lowpass;
+    lp.Q.value = 0.9;
+    const horn = c.createBiquadFilter();
+    horn.type = "peaking";
+    horn.frequency.value = GT.horn.freq;
+    horn.gain.value = GT.horn.gain;
+    horn.Q.value = GT.horn.q;
+    const drive = c.createWaveShaper();
+    const n = 1024, curve = new Float32Array(n), k = GT.drive;
+    for (let i = 0; i < n; i++) {
+        const x = (i / (n - 1)) * 2 - 1;
+        curve[i] = Math.tanh(k * x) / Math.tanh(k);
+    }
+    drive.curve = curve;
+    const makeUp = c.createGain();
+    makeUp.gain.value = GT.makeUp;
+    hp.connect(lp).connect(horn).connect(drive).connect(makeUp).connect(out);
+    return hp;
 }
 /** Fade a sound out and stop it (so cutting it off doesn't click). */
 export function stop(v, fadeMs = 70) {
@@ -323,6 +377,10 @@ export function stop(v, fadeMs = 70) {
         v.current?.src.stop(t + fadeMs / 1000 + 0.02);
     }
     catch { /* already stopped */ }
+    v.current?.wobble?.forEach((o) => { try {
+        o.stop(t + fadeMs / 1000 + 0.02);
+    }
+    catch { /* done */ } });
     setTimeout(() => voices.delete(v), fadeMs + 100);
 }
 /** Glide a voice's level toward `value` over about `seconds` (for sounds mixed continuously, like rain). */
@@ -346,6 +404,23 @@ export function ringsOut(v) {
 /** What's sounding right now, and how loud where the keeper stands (0..1): for the debug view. */
 export function voicesNow() {
     return [...voices].filter((v) => !v.stopped).map((v) => ({ key: v.key, gain: v.spatial.gain.value * v.level.gain.value }));
+}
+/** Set a volume group (0..1), now or once sound starts. */
+export function setBusVolume(bus, value) {
+    busLevel[bus] = value;
+    const n = buses[bus];
+    if (n && ac)
+        n.gain.setTargetAtTime(value, ac.currentTime, 0.05);
+}
+/** Slow a voice down (pitch drags with it) to `toRate` over `seconds`: a gramophone's spring giving out. */
+export function rampRate(v, toRate, seconds) {
+    const src = v?.current?.src;
+    if (!src || !ac)
+        return;
+    const t = ac.currentTime;
+    src.playbackRate.cancelScheduledValues(t);
+    src.playbackRate.setValueAtTime(src.playbackRate.value, t);
+    src.playbackRate.linearRampToValueAtTime(toRate * v.rate, t + seconds);
 }
 /** Is this voice still sounding (not finished, not stopped)? */
 export function isPlaying(v) {

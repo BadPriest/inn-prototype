@@ -21,6 +21,8 @@ import { draw, computeView, type View } from "./ui/render.js";
 import { updateHud, initDebug, toggleDebug } from "./ui/hud.js";
 import { back, initMenus, menuKey, menuOpen } from "./ui/menu.js";
 import { initSound, isMuted, soundscape, toggleMute, unlockAudio } from "./sound.js";
+import { setBusVolume } from "./sound/engine.js";
+import { updateWinding } from "./sound/gramophone.js";
 import { BUILD } from "./version.js";
 import { openMenu, closeAll, replaceMenu } from "./ui/menu.js";
 
@@ -511,8 +513,25 @@ function watchTrays(): void {
 
 const SETTINGS_KEY = "travelling-inn-settings";
 type UiChoice = "auto" | number;
-let uiChoice: UiChoice = "auto";
-try { uiChoice = (JSON.parse(localStorage.getItem(SETTINGS_KEY) ?? "{}") as { ui?: UiChoice }).ui ?? "auto"; } catch { /* defaults */ }
+interface Settings { ui?: UiChoice; cues?: number; atmosphere?: number; music?: boolean }
+let settings: Settings = {};
+try { settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) ?? "{}") as Settings; } catch { /* defaults */ }
+let uiChoice: UiChoice = settings.ui ?? "auto";
+function saveSettings(): void {
+  settings.ui = uiChoice;
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch { /* fine */ }
+}
+// Sound: cues (orders, outcomes, the bell) and atmosphere (crowd, rain, fire…) each have a volume;
+// music (the gramophone) can be switched off, to check the loop holds up without it.
+const VOLUME_STEPS = [0, 0.25, 0.5, 0.75, 1];
+const pct = (v: number) => (v === 0 ? "off" : `${Math.round(v * 100)}%`);
+function applySound(): void {
+  setBusVolume("cue", settings.cues ?? 1);
+  setBusVolume("ambience", settings.atmosphere ?? 1);
+  setBusVolume("music", settings.music === false ? 0 : 1);
+}
+applySound();
+const nextStep = (v: number | undefined) => VOLUME_STEPS[(VOLUME_STEPS.indexOf(v ?? 1) + 1) % VOLUME_STEPS.length];
 const UI_STEPS: UiChoice[] = ["auto", 1, 1.25, 1.5, 1.75, 2, 2.5];
 
 function autoUi(): number {
@@ -546,11 +565,14 @@ function openPause(): void {
       { label: "▶ Resume", sub: "P", button: "primary" as const, action: () => resume() },
       { label: "🔍 UI size", sub: uiLabel(), action: () => {
         uiChoice = UI_STEPS[(UI_STEPS.indexOf(uiChoice) + 1) % UI_STEPS.length];
-        try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ ui: uiChoice })); } catch { /* fine */ }
+        saveSettings();
         applyUi();
         replaceMenu(build());
       } },
       { label: "🔊 Sound", sub: isMuted() ? "off" : "on", action: () => { toggleMute(); replaceMenu(build()); } },
+      { label: "🔔 Cues", sub: `${pct(settings.cues ?? 1)} · orders, outcomes, the bell`, action: () => { settings.cues = nextStep(settings.cues); saveSettings(); applySound(); replaceMenu(build()); } },
+      { label: "🌧 Atmosphere", sub: `${pct(settings.atmosphere ?? 1)} · crowd, rain, fire, cooking`, action: () => { settings.atmosphere = nextStep(settings.atmosphere); saveSettings(); applySound(); replaceMenu(build()); } },
+      { label: "🎵 Music", sub: settings.music === false ? "off" : "on", action: () => { settings.music = settings.music === false; saveSettings(); applySound(); replaceMenu(build()); } },
       { label: "✅ Objectives", sub: g.showObjectives ? "shown" : "hidden", action: () => { g.showObjectives = !g.showObjectives; replaceMenu(build()); } },
       { label: "❔ How to play", sub: "", action: () => openMenu({ title: "How to play", body: welcomeBody(), items: [{ label: "Back", button: "secondary", action: () => back() }] }) },
     ],
@@ -611,6 +633,7 @@ function frame(now: number): void {
   if (cleaningWhat && !g.paused && !g.modal && !menuOpen() && cleanable(g, cleaningWhat)) cleanStep(g, cleaningWhat, realDt);
   else if (g.cleaning && (!cleaningWhat || targetId(cleaningWhat) !== g.cleaning.targetId)) g.cleaning = null;
   if (!g.paused) updatePour(g, realDt);
+  updateWinding(g, realDt);
   const sim = simDelta(g, realDt);
   if (sim > 0) {
     updateCrafting(g, sim, target?.type === "furniture" ? target.f : null);
