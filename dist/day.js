@@ -6,6 +6,7 @@ import { ageFood, finishAllJobs } from "./crafting.js";
 import { closeAllStretches } from "./needs.js";
 import { CALENDAR } from "./data.js";
 import { longDate, seasonTurned } from "./calendar.js";
+import { morningLine, passNight } from "./weather.js";
 const SAVE_KEY = "travelling-inn-proto-v3"; // v3: the calendar (older saves start fresh)
 export function simDelta(g, realDt) {
     if (g.paused || g.modal)
@@ -65,6 +66,7 @@ export function endDay(g) {
     return stats;
 }
 export function startNextDay(g) {
+    passNight(g, 24 * 60 - TUNING.dayLengthMinutes); // turned in at 2, up at 6: the weather carried on
     g.day++;
     g.minute = 0;
     g.turnInPrompted = false;
@@ -92,6 +94,7 @@ export function beginDay(g) {
     if (g.seasonNews)
         g.say(g.seasonNews);
     g.say(`${longDate(g.date)}. You wake at 6.${g.day === 1 ? " The inn is closed; open the front door when you're ready." : ""}`);
+    g.say(morningLine(g));
     if (joined.length && g.day > 1)
         g.say(`New in town: ${joined.join(", ")}. They may drop by.`);
 }
@@ -100,7 +103,7 @@ export function save(g) {
         const regulars = [...g.regulars.values()].map(({ arriveAt, visitedToday, ...rest }) => { void arriveAt; void visitedToday; return rest; });
         // The needs log is big: keep it for the last two weeks of days only, so the save stays small.
         const history = g.history.map((d, i) => (i < g.history.length - 14 ? { ...d, unmet: undefined } : d));
-        localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, calendarStart: g.calendarStart, history, regulars, visitorNotes: g.visitorNotes,
+        localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, calendarStart: g.calendarStart, weather: g.weather, history, regulars, visitorNotes: g.visitorNotes,
             menu: [...g.menu], menuChosen: g.menuChosen, upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives }));
     }
     catch { /* storage unavailable: carry on */ }
@@ -121,6 +124,8 @@ export function load(g) {
         g.showObjectives = s.showObjectives ?? true;
         g.day = s.day ?? 1;
         g.calendarStart = s.calendarStart ?? 0;
+        if (s.weather)
+            g.weather = s.weather;
         g.history = s.history ?? [];
         g.stats = emptyStats(g.day);
         for (const r of s.regulars ?? [])

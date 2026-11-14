@@ -2,6 +2,7 @@
 import { EventBus } from "./core.js";
 import { World } from "./world.js";
 import { dateOf, randomStartSeason } from "./calendar.js";
+import { newWeather } from "./weather.js";
 import { TIME_WORDS, TUNING, timeOfDayAt } from "./data.js";
 export function emptyStats(day) {
     return {
@@ -18,6 +19,7 @@ export class Game {
     world = new World();
     day = 1; // days played, from 1. The date is worked out from this: see `date`.
     calendarStart = randomStartSeason(); // index of the calendar season this save began in
+    weather = newWeather(dateOf(1, this.calendarStart).season);
     minute = 0; // minutes since the day started (6 AM)
     speedIndex = 1;
     paused = false;

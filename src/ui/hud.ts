@@ -4,6 +4,8 @@ import { ARCHETYPES, NEED_IDS, REGULARS, TIME_WORDS, TUNING } from "../data.js";
 import type { Game, Patron, UnmetStretch } from "../game.js";
 import { unmetLogText } from "../needs.js";
 import { compactDate, shortDate } from "../calendar.js";
+import { forceWeather, weatherLabel, weatherTags } from "../weather.js";
+import type { RainBandId, SkyId } from "../data.js";
 import { spawnRegular, spawnVisitors } from "../patrons.js";
 import { emptyTastes } from "../game.js";
 import { resetSave } from "../day.js";
@@ -14,7 +16,7 @@ const $ = (id: string) => document.getElementById(id)!;
 
 export function updateHud(g: Game, prompt: string): void {
   const status = g.open ? (g.lastCall ? "LAST CALL" : "OPEN") : "CLOSED";
-  $("clock").innerHTML = `${g.date.weekday.slice(0, 3)}, ${shortDate(g.date)} · <b>${g.clockText()}</b> · <span class="st ${status.replace(" ", "")}">${status}</span> · ×${g.speed}${g.paused ? " · paused" : ""}`;
+  $("clock").innerHTML = `${g.date.weekday.slice(0, 3)}, ${shortDate(g.date)} · <b>${g.clockText()}</b> · ${weatherLabel(g)} · <span class="st ${status.replace(" ", "")}">${status}</span> · ×${g.speed}${g.paused ? " · paused" : ""}`;
   $("prompt").textContent = prompt;
   // Journal heads-up: a toast for the latest note, and a count until the journal is opened.
   const toast = document.getElementById("toast");
@@ -116,6 +118,10 @@ export function initDebug(g: Game): void {
     catch { note.textContent = "Couldn't reach the clipboard."; }
     setTimeout(() => { note.textContent = ""; }, 3000);
   };
+  ($("dbg-weather-set") as HTMLButtonElement).onclick = () => {
+    const [sky, band] = ($("dbg-weather") as HTMLSelectElement).value.split(":") as [SkyId, RainBandId | undefined];
+    forceWeather(g, sky, band);
+  };
   const reset = $("dbg-reset") as HTMLButtonElement;
   let armed = false;
   reset.onclick = () => {
@@ -156,12 +162,15 @@ function updateDebug(g: Game): void {
     const st = g.regular(p.regularId);
     return `<div class="dp"><b style="color:${p.color}">${p.name}</b>${p.groupId && (g.groups.find((x) => x.id === p.groupId)?.members.length ?? 0) > 1 ? ` <span class="muted">(party #${p.groupId})</span>` : ""} · ${p.state}${o?.open ? ` · wants ${o.label} (${Math.floor(g.minute - p.waitedSince)}/${Math.floor(p.patience)}m)` : ""}
       <div>${needsLine(g, p)}</div>
+      ${p.weatherTaste.love.length + p.weatherTaste.dislike.length ? `<div>weather ♥ ${p.weatherTaste.love.join(", ") || "–"} · ✗ ${p.weatherTaste.dislike.join(", ") || "–"}${p.cameIn?.band ? ` · came in from ${p.cameIn.band} (${p.cameIn.rain})` : ""}</div>` : ""}
       <div>schema: ${p.schema}${st ? ` · familiarity ${st.familiarity}${st.resolved ? " · resolved" : ""}${st.openedUp ? " · opened up" : ""}` : ""} · fuss ${p.fussiness.toFixed(2)} · mess ${p.messiness.toFixed(2)}</div>
       ${p.craving ? `<div>craving: ${p.craving.tag}${p.schema === "veiled" ? (p.craving.honest ? " (honest)" : " (noise)") : ""}</div>` : ""}
       <div>food ♥ ${t.food.love.join(", ") || "–"} · + ${t.food.like.join(", ") || "–"} · ✗ ${t.food.dislike.join(", ") || "–"}</div>
       <div>drink ♥ ${t.drink.love.join(", ") || "–"} · + ${t.drink.like.join(", ") || "–"} · ✗ ${t.drink.dislike.join(", ") || "–"}</div>
       ${st && (st.locks.food.love.length + st.locks.food.dislike.length + st.locks.drink.love.length + st.locks.drink.dislike.length) ? `<div>locked: food ♥${st.locks.food.love.join(",")} ✗${st.locks.food.dislike.join(",")} · drink ♥${st.locks.drink.love.join(",")} ✗${st.locks.drink.dislike.join(",")}</div>` : ""}</div>`;
   }).join("") || `<div class="muted">Nobody inside.</div>`;
+  const w = g.weather;
+  $("dbg-weather-now").textContent = `${weatherLabel(g)} · ${w.sky}${w.band ? ` ${w.rain.toFixed(2)} → ${w.target.toFixed(2)}${w.ending ? " (easing off)" : ""}` : ""} · ${w.hours.toFixed(1)}h · tags: ${weatherTags(g).join(", ") || "–"}`;
   const unmet = g.stats.unmet ?? [];
   const open = g.patrons.flatMap((p) => NEED_IDS.filter((n) => p.unmet[n]).map((n) => ({ p, n })));
   $("dbg-needs").innerHTML = (unmetSummary(unmet) || `<div class="muted">None logged yet.</div>`)

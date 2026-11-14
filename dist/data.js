@@ -3,31 +3,32 @@
 // ---------------------------------------------------------------------------
 // The map. One character per tile. See TILE_LEGEND below.
 export const MAP = [
-    "##################################",
+    "######################o###########",
     "#B~~d~w~#::#,,SS,R,O,,,,H,,,,PPPP#",
     "#B~~~~~~#::#,,,,,,,,,,,,,,,,,,,,,#",
     "#~~~~~~~#::#,,,,,,,,,,,,,,,,,,,,,#",
-    "#~~~~~~~D::#,,,,,,,,KK,,,,,,,,,,,#",
+    "o~~~~~~~D::#,,,,,,,,KK,,,,,,,,,,,#",
     "#~~~~~~~#::#,,,,,,,,,,,,,,,,,,,,,#",
     "#~~~~~~~#::#W,,,,,,,,,,,,,,,,,,,,#",
     "#########::##D####h###Z###D#A#Y###",
     "#..........#_____________________#",
     "#..........#_============g======##",
     "#.............s.s.s.s.s.s.s.s.s..#",
-    "#................................#",
+    "o................................o",
     "#...............c....c...........#",
     "#.........ctc..ctc..ctc..ctc.....#",
     "#...............c....c..........F#",
     "#...............................F#",
     "###..###........c....c....ccc....#",
     "#X;;;;;#..ctc..ctc..ctc..ctttc...#",
-    "#b;;;;b#........c....c....ccc....#",
+    "#b;;;;b#........c....c....ccc....o",
     "#b;;;;b#.........................#",
     "#b;;;;b#.........................#",
-    "###E##############################",
+    "###E########o#######o#######o#####",
 ];
 const C = {
     wall: "#2a211d",
+    window: "#4f6474",
     tap: "#8a6a4a",
     kitchen: "#a39c8e",
     bed: "#7a5c48",
@@ -37,6 +38,7 @@ const C = {
 };
 export const TILE_LEGEND = {
     "#": { kind: "wall", floor: C.wall },
+    o: { kind: "wall", floor: C.window, name: "Window" }, // rain is heard at the windows
     ".": { kind: "floor", floor: C.tap },
     ";": { kind: "floor", floor: C.entry },
     "~": { kind: "staff", floor: C.bed },
@@ -130,24 +132,28 @@ export const GARNISHES = [
 ];
 export const ARCHETYPES = [
     { id: "dock", name: "Dockworker", color: "#b5651d", weight: 3,
+        weather: { love: [], dislike: ["stormy", "cold"] },
         needs: { hunger: [0.5, 0.15], thirst: [0.75, 0.15], warmth: [0.3, 0.15] },
         tastes: { love: ["rich", "hearty"], like: ["smoky", "savoury", "bitter", "salty"], dislike: ["light", "fragrant"] },
         extraLikes: ["fiery", "briny", "warm"],
         fussiness: [0.5, 0.2], patience: [40, 10], stay: [120, 40], consume: [22, 6], walk: [2.6, 0.4],
         foodBias: 0.6, garnishAsk: 0.15, messiness: [0.7, 0.2] },
     { id: "scholar", name: "Scholar", color: "#5b7fb5", weight: 2,
+        weather: { love: ["rain", "light-rain"], dislike: ["sunny"] },
         needs: { hunger: [0.35, 0.15], thirst: [0.45, 0.15], warmth: [0.4, 0.15] },
         tastes: { love: ["fragrant"], like: ["mild", "homely", "bright"], dislike: ["fiery", "smoky", "salty"] },
         extraLikes: ["tart", "crisp", "warm"],
         fussiness: [0.7, 0.15], patience: [32, 8], stay: [100, 30], consume: [26, 6], walk: [2.0, 0.3],
         foodBias: 0.4, garnishAsk: 0.4, messiness: [0.15, 0.1] },
     { id: "traveller", name: "Traveller", color: "#6f9e5a", weight: 3,
+        weather: { love: ["sunny"], dislike: ["rain", "stormy"] },
         needs: { hunger: [0.75, 0.15], thirst: [0.5, 0.15], warmth: [0.45, 0.15] },
         tastes: { love: ["warm"], like: ["hearty", "sweet", "homely", "savoury", "crisp"], dislike: [] },
         extraLikes: ["earthy", "rich", "bright"],
         fussiness: [0.2, 0.15], patience: [55, 15], stay: [90, 30], consume: [20, 5], walk: [2.4, 0.4],
         foodBias: 0.55, garnishAsk: 0.2, messiness: [0.4, 0.2] },
     { id: "farmer", name: "Farmhand", color: "#a89a3c", weight: 2,
+        weather: { love: ["light-rain"], dislike: ["cold"] },
         needs: { hunger: [0.6, 0.15], thirst: [0.55, 0.15], warmth: [0.3, 0.15] },
         tastes: { love: ["earthy"], like: ["homely", "tart", "crisp"], dislike: ["sweet", "briny"] },
         extraLikes: ["hearty", "smoky", "fresh"],
@@ -156,6 +162,7 @@ export const ARCHETYPES = [
 ];
 export const REGULARS = [
     { id: "hedda", name: "Hedda", color: "#c9a0dc", schema: "reserved", joinsOnDay: 1, habit: [11, 13],
+        weather: { love: ["rain", "grey"], dislike: ["stormy"] },
         needs: { hunger: [0.55, 0.1], thirst: [0.3, 0.1], warmth: [0.55, 0.1] },
         blurb: "The miller's widow. Says little.",
         food: { love: ["savoury"], like: ["warm", "earthy"], dislike: ["sweet", "tart", "fiery"] },
@@ -164,6 +171,7 @@ export const REGULARS = [
         fussiness: 0, patience: [80, 10], stay: [90, 20], consume: [28, 5], walk: [1.6, 0.2],
         foodBias: 0.7, garnishAsk: 0, messiness: 0.1 },
     { id: "tobin", name: "Tobin", color: "#e07b5f", schema: "unformed", joinsOnDay: 1, habit: [18, 20],
+        weather: { love: ["stormy"], dislike: ["grey"] },
         needs: { hunger: [0.5, 0.2], thirst: [0.6, 0.2], warmth: [0.2, 0.1] },
         blurb: "New in town. Doesn't seem to know what he likes.",
         food: { love: [], like: [], dislike: [] }, drink: { love: [], like: [], dislike: [] },
@@ -172,6 +180,7 @@ export const REGULARS = [
         fussiness: 0.2, patience: [50, 10], stay: [150, 30], consume: [18, 5], walk: [2.8, 0.3],
         foodBias: 0.55, garnishAsk: 0.3, messiness: 0.8 },
     { id: "maren", name: "Maren", color: "#f0c05a", schema: "open", joinsOnDay: 3, habit: [15, 17],
+        weather: { love: ["sunny"], dislike: ["grey", "cold"] },
         needs: { hunger: [0.35, 0.1], thirst: [0.45, 0.1], warmth: [0.3, 0.1] },
         blurb: "Bakes for half the street. Hopeful about most things.",
         food: { love: ["sweet", "warm"], like: ["homely", "crisp"], dislike: ["bitter", "briny"] },
@@ -180,6 +189,7 @@ export const REGULARS = [
         fussiness: 0.3, patience: [50, 10], stay: [80, 20], consume: [20, 5], walk: [2.2, 0.3],
         foodBias: 0.5, garnishAsk: 0.4, messiness: 0.3 },
     { id: "ferryman", name: "The ferryman", color: "#4f8a8b", schema: "veiled", joinsOnDay: 5, habit: [20, 22],
+        weather: { love: ["stormy"], dislike: ["sunny"] }, // secretly loves a good storm
         needs: { hunger: [0.6, 0.1], thirst: [0.55, 0.1], warmth: [0.65, 0.1] },
         blurb: "Takes the night crossing. Hard to read.",
         food: { love: ["smoky", "briny"], like: ["hearty"], dislike: ["light", "sweet"] },
@@ -188,6 +198,7 @@ export const REGULARS = [
         fussiness: 0.55, patience: [40, 8], stay: [120, 30], consume: [20, 5], walk: [2.0, 0.3],
         foodBias: 0.6, garnishAsk: 0.2, messiness: 0.4 },
     { id: "wil", name: "Old Wil", color: "#b0b0a0", schema: "open", joinsOnDay: 7, habit: [9, 11],
+        weather: { love: [], dislike: ["cold"] },
         needs: { hunger: [0.65, 0.1], thirst: [0.6, 0.1], warmth: [0.4, 0.1] },
         blurb: "Eats anything, says so loudly. Hard to surprise.",
         food: { love: ["rich"], like: ["warm", "hearty", "savoury", "smoky", "earthy", "homely", "crisp", "sweet"], dislike: [] },
@@ -196,6 +207,7 @@ export const REGULARS = [
         fussiness: 0.1, patience: [70, 10], stay: [140, 30], consume: [15, 4], walk: [1.5, 0.2],
         foodBias: 0.6, garnishAsk: 0.1, messiness: 0.6 },
     { id: "ysolde", name: "Ysolde", color: "#9db4ff", schema: "unformed", joinsOnDay: 9, habit: [16, 19],
+        weather: { love: ["sunny", "cold"], dislike: ["rain", "stormy"] },
         needs: { hunger: [0.55, 0.15], thirst: [0.5, 0.15], warmth: [0.4, 0.1] },
         blurb: "A courier between towns. Picky, or maybe just unsure.",
         food: { love: [], like: [], dislike: [] }, drink: { love: [], like: [], dislike: [] },
@@ -281,8 +293,38 @@ export const CHATTER = {
         { text: "Early start, this.", when: ["morning"] },
         "Quiet in here {now}. I like it.",
         "Ferry was late again.", "Haven't been here in a while.", "Fire's nice.",
-        "You still owe me for last time.", "Rain's coming.",
+        "You still owe me for last time.",
     ],
+    /** Talk about the weather, by weather tag (weatherTags in weather.ts). Never sunshine talk in a downpour. */
+    weather: {
+        sunny: [
+            { text: "Lovely day out.", when: ["morning", "midday", "afternoon"] },
+            { text: "Sun's out, for once.", when: ["morning", "midday", "afternoon"] },
+            { text: "Clear night out. Stars and all.", when: ["evening", "night"] },
+        ],
+        grey: ["Grey out {now}.", "Looks like rain.", "Can't make its mind up, that sky."],
+        "light-rain": ["Bit of drizzle out.", "Just spitting, out there.", "Soft rain. Good for the gardens."],
+        rain: ["Raining properly now.", "Wet out there.", "You'd want a good coat {now}."],
+        stormy: ["Coming down in buckets out there.", "Listen to that wind.", "Nobody's crossing the river in this.", "Hope the roof holds."],
+        cold: ["Bitter out.", "Cold enough to freeze your ears off.", "Good to be near a fire {now}."],
+    },
+    weatherChance: 0.3, // share of small talk that's about the weather
+    /** Said on sitting down, by what they walked in from. */
+    cameIn: {
+        "light-rain": ["Only a bit of drizzle.", "Just spitting out there."],
+        rain: ["Wet one out there.", "Mind the puddle by the door."],
+        storm: ["Coming down in buckets out there!", "Blown in like a leaf, me."],
+    },
+    /** A guest or two remarks when the weather changes. */
+    weatherTurns: {
+        rainStarts: ["Here comes the rain.", "Glad I'm in here."],
+        stormBreaks: ["Listen to that!", "Hark at it now."],
+        rainStops: ["Sounds like it's stopped.", "That's eased off."],
+        clears: ["Sun's coming out."],
+    },
+    /** Weather tastes: {w} is the weather's name (WEATHER_NAMES), {W} the same with a capital. */
+    weatherLove: ["Now this is my kind of weather.", "I do love a {w}.", "Nothing better than a {w}."],
+    weatherDislike: ["Can't stand {w}.", "{W}. Just my luck.", "I could do without {w}."],
     love: ["Nothing beats something {tag}.", "I'd walk a mile for anything {tag}.", "Give me {tag} any day."],
     like: ["Something {tag} would go down well.", "I don't mind a bit of {tag}."],
     dislike: ["Can't abide anything {tag}.", "Keep anything {tag} away from me.", "Never cared for {tag} things."],
@@ -294,6 +336,15 @@ export const CHATTER = {
         reserved: ["Mm.", "…{time}.", "Hm."], // the reserved, until they open up
         friend: ["There's my favourite keeper.", "Was hoping you'd come by.", "Sit with us a moment, if you can."],
     },
+};
+/** How people name a weather tag, for weather tastes: fondly ("a good storm") or not ("storms"). */
+export const WEATHER_NAMES = {
+    sunny: { love: "sunny day", dislike: "all this sun" },
+    grey: { love: "grey day", dislike: "grey skies" },
+    "light-rain": { love: "soft rain", dislike: "drizzle" },
+    rain: { love: "rainy day", dislike: "rain" },
+    stormy: { love: "good storm", dislike: "storms" },
+    cold: { love: "crisp cold day", dislike: "the cold" },
 };
 export const TALK_TUNING = {
     chatEvery: [30, 12], // game minutes between things a person says
@@ -337,6 +388,31 @@ export const SOUNDS = {
     crowdComfortable: { files: [SND + "occupancy-bg-comfortable-1-loop.opus"], volume: 0.22, pitch: 0.02, loop: true, room: "taproom" },
     crowdBusy: { files: [SND + "occupancy-bg-busy-1-loop.opus"], volume: 0.27, pitch: 0.02, loop: true, room: "taproom" },
     crowdPacked: { files: [SND + "occupancy-bg-packed-1-loop.opus"], volume: 0.32, pitch: 0.02, loop: true, room: "taproom" },
+    // Weather (sound/weather.ts mixes these by rain intensity; WEATHER_SOUND below).
+    // Indoors: the rain on the building, heard everywhere inside.
+    rainSoftIn: { files: [SND + "rain-soft-ambience-loop.opus"], volume: 0.3, pitch: 0.01, loop: true },
+    rainMediumIn: { files: [SND + "rain-medium-ambience-loop.opus"], volume: 0.38, pitch: 0.01, loop: true },
+    rainStormIn: { files: [SND + "rain-storm-ambience-loop.opus"], volume: 0.48, pitch: 0.01, loop: true },
+    // Outdoors: heard from the front door while it's open.
+    rainSoftOut: { files: [SND + "rain-soft-outside-ambience-loop.opus"], volume: 0.55, pitch: 0.01, loop: true },
+    rainMediumOut: { files: [SND + "rain-medium-outside-ambience-loop.opus"], volume: 0.65, pitch: 0.01, loop: true },
+    // At the windows: louder as the keeper walks near one.
+    rainWindow: { files: [SND + "sfx-rain-window-loop.opus"], volume: 0.4, pitch: 0.02, loop: true },
+};
+/**
+ * How the weather layers mix. Each layer's share by rain intensity (0..1): [from, full, fadesFrom, gone]
+ * means silent below `from`, full between `full` and `fadesFrom`, silent again past `gone`.
+ */
+export const WEATHER_SOUND = {
+    layers: {
+        soft: [0, 0.12, 0.35, 0.6],
+        medium: [0.28, 0.5, 0.8, 1.01],
+        storm: [0.62, 0.85, 1.01, 1.02],
+    },
+    driftSeconds: 2.5, // how fast the mix follows the rain
+    doorSeconds: 0.5, // how fast the outdoors swells in and out with the door
+    window: { fullWithin: 1.2, goneAt: 6 }, // tiles from the nearest window
+    idleStopSeconds: 6, // a layer silent this long stops playing
 };
 export const SOUND_TUNING = {
     targetLoudness: 0.12, // every file is evened out to about this (RMS of its audible part)
@@ -403,6 +479,78 @@ export const UPGRADES = [
     { id: "urn", name: "Tea urn", icon: "⚱️", desc: "Adds a choice at the kettle: brew a whole urn, about 8 cups, poured straight from it. Single cups stay.", unlockAtServed: 20 },
     { id: "trays", name: "Wider trays", icon: "🍽️", desc: "Carry 3 dishes per tray, and 5 drinks.", unlockAtServed: 35 },
 ];
+export const WEATHER = {
+    skies: {
+        clear: { name: "Clear", icon: "☀️", nightIcon: "🌙", minHours: 3, tags: ["sunny"] },
+        cloudy: { name: "Cloudy", icon: "⛅", nightIcon: "☁️", minHours: 1.5, tags: [] },
+        overcast: { name: "Overcast", icon: "☁️", nightIcon: "☁️", minHours: 2, tags: ["grey"] },
+        rain: { name: "Rain", icon: "🌧️", nightIcon: "🌧️", minHours: 1, tags: ["wet"] },
+    },
+    /** Bands of rain intensity, in order. A band is entered at `from` and left `hysteresis` below it. */
+    bands: [
+        { id: "light-rain", name: "Light rain", icon: "🌦️", from: 0, tags: ["light-rain"] },
+        { id: "rain", name: "Rain", icon: "🌧️", from: 0.35, tags: ["rain"] },
+        { id: "storm", name: "Storm", icon: "⛈️", from: 0.7, tags: ["heavy-rain", "stormy"] },
+    ],
+    hysteresis: 0.06,
+    bandMinMinutes: 30, // a band holds at least this long before easing or building again (a storm breaking doesn't wait)
+    // Rain intensity: eases toward a target, which wanders now and then. A storm breaking jumps it.
+    rainEasePerHour: 0.35,
+    rainWanderEvery: [40, 15], // game minutes between new targets while raining
+    rainEndsBelow: 0.12, // once easing off, the rain stops under this
+    showerStart: [0.55, 0.12], // a sudden shower (cloudy → rain) comes down this hard at once
+    stormJump: 0.3, // how far a storm breaking jumps the intensity, straight away
+    stormLasts: [100, 35], // game minutes a storm rages before the rain wanders again
+    thunderPerHour: 3, // in the storm band
+    coldSeasons: ["winter"],
+    coldNightSeasons: ["autumn", "spring"], // cold in the evening and at night
+    /**
+     * Per calendar season:
+     *   start   odds of the sky on the first morning of a save
+     *   stay    once past its minimum time, chance per hour a sky holds (else it moves on)
+     *   to      where it moves on to, by weight. cloudy → rain is a sudden shower (abrupt)
+     *   rain    how hard rain tends to be (target intensity)
+     *   storm   chance per hour of rain that a storm breaks
+     */
+    seasons: {
+        spring: {
+            start: { clear: 2, cloudy: 3, overcast: 2, rain: 1 },
+            stay: { clear: 0.6, cloudy: 0.5, overcast: 0.55, rain: 0.55 },
+            to: { clear: { cloudy: 1 }, cloudy: { clear: 1, overcast: 1, rain: 0.5 }, overcast: { cloudy: 1, rain: 1.4 }, rain: { overcast: 1, cloudy: 1.2 } },
+            rain: [0.28, 0.2], storm: 0.03,
+        },
+        summer: {
+            start: { clear: 5, cloudy: 2, overcast: 1, rain: 0.3 },
+            stay: { clear: 0.85, cloudy: 0.5, overcast: 0.45, rain: 0.4 },
+            to: { clear: { cloudy: 1 }, cloudy: { clear: 2, overcast: 0.6, rain: 0.35 }, overcast: { cloudy: 1.2, rain: 0.8 }, rain: { cloudy: 1.5, overcast: 0.5 } },
+            rain: [0.5, 0.25], storm: 0.08,
+        },
+        autumn: {
+            start: { clear: 1, cloudy: 2, overcast: 3, rain: 2 },
+            stay: { clear: 0.55, cloudy: 0.5, overcast: 0.7, rain: 0.75 },
+            to: { clear: { cloudy: 1 }, cloudy: { clear: 0.6, overcast: 1.4, rain: 0.25 }, overcast: { cloudy: 0.7, rain: 1.5 }, rain: { overcast: 1.5, cloudy: 0.5 } },
+            rain: [0.45, 0.2], storm: 0.05,
+        },
+        winter: {
+            start: { clear: 1, cloudy: 2, overcast: 4, rain: 2 },
+            stay: { clear: 0.6, cloudy: 0.5, overcast: 0.75, rain: 0.7 },
+            to: { clear: { cloudy: 1 }, cloudy: { clear: 0.7, overcast: 1.5, rain: 0.1 }, overcast: { cloudy: 0.6, rain: 1.2 }, rain: { overcast: 1.6, cloudy: 0.4 } },
+            rain: [0.4, 0.15], storm: 0.02,
+        },
+    },
+    /** What the keeper notices, in the log. */
+    lines: {
+        sky: {
+            "clear>cloudy": "Clouds are drifting over.", "cloudy>clear": "The sky's clearing.",
+            "cloudy>overcast": "The sky's closing in, grey.", "overcast>cloudy": "The cloud's breaking up.",
+            "overcast>rain": "It's starting to rain.", "cloudy>rain": "A sudden shower comes down!",
+            "rain>overcast": "The rain has stopped.", "rain>cloudy": "The rain has stopped. Brighter out.",
+        },
+        heavier: { rain: "The rain's getting heavier.", storm: "It's pouring now. A proper storm." },
+        stormBreaks: "A storm breaks!",
+        easing: { "light-rain": "The rain's easing off.", rain: "The storm's passing. Still raining." },
+    },
+};
 // ---------------------------------------------------------------------------
 // Pacing and rules. Tune these by playing.
 export const TUNING = {

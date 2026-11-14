@@ -1,11 +1,12 @@
 // Patrons: arrivals, walking, ordering, waiting, eating, mess and leaving.
 
 import { chance, organic, pick, uid, weightedPick } from "./core.js";
-import { ARCHETYPES, CHATTER, GARNISHES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, type Archetype, type ItemKind, type Regular } from "./data.js";
+import { ARCHETYPES, CHATTER, GARNISHES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, type Archetype, type ItemKind, type Regular } from "./data.js";
 import type { Game, Group, Order, Patron, RegularState } from "./game.js";
 import { emptyTastes } from "./game.js";
 import { appeal, prepareVisit, tagScore } from "./tastes.js";
 import { arrivalNeeds, closeAllStretches } from "./needs.js";
+import { cameIn, weatherTags } from "./weather.js";
 import { dist, type Seat, type Table, type Vec } from "./world.js";
 
 const counts = new Map<string, number>();
@@ -46,6 +47,7 @@ function basePatron(g: Game, seat: Seat): Pick<Patron, "id" | "pos" | "path" | "
 }
 
 function admit(g: Game, p: Patron, seat: Seat): Patron {
+  p.cameIn = cameIn(g);
   seat.occupant = p.id;
   g.patrons.push(p);
   g.stats.arrivals++;
@@ -83,6 +85,7 @@ export function spawnPatron(g: Game, archetype?: Archetype, forced?: { seat: Sea
     garnishAsk: a.garnishAsk,
     stayUntil: g.minute + Math.max(20, organic(a.stay)),
     needs: arrivalNeeds(a.needs),
+    weatherTaste: a.weather,
     unmet: {},
     groupId: forced?.groupId,
   };
@@ -195,6 +198,7 @@ export function spawnRegular(g: Game, def: Regular, st: RegularState): Patron | 
     garnishAsk: def.garnishAsk,
     stayUntil: g.minute + Math.max(20, organic(def.stay)),
     needs: arrivalNeeds(def.needs),
+    weatherTaste: def.weather,
     unmet: {},
   };
   prepareVisit(p, def, st);
@@ -403,7 +407,9 @@ function chatter(g: Game, p: Patron): void {
   if (!mates.length && chance(0.7)) return;
   if (p.schema === "reserved" && chance(0.8)) return;
   const hint = chance(TALK_TUNING.hintChance) ? tasteLine(p) : null;
-  const text = hint ?? g.pickLine(CHATTER.small);
+  const weather = !hint && chance(CHATTER.weatherChance) ? weatherLine(g, p) : null;
+  const text = hint ?? weather?.text ?? g.pickLine(CHATTER.small);
+  if (weather?.taste && dist(g.keeper.pos, p.pos) <= TALK_TUNING.overhearRange) g.journal(p, `overheard: “${weather.text}”`, "said");
   p.line = { text, until: g.minute + 6 };
   if (mates.length && chance(0.7)) {
     const m = pick(mates);
@@ -411,6 +417,43 @@ function chatter(g: Game, p: Patron): void {
     setTimeoutGame(g, m, pick(CHATTER.replies), 1.5);
   }
   if (hint && dist(g.keeper.pos, p.pos) <= TALK_TUNING.overhearRange) g.journal(p, `overheard: “${hint}”`, "said");
+}
+
+/**
+ * Something about the weather right now. A weather they love or dislike comes first, and gives that
+ * taste away (the journal notes it when overheard).
+ */
+function weatherLine(g: Game, p: Patron): { text: string; taste: boolean } | null {
+  const tags = weatherTags(g);
+  const loved = tags.filter((t) => p.weatherTaste.love.includes(t) && WEATHER_NAMES[t]);
+  const hated = tags.filter((t) => p.weatherTaste.dislike.includes(t) && WEATHER_NAMES[t]);
+  if ((loved.length || hated.length) && chance(0.5)) {
+    const love = loved.length && (!hated.length || chance(0.5));
+    const tag = pick(love ? loved : hated);
+    const name = WEATHER_NAMES[tag][love ? "love" : "dislike"];
+    const text = pick(love ? CHATTER.weatherLove : CHATTER.weatherDislike).replace("{w}", name).replace("{W}", name[0].toUpperCase() + name.slice(1));
+    return { text, taste: true };
+  }
+  const about = tags.filter((t) => CHATTER.weather[t]);
+  if (!about.length) return null;
+  const text = g.pickLine(CHATTER.weather[pick(about)]);
+  return text ? { text, taste: false } : null;
+}
+
+/** A guest or two remark when the weather turns. */
+export function initTalk(g: Game): void {
+  g.bus.on((e) => {
+    let lines: string[] | undefined;
+    if (e.type === "WeatherChanged") {
+      if (e.to === "rain") lines = CHATTER.weatherTurns.rainStarts;
+      else if (e.from === "rain") lines = CHATTER.weatherTurns.rainStops;
+      else if (e.to === "clear") lines = CHATTER.weatherTurns.clears;
+    } else if (e.type === "RainBandChanged" && e.to === "storm") lines = CHATTER.weatherTurns.stormBreaks;
+    if (!lines) return;
+    const seated = g.patrons.filter((p) => (p.state === "seated" || p.state === "waiting" || p.state === "consuming") && p.schema !== "reserved");
+    const who = seated.sort(() => Math.random() - 0.5).slice(0, chance(0.5) ? 2 : 1);
+    who.forEach((p, i) => setTimeoutGame(g, p, pick(lines!), 0.5 + i * 1.5));
+  });
 }
 
 /** Say something a little later (in game minutes). */
@@ -527,6 +570,9 @@ export function updatePatrons(g: Game, simDt: number): void {
           if (seatOf(g, p)?.kind === "bench") { p.state = "queued"; break; }
           p.state = "seated";
           p.nextThinkAt = g.minute + organic([2, 1.5]);
+          // In from the rain: they might say so.
+          const from = p.cameIn?.band ? CHATTER.cameIn[p.cameIn.band] : undefined;
+          if (from && p.schema !== "reserved" && chance(0.5)) p.line = { text: pick(from), until: g.minute + 6 };
         }
         break;
       case "queued":

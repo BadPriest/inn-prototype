@@ -275,7 +275,7 @@ function startSource(v: Voice, when: number, offsetRandom: boolean, fadeIn: numb
   return s;
 }
 
-export interface PlayOptions { rate?: number; fadeInMs?: number }
+export interface PlayOptions { rate?: number; fadeInMs?: number; level?: number /* start at this level, for setLevel */ }
 
 /** Play a sound from a place (null: from nowhere in particular). Null if it isn't loaded. */
 export function play(key: string, at: Vec | null, opts: PlayOptions = {}): Voice | null {
@@ -286,6 +286,7 @@ export function play(key: string, at: Vec | null, opts: PlayOptions = {}): Voice
   const t = ac.currentTime;
   const fade = (opts.fadeInMs ?? 0) / 1000;
   if (fade > 0) { level.gain.setValueAtTime(0, t); level.gain.linearRampToValueAtTime(1, t + fade); }
+  else if (opts.level !== undefined) level.gain.setValueAtTime(opts.level, t);
   const spatial = ac.createGain();
   const { gain, pan } = placement(at, def);
   spatial.gain.value = gain;
@@ -310,6 +311,20 @@ export function stop(v: Voice | null | undefined, fadeMs = 70): void {
   v.level.gain.linearRampToValueAtTime(0, t + fadeMs / 1000);
   try { v.current?.src.stop(t + fadeMs / 1000 + 0.02); } catch { /* already stopped */ }
   setTimeout(() => voices.delete(v), fadeMs + 100);
+}
+
+/** Glide a voice's level toward `value` over about `seconds` (for sounds mixed continuously, like rain). */
+export function setLevel(v: Voice | null | undefined, value: number, seconds: number): void {
+  if (!v || !ac || v.stopped) return;
+  const t = ac.currentTime;
+  v.level.gain.cancelScheduledValues(t);
+  v.level.gain.setValueAtTime(v.level.gain.value, t);
+  v.level.gain.setTargetAtTime(value, t, Math.max(0.01, seconds / 3));
+}
+
+/** Move where a voice plays from (volume and pan follow on the next frame). */
+export function moveVoice(v: Voice | null | undefined, at: Vec | null): void {
+  if (v) v.at = at;
 }
 
 /** How long a voice's sound rings before it has faded to near silence (seconds). */

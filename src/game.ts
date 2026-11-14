@@ -3,7 +3,8 @@
 import { EventBus, type Outcome } from "./core.js";
 import { World, type Vec } from "./world.js";
 import { dateOf, randomStartSeason, type GameDate } from "./calendar.js";
-import { TIME_WORDS, TUNING, timeOfDayAt, type Archetype, type ItemKind, type Line, type NeedId, type Regular, type SchemaId, type TasteSet, type TimeOfDay } from "./data.js";
+import { newWeather, type CameIn, type WeatherState } from "./weather.js";
+import { TIME_WORDS, TUNING, timeOfDayAt, type Archetype, type ItemKind, type Line, type NeedId, type Regular, type SchemaId, type TasteSet, type TimeOfDay, type WeatherTaste } from "./data.js";
 
 export interface Item {
   id: number;
@@ -82,6 +83,10 @@ export interface Patron {
   marker?: { text: Outcome | string; until: number };
   line?: { text: string; until: number };
   leftEarly: boolean;
+  /** The weather they walked in from: sky, rain band and intensity. */
+  cameIn?: CameIn;
+  /** Weather they love or dislike (by weather tag). */
+  weatherTaste: WeatherTaste;
   /** 0 = fully met, 1 = desperate. Measured only, for now: nothing reacts to them yet. */
   needs: Record<NeedId, number>;
   /** Needs currently unmet, with when it started and what was going on meanwhile. */
@@ -182,6 +187,7 @@ export class Game {
   world = new World();
   day = 1; // days played, from 1. The date is worked out from this: see `date`.
   calendarStart = randomStartSeason(); // index of the calendar season this save began in
+  weather: WeatherState = newWeather(dateOf(1, this.calendarStart).season);
   minute = 0; // minutes since the day started (6 AM)
   speedIndex = 1;
   paused = false;

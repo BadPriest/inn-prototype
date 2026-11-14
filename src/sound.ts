@@ -4,6 +4,7 @@
 //   sound/footsteps.ts  a step per stride, keeper and guests
 //   sound/crowd.ts      the taproom murmur, by headcount
 //   sound/fire.ts       the fire: catches, roars, settles; embers when put out
+//   sound/weather.ts    rain indoors, through the open door, and at the windows, mixed by intensity
 // This file listens to game events and calls soundscape() every frame. M mutes; pause silences everything.
 
 import type { Game } from "./game.js";
@@ -13,6 +14,7 @@ import { cookingLoops } from "./sound/loops.js";
 import { footsteps } from "./sound/footsteps.js";
 import { crowd } from "./sound/crowd.js";
 import { fire } from "./sound/fire.js";
+import { weatherSound } from "./sound/weather.js";
 
 export { isMuted, toggleMute, unlockAudio } from "./sound/engine.js";
 
@@ -23,6 +25,7 @@ export function soundscape(g: Game, realDt: number): void {
   footsteps(g, realDt);
   crowd(g);
   fire(g, realDt);
+  weatherSound(g, realDt);
   updateVoices();
 }
 

@@ -5,8 +5,9 @@ import { dist } from "./world.js";
 import { simDelta, updateClock, load, beginDay } from "./day.js";
 import { longDate, shortDate } from "./calendar.js";
 import { updateCrafting } from "./crafting.js";
-import { updatePatrons } from "./patrons.js";
+import { initTalk, updatePatrons } from "./patrons.js";
 import { updateNeeds } from "./needs.js";
+import { updateWeather } from "./weather.js";
 import { updateFrontDoor } from "./door.js";
 import { cancelPour, updatePour } from "./serving.js";
 import { watchObjectives } from "./objectives.js";
@@ -30,6 +31,7 @@ let clickDest = null;
 initMenus(document.getElementById("menu"), (modal) => { g.modal = modal; }, () => g.bus.emit({ type: "Confirmed" }));
 initDebug(g);
 initSound(g);
+initTalk(g);
 const wm = document.getElementById("watermark");
 if (wm)
     wm.textContent = `Travelling Inn · lofi prototype · ${BUILD}`;
@@ -660,6 +662,7 @@ function frame(now) {
         updateCrafting(g, sim, target?.type === "furniture" ? target.f : null);
         updatePatrons(g, sim);
         updateNeeds(g, sim);
+        updateWeather(g, sim);
         updateFrontDoor(g, now);
         updateClock(g, sim, () => forcedTurnIn(g));
     }

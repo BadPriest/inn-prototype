@@ -286,6 +286,8 @@ export function play(key, at, opts = {}) {
         level.gain.setValueAtTime(0, t);
         level.gain.linearRampToValueAtTime(1, t + fade);
     }
+    else if (opts.level !== undefined)
+        level.gain.setValueAtTime(opts.level, t);
     const spatial = ac.createGain();
     const { gain, pan } = placement(at, def);
     spatial.gain.value = gain;
@@ -322,6 +324,20 @@ export function stop(v, fadeMs = 70) {
     }
     catch { /* already stopped */ }
     setTimeout(() => voices.delete(v), fadeMs + 100);
+}
+/** Glide a voice's level toward `value` over about `seconds` (for sounds mixed continuously, like rain). */
+export function setLevel(v, value, seconds) {
+    if (!v || !ac || v.stopped)
+        return;
+    const t = ac.currentTime;
+    v.level.gain.cancelScheduledValues(t);
+    v.level.gain.setValueAtTime(v.level.gain.value, t);
+    v.level.gain.setTargetAtTime(value, t, Math.max(0.01, seconds / 3));
+}
+/** Move where a voice plays from (volume and pan follow on the next frame). */
+export function moveVoice(v, at) {
+    if (v)
+        v.at = at;
 }
 /** How long a voice's sound rings before it has faded to near silence (seconds). */
 export function ringsOut(v) {

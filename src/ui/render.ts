@@ -44,6 +44,17 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
     for (const t of row) {
       ctx.fillStyle = t.def.floor;
       ctx.fillRect(X(t.x), Y(t.y), ts, ts);
+      if (t.def.name === "Window") {
+        // A pane of glass in the wall: a lighter frame, split in four.
+        ctx.strokeStyle = "rgba(220,235,245,0.45)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(X(t.x) + 3, Y(t.y) + 3, ts - 6, ts - 6);
+        ctx.beginPath();
+        ctx.moveTo(X(t.x) + ts / 2, Y(t.y) + 3); ctx.lineTo(X(t.x) + ts / 2, Y(t.y) + ts - 3);
+        ctx.moveTo(X(t.x) + 3, Y(t.y) + ts / 2); ctx.lineTo(X(t.x) + ts - 3, Y(t.y) + ts / 2);
+        ctx.stroke();
+        ctx.lineWidth = 1;
+      }
       if (t.def.kind !== "wall") {
         ctx.strokeStyle = "rgba(0,0,0,0.08)";
         ctx.strokeRect(X(t.x) + 0.5, Y(t.y) + 0.5, ts - 1, ts - 1);

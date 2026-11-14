@@ -59,6 +59,9 @@ export type GameEvent =
   | { type: "DayStarted"; day: number }
   | { type: "TimeOfDayChanged"; from: string; to: string }
   | { type: "CalendarSeasonChanged"; season: string }
+  | { type: "WeatherChanged"; from: string; to: string; abrupt: boolean }
+  | { type: "RainBandChanged"; from: string | null; to: string | null; abrupt: boolean } // light-rain, rain, storm
+  | { type: "Thunder"; near: boolean }
   | { type: "Paused" }
   | { type: "Resumed" }
   | { type: "Log"; text: string };
