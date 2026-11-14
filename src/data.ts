@@ -376,6 +376,18 @@ export const NEEDS = {
   graceChance: 0.3, // when they're done and full, chance of one more
 };
 
+// Flow and shelter: how many come in. Passing traffic (the hour's flow × the location's traffic) times a
+// shelter factor from the weather: rain drives passers-by indoors (more so in a busy place), and keeps
+// them until it stops. A storm thins the street, since fewer people are out at all.
+export const SHELTER = {
+  fullAt: 0.45, // rain intensity at which the pull indoors is at its strongest
+  stormThins: 0.5, // in the storm band, the street has this much fewer people on it
+  waitOut: [150, 50] as Organic, // game minutes past their usual stay they'll wait for the rain to stop
+  checkEvery: [20, 8] as Organic, // game minutes between looking out (and maybe ordering again)
+  waitLines: ["I'll wait till it eases.", "Not going out in that.", "Might as well stay put."],
+  braveLines: ["Can't wait all day.", "Right. Into it, then.", "It's not going to stop, is it."],
+};
+
 // Soaked: guests in from the rain. How wet comes from the rain's intensity as they arrive; it fades as
 // they dry (faster by a lit fire). Wet guests get cold, want the fire and something warm, and drip.
 export const SOAKING = {

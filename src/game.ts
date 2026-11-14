@@ -83,6 +83,10 @@ export interface Patron {
   marker?: { text: Outcome | string; until: number };
   line?: { text: string; until: number };
   leftEarly: boolean;
+  /** Why they came in: out of the rain, to eat, to drink, or for the company. */
+  reason: "shelter" | "food" | "drink" | "company";
+  /** Done, wanting nothing, but waiting for the rain to stop (since this game minute). */
+  waitingOut?: number;
   /** How wet they are, 0..1: from the rain they came in from, drying off inside. */
   soaked: number;
   /** The weather they walked in from: sky, rain band and intensity. */

@@ -1,6 +1,6 @@
 // Patrons: arrivals, walking, ordering, waiting, eating, mess and leaving.
 import { chance, organic, pick, uid, weightedPick } from "./core.js";
-import { ARCHETYPES, CHATTER, GARNISHES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING } from "./data.js";
+import { ARCHETYPES, CHATTER, GARNISHES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING, SHELTER } from "./data.js";
 import { emptyTastes } from "./game.js";
 import { appeal, prepareVisit, tagScore } from "./tastes.js";
 import { arrivalNeeds, closeAllStretches } from "./needs.js";
@@ -29,6 +29,27 @@ export function wants(needs, foodBias, kind) {
 function hungrier(needs, foodBias) {
     const f = wants(needs, foodBias, "food") + 0.05, d = wants(needs, foodBias, "drink") + 0.05;
     return chance(f / (f + d));
+}
+/**
+ * How many more come in because of the weather: rain pulls passers-by indoors (by the location's
+ * shelter), a storm thins the street. 1 on a dry day.
+ */
+export function shelterFactor(g) {
+    const w = g.weather;
+    if (w.sky !== "rain")
+        return 1;
+    const pull = 1 + g.loc.shelter * Math.min(1, w.rain / SHELTER.fullAt);
+    const out = w.band === "storm" ? 1 - SHELTER.stormThins : 1;
+    return pull * out;
+}
+/** Why someone's coming in: the extra rush from the rain is shelter; otherwise what they need most. */
+function reasonFor(g, needs) {
+    const f = shelterFactor(g);
+    if (f > 1 && chance((f - 1) / f))
+        return "shelter";
+    if (Math.max(needs.hunger, needs.thirst) < NEEDS.wantAt)
+        return "company";
+    return needs.hunger >= needs.thirst ? "food" : "drink";
 }
 /** Who's passing: archetypes by their weight, times how common they are where the inn stands. */
 function passerBy(g) {
@@ -112,6 +133,7 @@ export function spawnPatron(g, archetype, forced) {
         stayUntil: g.minute + Math.max(20, organic(a.stay)),
         needs,
         soaked,
+        reason: reasonFor(g, needs),
         weatherTaste: a.weather,
         unmet: {},
         groupId: forced?.groupId,
@@ -242,6 +264,7 @@ export function spawnRegular(g, def, st) {
         stayUntil: g.minute + Math.max(20, organic(def.stay)),
         needs,
         soaked,
+        reason: reasonFor(g, needs),
         weatherTaste: def.weather,
         unmet: {},
     };
@@ -442,6 +465,37 @@ function wantsMore(g, p) {
         return true;
     }
     return false;
+}
+/**
+ * Waiting for the rain to stop. When it does, they go (inn#23 will make that a choice). Meanwhile they
+ * look out now and then, may order again as they get thirsty, and won't wait forever.
+ */
+function waitOutRain(g, p) {
+    const done = () => { p.waitingOut = undefined; };
+    if (!g.open || g.lastCall) {
+        done();
+        startLeaving(g, p);
+        return;
+    }
+    if (g.weather.sky !== "rain") {
+        done();
+        startLeaving(g, p);
+        return;
+    }
+    if (g.minute < p.nextThinkAt)
+        return;
+    p.nextThinkAt = g.minute + organic(SHELTER.checkEvery);
+    if (g.minute - p.stayUntil > organic(SHELTER.waitOut)) {
+        done();
+        if (p.schema !== "reserved")
+            p.line = { text: pick(SHELTER.braveLines), until: g.minute + 6 };
+        startLeaving(g, p);
+        return;
+    }
+    if (wantsMore(g, p)) {
+        done();
+        placeOrder(g, p);
+    }
 }
 function groupOf(g, p) {
     return p.groupId ? g.groups.find((x) => x.id === p.groupId) : undefined;
@@ -674,7 +728,7 @@ export function updatePatrons(g, simDt) {
     }
     // Visitors arrive at the flow rate.
     if (g.open && !g.lastCall && g.minute >= g.nextArrivalAt) {
-        const rate = TUNING.flowByHour[g.hour] * g.loc.traffic * g.flowMultiplier; // per hour
+        const rate = TUNING.flowByHour[g.hour] * g.loc.traffic * shelterFactor(g) * g.flowMultiplier; // per hour
         if (rate > 0.01) {
             spawnVisitors(g);
             g.nextArrivalAt = g.minute + Math.max(3, organic([60 / rate, 30 / rate]));
@@ -722,6 +776,10 @@ export function updatePatrons(g, simDt) {
                     lingerOrLeave(g, p);
                     break;
                 }
+                if (p.waitingOut !== undefined) {
+                    waitOutRain(g, p);
+                    break;
+                }
                 if (g.minute >= p.nextThinkAt) {
                     if (!g.open || g.lastCall)
                         startLeaving(g, p);
@@ -755,10 +813,20 @@ export function updatePatrons(g, simDt) {
                     p.consuming = undefined;
                     leaveTableMess(g, p);
                     const group = groupOf(g, p);
-                    const stay = !group?.leaving && g.open && !g.lastCall && g.minute < p.stayUntil && wantsMore(g, p);
+                    const raining = g.weather.sky === "rain";
+                    const canStay = !group?.leaving && g.open && !g.lastCall;
+                    const stay = canStay && (g.minute < p.stayUntil || raining) && wantsMore(g, p);
                     if (stay) {
                         p.state = "seated";
                         p.nextThinkAt = g.minute + organic([4, 3]);
+                    }
+                    else if (canStay && raining) {
+                        // Done, but it's raining: they sit it out.
+                        p.state = "seated";
+                        p.waitingOut = g.minute;
+                        p.nextThinkAt = g.minute + organic(SHELTER.checkEvery);
+                        if (p.schema !== "reserved" && chance(0.5))
+                            p.line = { text: pick(SHELTER.waitLines), until: g.minute + 6 };
                     }
                     else if (group && othersPresent(g, p).length && (group.leaving || chance(0.8))) {
                         // Parties mostly leave together: wait for the others to finish.

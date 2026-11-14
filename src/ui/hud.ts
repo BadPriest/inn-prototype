@@ -6,7 +6,7 @@ import { unmetLogText } from "../needs.js";
 import { compactDate, shortDate } from "../calendar.js";
 import { forceWeather, weatherLabel, weatherTags } from "../weather.js";
 import type { RainBandId, SkyId } from "../data.js";
-import { spawnRegular, spawnVisitors } from "../patrons.js";
+import { shelterFactor, spawnRegular, spawnVisitors } from "../patrons.js";
 import { emptyTastes } from "../game.js";
 import { resetSave } from "../day.js";
 import { iconFor, itemLabel } from "../serving.js";
@@ -173,7 +173,7 @@ function updateDebug(g: Game): void {
     const t = p.tastes;
     const st = g.regular(p.regularId);
     return `<div class="dp"><b style="color:${p.color}">${p.name}</b>${p.groupId && (g.groups.find((x) => x.id === p.groupId)?.members.length ?? 0) > 1 ? ` <span class="muted">(party #${p.groupId})</span>` : ""} · ${p.state}${o?.open ? ` · wants ${o.label} (${Math.floor(g.minute - p.waitedSince)}/${Math.floor(p.patience)}m)` : ""}
-      <div>${needsLine(g, p)}</div>
+      <div>${needsLine(g, p)} · came for ${p.reason}${p.waitingOut !== undefined ? ` · waiting out the rain ${Math.floor(g.minute - p.waitingOut)}m` : ""}</div>
       ${p.weatherTaste.love.length + p.weatherTaste.dislike.length ? `<div>weather ♥ ${p.weatherTaste.love.join(", ") || "–"} · ✗ ${p.weatherTaste.dislike.join(", ") || "–"}${p.cameIn?.band ? ` · came in from ${p.cameIn.band} (${p.cameIn.rain})` : ""}</div>` : ""}
       <div>schema: ${p.schema}${st ? ` · familiarity ${st.familiarity}${st.resolved ? " · resolved" : ""}${st.openedUp ? " · opened up" : ""}` : ""} · fuss ${p.fussiness.toFixed(2)} · mess ${p.messiness.toFixed(2)}</div>
       ${p.craving ? `<div>craving: ${p.craving.tag}${p.schema === "veiled" ? (p.craving.honest ? " (honest)" : " (noise)") : ""}</div>` : ""}
@@ -195,6 +195,6 @@ function updateDebug(g: Game): void {
   const h = g.history.slice(-5).map((s) =>
     `<div>Day ${s.day} (${compactDate(g.dateOfDay(s.day), g.date.year)}): ${s.arrivals} in, ${s.served} served, ${s.outcomes.DELIGHT} delight, ${s.outcomes.COMPLAINS} complaints, ${s.leftEarly} left early${s.unmet?.length ? ` · unmet: ${unmetSummary(s.unmet, true)}` : ""}</div>`).join("");
   $("dbg-history").innerHTML = h || `<div class="muted">No finished days yet.</div>`;
-  $("dbg-next").textContent = g.open && !g.lastCall ? `next arrival ~${g.clockText(g.nextArrivalAt)} · flow now ${(TUNING.flowByHour[g.hour] * g.loc.traffic * g.flowMultiplier).toFixed(1)}/h` : "inn closed";
+  $("dbg-next").textContent = g.open && !g.lastCall ? `next arrival ~${g.clockText(g.nextArrivalAt)} · flow now ${(TUNING.flowByHour[g.hour] * g.loc.traffic * shelterFactor(g) * g.flowMultiplier).toFixed(1)}/h (shelter ×${shelterFactor(g).toFixed(2)})` : "inn closed";
   $("dbg-next").textContent = `${g.loc.name} · ${$("dbg-next").textContent}`;
 }
