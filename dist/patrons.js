@@ -1,6 +1,6 @@
 // Patrons: arrivals, walking, ordering, waiting, eating, mess and leaving.
 import { chance, organic, pick, uid, weightedPick } from "./core.js";
-import { ARCHETYPES, CHATTER, GARNISHES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING, SHELTER, SEASONAL_TASTES, MARKET } from "./data.js";
+import { ARCHETYPES, CHATTER, GARNISHES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING, SHELTER, SEASONAL_TASTES, MARKET, SPECIFIC_ORDERS } from "./data.js";
 import { emptyTastes } from "./game.js";
 import { appeal, prepareVisit, tagScore } from "./tastes.js";
 import { arrivalNeeds, closeAllStretches } from "./needs.js";
@@ -354,10 +354,13 @@ function placeOrder(g, p) {
         const gar = weightedPick(GARNISHES, (x) => Math.max(0, tagScore(x.tags, t).score) + 0.2 + (p.craving && x.tags.includes(p.craving.tag) ? 2 : 0));
         wantGarnish = gar?.id;
     }
+    const wantOption = namedOption(g, p, recipe);
+    const opt = INGREDIENTS.find((x) => x.id === wantOption);
     const garName = GARNISHES.find((x) => x.id === wantGarnish)?.name.toLowerCase();
+    const named = opt ? (recipe.id === "tea" ? `${opt.name} tea` : `${recipe.name}, ${opt.name.toLowerCase()}`) : recipe.name;
     const o = {
-        id: uid(), patronId: p.id, recipeId: recipe.id, wantGarnish,
-        label: garName ? `${recipe.name} with ${garName}` : recipe.name,
+        id: uid(), patronId: p.id, recipeId: recipe.id, wantGarnish, wantOption,
+        label: garName ? `${named} with ${garName}` : named,
         placedAt: g.minute, open: true,
     };
     g.orders.push(o);
@@ -386,6 +389,23 @@ function placeOrder(g, p) {
         p.line = { text: hint, until: g.minute + 8 };
         g.journal(p, `said: “${hint}”`, "said");
     }
+}
+/**
+ * Do they ask for a particular leaf or bean? Regulars who are open about their tastes often do, fussy
+ * strangers sometimes. They name the one they truly like best (if they like any of them at all).
+ */
+function namedOption(g, p, recipe) {
+    if (recipe.kind !== "drink" || recipe.slots !== 1 || !recipe.options.length)
+        return undefined;
+    const st = g.regular(p.regularId);
+    const knowsOwnMind = st ? (p.schema === "open" || st.openedUp || st.resolved) : false;
+    const asks = chance(knowsOwnMind ? SPECIFIC_ORDERS.regular : p.fussiness >= SPECIFIC_ORDERS.fussyAt ? SPECIFIC_ORDERS.fussy : SPECIFIC_ORDERS.anyone);
+    if (!asks)
+        return undefined;
+    const best = recipe.options
+        .map((id) => ({ id, s: tagScore(INGREDIENTS.find((x) => x.id === id)?.tags ?? [], p.tastes[recipe.kind]).score }))
+        .sort((a, b) => b.s - a.s)[0];
+    return best && best.s > 0 ? best.id : undefined;
 }
 /**
  * Someone was delighted. People nearby notice, and some think about having the same.
@@ -747,10 +767,10 @@ function makeMess(g, p, simDt) {
 }
 /** People pick at a snack bowl on their table, and may say what they think of it. */
 function nibble(g, p, simDt) {
-    const seat = seatOf(g, p);
-    if (!seat?.table)
+    const key = g.bowlKeyFor(seatOf(g, p));
+    if (!key)
         return;
-    const bowl = g.bowls.get(tableKey(seat.table));
+    const bowl = g.bowls.get(key);
     if (!bowl || bowl.left <= 0)
         return;
     const snack = SNACKS.find((x) => x.id === bowl.snack);

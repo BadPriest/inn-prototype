@@ -16,6 +16,7 @@ export interface Item {
   garnish?: string; // garnish id
   madeDay?: number;
   snack?: string; // a filled snack bowl (snack id)
+  options?: string[]; // ingredients that went in (the leaf, the beans…)
   whole?: number; // a whole pie, this many slices: carried from the oven to the pie safe, never served
   ticket?: number; // patron id this single serving was made for
   ticketName?: string;
@@ -31,6 +32,7 @@ export interface Order {
   patronId: number;
   recipeId: string;
   wantGarnish?: string;
+  wantOption?: string; // a particular leaf or bean, asked for by name
   label: string;
   placedAt: number; // game minute
   open: boolean;
@@ -213,6 +215,8 @@ export class Game {
   lastCall = false;
   fireLit = false;
   lampsLit = false;
+  /** The gramophone: playing or not, which record, and how many records the spring has left. */
+  gramophone = { on: false, record: 0, left: 0 };
   /** This morning's paper (newspaper.ts). */
   paper?: Paper; // the keeper lights the lamps when it gets gloomy (ui/light.ts)
   flowMultiplier = 1;
@@ -359,6 +363,19 @@ export class Game {
   /** Tray capacity, with upgrades. */
   trayCap(kind: ItemKind): number {
     return T2.trayCapacity[kind] + (this.upgrades.has("trays") ? 1 : 0);
+  }
+
+  /** The snack bowl a seat can reach: its table's, or for a stool, the nearest snack spot on the counter. */
+  bowlKeyFor(seat: { kind: string; tile: Vec; table?: Vec } | undefined): string | undefined {
+    if (!seat) return undefined;
+    if (seat.table) return `${seat.table.x},${seat.table.y}`;
+    if (seat.kind !== "stool") return undefined;
+    const spot = this.world.furniture
+      .filter((f) => f.kind === "snacks")
+      .map((f) => ({ f, d: Math.hypot(f.tiles[0].x - seat.tile.x, f.tiles[0].y - seat.tile.y) }))
+      .filter((x) => x.d <= 2.3)
+      .sort((a, b) => a.d - b.d)[0];
+    return spot ? `${spot.f.tiles[0].x},${spot.f.tiles[0].y}` : undefined;
   }
 
   regularDef(id: string | undefined): Regular | undefined {

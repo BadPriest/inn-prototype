@@ -1,12 +1,14 @@
 // What happens when the keeper interacts with something. Menus live here.
 import { organic } from "./core.js";
-import { RECIPES, REGULARS, TUNING } from "./data.js";
+import { GRAMOPHONE, RECIPES, REGULARS, TUNING } from "./data.js";
 import { dist } from "./world.js";
 import { collectShelf, recipesFor, serveFromPot } from "./crafting.js";
 import { tableKey } from "./patrons.js";
 import { servePatron, serveTable, trayItems, pickUpTray, startPour, setTrayDown } from "./serving.js";
 import { endDay, startNextDay, toggleInn } from "./day.js";
 import { compactDate, longDate } from "./calendar.js";
+import { gramophoneChanged, gramophoneWound, recordsReady } from "./sound/gramophone.js";
+import { openSteepScreen } from "./ui/cook.js";
 import { closeAll, openMenu, back } from "./ui/menu.js";
 import { openCookScreen } from "./ui/cook.js";
 import { openPieSafeScreen, openSnackScreen } from "./ui/larder.js";
@@ -143,6 +145,8 @@ export function promptFor(g, t) {
         case "station":
             if (pot && g.pouring && g.pouring.from === f.id)
                 return `Pouring… ${Math.round((g.pouring.progress / g.pouring.total) * 100)}%`;
+            if (pot?.item.recipeId === "water")
+                return `Space: steep a cup of tea (hot water for ${pot.left} more)`;
             if (pot)
                 return `Space: ${pot.item.kind === "drink" ? "pour a cup of" : "take a serving of"} ${pot.item.name.toLowerCase()} (${pot.left} left)`;
             {
@@ -155,6 +159,14 @@ export function promptFor(g, t) {
                 }
                 return ready || `Space: cook at the ${f.name.toLowerCase()}`;
             }
+        case "gramophone":
+            if (!recordsReady())
+                return "The gramophone (no records yet)";
+            return g.gramophone.on ? `Space: change the record (${g.gramophone.left} left on this winding)` : "Space: wind it up and play a record";
+        case "snacks": {
+            const bowl = g.bowls.get(`${f.tiles[0].x},${f.tiles[0].y}`);
+            return bowl ? (bowl.left < 0.15 ? "Space: refill the counter bowl" : "Space: swap or clear the counter bowl") : "Space: set out snacks on the counter";
+        }
         case "bin": return trayItems(g).length ? "Space: throw something away" : "Scrap bin";
         case "piesafe": return trayItems(g).some((i) => i.whole) ? "Space: put the pie away"
             : g.pieSafe.length ? `Space: take a slice (${g.pieSafe.map((p) => p.left).reduce((a, b) => a + b, 0)} slices)` : "The pie safe is empty";
@@ -204,6 +216,10 @@ export function interact(g, t) {
             return;
         }
         case "station": {
+            if (g.pots.get(f.id)?.item.recipeId === "water") {
+                openSteepScreen(g, f);
+                return;
+            }
             if (g.pots.has(f.id)) {
                 if (g.pots.get(f.id).item.kind === "drink")
                     startPour(g, f.id); // a cup from the urn takes pouring
@@ -222,6 +238,30 @@ export function interact(g, t) {
             openCraftMenu(g, f);
             return;
         }
+        case "gramophone": {
+            const gr = g.gramophone;
+            if (!recordsReady()) {
+                g.say("No records to play yet.");
+                return;
+            }
+            if (!gr.on) {
+                gr.on = true;
+                gr.left = GRAMOPHONE.perWinding;
+                gramophoneWound(g);
+                g.say("You wind the gramophone and set the needle down.");
+            }
+            else if (gr.left <= 0)
+                g.say("It's winding down; give it a moment, then wind it again.");
+            else {
+                gr.record = (gr.record + 1) % GRAMOPHONE.records.length;
+                gramophoneChanged();
+                g.say("You change the record.");
+            }
+            return;
+        }
+        case "snacks":
+            openSnackMenu(g, `${f.tiles[0].x},${f.tiles[0].y}`);
+            return;
         case "hatch":
             openHatchMenu(g);
             return;

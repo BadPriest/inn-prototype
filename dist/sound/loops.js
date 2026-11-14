@@ -12,7 +12,7 @@ function wanted(g) {
         const c = at(fid);
         if (job.done || !r || !c)
             continue;
-        if (r.station === "kettle")
+        if (r.station === "kettle" || r.station === "coffee")
             want.set(`kettle@${fid}`, c);
         else if (r.id === "stew")
             want.set(`stewCooking@${fid}`, c);

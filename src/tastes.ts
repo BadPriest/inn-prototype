@@ -5,7 +5,7 @@
 //   afterServe    what a strong reaction changes (locks, breakthroughs, opening up)
 
 import { chance, pick, weightedPick, type Outcome } from "./core.js";
-import { GARNISHES, SCHEMA_TUNING, SEASONAL_TASTES, TASTE_POOL, TUNING, type CalendarSeasonId, type ItemKind, type Regular, type SchemaId, type TasteSet } from "./data.js";
+import { GARNISHES, SCHEMA_TUNING, SEASONAL_TASTES, SPECIFIC_ORDERS, TASTE_POOL, TUNING, type CalendarSeasonId, type ItemKind, type Regular, type SchemaId, type TasteSet } from "./data.js";
 import { emptyTastes, type Game, type Item, type Order, type Patron, type RegularState, type Tastes } from "./game.js";
 
 export function tagScore(tags: string[], t: TasteSet): { score: number; hitLove: boolean } {
@@ -157,6 +157,8 @@ export function judge(g: Game, p: Patron, item: Item, order: Order | null): Verd
   // In season: a little better, unless it's something they dislike.
   if (inSeason(g.date.season, item.tags, truth)) score += SEASONAL_TASTES.scoreBonus;
   let missingGarnish = false;
+  const wrongOption = !!order?.wantOption && !item.options?.includes(order.wantOption);
+  if (wrongOption) score += TUNING.scoring.missingGarnish; // they said which one
   if (order?.wantGarnish && item.garnish !== order.wantGarnish) {
     score += TUNING.scoring.missingGarnish;
     missingGarnish = true;
@@ -189,7 +191,8 @@ export function judge(g: Game, p: Patron, item: Item, order: Order | null): Verd
       case "DELIGHT": line = hitCraving ? pick(["That's exactly it.", "How did you know?", "Just what I wanted."]) : pick(["Oh, that's lovely.", "Now that's something.", "Just what I needed."]); break;
       case "PLEASED": line = pick(["Mm. Good.", "That'll do nicely.", "Thank you."]); break;
       case "FULFILLED": line = pick(["Thanks.", "Right.", ""]); break;
-      case "COMPLAINS": line = missingGarnish && g2 ? `No ${g2.name.toLowerCase()}? Really?` : pick(["Not quite to my taste.", "Hm. No.", "That's... not for me."]); break;
+      case "UNFINISHED": line = wrongOption ? pick(SPECIFIC_ORDERS.wrongLines) : ""; break;
+      case "COMPLAINS": line = wrongOption ? pick(SPECIFIC_ORDERS.wrongLines) : missingGarnish && g2 ? `No ${g2.name.toLowerCase()}? Really?` : pick(["Not quite to my taste.", "Hm. No.", "That's... not for me."]); break;
       default: line = "";
     }
   }

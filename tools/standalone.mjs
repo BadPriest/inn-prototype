@@ -27,9 +27,10 @@ for (const file of walk(dist)) {
 }
 
 // Files from assets/ (and its subfolders), packed in as data URLs so the single file still has them.
-// A folder named "questionable" is left out: parked files that the game doesn't use.
+// Left out: "questionable" (parked files the game doesn't use) and "music" (the original songs; the
+// game plays the smaller copies in sounds/gramophone).
 const assetsDir = join(root, "assets");
-const SKIP_DIRS = new Set(["questionable"]);
+const SKIP_DIRS = new Set(["questionable", "music"]);
 const MIME = { ".opus": "audio/ogg", ".ogg": "audio/ogg", ".mp3": "audio/mpeg", ".wav": "audio/wav", ".m4a": "audio/mp4" };
 const assets = {};
 function packDir(dir, prefix) {

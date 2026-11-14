@@ -337,6 +337,17 @@ export function voicesNow(): { key: string; gain: number }[] {
   return [...voices].filter((v) => !v.stopped).map((v) => ({ key: v.key, gain: v.spatial.gain.value * v.level.gain.value }));
 }
 
+/** Is this voice still sounding (not finished, not stopped)? */
+export function isPlaying(v: Voice | null): boolean {
+  return !!v && voices.has(v) && !v.stopped;
+}
+
+/** Is this sound loaded and ready to play? */
+export function hasSound(key: string): boolean {
+  const def = SOUNDS[key];
+  return !!def && choices(def).length > 0;
+}
+
 /** How many of this sound are playing right now. */
 export function playingCount(key: string): number {
   let n = 0;

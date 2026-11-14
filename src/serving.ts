@@ -1,7 +1,7 @@
 // Trays, pickup, pouring, garnishing and delivery.
 
 import { GARNISHES, RECIPES, TUNING } from "./data.js";
-import { makeItem, serveFromPot } from "./crafting.js";
+import { makeItem, serveFromPot, steepTea } from "./crafting.js";
 import type { Game, Item, Patron, SetDownTray } from "./game.js";
 import { dist } from "./world.js";
 import { organic, uid } from "./core.js";
@@ -155,6 +155,7 @@ export function updatePour(g: Game, realDt: number): void {
   if (p.progress < p.total) return;
   g.pouring = null;
   if (p.from.startsWith("tap:")) pour(g, p.recipeId!);
+  else if (p.recipeId?.startsWith("leaf:")) steepTea(g, p.from, p.recipeId.slice(5));
   else serveFromPot(g, p.from);
   g.bus.emit({ type: "PourEnded", id: p.id, done: true });
 }
@@ -214,6 +215,7 @@ export function deliverTo(g: Game, p: Patron, quiet = false, extra: Item[] = [])
   const matches = [...trayItems(g), ...extra].filter((i) => i.recipeId === order.recipeId && !i.whole);
   const item =
     matches.find((i) => i.ticket === p.id) ??
+    (order.wantOption ? matches.find((i) => !i.ticket && i.options?.includes(order.wantOption!)) : undefined) ??
     matches.find((i) => !i.ticket) ??
     matches.find((i) => !g.patron(i.ticket)?.orderId || !g.order(g.patron(i.ticket)!.orderId)?.open) ??
     matches[0];

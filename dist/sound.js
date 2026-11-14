@@ -5,6 +5,7 @@
 //   sound/crowd.ts      the taproom murmur, by headcount
 //   sound/fire.ts       the fire: catches, roars, settles; embers when put out
 //   sound/weather.ts    rain indoors, through the open door, and at the windows, mixed by intensity
+//   sound/gramophone.ts records from the gramophone, a few per winding
 // This file listens to game events and calls soundscape() every frame. M mutes; pause silences everything.
 import { DOOR_TUNING, OUTCOME_SOUND, SOUND_TUNING as T } from "./data.js";
 import { attach, output, play, ready, resume, ringsOut, stop, suspend, updateVoices, vary } from "./sound/engine.js";
@@ -13,6 +14,7 @@ import { footsteps } from "./sound/footsteps.js";
 import { crowd } from "./sound/crowd.js";
 import { fire } from "./sound/fire.js";
 import { thunder, weatherSound } from "./sound/weather.js";
+import { gramophoneSound } from "./sound/gramophone.js";
 export { isMuted, toggleMute, unlockAudio } from "./sound/engine.js";
 /** Call every frame with real seconds. */
 export function soundscape(g, realDt) {
@@ -23,6 +25,7 @@ export function soundscape(g, realDt) {
     crowd(g);
     fire(g, realDt);
     weatherSound(g, realDt);
+    gramophoneSound(g);
     updateVoices();
 }
 // The door makes one sound at a time: opening and closing never overlap.

@@ -2,7 +2,8 @@
 // Click a card to add it, click again to take it out. The dish below changes as you choose.
 // COOK becomes available once enough ingredients are chosen.
 
-import { INGREDIENTS, type Recipe } from "../data.js";
+import { INGREDIENTS, RECIPES, type Recipe } from "../data.js";
+import { startPour } from "../serving.js";
 import type { Game } from "../game.js";
 import type { Furniture } from "../world.js";
 import { makeItem, startJob, ticketFor } from "../crafting.js";
@@ -10,6 +11,35 @@ import { closeAll, openMenu, replaceMenu, type MenuSpec } from "./menu.js";
 import { chip, grid, gridKeys } from "./cards.js";
 
 interface CookState { chosen: string[]; focus: number }
+
+/** The kettle's boiled: pick a leaf for the next cup. Shows who's waiting for tea, and for which leaf. */
+export function openSteepScreen(g: Game, f: Furniture): void {
+  const tea = RECIPES.find((r) => r.id === "tea")!;
+  const water = g.pots.get(f.id);
+  const st = { focus: 0 };
+  const build = (): MenuSpec => {
+    const waiting = g.orders.filter((o) => o.open && o.recipeId === "tea").sort((a, b) => a.placedAt - b.placedAt);
+    const wanted = (id: string) => waiting.filter((o) => o.wantOption === id).map((o) => g.patron(o.patronId)?.name).filter(Boolean);
+    const steep = (id: string) => { closeAll(); startPour(g, f.id, `leaf:${id}`); };
+    const cards = grid(tea.options.map((id, i) => {
+      const ing = INGREDIENTS.find((x) => x.id === id)!;
+      const who = wanted(id);
+      return { pick: id, icon: ing.icon, name: ing.name, tags: ing.tags, note: who.length ? `asked for by ${who.join(", ")}` : "", on: who.length > 0, focus: i === st.focus };
+    }));
+    const queue = waiting.map((o) => `${g.patron(o.patronId)?.name ?? "?"}${o.wantOption ? ` (${INGREDIENTS.find((x) => x.id === o.wantOption)?.name.toLowerCase()})` : ""}`).join(", ");
+    return {
+      title: "🍵 Steep a cup",
+      subtitle: `Hot water for ${water?.left ?? 0} more`,
+      view: {
+        html: `<p class="blurb">${waiting.length ? `Waiting for tea: ${queue}.` : "Nobody's waiting for tea just now; it'll go to whoever asks."}</p>${cards}`,
+        onPick: steep,
+        onKey: gridKeys(() => tea.options.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, (i) => steep(tea.options[i])),
+      },
+      items: [],
+    };
+  };
+  openMenu(build());
+}
 
 export function openCookScreen(g: Game, f: Furniture, r: Recipe): void {
   const state: CookState = { chosen: [], focus: 0 };
@@ -46,6 +76,7 @@ function cookSpec(g: Game, f: Furniture, r: Recipe, st: CookState): MenuSpec {
   const tags = item.tags.map((t) => chip(t, !r.baseTags.includes(t))).join("");
   const time = `about ${Math.round(r.minutes[0])} min${r.tended ? ", and it needs you at the station" : ""}`;
   const makes = r.storedIn === "piesafe" ? `a whole pie, about ${r.servings?.[0] ?? 6} slices, for the pie safe`
+    : r.id === "water" ? `hot water for about ${r.servings?.[0] ?? 3} cups; you steep each with its own leaf`
     : r.servings ? `a batch of about ${r.servings[0]} servings, served from the ${f.name.toLowerCase()}`
     : "one serving, waiting here when it's done";
   const forWho = r.servings ? "" : ticket ? `For <b>${ticket.name}</b>: theirs is the oldest order for this.` : "Nobody's asked for this yet: it'll go to whoever does.";
@@ -87,7 +118,7 @@ function cookSpec(g: Game, f: Furniture, r: Recipe, st: CookState): MenuSpec {
     },
     items: [
       ...(ticket ? [{ label: "Cook for nobody in particular", button: "secondary" as const, disabled: !ready, action: () => cook(false) }] : []),
-      { label: "Cook", sub: ticket ? `for ${ticket.name}` : undefined, button: "primary" as const, disabled: !ready, action: () => cook(true) },
+      { label: r.id === "water" ? "Boil" : "Cook", sub: ticket ? `for ${ticket.name}` : undefined, button: "primary" as const, disabled: !ready, action: () => cook(true) },
     ],
   };
 }

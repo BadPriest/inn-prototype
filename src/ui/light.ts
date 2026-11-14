@@ -94,6 +94,13 @@ export function drawLight(ctx: CanvasRenderingContext2D, g: Game, X: (n: number)
     }
   }
 
+  // The keeper carries a candle: a small warm light wherever they go, once it's dim.
+  if (dark > LIGHT.keeperCandle.from) {
+    const k = g.keeper.pos;
+    const flicker = 1 + 0.05 * Math.sin(t * 11.3) + 0.03 * Math.sin(t * 17.9);
+    glows.push({ x: k.x, y: k.y, r: LIGHT.keeperCandle.reach * flicker, strength: LIGHT.keeperCandle.strength, warm: LIGHT.keeperCandle.warm });
+  }
+
   if (dark > 0.01) {
     if (!shade) shade = document.createElement("canvas");
     if (shade.width !== W || shade.height !== H) { shade.width = W; shade.height = H; }

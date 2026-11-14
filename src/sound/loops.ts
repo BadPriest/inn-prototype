@@ -16,7 +16,7 @@ function wanted(g: Game): Map<string, Vec> {
     const r = RECIPES.find((x) => x.id === job.recipeId);
     const c = at(fid);
     if (job.done || !r || !c) continue;
-    if (r.station === "kettle") want.set(`kettle@${fid}`, c);
+    if (r.station === "kettle" || r.station === "coffee") want.set(`kettle@${fid}`, c);
     else if (r.id === "stew") want.set(`stewCooking@${fid}`, c);
   }
   for (const [fid, pot] of g.pots) {

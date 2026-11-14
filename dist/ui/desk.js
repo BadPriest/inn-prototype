@@ -42,11 +42,13 @@ export function openDeskScreen(g, openJournal) {
 }
 // ---------------------------------------------------------------------------
 // The bill of fare: cards to put on the board or take off it.
+/** What can go on the bill of fare (not the kettle's hot water). */
+const MENU = RECIPES.filter((r) => !r.internal);
 export function openBillOfFare(g) {
     const st = { focus: 0 };
     const build = () => {
         const toggle = (i) => {
-            const r = RECIPES[i];
+            const r = MENU[i];
             if (g.menu.has(r.id))
                 g.menu.delete(r.id);
             else
@@ -59,10 +61,10 @@ export function openBillOfFare(g) {
         const putUp = () => {
             g.menuChosen = true;
             confirmed(); // the piano, not the paper tick: putting it up is the decision
-            g.say(`The bill of fare is up: ${RECIPES.filter((r) => g.menu.has(r.id)).map((r) => r.icon).join(" ") || "nothing yet"}.`);
+            g.say(`The bill of fare is up: ${MENU.filter((r) => g.menu.has(r.id)).map((r) => r.icon).join(" ") || "nothing yet"}.`);
             back();
         };
-        const cards = RECIPES.map((r, i) => ({
+        const cards = MENU.map((r, i) => ({
             pick: String(i),
             icon: r.icon,
             name: r.name,
@@ -82,7 +84,7 @@ export function openBillOfFare(g) {
                         putUp();
                         return true;
                     }
-                    return gridKeys(() => RECIPES.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, toggle)(e);
+                    return gridKeys(() => MENU.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, toggle)(e);
                 },
             },
             items: [{ label: "Put it up", sub: `${g.menu.size} on the board`, button: "primary", action: putUp }],

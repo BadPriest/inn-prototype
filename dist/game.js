@@ -30,6 +30,8 @@ export class Game {
     lastCall = false;
     fireLit = false;
     lampsLit = false;
+    /** The gramophone: playing or not, which record, and how many records the spring has left. */
+    gramophone = { on: false, record: 0, left: 0 };
     /** This morning's paper (newspaper.ts). */
     paper; // the keeper lights the lamps when it gets gloomy (ui/light.ts)
     flowMultiplier = 1;
@@ -164,6 +166,21 @@ export class Game {
     /** Tray capacity, with upgrades. */
     trayCap(kind) {
         return T2.trayCapacity[kind] + (this.upgrades.has("trays") ? 1 : 0);
+    }
+    /** The snack bowl a seat can reach: its table's, or for a stool, the nearest snack spot on the counter. */
+    bowlKeyFor(seat) {
+        if (!seat)
+            return undefined;
+        if (seat.table)
+            return `${seat.table.x},${seat.table.y}`;
+        if (seat.kind !== "stool")
+            return undefined;
+        const spot = this.world.furniture
+            .filter((f) => f.kind === "snacks")
+            .map((f) => ({ f, d: Math.hypot(f.tiles[0].x - seat.tile.x, f.tiles[0].y - seat.tile.y) }))
+            .filter((x) => x.d <= 2.3)
+            .sort((a, b) => a.d - b.d)[0];
+        return spot ? `${spot.f.tiles[0].x},${spot.f.tiles[0].y}` : undefined;
     }
     regularDef(id) {
         return REGULAR_LOOKUP.get(id ?? "");

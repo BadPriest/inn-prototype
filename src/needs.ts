@@ -94,7 +94,8 @@ export function updateNeeds(g: Game, simDt: number): void {
     }
     // A salty snack bowl on the table.
     const seat = g.world.seats.find((s) => s.id === p.seatId);
-    const bowl = seat?.table ? g.bowls.get(`${seat.table.x},${seat.table.y}`) : undefined;
+    const bowlKey = g.bowlKeyFor(seat);
+    const bowl = bowlKey ? g.bowls.get(bowlKey) : undefined;
     if (bowl && bowl.left > 0) n.thirst += (SNACKS.find((x) => x.id === bowl.snack)?.thirsty ?? 0) * NEEDS.snackThirstPerHour * hours;
     // Eating or drinking: the serving's worth, spread over the time it takes.
     if (p.state === "consuming" && p.consuming) {

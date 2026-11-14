@@ -4,7 +4,7 @@
 //   score         how a serve scores (the veiled add noise here)
 //   afterServe    what a strong reaction changes (locks, breakthroughs, opening up)
 import { chance, pick, weightedPick } from "./core.js";
-import { GARNISHES, SCHEMA_TUNING, SEASONAL_TASTES, TASTE_POOL, TUNING } from "./data.js";
+import { GARNISHES, SCHEMA_TUNING, SEASONAL_TASTES, SPECIFIC_ORDERS, TASTE_POOL, TUNING } from "./data.js";
 import { emptyTastes } from "./game.js";
 export function tagScore(tags, t) {
     const s = TUNING.scoring;
@@ -153,6 +153,9 @@ export function judge(g, p, item, order) {
     if (inSeason(g.date.season, item.tags, truth))
         score += SEASONAL_TASTES.scoreBonus;
     let missingGarnish = false;
+    const wrongOption = !!order?.wantOption && !item.options?.includes(order.wantOption);
+    if (wrongOption)
+        score += TUNING.scoring.missingGarnish; // they said which one
     if (order?.wantGarnish && item.garnish !== order.wantGarnish) {
         score += TUNING.scoring.missingGarnish;
         missingGarnish = true;
@@ -195,8 +198,11 @@ export function judge(g, p, item, order) {
             case "FULFILLED":
                 line = pick(["Thanks.", "Right.", ""]);
                 break;
+            case "UNFINISHED":
+                line = wrongOption ? pick(SPECIFIC_ORDERS.wrongLines) : "";
+                break;
             case "COMPLAINS":
-                line = missingGarnish && g2 ? `No ${g2.name.toLowerCase()}? Really?` : pick(["Not quite to my taste.", "Hm. No.", "That's... not for me."]);
+                line = wrongOption ? pick(SPECIFIC_ORDERS.wrongLines) : missingGarnish && g2 ? `No ${g2.name.toLowerCase()}? Really?` : pick(["Not quite to my taste.", "Hm. No.", "That's... not for me."]);
                 break;
             default: line = "";
         }

@@ -1,5 +1,5 @@
 // Canvas drawing. Basic shapes only: rectangles for furniture, circles for people.
-import { RECIPES, ROOM_LABELS, SOAKING, TUNING } from "../data.js";
+import { RECIPES, ROOM_LABELS, SNACKS, SOAKING, TUNING } from "../data.js";
 import { iconFor } from "../serving.js";
 import { drawLight } from "./light.js";
 /** Fit the whole inn if it's big enough to read; otherwise zoom in and follow the keeper. */
@@ -108,20 +108,6 @@ export function draw(ctx, g, v, target, clickDest) {
         }
     }
     // Snack bowls
-    for (const [key, b] of g.bowls) {
-        const [tx, ty] = key.split(",").map(Number);
-        const cx = X(tx) + ts * 0.72, cy = Y(ty) + ts * 0.72;
-        ctx.fillStyle = "#d9c9a8";
-        ctx.beginPath();
-        ctx.arc(cx, cy, ts * 0.2, 0, Math.PI * 2);
-        ctx.fill();
-        if (b.left > 0) {
-            ctx.fillStyle = b.snack === "olives" ? "#6b7a2a" : b.snack === "eggs" ? "#f1e3b0" : "#b0773a";
-            ctx.beginPath();
-            ctx.arc(cx, cy, ts * 0.16 * Math.sqrt(b.left), 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
     // Reserved tables: a little card on the table
     for (const [key] of g.reservations) {
         const [tx, ty] = key.split(",").map(Number);
@@ -234,6 +220,34 @@ export function draw(ctx, g, v, target, clickDest) {
         if (f.kind === "hatch" && g.hatch.length) {
             badge(ctx, px + pw - 2, py + 2, String(g.hatch.length), ts);
         }
+    }
+    // A bowl you can see from across the room: the snack's icon in a pale bowl, a ring for how full it is.
+    for (const [key, b] of g.bowls) {
+        const [tx, ty] = key.split(",").map(Number);
+        const cx = X(tx) + ts * 0.5, cy = Y(ty) + ts * 0.5;
+        const r = ts * 0.3;
+        ctx.fillStyle = "#efe3c8";
+        ctx.strokeStyle = "#5a4636";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        if (b.left > 0) {
+            ctx.strokeStyle = b.left < 0.15 ? "#d9634a" : "#c9a24a";
+            ctx.lineWidth = Math.max(2, ts * 0.07);
+            ctx.beginPath();
+            ctx.arc(cx, cy, r + ts * 0.04, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * b.left);
+            ctx.stroke();
+            ctx.lineWidth = 1;
+        }
+        const sn = SNACKS.find((x) => x.id === b.snack);
+        ctx.globalAlpha = b.left > 0.02 ? 1 : 0.35;
+        ctx.font = `${Math.floor(ts * 0.36)}px system-ui, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(sn?.icon ?? "🥣", cx, cy + 1);
+        ctx.globalAlpha = 1;
     }
     // Target highlight
     if (target) {

@@ -19,6 +19,8 @@ export function openSnackScreen(g: Game, key: string): void {
 
 function snackSpec(g: Game, key: string, st: { focus: number }): MenuSpec {
   const bowl = g.bowls.get(key);
+  const [kx, ky] = key.split(",").map(Number);
+  const where = g.world.tile(kx, ky)?.def.interact === "snacks" ? "counter" : "table";
   const current = SNACKS.find((x) => x.id === bowl?.snack);
   const refresh = () => replaceMenu(snackSpec(g, key, st));
   const setOut = (i: number) => {
@@ -33,23 +35,23 @@ function snackSpec(g: Game, key: string, st: { focus: number }): MenuSpec {
     icon: sn.icon,
     name: sn.name,
     tags: sn.tags,
-    note: bowl?.snack === sn.id ? (bowl.left < 0.15 ? "on the table · top it up" : "on the table now") : sn.thirsty >= 0.25 ? "makes them thirsty" : "easy on the throat",
+    note: bowl?.snack === sn.id ? (bowl.left < 0.15 ? `on the ${where} · top it up` : `on the ${where} now`) : sn.thirsty >= 0.25 ? "makes them thirsty" : "easy on the throat",
     on: bowl?.snack === sn.id,
     focus: i === st.focus,
   }));
   const focused = SNACKS[st.focus];
   const left = bowl ? (bowl.left < 0.15 ? "empty" : `about ${Math.round(bowl.left * 100)}% left`) : "";
   const html = `
-    <p class="blurb">A bowl on the table, free to whoever sits there. Salty ones make people thirsty, and thirsty people order drinks.</p>
+    <p class="blurb">${where === "counter" ? "A bowl on the counter, free to the stools beside it." : "A bowl on the table, free to whoever sits there."} Salty ones make people thirsty, and thirsty people order drinks.</p>
     ${bowl && current ? `<div class="dish slim"><span class="ic">${current.icon}</span><div>
-        <div class="nm">${current.name} on the table</div>
+        <div class="nm">${current.name} on the ${where}</div>
         <div class="meter"><span style="width:${Math.round(bowl.left * 100)}%"></span></div>
         <div class="meta">${left}</div></div></div>` : ""}
     <div class="need">${bowl ? "Pick one to top up or swap:" : "Pick one to set out:"}</div>
     <div class="cards">${cards.map(card).join("")}</div>
     ${focused?.blurb ? `<p class="aside">${focused.icon} ${focused.blurb}</p>` : ""}`;
   return {
-    title: "🥜 Snacks for the table",
+    title: where === "counter" ? "🥜 Snacks for the counter" : "🥜 Snacks for the table",
     subtitle: "On the house",
     view: {
       html,

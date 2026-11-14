@@ -10,9 +10,10 @@ import { dist, type Furniture } from "./world.js";
 import { addToTray, removeFromTray, trayItems } from "./serving.js";
 
 export function recipesFor(g: Game, f: Furniture): Recipe[] {
-  const list = RECIPES.filter((r) => r.station === f.station);
-  const tea = list.find((r) => r.id === "tea");
-  if (tea && g.upgrades.has("urn")) list.splice(list.indexOf(tea) + 1, 0, urnTea(tea));
+  // At the kettle, tea isn't made here as a job: you boil the kettle, then steep cups from the hot water.
+  const list = RECIPES.filter((r) => r.station === f.station && r.id !== "tea");
+  const tea = RECIPES.find((r) => r.id === "tea" && r.station === f.station);
+  if (tea && g.upgrades.has("urn")) list.push(urnTea(tea));
   return list;
 }
 
@@ -21,7 +22,7 @@ export function makeItem(recipe: Recipe, ingredients: string[]): Item {
   const tags = [...new Set([...recipe.baseTags, ...ings.flatMap((i) => i.tags)])];
   const base = recipe.id === "tea" ? "Tea" : recipe.name;
   const name = ings.length ? `${base} (${ings.map((i) => i.name.toLowerCase()).join(", ")})` : base;
-  return { id: uid(), recipeId: recipe.id, name, kind: recipe.kind, tags };
+  return { id: uid(), recipeId: recipe.id, name, kind: recipe.kind, tags, options: [...ingredients] };
 }
 
 /** The oldest open order for this recipe that nothing is already being made for. */
@@ -41,7 +42,7 @@ export function ticketFor(g: Game, recipe: Recipe): { id: number; name: string }
 /** The tea urn: a batch version of tea, offered alongside the single cup once you have the upgrade. */
 export function urnTea(tea: Recipe): Recipe {
   return { ...tea, name: "Tea, a whole urn", servings: [8, 1], minutes: [tea.minutes[0] * 2.5, tea.minutes[1]],
-    blurb: "A whole urn, kept hot on the hearth and poured by the cup all day. One leaf for everyone who asks." };
+    blurb: "A whole urn, kept hot behind the counter and poured by the cup all day. One leaf for everyone who asks." };
 }
 
 /** How a job's recipe is made: as itself, or as a batch (the urn). */
@@ -54,9 +55,10 @@ export function startJob(g: Game, f: Furniture, recipeIn: Recipe, ingredients: s
   const recipe = effectiveRecipe(g, RECIPES.find((r) => r.id === recipeIn.id)!, batch);
   if (recipe.servings) ticket = null;
   let total = Math.max(1, organic(recipe.minutes));
-  if (recipe.id === "tea" && g.upgrades.has("kettle")) total *= 0.5;
+  if (recipe.id === "water" && g.upgrades.has("kettle")) total *= 0.5;
   g.jobs.set(f.id, { recipeId: recipe.id, ingredients, total, progress: 0, done: false, ticket: ticket?.id, ticketName: ticket?.name, batch });
   const forWho = ticket ? ` for ${ticket.name}` : recipe.storedIn === "piesafe" ? " (a whole pie)" : recipe.servings ? " (a whole pot)" : "";
+  if (recipe.id === "water") { g.say("You put the kettle on."); return; }
   g.say(`Started ${recipe.name.toLowerCase()}${forWho} at the ${f.name.toLowerCase()}${recipe.tended ? ". Stay with it" : ""}.`);
 }
 
@@ -92,7 +94,7 @@ function finish(g: Game, fid: string, job: Job, recipe: Recipe): void {
     const n = Math.max(2, Math.round(organic(recipe.servings)));
     g.pots.set(fid, { item: job.item!, left: n, total: n });
     g.jobs.delete(fid);
-    g.say(`A pot of ${job.item!.name.toLowerCase()} is ready: ${n} servings.`);
+    g.say(recipe.id === "water" ? `The kettle's boiled: hot water for ${n} cups.` : `A pot of ${job.item!.name.toLowerCase()} is ready: ${n} servings.`);
     return;
   }
   const shelf = g.shelves.get(fid) ?? [];
@@ -195,6 +197,28 @@ export function ageFood(g: Game): void {
     if (pot.item.tags.includes(TUNING.staleTag)) { g.pots.delete(fid); tossed++; } else stale(pot.item);
   }
   if (tossed) g.say(`Food older than a day went to the hens (${tossed}).`);
+}
+
+/**
+ * A cup of tea from the kettle's hot water, with this leaf. Made for whoever's waited longest for tea,
+ * and first for someone who asked for this very leaf.
+ */
+export function steepTea(g: Game, fid: string, leaf: string): void {
+  const water = g.pots.get(fid);
+  const tea = RECIPES.find((r) => r.id === "tea")!;
+  if (!water || water.item.recipeId !== "water") return;
+  const item = makeItem(tea, [leaf]);
+  item.madeDay = g.day;
+  const taken = new Set([...trayItems(g), ...shelfItems(g)].map((i) => i.ticket).filter(Boolean));
+  const waiting = g.orders.filter((o) => o.open && o.recipeId === "tea" && !taken.has(o.patronId)).sort((a, b) => a.placedAt - b.placedAt);
+  const o = waiting.find((x) => x.wantOption === leaf) ?? waiting.find((x) => !x.wantOption) ?? waiting[0];
+  const p = o ? g.patron(o.patronId) : undefined;
+  if (p) { item.ticket = p.id; item.ticketName = p.name; }
+  if (!addToTray(g, item)) { g.say("No room on your trays."); return; }
+  g.stats.crafted++;
+  water.left--;
+  g.say(`${item.name}${p ? ` for ${p.name}` : ""} (${water.left} cup${water.left === 1 ? "" : "s"} of hot water left).`);
+  if (water.left <= 0) { g.pots.delete(fid); g.say("The kettle's empty."); }
 }
 
 /** Take one serving from a communal pot onto a tray. */

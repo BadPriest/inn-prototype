@@ -4,18 +4,18 @@
 // The map. One character per tile. See TILE_LEGEND below.
 export const MAP = [
     "######################o###########",
-    "#B~~d~w~#::#,,SS,R,O,,,,H,,,,PPPP#",
+    "#B~~d~w~#::#,,SS,R,O,,,,,,,,,PPPP#",
     "#B~~~~~~#::#,,,,,,,,,,,,,,,,,,,,,#",
     "#~~~~~~~#::#,,,,,,,,,,,,,,,,,,,,,#",
     "o~~~~~~~D::#,,,,,,,,KK,,,,,,,,,,,#",
     "#~~~~~~~#::#,,,,,,,,,,,,,,,,,,,,,#",
     "#~~~~~~~#::#W,,,,,,,,,,,,,,,,,,,,#",
-    "#########::##D####h###Z###D#A#Y###",
+    "#########::##D####h###Z#H#D#A#Y#V#",
     "#..........#_____________________#",
-    "#..........#_============g======##",
+    "#..........#_==k===k===k=g==k===##",
     "#.............s.s.s.s.s.s.s.s.s..#",
     "o................................o",
-    "#...............c....c...........#",
+    "#G..............c....c...........#",
     "#.........ctc..ctc..ctc..ctc.....#",
     "#...............c....c..........F#",
     "#...............................F#",
@@ -60,7 +60,10 @@ export const TILE_LEGEND = {
     S: { kind: "furniture", floor: C.kitchen, label: "Stove", name: "Stove", interact: "station" },
     R: { kind: "furniture", floor: C.kitchen, label: "Pan", name: "Griddle", interact: "station" },
     O: { kind: "furniture", floor: C.kitchen, label: "Oven", name: "Oven", interact: "station" },
-    H: { kind: "furniture", floor: C.kitchen, label: "Kettle", name: "Hearth kettle", interact: "station" },
+    H: { kind: "furniture", floor: C.staff, label: "Kettle", name: "Tea kettle", interact: "station" },
+    V: { kind: "furniture", floor: C.staff, label: "Coffee", name: "Coffee pot", interact: "station" },
+    k: { kind: "counter", floor: C.staff, label: "", name: "Snack spot", interact: "snacks" },
+    G: { kind: "furniture", floor: C.tap, label: "♫", name: "Gramophone", interact: "gramophone" }, // a bowl here serves the stools beside it
     K: { kind: "furniture", floor: C.kitchen, label: "Prep", name: "Prep table", interact: "station" },
     W: { kind: "furniture", floor: C.kitchen, label: "Bin", name: "Scrap bin", interact: "bin" },
     P: { kind: "furniture", floor: C.kitchen, label: "Pantry", name: "Pantry", interact: "pantry" },
@@ -72,7 +75,7 @@ export const TILE_LEGEND = {
 };
 /** Which crafting station each map letter is. Multi-tile stations share one id. */
 export const STATION_OF_TILE = {
-    S: "stove", R: "griddle", O: "oven", H: "kettle", K: "prep",
+    S: "stove", R: "griddle", O: "oven", H: "kettle", V: "coffee", K: "prep",
 };
 /** Which drink each tap letter pours. */
 export const TAP_OF_TILE = { A: "ale", Y: "cider" };
@@ -102,6 +105,10 @@ export const INGREDIENTS = [
     { id: "chamomile", icon: "🌼", name: "Chamomile", tags: ["homely"] },
     { id: "black", icon: "🍂", name: "Black leaf", tags: ["bitter"] },
     { id: "smokedleaf", icon: "🪵", name: "Smoked leaf", tags: ["smoky"] },
+    { id: "lightroast", icon: "🫘", name: "Light roast", tags: ["bright"] },
+    { id: "darkroast", icon: "☕", name: "Dark roast", tags: ["bitter"] },
+    { id: "chicory", icon: "🌾", name: "Chicory", tags: ["earthy"] },
+    { id: "spiced", icon: "🧂", name: "Spiced blend", tags: ["fiery"] },
 ];
 export const RECIPES = [
     { id: "stew", blurb: "A pot that keeps the whole room warm. Slow to make and generous once it's done: it feeds whoever asks, a ladle at a time, until the pot scrapes bottom.", icon: "🍲", name: "Stew", kind: "food", station: "stove", baseTags: ["warm", "hearty"], slots: 2,
@@ -112,7 +119,11 @@ export const RECIPES = [
         options: ["apple", "berry", "meat", "cheese"], minutes: [20, 4], servings: [6, 1], storedIn: "piesafe" },
     { id: "salad", blurb: "Cold and crisp, put together by hand at the prep table. Quick to make, and easy to get just right.", icon: "🥗", name: "Salad", kind: "food", station: "prep", baseTags: ["cold", "light"], slots: 2,
         options: ["apple", "walnut", "radish", "herbs", "cheese", "herring"], minutes: [4, 1] },
-    { id: "tea", blurb: "A cup for one, steeped at the hearth. What goes in the pot decides who it comforts.", icon: "🍵", name: "Tea", kind: "drink", station: "kettle", baseTags: ["warm", "mild"], slots: 1,
+    { id: "coffee", blurb: "A whole pot at a time, poured by the cup until it's gone. The beans decide what kind of morning it is.", icon: "☕", name: "Coffee", kind: "drink", station: "coffee", baseTags: ["warm", "rich"], slots: 1,
+        options: ["lightroast", "darkroast", "chicory", "spiced"], minutes: [8, 2], servings: [7, 1] },
+    { id: "water", internal: true, blurb: "Boil the kettle once, then steep a cup at a time, each with the leaf its drinker likes, until the water's gone.", icon: "♨️", name: "Boil the kettle", kind: "drink", station: "kettle", baseTags: ["warm"], slots: 0,
+        options: [], minutes: [4, 1], servings: [3, 0.8] },
+    { id: "tea", blurb: "A cup for one, steeped behind the counter. What goes in the pot decides who it comforts.", icon: "🍵", name: "Tea", kind: "drink", station: "kettle", baseTags: ["warm", "mild"], slots: 1,
         options: ["mint", "chamomile", "black", "smokedleaf"], minutes: [3, 1] },
     { id: "ale", icon: "🍺", name: "Ale", kind: "drink", station: "tap", baseTags: ["cold", "bitter", "hearty"], slots: 0,
         options: [], minutes: [0, 0] },
@@ -292,6 +303,18 @@ export const SEASONAL_TASTES = {
     cravingPull: 2.5, // a regular's possible cravings in season are this much likelier
     visitorCraving: 0.25, // chance a passing visitor craves something in season
 };
+/**
+ * Asking for it by name: some guests order a particular leaf or bean ("Mint tea", "Coffee, dark roast"):
+ * regulars who know their own mind, and fussy strangers now and then. They ask for what they truly like
+ * best. Serve another and it lands like a missing garnish.
+ */
+export const SPECIFIC_ORDERS = {
+    regular: 0.6, // a regular who's open about their tastes (open, or opened up / solved)
+    fussy: 0.4, // a stranger this fussy or more (fussyAt)
+    fussyAt: 0.45,
+    anyone: 0.12, // anyone else with a clear favourite, now and then
+    wrongLines: ["That's not what I asked for.", "I did say which one.", "Not the one I wanted, but fine."],
+};
 /** Tags an unformed patron may roll each visit, and that cravings may name. */
 export const TASTE_POOL = [
     "sweet", "tart", "savoury", "bitter", "rich", "earthy", "smoky", "briny", "fiery", "salty",
@@ -332,6 +355,17 @@ export const LOCATIONS = [
         cold: { seasons: ["winter"], nights: ["autumn"] },
         blurb: "Among green hills and smallholdings. Long, gentle springs and summers; soft rain, hardly ever a storm." },
 ];
+/** The gramophone (sound/gramophone.ts): its records, and how many play per winding. */
+export const GRAMOPHONE = {
+    records: [
+        { sound: "recordBoat", title: "Go, Little Boat" },
+        { sound: "recordBlow", title: "Let It Blow" },
+        { sound: "recordRound", title: "Round We Go" },
+        { sound: "recordApple", title: "The Apple Tree" },
+        { sound: "recordRoad", title: "The Road Can Wait" },
+    ],
+    perWinding: 3, // records it plays before the spring runs down
+};
 /** Market day: busier around the middle of the day. */
 export const MARKET = { from: 9, to: 15, flow: 1.5 };
 /** The morning paper's town news (newspaper.ts). */
@@ -496,6 +530,18 @@ export const SOUNDS = {
     windSoft: { files: [SND + "wind-soft-outside-ambience-loop.opus"], volume: 0.35, pitch: 0.02, loop: true },
     windMedium: { files: [SND + "wind-medium-outside-ambience-loop.opus"], volume: 0.45, pitch: 0.02, loop: true },
     windStrong: { files: [SND + "wind-strong-outside-ambience-loop.opus"], volume: 0.55, pitch: 0.02, loop: true },
+    // The gramophone's records (assets/sounds/gramophone: smaller copies of the originals in music/).
+    recordBoat: { files: [SND + "gramophone/go-little-boat.opus"], volume: 0.34, pitch: 0 },
+    recordBlow: { files: [SND + "gramophone/let-it-blow.opus"], volume: 0.34, pitch: 0 },
+    recordRound: { files: [SND + "gramophone/round-we-go.opus"], volume: 0.34, pitch: 0 },
+    recordApple: { files: [SND + "gramophone/the-apple-tree.opus"], volume: 0.34, pitch: 0 },
+    recordRoad: { files: [SND + "gramophone/the-road-can-wait.opus"], volume: 0.34, pitch: 0 },
+    // The gramophone's own sounds: winding it, the needle, the surface noise, the end of a record, the spring giving out.
+    gramoCrank: { files: [SND + "sfx-gramophone-winding-crank.opus"], volume: 0.5, pitch: 0.03 },
+    gramoNeedle: { files: [SND + "sfx-gramophone-needle-drop.opus"], volume: 0.45, pitch: 0.04, trim: true },
+    gramoCrackle: { files: [SND + "sfx-gramophone-surface-crackle-loop.opus", SND + "sfx-gramophone-surface-crackle-loop-2.opus"], volume: 0.12, pitch: 0.02, loop: true },
+    gramoRunout: { files: [SND + "sfx-gramophone-record-finished.opus"], volume: 0.4, pitch: 0.02 },
+    gramoWindDown: { files: [SND + "sfx-gramophone-winding-down.opus"], volume: 0.5, pitch: 0.02 },
     // Thunder in the storm band: a close crack now and then, otherwise a rumble nearby.
     thunderClose: { files: [SND + "sfx-thunder-close-1.opus", SND + "sfx-thunder-close-2.opus"], volume: 0.7, pitch: 0.06, heardEverywhere: true },
     thunderNearby: { files: [SND + "sfx-thunder-nearby-1.opus", SND + "sfx-thunder-nearby-2.opus"], volume: 0.5, pitch: 0.06, heardEverywhere: true },
@@ -589,7 +635,7 @@ export const DOOR_TUNING = {
 // The bill of fare: what's on today. Set at the desk.
 export const DEFAULT_MENU = ["ale", "cider"];
 export const UPGRADES = [
-    { id: "kettle", name: "Copper kettle", icon: "🫖", desc: "Tea brews twice as fast.", unlockAtServed: 8 },
+    { id: "kettle", name: "Copper kettle", icon: "🫖", desc: "The kettle boils twice as fast.", unlockAtServed: 8 },
     { id: "urn", name: "Tea urn", icon: "⚱️", desc: "Adds a choice at the kettle: brew a whole urn, about 8 cups, poured straight from it. Single cups stay.", unlockAtServed: 20 },
     { id: "trays", name: "Wider trays", icon: "🍽️", desc: "Carry 3 dishes per tray, and 5 drinks.", unlockAtServed: 35 },
 ];
@@ -682,6 +728,7 @@ export const LIGHT = {
     windowReach: 3.5, // tiles of daylight around a window
     fire: { reach: 6, strength: 0.95, warm: 0.22 },
     candle: { reach: 2, strength: 0.75, warm: 0.1 },
+    keeperCandle: { from: 0.12, reach: 2.6, strength: 0.8, warm: 0.13 }, // the candle the keeper carries, once it's this dark
     flash: { near: 0.55, far: 0.2, ms: 350 },
     /** Hanging lamps: where they hang (tile coords) and how far their light reaches (tiles). */
     lamps: [
