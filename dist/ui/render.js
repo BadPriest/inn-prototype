@@ -2,12 +2,13 @@
 import { RECIPES, ROOM_LABELS, TUNING } from "../data.js";
 import { iconFor } from "../serving.js";
 /** Fit the whole inn if it's big enough to read; otherwise zoom in and follow the keeper. */
-export function computeView(canvas, g, minTile = 22) {
-    const fit = Math.floor(Math.min(canvas.width / g.world.w, canvas.height / g.world.h));
+/** `top`: canvas pixels kept clear at the top (the status card sits there). */
+export function computeView(canvas, g, minTile = 22, top = 0) {
+    const fit = Math.floor(Math.min(canvas.width / g.world.w, (canvas.height - top) / g.world.h));
     const dpr = window.devicePixelRatio || 1;
     const min = Math.floor(minTile * dpr);
     if (fit >= min) {
-        return { ts: fit, ox: Math.floor((canvas.width - fit * g.world.w) / 2), oy: Math.floor((canvas.height - fit * g.world.h) / 2) };
+        return { ts: fit, ox: Math.floor((canvas.width - fit * g.world.w) / 2), oy: top + Math.floor((canvas.height - top - fit * g.world.h) / 2) };
     }
     const ts = min;
     const mapW = ts * g.world.w, mapH = ts * g.world.h;

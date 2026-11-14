@@ -8,12 +8,13 @@ import { iconFor } from "../serving.js";
 export interface View { ts: number; ox: number; oy: number }
 
 /** Fit the whole inn if it's big enough to read; otherwise zoom in and follow the keeper. */
-export function computeView(canvas: HTMLCanvasElement, g: Game, minTile = 22): View {
-  const fit = Math.floor(Math.min(canvas.width / g.world.w, canvas.height / g.world.h));
+/** `top`: canvas pixels kept clear at the top (the status card sits there). */
+export function computeView(canvas: HTMLCanvasElement, g: Game, minTile = 22, top = 0): View {
+  const fit = Math.floor(Math.min(canvas.width / g.world.w, (canvas.height - top) / g.world.h));
   const dpr = window.devicePixelRatio || 1;
   const min = Math.floor(minTile * dpr);
   if (fit >= min) {
-    return { ts: fit, ox: Math.floor((canvas.width - fit * g.world.w) / 2), oy: Math.floor((canvas.height - fit * g.world.h) / 2) };
+    return { ts: fit, ox: Math.floor((canvas.width - fit * g.world.w) / 2), oy: top + Math.floor((canvas.height - top - fit * g.world.h) / 2) };
   }
   const ts = min;
   const mapW = ts * g.world.w, mapH = ts * g.world.h;

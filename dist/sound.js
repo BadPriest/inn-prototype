@@ -12,7 +12,7 @@ import { cookingLoops } from "./sound/loops.js";
 import { footsteps } from "./sound/footsteps.js";
 import { crowd } from "./sound/crowd.js";
 import { fire } from "./sound/fire.js";
-import { weatherSound } from "./sound/weather.js";
+import { thunder, weatherSound } from "./sound/weather.js";
 export { isMuted, toggleMute, unlockAudio } from "./sound/engine.js";
 /** Call every frame with real seconds. */
 export function soundscape(g, realDt) {
@@ -123,6 +123,9 @@ export function initSound(g) {
             }
             case "Paper":
                 paper();
+                break;
+            case "Thunder":
+                thunder(e.near);
                 break;
             case "Confirmed":
                 if (T.confirmSound)

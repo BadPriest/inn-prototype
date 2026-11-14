@@ -40,6 +40,14 @@ const wm = document.getElementById("watermark");
 if (wm) wm.textContent = `Travelling Inn · lofi prototype · ${BUILD}`;
 window.addEventListener("pointerdown", unlockAudio);
 
+/** Canvas pixels to keep clear at the top of the map, so the status card never covers it. */
+function statusClearance(): number {
+  const st = document.getElementById("status");
+  if (!st || st.offsetParent === null) return 0; // hidden (short screens)
+  const gap = st.getBoundingClientRect().bottom - canvas.getBoundingClientRect().top + 6;
+  return Math.max(0, gap) * (window.devicePixelRatio || 1);
+}
+
 function resize(): void {
   const dpr = window.devicePixelRatio || 1;
   canvas.width = Math.floor(canvas.clientWidth * dpr);
@@ -585,7 +593,7 @@ function frame(now: number): void {
   watchTrays();
   watchObjectives(g);
   soundscape(g, realDt);
-  view = computeView(canvas, g);
+  view = computeView(canvas, g, 22, statusClearance());
   draw(ctx, g, view, target, clickDest);
   hudTimer -= realDt;
   if (hudTimer <= 0) {

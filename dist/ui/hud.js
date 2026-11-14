@@ -11,7 +11,8 @@ import { objectives } from "../objectives.js";
 const $ = (id) => document.getElementById(id);
 export function updateHud(g, prompt) {
     const status = g.open ? (g.lastCall ? "LAST CALL" : "OPEN") : "CLOSED";
-    $("clock").innerHTML = `${g.date.weekday.slice(0, 3)}, ${shortDate(g.date)} · <b>${g.clockText()}</b> · ${weatherLabel(g)} · <span class="st ${status.replace(" ", "")}">${status}</span> · ×${g.speed}${g.paused ? " · paused" : ""}`;
+    updateStatus(g);
+    $("clock").innerHTML = `<span class="st ${status.replace(" ", "")}">${status}</span> · ×${g.speed}${g.paused ? " · paused" : ""}`;
     $("prompt").textContent = prompt;
     // Journal heads-up: a toast for the latest note, and a count until the journal is opened.
     const toast = document.getElementById("toast");
@@ -66,6 +67,17 @@ export function updateHud(g, prompt) {
     updateObjectives(g);
     if ($("debug").style.display !== "none")
         updateDebug(g);
+}
+/** The status card over the map: weekday, date, time and weather (the avatar slot waits for mood). */
+function updateStatus(g) {
+    const el = document.getElementById("status");
+    if (!el)
+        return;
+    const d = g.date;
+    el.querySelector(".st-day").textContent = d.weekday;
+    el.querySelector(".st-date").textContent = shortDate(d);
+    el.querySelector(".st-time b").textContent = g.clockText();
+    el.querySelector(".st-wx").textContent = weatherLabel(g);
 }
 /** The optional morning checklist, so new players know where to start. */
 function updateObjectives(g) {

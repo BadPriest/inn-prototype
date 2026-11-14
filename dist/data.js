@@ -398,6 +398,16 @@ export const SOUNDS = {
     rainMediumOut: { files: [SND + "rain-medium-outside-ambience-loop.opus"], volume: 0.65, pitch: 0.01, loop: true },
     // At the windows: louder as the keeper walks near one.
     rainWindow: { files: [SND + "sfx-rain-window-loop.opus"], volume: 0.4, pitch: 0.02, loop: true },
+    // Wind outside: heard faintly around the building, fully through the open door.
+    windSoft: { files: [SND + "wind-soft-outside-ambience-loop.opus"], volume: 0.35, pitch: 0.02, loop: true },
+    windMedium: { files: [SND + "wind-medium-outside-ambience-loop.opus"], volume: 0.45, pitch: 0.02, loop: true },
+    windStrong: { files: [SND + "wind-strong-outside-ambience-loop.opus"], volume: 0.55, pitch: 0.02, loop: true },
+    // Thunder in the storm band: a close crack now and then, otherwise a rumble nearby.
+    thunderClose: { files: [SND + "sfx-thunder-close-1.opus", SND + "sfx-thunder-close-2.opus"], volume: 0.7, pitch: 0.06, heardEverywhere: true },
+    thunderNearby: { files: [SND + "sfx-thunder-nearby-1.opus", SND + "sfx-thunder-nearby-2.opus"], volume: 0.5, pitch: 0.06, heardEverywhere: true },
+    // The street outside, heard through the open front door. Which one: WEATHER_SOUND.street.
+    streetTown: { files: [SND + "street-loop-towncenter.opus"], volume: 0.5, pitch: 0.01, loop: true },
+    streetCountry: { files: [SND + "street-loop-countryside.opus"], volume: 0.5, pitch: 0.01, loop: true },
 };
 /**
  * How the weather layers mix. Each layer's share by rain intensity (0..1): [from, full, fadesFrom, gone]
@@ -413,6 +423,16 @@ export const WEATHER_SOUND = {
     doorSeconds: 0.5, // how fast the outdoors swells in and out with the door
     window: { fullWithin: 1.2, goneAt: 6 }, // tiles from the nearest window
     idleStopSeconds: 6, // a layer silent this long stops playing
+    // Wind follows how wild it is out: the rain's intensity, or a breeze on grey days. Same shape as layers.
+    wind: {
+        soft: [0.05, 0.15, 0.4, 0.6],
+        medium: [0.4, 0.6, 0.8, 0.95],
+        strong: [0.7, 0.88, 1.01, 1.02],
+    },
+    greyBreeze: { overcast: 0.15, cloudy: 0.08 }, // how wild a dry sky counts as
+    windIndoors: 0.3, // with the door shut, the wind is this loud inside
+    street: "streetTown", // streetTown or streetCountry; the starting location (inn#13) will choose
+    rainDrownsStreet: 0.8, // at full rain the street is this much quieter
 };
 export const SOUND_TUNING = {
     targetLoudness: 0.12, // every file is evened out to about this (RMS of its audible part)

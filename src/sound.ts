@@ -14,7 +14,7 @@ import { cookingLoops } from "./sound/loops.js";
 import { footsteps } from "./sound/footsteps.js";
 import { crowd } from "./sound/crowd.js";
 import { fire } from "./sound/fire.js";
-import { weatherSound } from "./sound/weather.js";
+import { thunder, weatherSound } from "./sound/weather.js";
 
 export { isMuted, toggleMute, unlockAudio } from "./sound/engine.js";
 
@@ -111,6 +111,7 @@ export function initSound(g: Game): void {
       }
       case "ServeOutcome": { const s = OUTCOME_SOUND[e.outcome]; if (s) reaction(s); break; }
       case "Paper": paper(); break;
+      case "Thunder": thunder(e.near); break;
       case "Confirmed": if (T.confirmSound) play("confirm", null); break;
       case "PatronLeft": if (e.early) synth.leave(); break;
       case "Log": if (e.text.startsWith("✦")) setTimeout(() => synth.moment(), 350); break;

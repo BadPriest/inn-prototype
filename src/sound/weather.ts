@@ -3,6 +3,9 @@
 //   indoors   the rain on the building, heard everywhere inside
 //   outdoors  swells in through the front door while it's open, fades as it closes
 //   window    rain on the glass, louder as the keeper walks near a window
+//   street    the street outside, through the open door; heavy rain drowns it
+//   wind      by how wild it is (rain intensity, or a breeze on grey days): faint inside, full at the door
+//   thunder   on the Thunder event (storm band): close or nearby
 // Layers start when they're needed and stop after a while silent.
 
 import type { Game } from "../game.js";
@@ -38,9 +41,9 @@ function nearestWindow(g: Game): { at: Vec; d: number } | null {
 }
 
 /** Bring a layer toward `level`: start it if it's needed, stop it once it's been silent a while. */
-function drive(key: string, level: number, at: Vec | null, seconds: number, realDt: number): void {
-  let l = layers.get(key);
-  if (!l) { l = { voice: null, level: 0, silentFor: 0 }; layers.set(key, l); }
+function drive(key: string, level: number, at: Vec | null, seconds: number, realDt: number, id = key): void {
+  let l = layers.get(id);
+  if (!l) { l = { voice: null, level: 0, silentFor: 0 }; layers.set(id, l); }
   if (level > 0.001 && !l.voice) {
     l.voice = play(key, at, { level: 0 });
     l.level = 0;
@@ -50,6 +53,11 @@ function drive(key: string, level: number, at: Vec | null, seconds: number, real
   if (Math.abs(level - l.level) > 0.005) { setLevel(l.voice, level, seconds); l.level = level; }
   l.silentFor = level <= 0.001 ? l.silentFor + realDt : 0;
   if (l.silentFor > W.idleStopSeconds) { stop(l.voice, 300); l.voice = null; l.silentFor = 0; }
+}
+
+/** Thunder, when the weather says so. */
+export function thunder(near: boolean): void {
+  play(near ? "thunderClose" : "thunderNearby", null);
 }
 
 export function weatherSound(g: Game, realDt: number): void {
@@ -69,6 +77,15 @@ export function weatherSound(g: Game, realDt: number): void {
   const open = g.frontDoor.open ? 1 : 0;
   drive("rainSoftOut", soft * open, door, W.doorSeconds, realDt);
   drive("rainMediumOut", Math.min(1, medium + storm * 1.2) * open, door, W.doorSeconds, realDt);
+  // Wind: faint around the building, full through the open door (the same loop, from two places).
+  const wild = r > 0 ? r : W.greyBreeze[w.sky] ?? 0;
+  for (const [layer, key] of [["soft", "windSoft"], ["medium", "windMedium"], ["strong", "windStrong"]] as const) {
+    const s = share(wild, W.wind[layer]);
+    drive(key, s * W.windIndoors, null, drift, realDt, `${key}@in`);
+    drive(key, s * open, door, W.doorSeconds, realDt, `${key}@door`);
+  }
+  // The street, under it all; heavy rain drowns it out.
+  drive(W.street, open * (1 - W.rainDrownsStreet * Math.min(1, r * 1.4)), door, W.doorSeconds, realDt);
 
   // The nearest window: on the glass, louder up close and with the rain.
   const near = nearestWindow(g);
