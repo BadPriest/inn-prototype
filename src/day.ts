@@ -5,8 +5,10 @@ import { emptyStats, type DayStats, type Game, type RegularState } from "./game.
 import { callLastOrders, clearPatrons, scheduleRegulars, unlockRegulars } from "./patrons.js";
 import { ageFood, finishAllJobs } from "./crafting.js";
 import { closeAllStretches } from "./needs.js";
+import { CALENDAR } from "./data.js";
+import { longDate, seasonTurned } from "./calendar.js";
 
-const SAVE_KEY = "travelling-inn-proto-v2";
+const SAVE_KEY = "travelling-inn-proto-v3"; // v3: the calendar (older saves start fresh)
 
 export function simDelta(g: Game, realDt: number): number {
   if (g.paused || g.modal) return 0;
@@ -73,6 +75,13 @@ export function startNextDay(g: Game): void {
   g.keeper.pos = { x: b.x + 0.5, y: b.y + 0.5 };
   g.keeper.path = [];
   g.keeper.pendingInteract = null;
+  // A new calendar season: said once, on waking. Not a big moment, but not one to miss.
+  g.seasonNews = undefined;
+  if (seasonTurned(g.day, g.calendarStart)) {
+    const s = CALENDAR.seasons.find((x) => x.id === g.date.season)!;
+    g.seasonNews = s.arrives;
+    g.bus.emit({ type: "CalendarSeasonChanged", season: s.id });
+  }
   beginDay(g);
   g.bus.emit({ type: "DayStarted", day: g.day });
   save(g);
@@ -82,7 +91,8 @@ export function startNextDay(g: Game): void {
 export function beginDay(g: Game): void {
   const joined = unlockRegulars(g);
   scheduleRegulars(g);
-  g.say(`Day ${g.day}. You wake at 6.${g.day === 1 ? " The inn is closed; open the front door when you're ready." : ""}`);
+  if (g.seasonNews) g.say(g.seasonNews);
+  g.say(`${longDate(g.date)}. You wake at 6.${g.day === 1 ? " The inn is closed; open the front door when you're ready." : ""}`);
   if (joined.length && g.day > 1) g.say(`New in town: ${joined.join(", ")}. They may drop by.`);
 }
 
@@ -91,7 +101,7 @@ export function save(g: Game): void {
     const regulars = [...g.regulars.values()].map(({ arriveAt, visitedToday, ...rest }) => { void arriveAt; void visitedToday; return rest; });
     // The needs log is big: keep it for the last two weeks of days only, so the save stays small.
     const history = g.history.map((d, i) => (i < g.history.length - 14 ? { ...d, unmet: undefined } : d));
-    localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, history, regulars, visitorNotes: g.visitorNotes,
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, calendarStart: g.calendarStart, history, regulars, visitorNotes: g.visitorNotes,
       menu: [...g.menu], menuChosen: g.menuChosen, upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives }));
   } catch { /* storage unavailable: carry on */ }
 }
@@ -99,8 +109,8 @@ export function save(g: Game): void {
 export function load(g: Game): void {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) return;
-    const s = JSON.parse(raw) as { day: number; history: DayStats[]; regulars?: RegularState[]; visitorNotes?: Game["visitorNotes"];
+    if (!raw) { save(g); return; } // a new save: keep the calendar season it starts in, even before day 1 ends
+    const s = JSON.parse(raw) as { day: number; calendarStart?: number; history: DayStats[]; regulars?: RegularState[]; visitorNotes?: Game["visitorNotes"];
       menu?: string[]; menuChosen?: boolean; upgrades?: string[]; totalServed?: number; showObjectives?: boolean };
     if (s.menu) g.menu = new Set(s.menu);
     g.menuChosen = !!s.menuChosen;
@@ -108,6 +118,7 @@ export function load(g: Game): void {
     g.totalServed = s.totalServed ?? 0;
     g.showObjectives = s.showObjectives ?? true;
     g.day = s.day ?? 1;
+    g.calendarStart = s.calendarStart ?? 0;
     g.history = s.history ?? [];
     g.stats = emptyStats(g.day);
     for (const r of s.regulars ?? []) g.regulars.set(r.id, r);

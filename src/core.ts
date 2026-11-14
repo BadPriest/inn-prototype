@@ -58,6 +58,7 @@ export type GameEvent =
   | { type: "DayEnded"; day: number }
   | { type: "DayStarted"; day: number }
   | { type: "TimeOfDayChanged"; from: string; to: string }
+  | { type: "CalendarSeasonChanged"; season: string }
   | { type: "Paused" }
   | { type: "Resumed" }
   | { type: "Log"; text: string };

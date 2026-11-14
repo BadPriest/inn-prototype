@@ -4,6 +4,7 @@ import { TUNING } from "./data.js";
 import { Game } from "./game.js";
 import { dist, type Vec } from "./world.js";
 import { simDelta, updateClock, load, beginDay } from "./day.js";
+import { longDate, shortDate } from "./calendar.js";
 import { updateCrafting } from "./crafting.js";
 import { updatePatrons } from "./patrons.js";
 import { updateNeeds } from "./needs.js";
@@ -541,6 +542,7 @@ const controls = touch
   : `<b>Click</b> the floor to walk, <b>click</b> things and people to use them, <b>double-click</b> to run, <b>right-click</b> to stop. Or <b>WASD</b> to walk (<b>Shift</b> runs) and <b>Space</b> to use. Hold <b>Space</b> to hurry cooking; hold <b>Space</b> or the mouse on a mess to clean it. When several things are in reach, <b>Tab</b> or the mouse wheel picks one. <b>P</b> pauses.`;
 function welcomeBody(): string {
   return `<div class="welcome">
+    <p><b>${longDate(g.date)}.</b></p>
     <p>You're the keeper. Each day you wake at 6, get the inn ready, open the door, and look after whoever comes in.</p>
     <p><b>Guests order</b> food at tables and drinks at the counter. Cook in the kitchen and pick dishes up where they were made, pour at the taps, and carry them over on your two trays.</p>
     <p><b>Everyone has hidden tastes.</b> Which ingredients you choose decides how a dish lands. Watch how people react, and read your <b>journal</b> at the desk: regulars reward getting to know them.</p>
@@ -549,7 +551,7 @@ function welcomeBody(): string {
   </div>`;
 }
 openMenu({
-  title: g.day > 1 ? `Welcome back: day ${g.day}` : "Welcome to the Travelling Inn",
+  title: g.day > 1 ? `Welcome back: ${shortDate(g.date)}` : "Welcome to the Travelling Inn",
   modal: true,
   body: welcomeBody(),
   items: [{ label: g.day > 1 ? "Continue" : "Start game", button: "primary", action: () => { closeAll(); unlockAudio(); } }],

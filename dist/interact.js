@@ -6,6 +6,7 @@ import { collectShelf, recipesFor, serveFromPot } from "./crafting.js";
 import { tableKey } from "./patrons.js";
 import { servePatron, serveTable, trayItems, pickUpTray, startPour, setTrayDown } from "./serving.js";
 import { endDay, startNextDay, toggleInn } from "./day.js";
+import { compactDate, longDate } from "./calendar.js";
 import { closeAll, openMenu, back } from "./ui/menu.js";
 import { openCookScreen } from "./ui/cook.js";
 import { openPieSafeScreen, openSnackScreen } from "./ui/larder.js";
@@ -354,7 +355,7 @@ function journalPage(g, id) {
     const entries = st.journal.slice(-40).reverse();
     openMenu({
         title: d.name,
-        body: `<div class="journal"><i>${d.blurb}</i>${entries.map((e) => `<div class="je ${e.kind ?? ""}"><span class="t">Day ${e.day} ${e.time}</span> ${e.text}</div>`).join("") || `<div class="muted">No notes yet. Serve them something.</div>`}</div>`,
+        body: `<div class="journal"><i>${d.blurb}</i>${entries.map((e) => `<div class="je ${e.kind ?? ""}"><span class="t">${compactDate(g.dateOfDay(e.day), g.date.year)} ${e.time}</span> ${e.text}</div>`).join("") || `<div class="muted">No notes yet. Serve them something.</div>`}</div>`,
         items: [{ label: "Back", action: () => back() }],
     });
 }
@@ -362,7 +363,7 @@ function visitorPage(g) {
     const entries = g.visitorNotes.slice(-30).reverse();
     openMenu({
         title: "Passing visitors",
-        body: `<div class="journal">${entries.map((e) => `<div class="je ${e.kind ?? ""}"><span class="t">Day ${e.day} ${e.time}</span> ${e.text}</div>`).join("") || "Nothing yet."}</div>`,
+        body: `<div class="journal">${entries.map((e) => `<div class="je ${e.kind ?? ""}"><span class="t">${compactDate(g.dateOfDay(e.day), g.date.year)} ${e.time}</span> ${e.text}</div>`).join("") || "Nothing yet."}</div>`,
         items: [{ label: "Back", action: () => back() }],
     });
 }
@@ -401,7 +402,7 @@ function goToSleep(g) {
         const o = s.outcomes;
         const row = (k, v) => `<tr><td>${k}</td><td>${v}</td></tr>`;
         openMenu({
-            title: `End of day ${s.day}`,
+            title: `End of ${compactDate(g.dateOfDay(s.day), g.date.year)}`,
             modal: true,
             body: `<table class="summary">
         ${row("Patrons", s.arrivals)}
@@ -418,11 +419,19 @@ function goToSleep(g) {
       </table>${s.moments.length ? `<div class="moments">${s.moments.map((m) => `<div>✦ ${m}</div>`).join("")}</div>` : ""}`,
             items: [{
                     button: "primary",
-                    label: `Wake up: day ${s.day + 1}`,
+                    label: `Wake up: ${compactDate(g.dateOfDay(s.day + 1), g.date.year)}`,
                     action: () => {
                         closeAll();
                         startNextDay(g);
                         fade.classList.remove("on");
+                        if (g.seasonNews) {
+                            openMenu({
+                                title: g.seasonNews,
+                                modal: true,
+                                body: `<p>${longDate(g.date)}.</p>`,
+                                items: [{ label: "Get up", button: "primary", action: () => closeAll() }],
+                            });
+                        }
                     },
                 }],
         });

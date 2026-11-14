@@ -239,6 +239,15 @@ export const SCHEMA_TUNING = {
     driftChance: 0.1, // per visit, a resolved regular's like may drift
     unformedDislikeLockAt: -3, // a reaction this bad (before fussiness) locks the disliked tags in
 };
+export const CALENDAR = {
+    seasons: [
+        { id: "spring", name: "Spring", days: 28, arrives: "Spring is here." },
+        { id: "summer", name: "Summer", days: 28, arrives: "Summer is here." },
+        { id: "autumn", name: "Autumn", days: 28, arrives: "Autumn is here." },
+        { id: "winter", name: "Winter", days: 28, arrives: "Winter is here." },
+    ],
+    weekdays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+};
 /** The clock hour each part of the day starts at, in order through the day. Night runs past midnight. */
 export const TIME_OF_DAY = [
     { id: "night", from: 0 },

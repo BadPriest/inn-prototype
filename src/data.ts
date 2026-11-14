@@ -371,6 +371,23 @@ export const SCHEMA_TUNING = {
 };
 
 // ---------------------------------------------------------------------------
+// The calendar. A Stardew-style year of calendar seasons ("season" alone means a guest's or the
+// keeper's long-term emotional state). Lengths are tunable; 28 days is exactly four weeks, so every
+// calendar season starts on the same weekday. Spring 1 of year 1 is a Monday.
+
+export type CalendarSeasonId = "spring" | "summer" | "autumn" | "winter";
+
+export const CALENDAR = {
+  seasons: [
+    { id: "spring", name: "Spring", days: 28, arrives: "Spring is here." },
+    { id: "summer", name: "Summer", days: 28, arrives: "Summer is here." },
+    { id: "autumn", name: "Autumn", days: 28, arrives: "Autumn is here." },
+    { id: "winter", name: "Winter", days: 28, arrives: "Winter is here." },
+  ] as { id: CalendarSeasonId; name: string; days: number; arrives: string }[],
+  weekdays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+};
+
+// ---------------------------------------------------------------------------
 // Time of day. One value that greetings, chatter, cravings, flow and (later) weather all read.
 // Nothing hard-codes "evening": the inn can be open from the morning on.
 

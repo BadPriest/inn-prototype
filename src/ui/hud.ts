@@ -3,6 +3,7 @@
 import { ARCHETYPES, NEED_IDS, REGULARS, TIME_WORDS, TUNING } from "../data.js";
 import type { Game, Patron, UnmetStretch } from "../game.js";
 import { unmetLogText } from "../needs.js";
+import { compactDate, shortDate } from "../calendar.js";
 import { spawnRegular, spawnVisitors } from "../patrons.js";
 import { emptyTastes } from "../game.js";
 import { resetSave } from "../day.js";
@@ -13,7 +14,7 @@ const $ = (id: string) => document.getElementById(id)!;
 
 export function updateHud(g: Game, prompt: string): void {
   const status = g.open ? (g.lastCall ? "LAST CALL" : "OPEN") : "CLOSED";
-  $("clock").innerHTML = `Day ${g.day} · <b>${g.clockText()}</b> · <span class="st ${status.replace(" ", "")}">${status}</span> · ×${g.speed}${g.paused ? " · paused" : ""}`;
+  $("clock").innerHTML = `${g.date.weekday.slice(0, 3)}, ${shortDate(g.date)} · <b>${g.clockText()}</b> · <span class="st ${status.replace(" ", "")}">${status}</span> · ×${g.speed}${g.paused ? " · paused" : ""}`;
   $("prompt").textContent = prompt;
   // Journal heads-up: a toast for the latest note, and a count until the journal is opened.
   const toast = document.getElementById("toast");
@@ -171,7 +172,7 @@ function updateDebug(g: Game): void {
     return `<div>${d.name} (${d.schema}) · fam ${r.familiarity} · visits ${r.visits}${r.resolved ? " · resolved" : ""}${r.openedUp ? " · opened up" : ""} · today ${r.visitedToday ? "came" : r.arriveAt !== undefined ? `~${g.clockText(r.arriveAt)}` : "–"}</div>`;
   }).join("");
   const h = g.history.slice(-5).map((s) =>
-    `<div>Day ${s.day}: ${s.arrivals} in, ${s.served} served, ${s.outcomes.DELIGHT} delight, ${s.outcomes.COMPLAINS} complaints, ${s.leftEarly} left early${s.unmet?.length ? ` · unmet: ${unmetSummary(s.unmet, true)}` : ""}</div>`).join("");
+    `<div>Day ${s.day} (${compactDate(g.dateOfDay(s.day), g.date.year)}): ${s.arrivals} in, ${s.served} served, ${s.outcomes.DELIGHT} delight, ${s.outcomes.COMPLAINS} complaints, ${s.leftEarly} left early${s.unmet?.length ? ` · unmet: ${unmetSummary(s.unmet, true)}` : ""}</div>`).join("");
   $("dbg-history").innerHTML = h || `<div class="muted">No finished days yet.</div>`;
   $("dbg-next").textContent = g.open && !g.lastCall ? `next arrival ~${g.clockText(g.nextArrivalAt)} · flow now ${(TUNING.flowByHour[g.hour] * g.flowMultiplier).toFixed(1)}/h` : "inn closed";
 }

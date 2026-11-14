@@ -2,6 +2,7 @@
 
 import { EventBus, type Outcome } from "./core.js";
 import { World, type Vec } from "./world.js";
+import { dateOf, randomStartSeason, type GameDate } from "./calendar.js";
 import { TIME_WORDS, TUNING, timeOfDayAt, type Archetype, type ItemKind, type Line, type NeedId, type Regular, type SchemaId, type TasteSet, type TimeOfDay } from "./data.js";
 
 export interface Item {
@@ -179,7 +180,8 @@ export interface SetDownTray { id: number; x: number; y: number; tray: Tray }
 export class Game {
   bus = new EventBus();
   world = new World();
-  day = 1;
+  day = 1; // days played, from 1. The date is worked out from this: see `date`.
+  calendarStart = randomStartSeason(); // index of the calendar season this save began in
   minute = 0; // minutes since the day started (6 AM)
   speedIndex = 1;
   paused = false;
@@ -224,6 +226,8 @@ export class Game {
   /** Item ids that left the trays through a known path this frame (the watchdog checks the rest). */
   accountedFor = new Set<number>();
   turnInPrompted = false;
+  /** "Spring is here." on the first morning of a new calendar season, until the day starts. */
+  seasonNews?: string;
 
   constructor() {
     const b = this.world.bedSide;
@@ -252,6 +256,16 @@ export class Game {
   /** Clock hour 0-23 for the current minute. */
   get hour(): number {
     return Math.floor((TUNING.dayStartHour * 60 + this.minute) / 60) % 24;
+  }
+
+  /** Today's date: "Spring 12, year 1", a Tuesday. */
+  get date(): GameDate {
+    return dateOf(this.day, this.calendarStart);
+  }
+
+  /** The date of any day of play (journal entries and past days keep their day number). */
+  dateOfDay(day: number): GameDate {
+    return dateOf(day, this.calendarStart);
   }
 
   /** Morning, midday, afternoon, evening or night: the one value everything reads. */
