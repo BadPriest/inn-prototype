@@ -458,7 +458,7 @@ function wantsMore(g: Game, p: Patron): boolean {
 function waitOutRain(g: Game, p: Patron): void {
   const done = () => { p.waitingOut = undefined; };
   if (!g.open || g.lastCall) { done(); startLeaving(g, p); return; }
-  if (g.weather.sky !== "rain") { done(); startLeaving(g, p); return; }
+  if (g.weather.sky !== "rain") { done(); startLeaving(g, p); return; } // (the decision came when it stopped)
   if (g.minute < p.nextThinkAt) return;
   p.nextThinkAt = g.minute + organic(SHELTER.checkEvery);
   if (g.minute - p.stayUntil > organic(SHELTER.waitOut)) {
@@ -555,9 +555,56 @@ function weatherLine(g: Game, p: Patron): { text: string; taste: boolean } | nul
   return text ? { text, taste: false } : null;
 }
 
+/** How likely someone is to go now the rain has stopped: why they came, against what they still need. */
+function leaveChance(g: Game, p: Patron): number {
+  let c = SHELTER.leaveFor[p.reason] ?? 0.3;
+  if (p.waitingOut !== undefined) c += SHELTER.idleLeave;
+  if (g.minute > p.stayUntil) c += SHELTER.overstayLeave;
+  const seat = seatOf(g, p);
+  const still = Math.max(seat?.kind === "stool" ? 0 : wants(p.needs, p.foodBias, "food"), wants(p.needs, p.foodBias, "drink"));
+  c -= SHELTER.stillWants * Math.min(1, still);
+  return clamp01(c);
+}
+
+/** Going: right away if there's nothing in front of them or coming; else once they've finished it. */
+function goWhenDone(g: Game, p: Patron): void {
+  p.waitingOut = undefined;
+  if (p.state === "seated" && !p.orderId) startLeaving(g, p);
+  else p.leaveAfter = true;
+}
+
+/**
+ * The rain has stopped: everyone inside decides whether to go. A party decides as one (and leaves
+ * together, through the usual lingering); one of them says why, so it reads as a choice, not dice.
+ */
+function rainStopped(g: Game): void {
+  const here = g.patrons.filter((p) => p.state === "seated" || p.state === "waiting" || p.state === "consuming");
+  const decided = new Set<number>();
+  for (const p of here) {
+    if (decided.has(p.id)) continue;
+    const group = groupOf(g, p);
+    const party = group ? here.filter((q) => q.groupId === group.id) : [p];
+    party.forEach((q) => decided.add(q.id));
+    const chanceToGo = party.reduce((a, q) => a + leaveChance(g, q), 0) / party.length;
+    const go = chance(chanceToGo);
+    const speaker = party.find((q) => q.schema !== "reserved");
+    if (speaker && chance(0.6)) setTimeoutGame(g, speaker, pick(go ? SHELTER.goLines : SHELTER.stayLines), 0.5 + Math.random() * 3);
+    if (!go) { party.forEach((q) => { q.waitingOut = undefined; }); continue; }
+    if (group && party.length > 1) {
+      group.leaving = true;
+      for (const q of party) {
+        q.waitingOut = undefined;
+        if (q.state === "seated" && !q.orderId) { q.lingering = true; q.lingerSince = g.minute; }
+        else q.leaveAfter = true;
+      }
+    } else goWhenDone(g, p);
+  }
+}
+
 /** A guest or two remark when the weather turns. */
 export function initTalk(g: Game): void {
   g.bus.on((e) => {
+    if (e.type === "WeatherChanged" && e.from === "rain") rainStopped(g);
     let lines: string[] | undefined;
     if (e.type === "WeatherChanged") {
       if (e.to === "rain") lines = CHATTER.weatherTurns.rainStarts;
@@ -749,11 +796,11 @@ export function updatePatrons(g: Game, simDt: number): void {
           const group = groupOf(g, p);
           const raining = g.weather.sky === "rain";
           const canStay = !group?.leaving && g.open && !g.lastCall;
-          const stay = canStay && (g.minute < p.stayUntil || raining) && wantsMore(g, p);
+          const stay = canStay && !p.leaveAfter && (g.minute < p.stayUntil || raining) && wantsMore(g, p);
           if (stay) {
             p.state = "seated";
             p.nextThinkAt = g.minute + organic([4, 3]);
-          } else if (canStay && raining) {
+          } else if (canStay && raining && !p.leaveAfter) {
             // Done, but it's raining: they sit it out.
             p.state = "seated";
             p.waitingOut = g.minute;

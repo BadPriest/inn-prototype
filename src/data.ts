@@ -386,6 +386,13 @@ export const SHELTER = {
   checkEvery: [20, 8] as Organic, // game minutes between looking out (and maybe ordering again)
   waitLines: ["I'll wait till it eases.", "Not going out in that.", "Might as well stay put."],
   braveLines: ["Can't wait all day.", "Right. Into it, then.", "It's not going to stop, is it."],
+  // When the rain stops, each guest (or party, as one) weighs why they came against what they still need.
+  leaveFor: { shelter: 0.85, company: 0.45, drink: 0.3, food: 0.2 } as Record<string, number>,
+  idleLeave: 0.3, // waiting it out with nothing left to do: more likely to go
+  overstayLeave: 0.2, // past their usual stay: more likely to go
+  stillWants: 0.45, // times how much they still want food or drink: less likely to go
+  goLines: ["That's our chance, then.", "Rain's stopped. I'm off.", "Right, while it's dry."],
+  stayLines: ["No rush now. It's nice in here.", "Might as well finish here.", "I'll stay a bit, I think."],
 };
 
 // Soaked: guests in from the rain. How wet comes from the rain's intensity as they arrive; it fades as
@@ -449,6 +456,8 @@ export type LocationId = "town" | "dockside" | "mountainside" | "crossroads" | "
 export interface Location {
   id: LocationId;
   name: string;
+  icon: string;
+  traits: string[]; // short chips on its card
   blurb: string;
   days: [spring: number, summer: number, autumn: number, winter: number]; // sums to 112
   rain: number; // more (> 1) or less rain: weights the sky toward rain, and rain lingers
@@ -461,17 +470,17 @@ export interface Location {
 }
 
 export const LOCATIONS: Location[] = [
-  { id: "town", name: "Town centre", days: [28, 28, 28, 28], rain: 1, storm: 1, traffic: 1.3, shelter: 1.5, visitors: {}, street: "streetTown",
+  { id: "town", name: "Town centre", icon: "🏘️", traits: ["busy", "rain rush"], days: [28, 28, 28, 28], rain: 1, storm: 1, traffic: 1.3, shelter: 1.5, visitors: {}, street: "streetTown",
     blurb: "On the market square. Busy all year; when it rains, half the street comes in." },
-  { id: "dockside", name: "Dockside", days: [28, 28, 28, 28], rain: 1.3, storm: 1.6, traffic: 1.1, shelter: 1.1, visitors: { dock: 2.5, scholar: 0.6 }, street: "streetTown",
+  { id: "dockside", name: "Dockside", icon: "⚓", traits: ["dockworkers", "wet", "stormy"], days: [28, 28, 28, 28], rain: 1.3, storm: 1.6, traffic: 1.1, shelter: 1.1, visitors: { dock: 2.5, scholar: 0.6 }, street: "streetTown",
     blurb: "By the harbour, where the boats come in. Thirsty dockworkers, wet weather, the odd storm off the sea." },
-  { id: "mountainside", name: "Mountainside", days: [21, 21, 28, 42], rain: 1.2, storm: 1.2, traffic: 0.6, shelter: 0.6, street: "streetCountry",
+  { id: "mountainside", name: "Mountainside", icon: "🏔️", traits: ["long winter", "quiet", "cold"], days: [21, 21, 28, 42], rain: 1.2, storm: 1.2, traffic: 0.6, shelter: 0.6, street: "streetCountry",
     cold: { seasons: ["autumn", "winter"], nights: ["spring", "summer"] },
     visitors: { traveller: 2, farmer: 1.5, dock: 0.3, scholar: 0.6 },
     blurb: "On the pass road, high up. Long winters, few passers-by, and everyone who comes in is glad of the fire." },
-  { id: "crossroads", name: "Crossroads", days: [28, 28, 28, 28], rain: 1, storm: 1, traffic: 0.85, shelter: 0.4, visitors: { traveller: 2.5, dock: 0.4 }, street: "streetCountry",
+  { id: "crossroads", name: "Crossroads", icon: "🪧", traits: ["travellers", "quiet"], days: [28, 28, 28, 28], rain: 1, storm: 1, traffic: 0.85, shelter: 0.4, visitors: { traveller: 2.5, dock: 0.4 }, street: "streetCountry",
     blurb: "Where the roads meet, out among the fields. Travellers passing through; rain or shine, much the same." },
-  { id: "hills", name: "Hill country", days: [35, 35, 21, 21], rain: 0.8, storm: 0.4, traffic: 0.8, shelter: 0.7, visitors: { farmer: 2.5, traveller: 1.2, dock: 0.3 }, street: "streetCountry",
+  { id: "hills", name: "Hill country", icon: "🌳", traits: ["long summer", "gentle", "farmers"], days: [35, 35, 21, 21], rain: 0.8, storm: 0.4, traffic: 0.8, shelter: 0.7, visitors: { farmer: 2.5, traveller: 1.2, dock: 0.3 }, street: "streetCountry",
     cold: { seasons: ["winter"], nights: ["autumn"] },
     blurb: "Among green hills and smallholdings. Long, gentle springs and summers; soft rain, hardly ever a storm." },
 ];

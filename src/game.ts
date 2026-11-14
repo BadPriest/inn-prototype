@@ -85,6 +85,8 @@ export interface Patron {
   leftEarly: boolean;
   /** Why they came in: out of the rain, to eat, to drink, or for the company. */
   reason: "shelter" | "food" | "drink" | "company";
+  /** Decided to go (the rain stopped): finish what's coming, then leave without ordering more. */
+  leaveAfter?: boolean;
   /** Done, wanting nothing, but waiting for the rain to stop (since this game minute). */
   waitingOut?: number;
   /** How wet they are, 0..1: from the rain they came in from, drying off inside. */

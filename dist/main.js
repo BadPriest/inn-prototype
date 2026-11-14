@@ -1,5 +1,6 @@
 // Wiring: input, the main loop, and the order systems run in.
-import { LOCATIONS, TUNING } from "./data.js";
+import { TUNING } from "./data.js";
+import { openLocationPicker } from "./ui/location.js";
 import { newWeather } from "./weather.js";
 import { Game } from "./game.js";
 import { dist } from "./world.js";
@@ -654,25 +655,20 @@ if (g.location) {
     });
 }
 else {
-    // A new save: first, where does the inn stand? It shapes the year, the weather and who comes in.
+    // A new save: the welcome, then where does the inn stand? It shapes the year, the weather and who comes in.
+    const settle = (id) => {
+        g.location = id;
+        g.weather = newWeather(g.date.season, g.loc);
+        g.log.length = 0;
+        beginDay(g); // the morning again, at the chosen place
+        save(g);
+        closeAll();
+    };
     openMenu({
         title: "Welcome to the Travelling Inn",
-        subtitle: "Where does your inn stand?",
         modal: true,
         body: welcomeBody(),
-        items: LOCATIONS.map((l) => ({
-            label: l.name,
-            sub: `${l.blurb} <span class="muted">(spring ${l.days[0]} · summer ${l.days[1]} · autumn ${l.days[2]} · winter ${l.days[3]} days)</span>`,
-            action: () => {
-                g.location = l.id;
-                g.weather = newWeather(g.date.season, g.loc);
-                g.log.length = 0;
-                beginDay(g); // the morning again, at the chosen place
-                save(g);
-                closeAll();
-                unlockAudio();
-            },
-        })),
+        items: [{ label: "Start game", button: "primary", action: () => { unlockAudio(); openLocationPicker(settle, true); } }],
     });
 }
 let last = performance.now();

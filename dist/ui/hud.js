@@ -182,7 +182,7 @@ function updateDebug(g) {
         const t = p.tastes;
         const st = g.regular(p.regularId);
         return `<div class="dp"><b style="color:${p.color}">${p.name}</b>${p.groupId && (g.groups.find((x) => x.id === p.groupId)?.members.length ?? 0) > 1 ? ` <span class="muted">(party #${p.groupId})</span>` : ""} · ${p.state}${o?.open ? ` · wants ${o.label} (${Math.floor(g.minute - p.waitedSince)}/${Math.floor(p.patience)}m)` : ""}
-      <div>${needsLine(g, p)} · came for ${p.reason}${p.waitingOut !== undefined ? ` · waiting out the rain ${Math.floor(g.minute - p.waitingOut)}m` : ""}</div>
+      <div>${needsLine(g, p)} · came for ${p.reason}${p.waitingOut !== undefined ? ` · waiting out the rain ${Math.floor(g.minute - p.waitingOut)}m` : ""}${p.leaveAfter ? " · leaving after this" : ""}</div>
       ${p.weatherTaste.love.length + p.weatherTaste.dislike.length ? `<div>weather ♥ ${p.weatherTaste.love.join(", ") || "–"} · ✗ ${p.weatherTaste.dislike.join(", ") || "–"}${p.cameIn?.band ? ` · came in from ${p.cameIn.band} (${p.cameIn.rain})` : ""}</div>` : ""}
       <div>schema: ${p.schema}${st ? ` · familiarity ${st.familiarity}${st.resolved ? " · resolved" : ""}${st.openedUp ? " · opened up" : ""}` : ""} · fuss ${p.fussiness.toFixed(2)} · mess ${p.messiness.toFixed(2)}</div>
       ${p.craving ? `<div>craving: ${p.craving.tag}${p.schema === "veiled" ? (p.craving.honest ? " (honest)" : " (noise)") : ""}</div>` : ""}
