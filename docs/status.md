@@ -11,6 +11,7 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - **Weather**: states and rain intensity (#14); guests talk about it, weather tastes (#20); its sounds: rain, wind, thunder, the street (#26); soaked guests seek the fire (#21); rain brings people in and keeps them (#22); when it stops, guests decide whether to go (#23).
 - **Screen**: the status card over the map (#29); pop-ups stay as they were (#31).
 - **Playtest fixes**: steady location picker, pies wait on the oven, debug over pause, crowd volume (#32).
+- **Decided**: 10 named regulars, not meant to be learned quickly; a small share also turn up at random (#12).
 
 ## In review (built and deployed; Bruno marks them done)
 
@@ -27,6 +28,17 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 
 ### Design sessions (an agenda)
 
+**#36 Game start and progression** (next; answers #11, redoes #7; Bruno's ideas are on the card)
+- Progression runs on the economy: buy everything from suppliers at first (smaller margin, no hassle), produce your own later. The game isn't out to bankrupt you.
+- Licences open the building (upstairs bedrooms, cellar, bigger kitchen). Each brings an official's visit; impress them, and they become a regular.
+- List the full kitchen and cellar equipment first; the starter set follows from that.
+- Choose a few starting recipes; learn more, and put more ingredients in them.
+- Trim food tags; flavour comes from mastery (a soup master cooks stones and water and people like it).
+- Keeper traits: start with 1–2, gain more slowly (tray on the head, play a card twice, haggler, charming).
+- Price follows quality, traits and the serving outcome; a Delight earns a tip; big effort pays.
+- Open: the first day; which permit comes first and how to impress an official; is the official one of the 10 regulars; does small/medium survive; what paces each kind of growth.
+- Topics of their own, later: suppliers, supplies, prices.
+
 **#10 Snow, and how patron schedules work** (unblocks #18 schedules, then #28 more regulars)
 - Snow: which calendar seasons and locations? Does it pile up and melt, or is it just weather?
 - What snow does to guests: cold, soaked when it melts, fewer passers-by, snowed in overnight?
@@ -34,6 +46,13 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - Schedules: does a regular keep fixed days ("the ferryman every market day"), habits with exceptions, or both?
 - Calendar season absences ("the ferryman scarce when the river freezes").
 - How the keeper learns a regular's days, and how the calendar (#30) shows that.
+- Already decided (#12): 10 named regulars, learned slowly; a small share also turn up at random. Still open: how often each one comes (a core most days?).
+
+**#35 Songs have tags** (new idea)
+- Which tags a record carries (mood, tempo, origin, a song from home?).
+- How guests react: tap a foot, hum, ask for it again, complain, stay longer, leave sooner?
+- Is music taste personal, by race (#4), or both? Do regulars have favourites they ask for?
+- Does it change how long guests stay or what they order, or is it only for flavour?
 
 **#4 Races have tastes**
 - Which fantasy races are in the prototype?
@@ -41,7 +60,7 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - Which races are common in which location.
 - How a guest's race shows on screen before there's art.
 
-**#5 Mastery** (unblocks #16 skill slots)
+**#5 Mastery** (unblocks #16 skill slots; take after #36, which sets its direction: flavour comes from mastery, not from piling on ingredients)
 - The dish categories.
 - What practice changes: "early results a bit uncertain, later reliably better". Uncertain how?
 - What earns a star, and what a star does (reputation, prices, guests who come for it?).
@@ -56,11 +75,6 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - Which configurations: stove with an embedded oven, two stews at once, an extra hob for frying?
 - How upgrades are bought or earned.
 - Is the fuel (wood, coal, later electric) a system?
-
-### Decisions
-
-- **#11** the smallest starting set of equipment (unblocks #7 small or medium tavern)
-- **#12** how many named regulars, 8 to 12
 
 ### Sounds
 

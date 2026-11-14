@@ -77,7 +77,7 @@ Crackle is a separate looped file, so it doesn't pass through the effect and can
 ### Next for the gramophone
 
 - **Q:** How long the spring runs in the real game, once testing no longer needs the run-down to come round quickly.
-- **Later:** guests react to the music (Spec 7's foot-tap expression); requests from regulars; buying records.
+- **Later:** records carry tags so guests react to the music (#35; Spec 7's foot-tap expression); requests from regulars; buying records.
 
 ## Next, in scope
 
