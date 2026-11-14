@@ -4,7 +4,7 @@
 // log line for the keeper), and offers tags so everyone else can read it: chatter, tastes, soaking,
 // flow, sound, light. Tuning is WEATHER in data.ts.
 import { chance, organic, weightedPick } from "./core.js";
-import { WEATHER } from "./data.js";
+import { LOCATIONS, WEATHER } from "./data.js";
 const clamp = (n, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, n));
 const BANDS = WEATHER.bands;
 /** The band for an intensity, moving from `current` with hysteresis so it doesn't flicker at an edge. */
@@ -16,8 +16,19 @@ function bandFor(rain, current) {
         i--;
     return BANDS[i].id;
 }
-function startRain(w, season, sudden) {
+/** The calendar season's weather odds, tilted by where the inn stands (wetter, stormier, or gentler). */
+export function oddsFor(season, loc = LOCATIONS[0]) {
     const S = WEATHER.seasons[season];
+    const to = Object.fromEntries(Object.entries(S.to).map(([from, opts]) => [from, Object.fromEntries(Object.entries(opts).map(([k, v]) => [k, k === "rain" ? (v ?? 0) * loc.rain : v]))]));
+    return {
+        ...S,
+        start: { ...S.start, rain: S.start.rain * loc.rain },
+        stay: { ...S.stay, rain: Math.min(0.97, 1 - (1 - S.stay.rain) / loc.rain) }, // wet places: rain lingers
+        to,
+        storm: S.storm * loc.storm,
+    };
+}
+function startRain(w, S, sudden) {
     w.rain = sudden ? clamp(organic(WEATHER.showerStart), 0.36, 0.9) : 0.08;
     w.target = clamp(organic(S.rain), 0.15, 0.95);
     w.wanderIn = organic(WEATHER.rainWanderEvery);
@@ -26,13 +37,13 @@ function startRain(w, season, sudden) {
     w.bandMinutes = 0;
 }
 /** The weather on the first morning of a save. */
-export function newWeather(season) {
-    const S = WEATHER.seasons[season];
+export function newWeather(season, loc) {
+    const S = oddsFor(season, loc);
     const skies = Object.keys(S.start);
     const sky = weightedPick(skies, (k) => S.start[k]) ?? "cloudy";
     const w = { sky, hours: 0, rain: 0, target: 0, band: null, ending: false, wanderIn: 0 };
     if (sky === "rain") {
-        startRain(w, season, false);
+        startRain(w, S, false);
         w.rain = w.target;
         w.band = bandFor(w.rain, null);
     } // already set in
@@ -51,7 +62,7 @@ function moveSky(g, to, abrupt) {
     w.sky = to;
     w.hours = 0;
     if (to === "rain")
-        startRain(w, g.date.season, abrupt);
+        startRain(w, oddsFor(g.date.season, g.loc), abrupt);
     else {
         w.rain = 0;
         w.target = 0;
@@ -67,7 +78,7 @@ function moveSky(g, to, abrupt) {
 }
 export function updateWeather(g, simDt) {
     const w = g.weather;
-    const S = WEATHER.seasons[g.date.season];
+    const S = oddsFor(g.date.season, g.loc);
     const hours = simDt / 60;
     w.hours += hours;
     if (w.sky === "rain") {
@@ -143,7 +154,8 @@ export function weatherTags(g) {
         tags.push(...(BANDS.find((b) => b.id === w.band)?.tags ?? []));
     const season = g.date.season;
     const late = g.timeOfDay === "evening" || g.timeOfDay === "night";
-    if (WEATHER.coldSeasons.includes(season) || (late && WEATHER.coldNightSeasons.includes(season)))
+    const cold = g.loc.cold ?? { seasons: WEATHER.coldSeasons, nights: WEATHER.coldNightSeasons };
+    if (cold.seasons.includes(season) || (late && cold.nights.includes(season)))
         tags.push("cold");
     return tags;
 }

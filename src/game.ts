@@ -4,7 +4,7 @@ import { EventBus, type Outcome } from "./core.js";
 import { World, type Vec } from "./world.js";
 import { dateOf, randomStartSeason, type GameDate } from "./calendar.js";
 import { newWeather, type CameIn, type WeatherState } from "./weather.js";
-import { TIME_WORDS, TUNING, timeOfDayAt, type Archetype, type ItemKind, type Line, type NeedId, type Regular, type SchemaId, type TasteSet, type TimeOfDay, type WeatherTaste } from "./data.js";
+import { TIME_WORDS, TUNING, timeOfDayAt, type Archetype, type ItemKind, type Line, type NeedId, type Regular, type SchemaId, type TasteSet, type TimeOfDay, type WeatherTaste, type Location, type LocationId } from "./data.js";
 
 export interface Item {
   id: number;
@@ -192,6 +192,8 @@ export class Game {
   world = new World();
   day = 1; // days played, from 1. The date is worked out from this: see `date`.
   calendarStart = randomStartSeason(); // index of the calendar season this save began in
+  /** Where the inn stands; unset until the player picks, on a new save (town centre meanwhile). */
+  location?: LocationId;
   weather: WeatherState = newWeather(dateOf(1, this.calendarStart).season);
   minute = 0; // minutes since the day started (6 AM)
   speedIndex = 1;
@@ -271,12 +273,17 @@ export class Game {
 
   /** Today's date: "Spring 12, year 1", a Tuesday. */
   get date(): GameDate {
-    return dateOf(this.day, this.calendarStart);
+    return dateOf(this.day, this.calendarStart, this.loc.days);
+  }
+
+  /** Where the inn stands: how long its calendar seasons run, its weather, who passes by. */
+  get loc(): Location {
+    return LOCATION_LOOKUP.get(this.location ?? "town")!;
   }
 
   /** The date of any day of play (journal entries and past days keep their day number). */
   dateOfDay(day: number): GameDate {
-    return dateOf(day, this.calendarStart);
+    return dateOf(day, this.calendarStart, this.loc.days);
   }
 
   /** Morning, midday, afternoon, evening or night: the one value everything reads. */
@@ -346,5 +353,6 @@ export class Game {
   }
 }
 
-import { REGULARS, DEFAULT_MENU, TUNING as T2 } from "./data.js";
+import { REGULARS, DEFAULT_MENU, LOCATIONS, TUNING as T2 } from "./data.js";
+const LOCATION_LOOKUP = new Map(LOCATIONS.map((l) => [l.id, l]));
 const REGULAR_LOOKUP = new Map(REGULARS.map((r) => [r.id, r]));

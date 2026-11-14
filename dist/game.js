@@ -19,6 +19,8 @@ export class Game {
     world = new World();
     day = 1; // days played, from 1. The date is worked out from this: see `date`.
     calendarStart = randomStartSeason(); // index of the calendar season this save began in
+    /** Where the inn stands; unset until the player picks, on a new save (town centre meanwhile). */
+    location;
     weather = newWeather(dateOf(1, this.calendarStart).season);
     minute = 0; // minutes since the day started (6 AM)
     speedIndex = 1;
@@ -95,11 +97,15 @@ export class Game {
     }
     /** Today's date: "Spring 12, year 1", a Tuesday. */
     get date() {
-        return dateOf(this.day, this.calendarStart);
+        return dateOf(this.day, this.calendarStart, this.loc.days);
+    }
+    /** Where the inn stands: how long its calendar seasons run, its weather, who passes by. */
+    get loc() {
+        return LOCATION_LOOKUP.get(this.location ?? "town");
     }
     /** The date of any day of play (journal entries and past days keep their day number). */
     dateOfDay(day) {
-        return dateOf(day, this.calendarStart);
+        return dateOf(day, this.calendarStart, this.loc.days);
     }
     /** Morning, midday, afternoon, evening or night: the one value everything reads. */
     get timeOfDay() {
@@ -160,5 +166,6 @@ export class Game {
         return REGULAR_LOOKUP.get(id ?? "");
     }
 }
-import { REGULARS, DEFAULT_MENU, TUNING as T2 } from "./data.js";
+import { REGULARS, DEFAULT_MENU, LOCATIONS, TUNING as T2 } from "./data.js";
+const LOCATION_LOOKUP = new Map(LOCATIONS.map((l) => [l.id, l]));
 const REGULAR_LOOKUP = new Map(REGULARS.map((r) => [r.id, r]));

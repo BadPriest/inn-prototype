@@ -79,7 +79,7 @@ export function startNextDay(g: Game): void {
   g.keeper.pendingInteract = null;
   // A new calendar season: said once, on waking. Not a big moment, but not one to miss.
   g.seasonNews = undefined;
-  if (seasonTurned(g.day, g.calendarStart)) {
+  if (seasonTurned(g.day, g.calendarStart, g.loc.days)) {
     const s = CALENDAR.seasons.find((x) => x.id === g.date.season)!;
     g.seasonNews = s.arrives;
     g.bus.emit({ type: "CalendarSeasonChanged", season: s.id });
@@ -104,7 +104,7 @@ export function save(g: Game): void {
     const regulars = [...g.regulars.values()].map(({ arriveAt, visitedToday, ...rest }) => { void arriveAt; void visitedToday; return rest; });
     // The needs log is big: keep it for the last two weeks of days only, so the save stays small.
     const history = g.history.map((d, i) => (i < g.history.length - 14 ? { ...d, unmet: undefined } : d));
-    localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, calendarStart: g.calendarStart, weather: g.weather, history, regulars, visitorNotes: g.visitorNotes,
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, calendarStart: g.calendarStart, location: g.location, weather: g.weather, history, regulars, visitorNotes: g.visitorNotes,
       menu: [...g.menu], menuChosen: g.menuChosen, upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives }));
   } catch { /* storage unavailable: carry on */ }
 }
@@ -113,7 +113,7 @@ export function load(g: Game): void {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) { save(g); return; } // a new save: keep the calendar season it starts in, even before day 1 ends
-    const s = JSON.parse(raw) as { day: number; calendarStart?: number; weather?: WeatherState; history: DayStats[]; regulars?: RegularState[]; visitorNotes?: Game["visitorNotes"];
+    const s = JSON.parse(raw) as { day: number; calendarStart?: number; location?: Game["location"]; weather?: WeatherState; history: DayStats[]; regulars?: RegularState[]; visitorNotes?: Game["visitorNotes"];
       menu?: string[]; menuChosen?: boolean; upgrades?: string[]; totalServed?: number; showObjectives?: boolean };
     if (s.menu) g.menu = new Set(s.menu);
     g.menuChosen = !!s.menuChosen;
@@ -122,6 +122,8 @@ export function load(g: Game): void {
     g.showObjectives = s.showObjectives ?? true;
     g.day = s.day ?? 1;
     g.calendarStart = s.calendarStart ?? 0;
+    // Saves played before locations existed stand in the town centre; a brand-new save still has to pick.
+    g.location = s.location ?? ((s.day ?? 1) > 1 || (s.history?.length ?? 0) > 0 ? "town" : undefined);
     if (s.weather) g.weather = s.weather;
     g.history = s.history ?? [];
     g.stats = emptyStats(g.day);

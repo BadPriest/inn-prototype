@@ -195,5 +195,6 @@ function updateDebug(g: Game): void {
   const h = g.history.slice(-5).map((s) =>
     `<div>Day ${s.day} (${compactDate(g.dateOfDay(s.day), g.date.year)}): ${s.arrivals} in, ${s.served} served, ${s.outcomes.DELIGHT} delight, ${s.outcomes.COMPLAINS} complaints, ${s.leftEarly} left early${s.unmet?.length ? ` · unmet: ${unmetSummary(s.unmet, true)}` : ""}</div>`).join("");
   $("dbg-history").innerHTML = h || `<div class="muted">No finished days yet.</div>`;
-  $("dbg-next").textContent = g.open && !g.lastCall ? `next arrival ~${g.clockText(g.nextArrivalAt)} · flow now ${(TUNING.flowByHour[g.hour] * g.flowMultiplier).toFixed(1)}/h` : "inn closed";
+  $("dbg-next").textContent = g.open && !g.lastCall ? `next arrival ~${g.clockText(g.nextArrivalAt)} · flow now ${(TUNING.flowByHour[g.hour] * g.loc.traffic * g.flowMultiplier).toFixed(1)}/h` : "inn closed";
+  $("dbg-next").textContent = `${g.loc.name} · ${$("dbg-next").textContent}`;
 }

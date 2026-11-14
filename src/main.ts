@@ -1,9 +1,10 @@
 // Wiring: input, the main loop, and the order systems run in.
 
-import { TUNING } from "./data.js";
+import { LOCATIONS, TUNING } from "./data.js";
+import { newWeather } from "./weather.js";
 import { Game } from "./game.js";
 import { dist, type Vec } from "./world.js";
-import { simDelta, updateClock, load, beginDay } from "./day.js";
+import { simDelta, updateClock, load, beginDay, save } from "./day.js";
 import { longDate, shortDate } from "./calendar.js";
 import { updateCrafting } from "./crafting.js";
 import { initTalk, updatePatrons } from "./patrons.js";
@@ -560,12 +561,35 @@ function welcomeBody(): string {
     <p class="muted">${controls}</p>
   </div>`;
 }
-openMenu({
-  title: g.day > 1 ? `Welcome back: ${shortDate(g.date)}` : "Welcome to the Travelling Inn",
-  modal: true,
-  body: welcomeBody(),
-  items: [{ label: g.day > 1 ? "Continue" : "Start game", button: "primary", action: () => { closeAll(); unlockAudio(); } }],
-});
+if (g.location) {
+  openMenu({
+    title: g.day > 1 ? `Welcome back: ${shortDate(g.date)}` : "Welcome to the Travelling Inn",
+    modal: true,
+    body: welcomeBody(),
+    items: [{ label: g.day > 1 ? "Continue" : "Start game", button: "primary", action: () => { closeAll(); unlockAudio(); } }],
+  });
+} else {
+  // A new save: first, where does the inn stand? It shapes the year, the weather and who comes in.
+  openMenu({
+    title: "Welcome to the Travelling Inn",
+    subtitle: "Where does your inn stand?",
+    modal: true,
+    body: welcomeBody(),
+    items: LOCATIONS.map((l) => ({
+      label: l.name,
+      sub: `${l.blurb} <span class="muted">(spring ${l.days[0]} · summer ${l.days[1]} · autumn ${l.days[2]} · winter ${l.days[3]} days)</span>`,
+      action: () => {
+        g.location = l.id;
+        g.weather = newWeather(g.date.season, g.loc);
+        g.log.length = 0;
+        beginDay(g); // the morning again, at the chosen place
+        save(g);
+        closeAll();
+        unlockAudio();
+      },
+    })),
+  });
+}
 
 let last = performance.now();
 let hudTimer = 0;

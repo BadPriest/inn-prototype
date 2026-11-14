@@ -30,6 +30,10 @@ function hungrier(needs, foodBias) {
     const f = wants(needs, foodBias, "food") + 0.05, d = wants(needs, foodBias, "drink") + 0.05;
     return chance(f / (f + d));
 }
+/** Who's passing: archetypes by their weight, times how common they are where the inn stands. */
+function passerBy(g) {
+    return weightedPick(ARCHETYPES, (x) => x.weight * (g.loc.visitors[x.id] ?? 1));
+}
 /** How wet someone coming in now gets: the rain's intensity, give or take. */
 function soakedNow(g) {
     return g.weather.sky === "rain" ? clamp01(g.weather.rain * organic(SOAKING.fromRain)) : 0;
@@ -75,7 +79,7 @@ function admit(g, p, seat) {
     return p;
 }
 export function spawnPatron(g, archetype, forced) {
-    const a = archetype ?? weightedPick(ARCHETYPES, (x) => x.weight);
+    const a = archetype ?? passerBy(g);
     const fussiness = clamp01(organic(a.fussiness));
     const needs = arrivalNeeds(a.needs);
     const soaked = soakedNow(g);
@@ -138,7 +142,7 @@ function freeBench(g) {
 }
 /** Visitors arrive alone or in a group. No table that fits? They wait on the bench, if there's room. */
 export function spawnVisitors(g, archetype) {
-    const a = archetype ?? weightedPick(ARCHETYPES, (x) => x.weight);
+    const a = archetype ?? passerBy(g);
     const size = rollGroupSize(g);
     if (size === 1 && spawnPatron(g, a))
         return true;
@@ -670,7 +674,7 @@ export function updatePatrons(g, simDt) {
     }
     // Visitors arrive at the flow rate.
     if (g.open && !g.lastCall && g.minute >= g.nextArrivalAt) {
-        const rate = TUNING.flowByHour[g.hour] * g.flowMultiplier; // per hour
+        const rate = TUNING.flowByHour[g.hour] * g.loc.traffic * g.flowMultiplier; // per hour
         if (rate > 0.01) {
             spawnVisitors(g);
             g.nextArrivalAt = g.minute + Math.max(3, organic([60 / rate, 30 / rate]));

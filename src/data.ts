@@ -428,6 +428,43 @@ export const CALENDAR = {
 };
 
 // ---------------------------------------------------------------------------
+// Where the inn stands, picked when a save starts. It reshapes the year (calendar season lengths,
+// always 112 days in all), tilts the weather, sets how many people pass by and who they are, and how
+// much a downpour drives them indoors.
+
+export type LocationId = "town" | "dockside" | "mountainside" | "crossroads" | "hills";
+
+export interface Location {
+  id: LocationId;
+  name: string;
+  blurb: string;
+  days: [spring: number, summer: number, autumn: number, winter: number]; // sums to 112
+  rain: number; // more (> 1) or less rain: weights the sky toward rain, and rain lingers
+  storm: number; // how often a storm breaks, against the calendar season's own odds
+  cold?: { seasons: CalendarSeasonId[]; nights: CalendarSeasonId[] }; // instead of WEATHER's
+  traffic: number; // passing traffic, times the hour's flow
+  shelter: number; // how much rain drives passers-by indoors (used by flow, inn#22)
+  visitors: Partial<Record<string, number>>; // archetype id -> times its usual weight
+  street: "streetTown" | "streetCountry"; // what's heard through the open door
+}
+
+export const LOCATIONS: Location[] = [
+  { id: "town", name: "Town centre", days: [28, 28, 28, 28], rain: 1, storm: 1, traffic: 1.3, shelter: 1.5, visitors: {}, street: "streetTown",
+    blurb: "On the market square. Busy all year; when it rains, half the street comes in." },
+  { id: "dockside", name: "Dockside", days: [28, 28, 28, 28], rain: 1.3, storm: 1.6, traffic: 1.1, shelter: 1.1, visitors: { dock: 2.5, scholar: 0.6 }, street: "streetTown",
+    blurb: "By the harbour, where the boats come in. Thirsty dockworkers, wet weather, the odd storm off the sea." },
+  { id: "mountainside", name: "Mountainside", days: [21, 21, 28, 42], rain: 1.2, storm: 1.2, traffic: 0.6, shelter: 0.6, street: "streetCountry",
+    cold: { seasons: ["autumn", "winter"], nights: ["spring", "summer"] },
+    visitors: { traveller: 2, farmer: 1.5, dock: 0.3, scholar: 0.6 },
+    blurb: "On the pass road, high up. Long winters, few passers-by, and everyone who comes in is glad of the fire." },
+  { id: "crossroads", name: "Crossroads", days: [28, 28, 28, 28], rain: 1, storm: 1, traffic: 0.85, shelter: 0.4, visitors: { traveller: 2.5, dock: 0.4 }, street: "streetCountry",
+    blurb: "Where the roads meet, out among the fields. Travellers passing through; rain or shine, much the same." },
+  { id: "hills", name: "Hill country", days: [35, 35, 21, 21], rain: 0.8, storm: 0.4, traffic: 0.8, shelter: 0.7, visitors: { farmer: 2.5, traveller: 1.2, dock: 0.3 }, street: "streetCountry",
+    cold: { seasons: ["winter"], nights: ["autumn"] },
+    blurb: "Among green hills and smallholdings. Long, gentle springs and summers; soft rain, hardly ever a storm." },
+];
+
+// ---------------------------------------------------------------------------
 // Time of day. One value that greetings, chatter, cravings, flow and (later) weather all read.
 // Nothing hard-codes "evening": the inn can be open from the morning on.
 
@@ -629,7 +666,6 @@ export const WEATHER_SOUND = {
   } as Record<"soft" | "medium" | "strong", [number, number, number, number]>,
   greyBreeze: { overcast: 0.15, cloudy: 0.08 } as Record<string, number>, // how wild a dry sky counts as
   windIndoors: 0.3, // with the door shut, the wind is this loud inside
-  street: "streetTown", // streetTown or streetCountry; the starting location (inn#13) will choose
   rainDrownsStreet: 0.8, // at full rain the street is this much quieter
 };
 

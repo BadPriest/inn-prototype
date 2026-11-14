@@ -85,7 +85,7 @@ export function weatherSound(g: Game, realDt: number): void {
     drive(key, s * open, door, W.doorSeconds, realDt, `${key}@door`);
   }
   // The street, under it all; heavy rain drowns it out.
-  drive(W.street, open * (1 - W.rainDrownsStreet * Math.min(1, r * 1.4)), door, W.doorSeconds, realDt);
+  drive(g.loc.street, open * (1 - W.rainDrownsStreet * Math.min(1, r * 1.4)), door, W.doorSeconds, realDt);
 
   // The nearest window: on the glass, louder up close and with the rain.
   const near = nearestWindow(g);

@@ -5,7 +5,7 @@
 // flow, sound, light. Tuning is WEATHER in data.ts.
 
 import { chance, organic, weightedPick } from "./core.js";
-import { WEATHER, type CalendarSeasonId, type RainBandId, type SkyId } from "./data.js";
+import { LOCATIONS, WEATHER, type CalendarSeasonId, type Location, type RainBandId, type SkyId } from "./data.js";
 import type { Game } from "./game.js";
 
 export interface WeatherState {
@@ -33,8 +33,23 @@ function bandFor(rain: number, current: RainBandId | null): RainBandId {
   return BANDS[i].id;
 }
 
-function startRain(w: WeatherState, season: CalendarSeasonId, sudden: boolean): void {
+type Odds = (typeof WEATHER.seasons)[CalendarSeasonId];
+
+/** The calendar season's weather odds, tilted by where the inn stands (wetter, stormier, or gentler). */
+export function oddsFor(season: CalendarSeasonId, loc: Location = LOCATIONS[0]): Odds {
   const S = WEATHER.seasons[season];
+  const to = Object.fromEntries(Object.entries(S.to).map(([from, opts]) =>
+    [from, Object.fromEntries(Object.entries(opts).map(([k, v]) => [k, k === "rain" ? (v ?? 0) * loc.rain : v]))])) as Odds["to"];
+  return {
+    ...S,
+    start: { ...S.start, rain: S.start.rain * loc.rain },
+    stay: { ...S.stay, rain: Math.min(0.97, 1 - (1 - S.stay.rain) / loc.rain) }, // wet places: rain lingers
+    to,
+    storm: S.storm * loc.storm,
+  };
+}
+
+function startRain(w: WeatherState, S: Odds, sudden: boolean): void {
   w.rain = sudden ? clamp(organic(WEATHER.showerStart), 0.36, 0.9) : 0.08;
   w.target = clamp(organic(S.rain), 0.15, 0.95);
   w.wanderIn = organic(WEATHER.rainWanderEvery);
@@ -44,12 +59,12 @@ function startRain(w: WeatherState, season: CalendarSeasonId, sudden: boolean): 
 }
 
 /** The weather on the first morning of a save. */
-export function newWeather(season: CalendarSeasonId): WeatherState {
-  const S = WEATHER.seasons[season];
+export function newWeather(season: CalendarSeasonId, loc?: Location): WeatherState {
+  const S = oddsFor(season, loc);
   const skies = Object.keys(S.start) as SkyId[];
   const sky = weightedPick(skies, (k) => S.start[k]) ?? "cloudy";
   const w: WeatherState = { sky, hours: 0, rain: 0, target: 0, band: null, ending: false, wanderIn: 0 };
-  if (sky === "rain") { startRain(w, season, false); w.rain = w.target; w.band = bandFor(w.rain, null); } // already set in
+  if (sky === "rain") { startRain(w, S, false); w.rain = w.target; w.band = bandFor(w.rain, null); } // already set in
   return w;
 }
 
@@ -65,7 +80,7 @@ function moveSky(g: Game, to: SkyId, abrupt: boolean): void {
   const fromBand = w.band;
   w.sky = to;
   w.hours = 0;
-  if (to === "rain") startRain(w, g.date.season, abrupt);
+  if (to === "rain") startRain(w, oddsFor(g.date.season, g.loc), abrupt);
   else { w.rain = 0; w.target = 0; w.band = null; w.ending = false; }
   if (quiet) return;
   tell(g, WEATHER.lines.sky[`${from}>${to}`]);
@@ -75,7 +90,7 @@ function moveSky(g: Game, to: SkyId, abrupt: boolean): void {
 
 export function updateWeather(g: Game, simDt: number): void {
   const w = g.weather;
-  const S = WEATHER.seasons[g.date.season];
+  const S = oddsFor(g.date.season, g.loc);
   const hours = simDt / 60;
   w.hours += hours;
 
@@ -138,7 +153,8 @@ export function weatherTags(g: Game): string[] {
   if (w.band) tags.push(...(BANDS.find((b) => b.id === w.band)?.tags ?? []));
   const season = g.date.season;
   const late = g.timeOfDay === "evening" || g.timeOfDay === "night";
-  if (WEATHER.coldSeasons.includes(season) || (late && WEATHER.coldNightSeasons.includes(season))) tags.push("cold");
+  const cold = g.loc.cold ?? { seasons: WEATHER.coldSeasons, nights: WEATHER.coldNightSeasons };
+  if (cold.seasons.includes(season) || (late && cold.nights.includes(season))) tags.push("cold");
   return tags;
 }
 

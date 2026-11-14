@@ -1,7 +1,8 @@
 // The calendar: which date a day of play falls on, and how dates are written.
 //
 // `g.day` stays a plain count of days played (1, 2, 3…): freshness, unlocks and history use it.
-// The date is worked out from it and from the calendar season the save started in.
+// The date is worked out from it, the calendar season the save started in, and how long each
+// calendar season runs where the inn stands (the starting location reshapes the year).
 
 import { CALENDAR, type CalendarSeasonId } from "./data.js";
 
@@ -15,23 +16,22 @@ export interface GameDate {
   offset: number;
 }
 
-const yearLength = () => CALENDAR.seasons.reduce((a, s) => a + s.days, 0);
-
-/** Days from the start of the year to the first day of this calendar season. */
-function seasonStart(index: number): number {
-  return CALENDAR.seasons.slice(0, index).reduce((a, s) => a + s.days, 0);
+/** Days in each calendar season, in order: the location's if it has its own, else the calendar's. */
+function lengthsOf(lengths?: number[]): number[] {
+  return CALENDAR.seasons.map((s, i) => lengths?.[i] ?? s.days);
 }
 
 /** The date of a day of play. `startSeason` is the index of the calendar season the save began in. */
-export function dateOf(day: number, startSeason: number): GameDate {
-  const offset = seasonStart(startSeason) + Math.max(0, day - 1);
-  const year = Math.floor(offset / yearLength()) + 1;
-  let inYear = offset % yearLength();
+export function dateOf(day: number, startSeason: number, lengths?: number[]): GameDate {
+  const len = lengthsOf(lengths);
+  const year = len.reduce((a, n) => a + n, 0);
+  const offset = len.slice(0, startSeason).reduce((a, n) => a + n, 0) + Math.max(0, day - 1);
+  let inYear = offset % year;
   let i = 0;
-  while (inYear >= CALENDAR.seasons[i].days) { inYear -= CALENDAR.seasons[i].days; i++; }
+  while (inYear >= len[i]) { inYear -= len[i]; i++; }
   const s = CALENDAR.seasons[i];
   return {
-    year, season: s.id, seasonName: s.name, dayOfSeason: inYear + 1,
+    year: Math.floor(offset / year) + 1, season: s.id, seasonName: s.name, dayOfSeason: inYear + 1,
     weekday: CALENDAR.weekdays[offset % CALENDAR.weekdays.length], offset,
   };
 }
@@ -42,8 +42,8 @@ export function randomStartSeason(): number {
 }
 
 /** Is this day the first of a new calendar season? (Not on the very first day of a save.) */
-export function seasonTurned(day: number, startSeason: number): boolean {
-  return day > 1 && dateOf(day, startSeason).season !== dateOf(day - 1, startSeason).season;
+export function seasonTurned(day: number, startSeason: number, lengths?: number[]): boolean {
+  return day > 1 && dateOf(day, startSeason, lengths).season !== dateOf(day - 1, startSeason, lengths).season;
 }
 
 function ordinal(n: number): string {
