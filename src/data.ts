@@ -200,6 +200,7 @@ export interface Archetype {
   name: string;
   color: string;
   weight: number; // how often they turn up
+  needs: NeedLevels; // how hungry, thirsty and cold they tend to arrive
   tastes: TasteSet;
   extraLikes: string[]; // each visitor draws one of these as a personal extra like
   fussiness: Organic; // 0..1
@@ -214,21 +215,25 @@ export interface Archetype {
 
 export const ARCHETYPES: Archetype[] = [
   { id: "dock", name: "Dockworker", color: "#b5651d", weight: 3,
+    needs: { hunger: [0.5, 0.15], thirst: [0.75, 0.15], warmth: [0.3, 0.15] },
     tastes: { love: ["rich", "hearty"], like: ["smoky", "savoury", "bitter", "salty"], dislike: ["light", "fragrant"] },
     extraLikes: ["fiery", "briny", "warm"],
     fussiness: [0.5, 0.2], patience: [40, 10], stay: [120, 40], consume: [22, 6], walk: [2.6, 0.4],
     foodBias: 0.6, garnishAsk: 0.15, messiness: [0.7, 0.2] },
   { id: "scholar", name: "Scholar", color: "#5b7fb5", weight: 2,
+    needs: { hunger: [0.35, 0.15], thirst: [0.45, 0.15], warmth: [0.4, 0.15] },
     tastes: { love: ["fragrant"], like: ["mild", "homely", "bright"], dislike: ["fiery", "smoky", "salty"] },
     extraLikes: ["tart", "crisp", "warm"],
     fussiness: [0.7, 0.15], patience: [32, 8], stay: [100, 30], consume: [26, 6], walk: [2.0, 0.3],
     foodBias: 0.4, garnishAsk: 0.4, messiness: [0.15, 0.1] },
   { id: "traveller", name: "Traveller", color: "#6f9e5a", weight: 3,
+    needs: { hunger: [0.75, 0.15], thirst: [0.5, 0.15], warmth: [0.45, 0.15] },
     tastes: { love: ["warm"], like: ["hearty", "sweet", "homely", "savoury", "crisp"], dislike: [] },
     extraLikes: ["earthy", "rich", "bright"],
     fussiness: [0.2, 0.15], patience: [55, 15], stay: [90, 30], consume: [20, 5], walk: [2.4, 0.4],
     foodBias: 0.55, garnishAsk: 0.2, messiness: [0.4, 0.2] },
   { id: "farmer", name: "Farmhand", color: "#a89a3c", weight: 2,
+    needs: { hunger: [0.6, 0.15], thirst: [0.55, 0.15], warmth: [0.3, 0.15] },
     tastes: { love: ["earthy"], like: ["homely", "tart", "crisp"], dislike: ["sweet", "briny"] },
     extraLikes: ["hearty", "smoky", "fresh"],
     fussiness: [0.4, 0.2], patience: [45, 10], stay: [110, 35], consume: [20, 5], walk: [2.2, 0.4],
@@ -252,6 +257,7 @@ export interface Regular {
   schema: SchemaId;
   joinsOnDay: number; // starts visiting from this day
   habit: [fromHour: number, toHour: number]; // when they tend to arrive
+  needs: NeedLevels; // how hungry, thirsty and cold they tend to arrive
   food: TasteSet; // true tastes (for unformed: ignored; see target)
   drink: TasteSet;
   /** Unformed only: how many tags must lock in, per kind, before they're resolved. */
@@ -269,6 +275,7 @@ export interface Regular {
 
 export const REGULARS: Regular[] = [
   { id: "hedda", name: "Hedda", color: "#c9a0dc", schema: "reserved", joinsOnDay: 1, habit: [11, 13],
+    needs: { hunger: [0.55, 0.1], thirst: [0.3, 0.1], warmth: [0.55, 0.1] },
     blurb: "The miller's widow. Says little.",
     food: { love: ["savoury"], like: ["warm", "earthy"], dislike: ["sweet", "tart", "fiery"] },
     drink: { love: ["homely"], like: ["mild", "warm", "fragrant", "bitter"], dislike: [] },
@@ -276,6 +283,7 @@ export const REGULARS: Regular[] = [
     fussiness: 0, patience: [80, 10], stay: [90, 20], consume: [28, 5], walk: [1.6, 0.2],
     foodBias: 0.7, garnishAsk: 0, messiness: 0.1 },
   { id: "tobin", name: "Tobin", color: "#e07b5f", schema: "unformed", joinsOnDay: 1, habit: [18, 20],
+    needs: { hunger: [0.5, 0.2], thirst: [0.6, 0.2], warmth: [0.2, 0.1] },
     blurb: "New in town. Doesn't seem to know what he likes.",
     food: { love: [], like: [], dislike: [] }, drink: { love: [], like: [], dislike: [] },
     target: { food: 7, drink: 4 },
@@ -283,6 +291,7 @@ export const REGULARS: Regular[] = [
     fussiness: 0.2, patience: [50, 10], stay: [150, 30], consume: [18, 5], walk: [2.8, 0.3],
     foodBias: 0.55, garnishAsk: 0.3, messiness: 0.8 },
   { id: "maren", name: "Maren", color: "#f0c05a", schema: "open", joinsOnDay: 3, habit: [15, 17],
+    needs: { hunger: [0.35, 0.1], thirst: [0.45, 0.1], warmth: [0.3, 0.1] },
     blurb: "Bakes for half the street. Hopeful about most things.",
     food: { love: ["sweet", "warm"], like: ["homely", "crisp"], dislike: ["bitter", "briny"] },
     drink: { love: ["sweet"], like: ["warm", "fragrant"], dislike: ["bitter"] },
@@ -290,6 +299,7 @@ export const REGULARS: Regular[] = [
     fussiness: 0.3, patience: [50, 10], stay: [80, 20], consume: [20, 5], walk: [2.2, 0.3],
     foodBias: 0.5, garnishAsk: 0.4, messiness: 0.3 },
   { id: "ferryman", name: "The ferryman", color: "#4f8a8b", schema: "veiled", joinsOnDay: 5, habit: [20, 22],
+    needs: { hunger: [0.6, 0.1], thirst: [0.55, 0.1], warmth: [0.65, 0.1] },
     blurb: "Takes the night crossing. Hard to read.",
     food: { love: ["smoky", "briny"], like: ["hearty"], dislike: ["light", "sweet"] },
     drink: { love: ["bitter"], like: ["smoky", "warm"], dislike: ["sweet", "fragrant"] },
@@ -297,6 +307,7 @@ export const REGULARS: Regular[] = [
     fussiness: 0.55, patience: [40, 8], stay: [120, 30], consume: [20, 5], walk: [2.0, 0.3],
     foodBias: 0.6, garnishAsk: 0.2, messiness: 0.4 },
   { id: "wil", name: "Old Wil", color: "#b0b0a0", schema: "open", joinsOnDay: 7, habit: [9, 11],
+    needs: { hunger: [0.65, 0.1], thirst: [0.6, 0.1], warmth: [0.4, 0.1] },
     blurb: "Eats anything, says so loudly. Hard to surprise.",
     food: { love: ["rich"], like: ["warm", "hearty", "savoury", "smoky", "earthy", "homely", "crisp", "sweet"], dislike: [] },
     drink: { love: ["hearty"], like: ["bitter", "cold", "sweet", "warm", "crisp"], dislike: [] },
@@ -304,6 +315,7 @@ export const REGULARS: Regular[] = [
     fussiness: 0.1, patience: [70, 10], stay: [140, 30], consume: [15, 4], walk: [1.5, 0.2],
     foodBias: 0.6, garnishAsk: 0.1, messiness: 0.6 },
   { id: "ysolde", name: "Ysolde", color: "#9db4ff", schema: "unformed", joinsOnDay: 9, habit: [16, 19],
+    needs: { hunger: [0.55, 0.15], thirst: [0.5, 0.15], warmth: [0.4, 0.1] },
     blurb: "A courier between towns. Picky, or maybe just unsure.",
     food: { love: [], like: [], dislike: [] }, drink: { love: [], like: [], dislike: [] },
     target: { food: 4, drink: 3 },
@@ -311,6 +323,34 @@ export const REGULARS: Regular[] = [
     fussiness: 0.6, patience: [35, 8], stay: [70, 20], consume: [18, 5], walk: [2.6, 0.3],
     foodBias: 0.5, garnishAsk: 0.5, messiness: 0.2 },
 ];
+
+// ---------------------------------------------------------------------------
+// Needs: groundwork for mood. Real values, measured, not faked. Nothing reacts to them yet
+// (orders still come from foodBias); the debug view shows them and every unmet stretch is logged,
+// so we learn what mood will have to react to. 0 = fully met, 1 = desperate.
+
+export type NeedId = "hunger" | "thirst" | "warmth";
+export const NEED_IDS: NeedId[] = ["hunger", "thirst", "warmth"];
+export type NeedLevels = Record<NeedId, Organic>;
+
+export const NEEDS = {
+  // Drift while inside, per game hour.
+  risePerHour: { hunger: 0.08, thirst: 0.12, warmth: 0 } as Record<NeedId, number>,
+  indoorWarmthPerHour: 0.05, // just being out of the weather eases the cold a little
+  // The fire: full effect at the hearth, fading to nothing at the edge of the radius (tiles).
+  fire: { radius: 4.5, warmthPerHour: 0.45 },
+  // A serving eases needs over the time it takes to eat or drink it.
+  serving: {
+    food: { hunger: 0.5, thirst: 0.05, warmth: 0 },
+    drink: { hunger: 0.05, thirst: 0.45, warmth: 0 },
+  } as Record<ItemKind, Record<NeedId, number>>,
+  warmTag: 0.15, // a serving tagged warm also eases the cold
+  snackThirstPerHour: 0.4, // times the snack's `thirsty`: a salty bowl makes people thirstier
+  // An unmet stretch starts above `unmetAt` and ends once back under `metAt` (the gap stops flicker).
+  unmetAt: 0.65,
+  metAt: 0.55,
+  logCap: 300, // stretches kept per day
+};
 
 /** Tags an unformed patron may roll each visit, and that cravings may name. */
 export const TASTE_POOL = [
@@ -323,7 +363,7 @@ export const SCHEMA_TUNING = {
   reservedBands: [0, 4, 8] as number[], // familiarity at which each band starts
   veiledNoiseFlips: 2, // tags whose valence is flipped per serve
   veiledHonestCraving: 0.33,
-  cravingChance: 0.6, // chance a regular has a craving tonight
+  cravingChance: 0.6, // chance a regular has a craving on a given visit
   cravingBonus: 2,
   unformedRoll: { love: 2, like: 2, dislike: 2 }, // tags rolled per visit, per kind
   driftChance: 0.1, // per visit, a resolved regular's like may drift
@@ -331,22 +371,61 @@ export const SCHEMA_TUNING = {
 };
 
 // ---------------------------------------------------------------------------
+// Time of day. One value that greetings, chatter, cravings, flow and (later) weather all read.
+// Nothing hard-codes "evening": the inn can be open from the morning on.
+
+export type TimeOfDay = "morning" | "midday" | "afternoon" | "evening" | "night";
+
+/** The clock hour each part of the day starts at, in order through the day. Night runs past midnight. */
+export const TIME_OF_DAY: { id: TimeOfDay; from: number }[] = [
+  { id: "night", from: 0 },
+  { id: "morning", from: 5 },
+  { id: "midday", from: 11 },
+  { id: "afternoon", from: 14 },
+  { id: "evening", from: 17 },
+  { id: "night", from: 22 },
+];
+
+export function timeOfDayAt(hour: number): TimeOfDay {
+  let id: TimeOfDay = "night";
+  for (const t of TIME_OF_DAY) if (hour >= t.from) id = t.id;
+  return id;
+}
+
+/** Words for each part of the day, filled into lines: {time} how people greet, {now} "tonight" and the like. */
+export const TIME_WORDS: Record<TimeOfDay, { time: string; now: string; part: string }> = {
+  morning: { time: "Morning", now: "this morning", part: "morning" },
+  midday: { time: "Good day", now: "today", part: "day" },
+  afternoon: { time: "Afternoon", now: "this afternoon", part: "afternoon" },
+  evening: { time: "Evening", now: "tonight", part: "evening" },
+  night: { time: "Evening", now: "tonight", part: "night" },
+};
+
+// ---------------------------------------------------------------------------
 // Talk. {tag} is filled in from the speaker's own tastes, so chatter can give tastes away.
+// {time} and {now} come from the time of day (TIME_WORDS). A line with `when` is only said then.
+export type Line = string | { text: string; when: TimeOfDay[] };
+
 export const CHATTER = {
   small: [
-    "Wind's turned, they say.", "Did you hear about the mill?", "Market was busy today.",
-    "My feet are killing me.", "Long day.", "Quiet in here tonight. I like it.",
+    "Wind's turned, they say.", "Did you hear about the mill?",
+    { text: "Market was busy today.", when: ["midday", "afternoon", "evening"] },
+    "My feet are killing me.",
+    { text: "Long day.", when: ["afternoon", "evening", "night"] },
+    { text: "Early start, this.", when: ["morning"] },
+    "Quiet in here {now}. I like it.",
     "Ferry was late again.", "Haven't been here in a while.", "Fire's nice.",
     "You still owe me for last time.", "Rain's coming.",
-  ],
+  ] as Line[],
   love: ["Nothing beats something {tag}.", "I'd walk a mile for anything {tag}.", "Give me {tag} any day."],
   like: ["Something {tag} would go down well.", "I don't mind a bit of {tag}."],
   dislike: ["Can't abide anything {tag}.", "Keep anything {tag} away from me.", "Never cared for {tag} things."],
   replies: ["Mm.", "Too right.", "Is that so?", "Ha!", "Same here.", "You always say that.", "Hm."],
-  greet: { morning: "Morning!", afternoon: "Afternoon.", evening: "Evening!", late: "Still up?" },
+  greet: { morning: "Morning!", midday: "Good day!", afternoon: "Afternoon.", evening: "Evening!", night: "Still up?" } as Record<TimeOfDay, string>,
   answer: {
-    stranger: ["Evening.", "Hello.", "Mm, hello."],
-    known: ["Ah, there you are.", "Good to see you.", "Evening, keeper."],
+    stranger: ["{time}.", "Hello.", "Mm, hello."],
+    known: ["Ah, there you are.", "Good to see you.", "{time}, keeper."],
+    reserved: ["Mm.", "…{time}.", "Hm."], // the reserved, until they open up
     friend: ["There's my favourite keeper.", "Was hoping you'd come by.", "Sit with us a moment, if you can."],
   },
 };

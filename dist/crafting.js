@@ -42,7 +42,7 @@ export function ticketFor(g, recipe) {
 /** The tea urn: a batch version of tea, offered alongside the single cup once you have the upgrade. */
 export function urnTea(tea) {
     return { ...tea, name: "Tea, a whole urn", servings: [8, 1], minutes: [tea.minutes[0] * 2.5, tea.minutes[1]],
-        blurb: "A whole urn, kept hot on the hearth and poured by the cup all evening. One leaf for everyone who asks." };
+        blurb: "A whole urn, kept hot on the hearth and poured by the cup all day. One leaf for everyone who asks." };
 }
 /** How a job's recipe is made: as itself, or as a batch (the urn). */
 export function effectiveRecipe(_g, recipe, batch = false) {

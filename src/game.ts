@@ -2,7 +2,7 @@
 
 import { EventBus, type Outcome } from "./core.js";
 import { World, type Vec } from "./world.js";
-import { TUNING, type Archetype, type ItemKind, type Regular, type SchemaId, type TasteSet } from "./data.js";
+import { TIME_WORDS, TUNING, timeOfDayAt, type Archetype, type ItemKind, type Line, type NeedId, type Regular, type SchemaId, type TasteSet, type TimeOfDay } from "./data.js";
 
 export interface Item {
   id: number;
@@ -77,10 +77,26 @@ export interface Patron {
   lingerSince?: number;
   greeted?: boolean; // the keeper has said hello this visit
   nextChatAt?: number;
-  consuming?: { icon: string; kind: ItemKind; from: number }; // what's in front of them
+  consuming?: { icon: string; kind: ItemKind; from: number; tags?: string[] }; // what's in front of them
   marker?: { text: Outcome | string; until: number };
   line?: { text: string; until: number };
   leftEarly: boolean;
+  /** 0 = fully met, 1 = desperate. Measured only, for now: nothing reacts to them yet. */
+  needs: Record<NeedId, number>;
+  /** Needs currently unmet, with when it started and what was going on meanwhile. */
+  unmet: Partial<Record<NeedId, { since: number; peak: number; while: Set<string> }>>;
+}
+
+/** One stretch of a patron going without: the raw material for designing mood. */
+export interface UnmetStretch {
+  who: string;
+  type: string; // archetype id, or "regular:<id>"
+  need: NeedId;
+  from: string; // clock time it started
+  minutes: number;
+  peak: number;
+  ended: "met" | "left" | "closing";
+  while: string[]; // what was going on during it: "fire out", "waiting on food", …
 }
 
 export interface Job {
@@ -120,13 +136,14 @@ export interface DayStats {
   garnished: number;
   cleaned: number;
   moments: string[]; // locks, breakthroughs, opening up
+  unmet?: UnmetStretch[]; // missing in saves from before needs
 }
 
 export function emptyStats(day: number): DayStats {
   return {
     day, arrivals: 0, served: 0, leftEarly: 0, leftUnserved: 0, crafted: 0, garnished: 0, cleaned: 0,
     outcomes: { DELIGHT: 0, PLEASED: 0, FULFILLED: 0, UNFINISHED: 0, COMPLAINS: 0 },
-    moments: [],
+    moments: [], unmet: [],
   };
 }
 
@@ -235,6 +252,25 @@ export class Game {
   /** Clock hour 0-23 for the current minute. */
   get hour(): number {
     return Math.floor((TUNING.dayStartHour * 60 + this.minute) / 60) % 24;
+  }
+
+  /** Morning, midday, afternoon, evening or night: the one value everything reads. */
+  get timeOfDay(): TimeOfDay {
+    return timeOfDayAt(this.hour);
+  }
+
+  /** Fill {time} and {now} in a line from the time of day ("Evening", "tonight"). */
+  words(text: string): string {
+    const w = TIME_WORDS[this.timeOfDay];
+    return text.replaceAll("{time}", w.time).replaceAll("{now}", w.now);
+  }
+
+  /** Pick a line that fits the time of day, with its words filled in. */
+  pickLine(lines: readonly Line[]): string {
+    const now = this.timeOfDay;
+    const fits = lines.filter((l) => typeof l === "string" || l.when.includes(now));
+    const l = fits[Math.floor(Math.random() * fits.length)] ?? "";
+    return this.words(typeof l === "string" ? l : l.text);
   }
 
   clockText(minute = this.minute): string {

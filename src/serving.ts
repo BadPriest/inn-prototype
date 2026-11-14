@@ -189,7 +189,7 @@ export function serveUnasked(g: Game, p: Patron, item: Item): void {
   else if (v.outcome === "DELIGHT") p.line = { text: "For me? Oh!", until: g.minute + 6 };
   g.stats.served++;
   g.totalServed++;
-  p.consuming = { icon: iconFor(item.recipeId, item.garnish) || "🥣", kind: item.kind, from: g.minute };
+  p.consuming = { icon: iconFor(item.recipeId, item.garnish) || "🥣", kind: item.kind, from: g.minute, tags: item.tags };
   g.stats.outcomes[v.outcome] = (g.stats.outcomes[v.outcome] ?? 0) + 1;
   g.bus.emit({ type: "ServeOutcome", patronId: p.id, outcome: v.outcome, score: v.score });
   g.journal(p, `Offered, unasked: ${item.name} [${item.tags.join(", ")}]: ${describeReaction(p, v)}.${v.line ? ` “${v.line}”` : ""}`);
@@ -233,7 +233,7 @@ export function deliverTo(g: Game, p: Patron, quiet = false, extra: Item[] = [])
   if (v.line) p.line = { text: v.line, until: g.minute + 6 };
   g.stats.served++;
   g.totalServed++;
-  p.consuming = { icon: iconFor(item.recipeId, item.garnish) || "🥣", kind: item.kind, from: g.minute };
+  p.consuming = { icon: iconFor(item.recipeId, item.garnish) || "🥣", kind: item.kind, from: g.minute, tags: item.tags };
   g.stats.outcomes[v.outcome] = (g.stats.outcomes[v.outcome] ?? 0) + 1;
   g.bus.emit({ type: "ServeOutcome", patronId: p.id, outcome: v.outcome, score: v.score });
 

@@ -4,6 +4,7 @@ import { TUNING } from "./data.js";
 import { emptyStats, type DayStats, type Game, type RegularState } from "./game.js";
 import { callLastOrders, clearPatrons, scheduleRegulars, unlockRegulars } from "./patrons.js";
 import { ageFood, finishAllJobs } from "./crafting.js";
+import { closeAllStretches } from "./needs.js";
 
 const SAVE_KEY = "travelling-inn-proto-v2";
 
@@ -16,7 +17,10 @@ export function simDelta(g: Game, realDt: number): number {
 }
 
 export function updateClock(g: Game, simDt: number, onTurnIn: () => void): void {
+  const before = g.timeOfDay;
   g.minute += simDt;
+  const after = g.timeOfDay;
+  if (after !== before) g.bus.emit({ type: "TimeOfDayChanged", from: before, to: after });
   if (!g.turnInPrompted && g.minute >= TUNING.dayLengthMinutes) {
     g.minute = TUNING.dayLengthMinutes;
     g.turnInPrompted = true;
@@ -36,7 +40,7 @@ export function toggleInn(g: Game): void {
     g.lastCall = true;
     callLastOrders(g);
     g.bus.emit({ type: "LastCall" });
-    g.say("Last call. No new orders tonight.");
+    g.say(g.words("Last call. No new orders {now}."));
   } else {
     g.open = false;
     g.lastCall = false;
@@ -47,6 +51,7 @@ export function toggleInn(g: Game): void {
 
 /** End the day: everyone goes home, cooking finishes, stats are kept. */
 export function endDay(g: Game): DayStats {
+  for (const p of g.patrons) closeAllStretches(g, p, "closing");
   clearPatrons(g);
   finishAllJobs(g);
   g.open = false;
@@ -84,7 +89,9 @@ export function beginDay(g: Game): void {
 export function save(g: Game): void {
   try {
     const regulars = [...g.regulars.values()].map(({ arriveAt, visitedToday, ...rest }) => { void arriveAt; void visitedToday; return rest; });
-    localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, history: g.history, regulars, visitorNotes: g.visitorNotes,
+    // The needs log is big: keep it for the last two weeks of days only, so the save stays small.
+    const history = g.history.map((d, i) => (i < g.history.length - 14 ? { ...d, unmet: undefined } : d));
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, history, regulars, visitorNotes: g.visitorNotes,
       menu: [...g.menu], menuChosen: g.menuChosen, upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives }));
   } catch { /* storage unavailable: carry on */ }
 }

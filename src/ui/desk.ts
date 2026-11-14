@@ -64,7 +64,7 @@ export function openBillOfFare(g: Game): void {
     }));
     return {
       title: "📜 Bill of fare",
-      subtitle: "What's on the menu tonight?",
+      subtitle: "What's on the menu today?",
       view: {
         html: `<p class="explain"><b>Pick what goes up on the board.</b> Guests only order what's on it, and they'll still order it after it runs out. Put up what you're ready to make; leave off what you'd rather not.</p>${grid(cards)}`,
         onPick: (v) => toggle(Number(v)),

@@ -1,7 +1,8 @@
 // The side panel (clock, orders, trays, log) and the debug view.
 
-import { ARCHETYPES, REGULARS, TUNING } from "../data.js";
-import type { Game } from "../game.js";
+import { ARCHETYPES, NEED_IDS, REGULARS, TIME_WORDS, TUNING } from "../data.js";
+import type { Game, Patron, UnmetStretch } from "../game.js";
+import { unmetLogText } from "../needs.js";
 import { spawnRegular, spawnVisitors } from "../patrons.js";
 import { emptyTastes } from "../game.js";
 import { resetSave } from "../day.js";
@@ -81,7 +82,7 @@ function updateObjectives(g: Game): void {
   sec.style.display = "";
   const list = objectives(g);
   if (g.open && list.every((o) => o.done || o.optional)) {
-    el.innerHTML = `<div class="muted">All set. Enjoy the evening. (O hides this)</div>`;
+    el.innerHTML = `<div class="muted">All set. Enjoy the ${TIME_WORDS[g.timeOfDay].part}. (O hides this)</div>`;
     return;
   }
   el.innerHTML = list.map((o) => `<div class="obj ${o.done ? "done" : ""}">${o.done ? "☑" : "☐"} ${o.text}${o.optional ? ' <span class="muted">(optional)</span>' : ""}</div>`).join("");
@@ -108,12 +109,38 @@ export function initDebug(g: Game): void {
     const target = (17 - TUNING.dayStartHour) * 60;
     if (g.minute < target) g.minute = target;
   };
+  ($("dbg-needs-copy") as HTMLButtonElement).onclick = async () => {
+    const note = $("dbg-needs-copied");
+    try { await navigator.clipboard.writeText(unmetLogText(g)); note.textContent = "Copied, tab-separated: paste into a sheet."; }
+    catch { note.textContent = "Couldn't reach the clipboard."; }
+    setTimeout(() => { note.textContent = ""; }, 3000);
+  };
   const reset = $("dbg-reset") as HTMLButtonElement;
   let armed = false;
   reset.onclick = () => {
     if (!armed) { armed = true; reset.textContent = "Click again to forget all days"; setTimeout(() => { armed = false; reset.textContent = "Reset save"; }, 3000); return; }
     resetSave(); location.reload();
   };
+}
+
+/** A patron's needs, 0 (met) to 1 (desperate). Unmet ones are marked, with how long so far. */
+function needsLine(g: Game, p: Patron): string {
+  return "needs: " + NEED_IDS.map((n) => {
+    const v = p.needs[n].toFixed(2);
+    const u = p.unmet[n];
+    return u ? `<b style="color:#ff7a6a">${n} ${v} (${Math.floor(g.minute - u.since)}m)</b>` : `${n} ${v}`;
+  }).join(" · ");
+}
+
+/** Count and average length per need, e.g. "hunger 4 × 23m · thirst 2 × 11m". */
+function unmetSummary(list: UnmetStretch[], inline = false): string {
+  const parts = NEED_IDS.map((n) => {
+    const of = list.filter((u) => u.need === n);
+    if (!of.length) return "";
+    const avg = Math.round(of.reduce((a, u) => a + u.minutes, 0) / of.length);
+    return `${n} ${of.length} × ${avg}m`;
+  }).filter(Boolean).join(" · ");
+  return inline || !parts ? parts : `<div>${parts}</div>`;
 }
 
 export function toggleDebug(): void {
@@ -127,18 +154,24 @@ function updateDebug(g: Game): void {
     const t = p.tastes;
     const st = g.regular(p.regularId);
     return `<div class="dp"><b style="color:${p.color}">${p.name}</b>${p.groupId && (g.groups.find((x) => x.id === p.groupId)?.members.length ?? 0) > 1 ? ` <span class="muted">(party #${p.groupId})</span>` : ""} · ${p.state}${o?.open ? ` · wants ${o.label} (${Math.floor(g.minute - p.waitedSince)}/${Math.floor(p.patience)}m)` : ""}
+      <div>${needsLine(g, p)}</div>
       <div>schema: ${p.schema}${st ? ` · familiarity ${st.familiarity}${st.resolved ? " · resolved" : ""}${st.openedUp ? " · opened up" : ""}` : ""} · fuss ${p.fussiness.toFixed(2)} · mess ${p.messiness.toFixed(2)}</div>
       ${p.craving ? `<div>craving: ${p.craving.tag}${p.schema === "veiled" ? (p.craving.honest ? " (honest)" : " (noise)") : ""}</div>` : ""}
       <div>food ♥ ${t.food.love.join(", ") || "–"} · + ${t.food.like.join(", ") || "–"} · ✗ ${t.food.dislike.join(", ") || "–"}</div>
       <div>drink ♥ ${t.drink.love.join(", ") || "–"} · + ${t.drink.like.join(", ") || "–"} · ✗ ${t.drink.dislike.join(", ") || "–"}</div>
       ${st && (st.locks.food.love.length + st.locks.food.dislike.length + st.locks.drink.love.length + st.locks.drink.dislike.length) ? `<div>locked: food ♥${st.locks.food.love.join(",")} ✗${st.locks.food.dislike.join(",")} · drink ♥${st.locks.drink.love.join(",")} ✗${st.locks.drink.dislike.join(",")}</div>` : ""}</div>`;
   }).join("") || `<div class="muted">Nobody inside.</div>`;
+  const unmet = g.stats.unmet ?? [];
+  const open = g.patrons.flatMap((p) => NEED_IDS.filter((n) => p.unmet[n]).map((n) => ({ p, n })));
+  $("dbg-needs").innerHTML = (unmetSummary(unmet) || `<div class="muted">None logged yet.</div>`)
+    + (open.length ? `<div>Going on now: ${open.map(({ p, n }) => `${p.name} ${n} ${Math.floor(g.minute - p.unmet[n]!.since)}m`).join(" · ")}</div>` : "")
+    + unmet.slice(-6).reverse().map((u) => `<div class="muted">${u.from} ${u.who}: ${u.need} ${u.minutes}m (peak ${u.peak}, ${u.ended})${u.while.length ? ` · ${u.while.join(", ")}` : ""}</div>`).join("");
   $("dbg-regulars").innerHTML = [...g.regulars.values()].map((r) => {
     const d = g.regularDef(r.id)!;
     return `<div>${d.name} (${d.schema}) · fam ${r.familiarity} · visits ${r.visits}${r.resolved ? " · resolved" : ""}${r.openedUp ? " · opened up" : ""} · today ${r.visitedToday ? "came" : r.arriveAt !== undefined ? `~${g.clockText(r.arriveAt)}` : "–"}</div>`;
   }).join("");
   const h = g.history.slice(-5).map((s) =>
-    `<div>Day ${s.day}: ${s.arrivals} in, ${s.served} served, ${s.outcomes.DELIGHT} delight, ${s.outcomes.COMPLAINS} complaints, ${s.leftEarly} left early</div>`).join("");
+    `<div>Day ${s.day}: ${s.arrivals} in, ${s.served} served, ${s.outcomes.DELIGHT} delight, ${s.outcomes.COMPLAINS} complaints, ${s.leftEarly} left early${s.unmet?.length ? ` · unmet: ${unmetSummary(s.unmet, true)}` : ""}</div>`).join("");
   $("dbg-history").innerHTML = h || `<div class="muted">No finished days yet.</div>`;
   $("dbg-next").textContent = g.open && !g.lastCall ? `next arrival ~${g.clockText(g.nextArrivalAt)} · flow now ${(TUNING.flowByHour[g.hour] * g.flowMultiplier).toFixed(1)}/h` : "inn closed";
 }

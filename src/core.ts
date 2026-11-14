@@ -57,6 +57,7 @@ export type GameEvent =
   | { type: "TurnInPrompted" }
   | { type: "DayEnded"; day: number }
   | { type: "DayStarted"; day: number }
+  | { type: "TimeOfDayChanged"; from: string; to: string }
   | { type: "Paused" }
   | { type: "Resumed" }
   | { type: "Log"; text: string };

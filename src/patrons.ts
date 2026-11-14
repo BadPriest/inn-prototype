@@ -5,6 +5,7 @@ import { ARCHETYPES, CHATTER, GARNISHES, INGREDIENTS, RECIPES, REGULARS, SNACKS,
 import type { Game, Group, Order, Patron, RegularState } from "./game.js";
 import { emptyTastes } from "./game.js";
 import { appeal, prepareVisit, tagScore } from "./tastes.js";
+import { arrivalNeeds, closeAllStretches } from "./needs.js";
 import { dist, type Seat, type Table, type Vec } from "./world.js";
 
 const counts = new Map<string, number>();
@@ -81,6 +82,8 @@ export function spawnPatron(g: Game, archetype?: Archetype, forced?: { seat: Sea
     foodBias: a.foodBias,
     garnishAsk: a.garnishAsk,
     stayUntil: g.minute + Math.max(20, organic(a.stay)),
+    needs: arrivalNeeds(a.needs),
+    unmet: {},
     groupId: forced?.groupId,
   };
   return admit(g, p, seat);
@@ -191,6 +194,8 @@ export function spawnRegular(g: Game, def: Regular, st: RegularState): Patron | 
     foodBias: def.foodBias,
     garnishAsk: def.garnishAsk,
     stayUntil: g.minute + Math.max(20, organic(def.stay)),
+    needs: arrivalNeeds(def.needs),
+    unmet: {},
   };
   prepareVisit(p, def, st);
   st.visits++;
@@ -247,7 +252,7 @@ function placeOrder(g: Game, p: Patron): void {
   }
   const menu = offered(kind);
   if (!menu.length) {
-    p.line = { text: pick(["Nothing on the board for me tonight.", "Is the kitchen closed?"]), until: g.minute + 6 };
+    p.line = { text: g.pickLine(["Nothing on the board for me {now}.", "Is the kitchen closed?"]), until: g.minute + 6 };
     g.say(`${p.name} finds nothing on the bill of fare, and leaves.`);
     startLeaving(g, p);
     return;
@@ -286,9 +291,9 @@ function placeOrder(g: Game, p: Patron): void {
     g.journal(p, `ordered ${recipe.name.toLowerCase()} after seeing ${insp.from} enjoy it.`, "note");
     return;
   }
-  // A craving hint, the first time they order tonight (the reserved keep it to themselves).
+  // A craving hint, the first time they order this visit (the reserved keep it to themselves).
   if (p.craving && p.ordersPlaced === 1 && p.schema !== "reserved") {
-    const hint = pick([`Something ${p.craving.tag} would be nice.`, `I could do with something ${p.craving.tag}.`, `Feel like something ${p.craving.tag} tonight.`]);
+    const hint = g.pickLine([`Something ${p.craving.tag} would be nice.`, `I could do with something ${p.craving.tag}.`, `Feel like something ${p.craving.tag} {now}.`]);
     p.line = { text: hint, until: g.minute + 8 };
     g.journal(p, `said: “${hint}”`, "said");
   }
@@ -316,6 +321,7 @@ export function inspireOthers(g: Game, p: Patron, item: { recipeId: string; kind
 
 export function startLeaving(g: Game, p: Patron, early = false): void {
   if (p.state === "leaving") return;
+  closeAllStretches(g, p, "left");
   const seat = seatOf(g, p);
   if (seat) seat.occupant = null;
   const o = g.order(p.orderId);
@@ -397,7 +403,7 @@ function chatter(g: Game, p: Patron): void {
   if (!mates.length && chance(0.7)) return;
   if (p.schema === "reserved" && chance(0.8)) return;
   const hint = chance(TALK_TUNING.hintChance) ? tasteLine(p) : null;
-  const text = hint ?? pick(CHATTER.small);
+  const text = hint ?? g.pickLine(CHATTER.small);
   p.line = { text, until: g.minute + 6 };
   if (mates.length && chance(0.7)) {
     const m = pick(mates);
@@ -413,26 +419,18 @@ function setTimeoutGame(g: Game, p: Patron, text: string, afterMinutes: number):
 }
 const pendingLines: { id: number; text: string; at: number }[] = [];
 
-function partOfDay(g: Game): keyof typeof CHATTER.greet {
-  const h = g.hour;
-  if (h >= 5 && h < 12) return "morning";
-  if (h >= 12 && h < 17) return "afternoon";
-  if (h >= 17 && h < 23) return "evening";
-  return "late";
-}
-
 /** Walking up to someone starts a quick hello. Once per visit. */
 function greetings(g: Game): void {
   for (const p of g.patrons) {
     if (p.greeted || p.state === "entering" || p.state === "leaving") continue;
     if (dist(g.keeper.pos, p.pos) > TALK_TUNING.greetRange) continue;
     p.greeted = true;
-    g.keeperLine = { text: CHATTER.greet[partOfDay(g)], until: g.minute + 4 };
+    g.keeperLine = { text: CHATTER.greet[g.timeOfDay], until: g.minute + 4 };
     const st = g.regular(p.regularId);
     const fam = st?.familiarity ?? 0;
-    let answer = pick(fam >= 8 ? CHATTER.answer.friend : fam >= 3 ? CHATTER.answer.known : CHATTER.answer.stranger);
-    if (p.schema === "reserved" && !st?.openedUp) answer = pick(["Mm.", "…Evening.", "Hm."]);
-    else if (p.craving && fam >= 3 && chance(0.5)) answer += ` Fancy something ${p.craving.tag} tonight.`;
+    let answer = g.pickLine(fam >= 8 ? CHATTER.answer.friend : fam >= 3 ? CHATTER.answer.known : CHATTER.answer.stranger);
+    if (p.schema === "reserved" && !st?.openedUp) answer = g.pickLine(CHATTER.answer.reserved);
+    else if (p.craving && fam >= 3 && chance(0.5)) answer += g.words(` Fancy something ${p.craving.tag} {now}.`);
     setTimeoutGame(g, p, answer, 1);
     if (st) st.familiarity += 1; // a hello counts for something
   }

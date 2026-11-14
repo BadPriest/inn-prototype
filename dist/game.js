@@ -1,12 +1,12 @@
 // The shared game state. Systems read and change it; the UI only reads it.
 import { EventBus } from "./core.js";
 import { World } from "./world.js";
-import { TUNING } from "./data.js";
+import { TIME_WORDS, TUNING, timeOfDayAt } from "./data.js";
 export function emptyStats(day) {
     return {
         day, arrivals: 0, served: 0, leftEarly: 0, leftUnserved: 0, crafted: 0, garnished: 0, cleaned: 0,
         outcomes: { DELIGHT: 0, PLEASED: 0, FULFILLED: 0, UNFINISHED: 0, COMPLAINS: 0 },
-        moments: [],
+        moments: [], unmet: [],
     };
 }
 export function emptyTastes() {
@@ -86,6 +86,22 @@ export class Game {
     /** Clock hour 0-23 for the current minute. */
     get hour() {
         return Math.floor((TUNING.dayStartHour * 60 + this.minute) / 60) % 24;
+    }
+    /** Morning, midday, afternoon, evening or night: the one value everything reads. */
+    get timeOfDay() {
+        return timeOfDayAt(this.hour);
+    }
+    /** Fill {time} and {now} in a line from the time of day ("Evening", "tonight"). */
+    words(text) {
+        const w = TIME_WORDS[this.timeOfDay];
+        return text.replaceAll("{time}", w.time).replaceAll("{now}", w.now);
+    }
+    /** Pick a line that fits the time of day, with its words filled in. */
+    pickLine(lines) {
+        const now = this.timeOfDay;
+        const fits = lines.filter((l) => typeof l === "string" || l.when.includes(now));
+        const l = fits[Math.floor(Math.random() * fits.length)] ?? "";
+        return this.words(typeof l === "string" ? l : l.text);
     }
     clockText(minute = this.minute) {
         const total = TUNING.dayStartHour * 60 + minute;

@@ -6,6 +6,7 @@ import { dist, type Vec } from "./world.js";
 import { simDelta, updateClock, load, beginDay } from "./day.js";
 import { updateCrafting } from "./crafting.js";
 import { updatePatrons } from "./patrons.js";
+import { updateNeeds } from "./needs.js";
 import { updateFrontDoor } from "./door.js";
 import { cancelPour, updatePour } from "./serving.js";
 import { watchObjectives } from "./objectives.js";
@@ -571,6 +572,7 @@ function frame(now: number): void {
   if (sim > 0) {
     updateCrafting(g, sim, target?.type === "furniture" ? target.f : null);
     updatePatrons(g, sim);
+    updateNeeds(g, sim);
     updateFrontDoor(g, now);
     updateClock(g, sim, () => forcedTurnIn(g));
   }
