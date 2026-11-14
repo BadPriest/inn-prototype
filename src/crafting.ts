@@ -86,15 +86,9 @@ export function updateCrafting(g: Game, simDt: number, target: Furniture | null)
 
 function finish(g: Game, fid: string, job: Job, recipe: Recipe): void {
   job.item!.madeDay = g.day;
-  if (recipe.storedIn === "piesafe") {
-    if (g.pieSafe.length >= TUNING.pieSafeCapacity) return; // waits on the station until there's room
-    const n = Math.max(2, Math.round(organic(recipe.servings ?? [6, 1])));
-    g.pieSafe.push({ id: uid(), item: job.item!, left: n, total: n, bakedDay: g.day });
-    g.jobs.delete(fid);
-    g.say(`A whole ${job.item!.name.toLowerCase()} goes into the pie safe: ${n} slices.`);
-    return;
-  }
-  if (recipe.servings) {
+  // Whole pies wait on the oven's shelf like any dish; the keeper carries them to the pie safe.
+  if (recipe.storedIn === "piesafe") job.item!.whole = Math.max(2, Math.round(organic(recipe.servings ?? [6, 1])));
+  else if (recipe.servings) {
     const n = Math.max(2, Math.round(organic(recipe.servings)));
     g.pots.set(fid, { item: job.item!, left: n, total: n });
     g.jobs.delete(fid);
@@ -149,6 +143,17 @@ export function takeSlice(g: Game, pieId: number): void {
   pie.left--;
   g.say(`${slice.name} (${pie.left} left).`);
   if (pie.left <= 0) { g.pieSafe = g.pieSafe.filter((p) => p !== pie); g.say("That pie's all gone."); }
+}
+
+/** Put a whole pie, carried from the oven, into the pie safe. False if the safe is full. */
+export function storePie(g: Game, pie: Item): boolean {
+  if (g.pieSafe.length >= TUNING.pieSafeCapacity) { g.say("The pie safe is full."); return false; }
+  removeFromTray(g, pie);
+  const n = pie.whole ?? 6;
+  g.pieSafe.push({ id: uid(), item: { ...pie, whole: undefined }, left: n, total: n, bakedDay: pie.madeDay ?? g.day });
+  g.accountedFor.add(pie.id);
+  g.say(`The ${pie.name.toLowerCase()} goes into the pie safe: ${n} slices.`);
+  return true;
 }
 
 /** Put an untouched slice back into the pie safe: onto its own pie if it's there, else as a pie of its own. */
@@ -212,8 +217,8 @@ export function finishAllJobs(g: Game): void {
     job.item.ticketName = undefined;
     job.item.madeDay = g.day;
     if (recipe.storedIn === "piesafe") {
-      const n = Math.max(2, Math.round(organic(recipe.servings ?? [6, 1])));
-      g.pieSafe.push({ id: uid(), item: job.item, left: n, total: n, bakedDay: g.day });
+      job.item.whole = Math.max(2, Math.round(organic(recipe.servings ?? [6, 1])));
+      g.shelves.set(fid, [...(g.shelves.get(fid) ?? []), job.item]);
     } else if (recipe.servings) {
       const n = Math.max(2, Math.round(organic(recipe.servings)));
       g.pots.set(fid, { item: job.item, left: n, total: n });

@@ -23,7 +23,9 @@ export function openLocationPicker(onChosen, replace = false) {
             subtitle: "It shapes the year, the weather, and who comes through the door",
             modal: true,
             view: {
-                html: `${grid(cards)}<p class="explain"><b>${chosen.icon} ${chosen.name}.</b> ${chosen.blurb}</p>`,
+                // A fixed size (the cards in one row, room for the longest description), so the screen
+                // doesn't jump or re-wrap as you move between places.
+                html: `<div style="width:min(560px, 86vw)">${grid(cards)}<p class="explain" style="min-height:4.8em"><b>${chosen.icon} ${chosen.name}.</b> ${chosen.blurb}</p></div>`,
                 onPick: (v) => choose(Number(v)),
                 onKey: (e) => {
                     if (e.key === "Enter") {

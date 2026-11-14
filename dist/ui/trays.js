@@ -88,7 +88,7 @@ function garnishSpec(g, st) {
 export function openOfferScreen(g, p) {
     const st = { focus: 0 };
     const build = () => {
-        const items = trayItems(g);
+        const items = trayItems(g).filter((i) => !i.whole); // a whole pie goes to the pie safe, not to a guest
         const give = (i) => { const it = items[i]; if (!it)
             return; closeAll(); serveUnasked(g, p, it); };
         return {

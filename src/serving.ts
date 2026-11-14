@@ -20,7 +20,7 @@ export function iconFor(recipeId: string, garnish?: string): string {
 }
 
 export function itemLabel(i: Item): string {
-  const base = `${iconFor(i.recipeId, i.garnish)} ${i.name}`;
+  const base = i.whole ? `${iconFor(i.recipeId, i.garnish)} Whole ${i.name.charAt(0).toLowerCase()}${i.name.slice(1)} (${i.whole} slices)` : `${iconFor(i.recipeId, i.garnish)} ${i.name}`;
   return i.ticketName ? `${base} → ${i.ticketName}` : base;
 }
 
@@ -211,7 +211,7 @@ export function deliverTo(g: Game, p: Patron, quiet = false, extra: Item[] = [])
     if (!quiet) g.say(`${p.name} isn't waiting on anything.`);
     return false;
   }
-  const matches = [...trayItems(g), ...extra].filter((i) => i.recipeId === order.recipeId);
+  const matches = [...trayItems(g), ...extra].filter((i) => i.recipeId === order.recipeId && !i.whole);
   const item =
     matches.find((i) => i.ticket === p.id) ??
     matches.find((i) => !i.ticket) ??

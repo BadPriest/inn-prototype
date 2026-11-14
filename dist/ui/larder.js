@@ -1,7 +1,7 @@
 // Card screens for what's already made: the snack bowl on a table, and the pie safe.
 // Same look and handling as cooking (see cards.ts).
-import { SNACKS } from "../data.js";
-import { returnSlice, takeSlice } from "../crafting.js";
+import { SNACKS, TUNING } from "../data.js";
+import { returnSlice, storePie, takeSlice } from "../crafting.js";
 import { trayItems, trayRoomFor } from "../serving.js";
 import { closeAll, openMenu, replaceMenu } from "./menu.js";
 import { card, gridKeys } from "./cards.js";
@@ -59,9 +59,9 @@ function snackSpec(g, key, st) {
 // ---------------------------------------------------------------------------
 // The pie safe: whole pies, a slice at a time. Slices on your tray can go back.
 export function openPieSafeScreen(g) {
-    const slices = trayItems(g).filter((i) => i.recipeId === "pie");
-    if (!g.pieSafe.length && !slices.length) {
-        g.say("The pie safe is empty. Bake one in the oven.");
+    const carried = trayItems(g).filter((i) => i.recipeId === "pie");
+    if (!g.pieSafe.length && !carried.length) {
+        g.say("The pie safe is empty. Bake one in the oven, then bring it here.");
         return;
     }
     openMenu(pieSpec(g, { focus: 0 }));
@@ -70,10 +70,11 @@ function pips(left, total) {
     return `<span class="pips">${"●".repeat(left)}${"○".repeat(Math.max(0, total - left))}</span>`;
 }
 function pieSpec(g, st) {
-    const slices = trayItems(g).filter((i) => i.recipeId === "pie");
+    const slices = trayItems(g).filter((i) => i.recipeId === "pie" && !i.whole);
+    const wholes = trayItems(g).filter((i) => i.recipeId === "pie" && i.whole);
     const room = trayRoomFor(g, "food");
-    // One list for the keyboard: whole pies first, then slices you could put back.
-    const picks = [...g.pieSafe.map((p) => `take:${p.id}`), ...slices.map((s) => `back:${s.id}`)];
+    // One list for the keyboard: whole pies to put away, then pies in the safe, then slices you could put back.
+    const picks = [...wholes.map((w) => `store:${w.id}`), ...g.pieSafe.map((p) => `take:${p.id}`), ...slices.map((s) => `back:${s.id}`)];
     st.focus = Math.min(st.focus, Math.max(0, picks.length - 1));
     const refresh = () => {
         if (!g.pieSafe.length && !trayItems(g).some((i) => i.recipeId === "pie")) {
@@ -84,16 +85,28 @@ function pieSpec(g, st) {
     };
     const use = (v) => {
         const [what, id] = v.split(":");
+        const it = trayItems(g).find((i) => i.id === Number(id));
         if (what === "take")
             takeSlice(g, Number(id));
-        else {
-            const it = trayItems(g).find((i) => i.id === Number(id));
+        else if (what === "store") {
             if (it)
-                returnSlice(g, it);
+                storePie(g, it);
         }
+        else if (it)
+            returnSlice(g, it);
         refresh();
     };
-    const pies = g.pieSafe.map((p, i) => {
+    const store = wholes.map((w, i) => ({
+        pick: `store:${w.id}`,
+        icon: "🥧",
+        name: w.name,
+        note: `${pips(w.whole ?? 0, w.whole ?? 0)}<br>whole, from the oven: put it away`,
+        tags: w.tags,
+        off: g.pieSafe.length >= TUNING.pieSafeCapacity,
+        focus: i === st.focus,
+    }));
+    const pies = g.pieSafe.map((p, i0) => {
+        const i = wholes.length + i0;
         const old = g.day - p.bakedDay >= 1;
         return {
             pick: `take:${p.id}`,
@@ -110,10 +123,11 @@ function pieSpec(g, st) {
         icon: "↩️",
         name: s.name,
         note: s.ticketName ? `was for ${s.ticketName}` : "put it back",
-        focus: g.pieSafe.length + i === st.focus,
+        focus: wholes.length + g.pieSafe.length + i === st.focus,
     }));
     const html = `
     <p class="blurb">Pies keep here for the day they're baked. Tomorrow they're day-old; the day after, they go to the hens.</p>
+    ${store.length ? `<div class="need">${g.pieSafe.length >= TUNING.pieSafeCapacity ? "The pie safe is full." : "From the oven (pick to put away):"}</div><div class="cards">${store.map(card).join("")}</div>` : ""}
     ${pies.length ? `<div class="need">${room ? "Pick a pie to cut a slice:" : "No room on your trays for a slice."}</div><div class="cards">${pies.map(card).join("")}</div>`
         : `<div class="need">No whole pies. Bake one in the oven.</div>`}
     ${back.length ? `<div class="need" style="margin-top:12px">On your tray (pick to put back):</div><div class="cards">${back.map(card).join("")}</div>` : ""}`;

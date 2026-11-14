@@ -16,6 +16,7 @@ export interface Item {
   garnish?: string; // garnish id
   madeDay?: number;
   snack?: string; // a filled snack bowl (snack id)
+  whole?: number; // a whole pie, this many slices: carried from the oven to the pie safe, never served
   ticket?: number; // patron id this single serving was made for
   ticketName?: string;
 }

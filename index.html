@@ -144,7 +144,7 @@
   #status .st-date { font:15px Georgia, serif; }
   #status .st-time b { font:600 17px system-ui; letter-spacing:.02em; }
   #status .st-wx { font-size:13px; color:#d9cbb4; margin-left:4px; }
-  #debug { position:absolute; left:8px; top:84px; width:360px; max-height:calc(100% - 92px); overflow:auto; background:rgba(20,16,14,.92); border:1px solid #5a4636; border-radius:6px; padding:8px 10px; font-size:12px; z-index:3; }
+  #debug { position:absolute; left:8px; top:84px; width:360px; max-height:calc(100% - 92px); overflow:auto; background:rgba(20,16,14,.92); border:1px solid #5a4636; border-radius:6px; padding:8px 10px; font-size:12px; z-index:6; } /* above pop-ups and the pause screen */
   #debug h4 { margin:6px 0 2px; color:var(--accent); font-size:11px; text-transform:uppercase; letter-spacing:.08em; }
   #debug .dp { padding:3px 0; border-bottom:1px dotted var(--line); }
   #debug button, #debug select { background:#3a2e26; color:var(--ink); border:1px solid #5a4636; border-radius:3px; padding:2px 6px; font-size:12px; }
@@ -219,6 +219,8 @@
       <div id="dbg-next" class="muted"></div>
       <div style="margin:4px 0">Flow <input id="dbg-flow" type="range" min="0" max="3" step="0.25" value="1"> <span id="dbg-flow-v">×1</span></div>
       <div style="margin:4px 0"><select id="dbg-arch"></select> <button id="dbg-spawn">Spawn patron</button> <button id="dbg-skip">Skip to 17:00</button></div>
+      <h4>Sounds playing</h4>
+      <div id="dbg-sounds" class="muted"></div>
       <h4>Weather</h4>
       <div id="dbg-weather-now"></div>
       <div style="margin:4px 0"><select id="dbg-weather">

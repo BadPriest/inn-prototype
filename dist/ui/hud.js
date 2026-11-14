@@ -1,6 +1,7 @@
 // The side panel (clock, orders, trays, log) and the debug view.
 import { ARCHETYPES, NEED_IDS, REGULARS, TIME_WORDS, TUNING } from "../data.js";
 import { unmetLogText } from "../needs.js";
+import { isMuted, voicesNow } from "../sound/engine.js";
 import { compactDate, shortDate } from "../calendar.js";
 import { forceWeather, weatherLabel, weatherTags } from "../weather.js";
 import { shelterFactor, spawnRegular, spawnVisitors } from "../patrons.js";
@@ -192,6 +193,8 @@ function updateDebug(g) {
     }).join("") || `<div class="muted">Nobody inside.</div>`;
     const w = g.weather;
     $("dbg-weather-now").textContent = `${weatherLabel(g)} · ${w.sky}${w.band ? ` ${w.rain.toFixed(2)} → ${w.target.toFixed(2)}${w.ending ? " (easing off)" : ""}` : ""} · ${w.hours.toFixed(1)}h · tags: ${weatherTags(g).join(", ") || "–"}`;
+    const playing = voicesNow().filter((v) => v.gain > 0.01);
+    $("dbg-sounds").textContent = playing.length ? playing.map((v) => `${v.key} ${v.gain.toFixed(2)}`).join(" · ") : (isMuted() ? "muted" : "nothing audible");
     const unmet = g.stats.unmet ?? [];
     const open = g.patrons.flatMap((p) => NEED_IDS.filter((n) => p.unmet[n]).map((n) => ({ p, n })));
     $("dbg-needs").innerHTML = (unmetSummary(unmet) || `<div class="muted">None logged yet.</div>`)

@@ -15,7 +15,7 @@ export function iconFor(recipeId, garnish) {
     return r + gi;
 }
 export function itemLabel(i) {
-    const base = `${iconFor(i.recipeId, i.garnish)} ${i.name}`;
+    const base = i.whole ? `${iconFor(i.recipeId, i.garnish)} Whole ${i.name.charAt(0).toLowerCase()}${i.name.slice(1)} (${i.whole} slices)` : `${iconFor(i.recipeId, i.garnish)} ${i.name}`;
     return i.ticketName ? `${base} → ${i.ticketName}` : base;
 }
 /** Put an item on a tray: one with the same kind and room, else an empty one. */
@@ -233,7 +233,7 @@ export function deliverTo(g, p, quiet = false, extra = []) {
             g.say(`${p.name} isn't waiting on anything.`);
         return false;
     }
-    const matches = [...trayItems(g), ...extra].filter((i) => i.recipeId === order.recipeId);
+    const matches = [...trayItems(g), ...extra].filter((i) => i.recipeId === order.recipeId && !i.whole);
     const item = matches.find((i) => i.ticket === p.id) ??
         matches.find((i) => !i.ticket) ??
         matches.find((i) => !g.patron(i.ticket)?.orderId || !g.order(g.patron(i.ticket).orderId)?.open) ??

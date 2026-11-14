@@ -67,6 +67,12 @@ window.addEventListener("keydown", (e) => {
     unlockAudio();
     if (e.key === " " || e.key.startsWith("Arrow") || e.key === "Backspace")
         e.preventDefault();
+    // The debug view opens over anything, the pause screen included.
+    if ((e.key === "`" || e.key === "F2") && !e.repeat) {
+        toggleDebug();
+        e.preventDefault();
+        return;
+    }
     if (menuOpen()) {
         if (g.paused && (e.key === "p" || e.key === "P" || e.key === "Escape") && !e.repeat) {
             resume();

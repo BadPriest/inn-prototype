@@ -332,6 +332,11 @@ export function ringsOut(v: Voice | null): number {
   return v?.current?.rings ?? 0;
 }
 
+/** What's sounding right now, and how loud where the keeper stands (0..1): for the debug view. */
+export function voicesNow(): { key: string; gain: number }[] {
+  return [...voices].filter((v) => !v.stopped).map((v) => ({ key: v.key, gain: v.spatial.gain.value * v.level.gain.value }));
+}
+
 /** How many of this sound are playing right now. */
 export function playingCount(key: string): number {
   let n = 0;

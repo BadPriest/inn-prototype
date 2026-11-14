@@ -153,7 +153,7 @@ export interface Recipe {
   minutes: Organic; // crafting time
   tended?: boolean; // only progresses while the keeper is at the station
   servings?: Organic; // made whole and served in portions: a pot of stew, a pie in slices
-  storedIn?: "piesafe"; // whole pies go to the pie safe instead of staying on the station
+  storedIn?: "piesafe"; // a whole one waits on the station; the keeper carries it to the pie safe, where it's sliced
   icon: string;
 }
 
@@ -682,15 +682,15 @@ export const SOUNDS: Record<string, SoundDef> = {
   fireMedium: { files: [SND + "fireplace-med-loop.opus"], volume: 0.35, pitch: 0.03, loop: true },
   fireLarge: { files: [SND + "fireplace-large-loop.opus"], volume: 0.42, pitch: 0.03, loop: true },
   // The murmur of the taproom, by how many people are in it (CROWD below).
-  crowdLow: { files: [SND + "occupancy-bg-low-1-loop.opus", SND + "occupancy-bg-low-2-loop.opus"], volume: 0.16, pitch: 0.02, loop: true, room: "taproom" },
-  crowdComfortable: { files: [SND + "occupancy-bg-comfortable-1-loop.opus"], volume: 0.22, pitch: 0.02, loop: true, room: "taproom" },
-  crowdBusy: { files: [SND + "occupancy-bg-busy-1-loop.opus"], volume: 0.27, pitch: 0.02, loop: true, room: "taproom" },
-  crowdPacked: { files: [SND + "occupancy-bg-packed-1-loop.opus"], volume: 0.32, pitch: 0.02, loop: true, room: "taproom" },
+  crowdLow: { files: [SND + "occupancy-bg-low-1-loop.opus", SND + "occupancy-bg-low-2-loop.opus"], volume: 0.28, pitch: 0.02, loop: true, room: "taproom" },
+  crowdComfortable: { files: [SND + "occupancy-bg-comfortable-1-loop.opus"], volume: 0.36, pitch: 0.02, loop: true, room: "taproom" },
+  crowdBusy: { files: [SND + "occupancy-bg-busy-1-loop.opus"], volume: 0.44, pitch: 0.02, loop: true, room: "taproom" },
+  crowdPacked: { files: [SND + "occupancy-bg-packed-1-loop.opus"], volume: 0.5, pitch: 0.02, loop: true, room: "taproom" },
   // Weather (sound/weather.ts mixes these by rain intensity; WEATHER_SOUND below).
   // Indoors: the rain on the building, heard everywhere inside.
-  rainSoftIn: { files: [SND + "rain-soft-ambience-loop.opus"], volume: 0.3, pitch: 0.01, loop: true },
-  rainMediumIn: { files: [SND + "rain-medium-ambience-loop.opus"], volume: 0.38, pitch: 0.01, loop: true },
-  rainStormIn: { files: [SND + "rain-storm-ambience-loop.opus"], volume: 0.48, pitch: 0.01, loop: true },
+  rainSoftIn: { files: [SND + "rain-soft-ambience-loop.opus"], volume: 0.22, pitch: 0.01, loop: true },
+  rainMediumIn: { files: [SND + "rain-medium-ambience-loop.opus"], volume: 0.3, pitch: 0.01, loop: true },
+  rainStormIn: { files: [SND + "rain-storm-ambience-loop.opus"], volume: 0.4, pitch: 0.01, loop: true },
   // Outdoors: heard from the front door while it's open.
   rainSoftOut: { files: [SND + "rain-soft-outside-ambience-loop.opus"], volume: 0.55, pitch: 0.01, loop: true },
   rainMediumOut: { files: [SND + "rain-medium-outside-ambience-loop.opus"], volume: 0.65, pitch: 0.01, loop: true },
@@ -729,7 +729,8 @@ export const WEATHER_SOUND = {
     strong: [0.7, 0.88, 1.01, 1.02],
   } as Record<"soft" | "medium" | "strong", [number, number, number, number]>,
   greyBreeze: { overcast: 0.15, cloudy: 0.08 } as Record<string, number>, // how wild a dry sky counts as
-  windIndoors: 0.3, // with the door shut, the wind is this loud inside
+  windIndoors: 0.3, // with the door shut, the wind is this loud inside, in the rain
+  windIndoorsDry: 0.15, // ...and on a dry grey day, a breeze you barely hear inside
   rainDrownsStreet: 0.8, // at full rain the street is this much quieter
 };
 

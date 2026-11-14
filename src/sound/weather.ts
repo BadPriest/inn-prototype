@@ -81,7 +81,7 @@ export function weatherSound(g: Game, realDt: number): void {
   const wild = r > 0 ? r : W.greyBreeze[w.sky] ?? 0;
   for (const [layer, key] of [["soft", "windSoft"], ["medium", "windMedium"], ["strong", "windStrong"]] as const) {
     const s = share(wild, W.wind[layer]);
-    drive(key, s * W.windIndoors, null, drift, realDt, `${key}@in`);
+    drive(key, s * (r > 0 ? W.windIndoors : W.windIndoorsDry), null, drift, realDt, `${key}@in`);
     drive(key, s * open, door, W.doorSeconds, realDt, `${key}@door`);
   }
   // The street, under it all; heavy rain drowns it out.

@@ -150,13 +150,14 @@ export function promptFor(g, t) {
                 const ready = shelf.length ? `Space: pick up ${shelf.map((i) => i.ticketName ? `${i.name} for ${i.ticketName}` : i.name).join(", ")}` : "";
                 if (job) {
                     const r = RECIPES.find((x) => x.id === job.recipeId);
-                    const cooking = job.done ? `${r.name} done, waiting for room ${r.storedIn === "piesafe" ? "in the pie safe" : "on the shelf"}` : `${r.name} ${Math.floor((job.progress / job.total) * 100)}% · hold Space to hurry`;
+                    const cooking = job.done ? `${r.name} done, waiting for room on the shelf` : `${r.name} ${Math.floor((job.progress / job.total) * 100)}% · hold Space to hurry`;
                     return ready ? `${ready} · ${cooking}` : cooking;
                 }
                 return ready || `Space: cook at the ${f.name.toLowerCase()}`;
             }
         case "bin": return trayItems(g).length ? "Space: throw something away" : "Scrap bin";
-        case "piesafe": return g.pieSafe.length ? `Space: take a slice (${g.pieSafe.map((p) => p.left).reduce((a, b) => a + b, 0)} slices)` : "The pie safe is empty";
+        case "piesafe": return trayItems(g).some((i) => i.whole) ? "Space: put the pie away"
+            : g.pieSafe.length ? `Space: take a slice (${g.pieSafe.map((p) => p.left).reduce((a, b) => a + b, 0)} slices)` : "The pie safe is empty";
         case "hatch": return g.hatch.length ? `Space: choose from the hatch (${g.hatch.length})` : "The hatch is empty";
         case "tap":
             if (g.pouring)
@@ -215,7 +216,7 @@ export function interact(g, t) {
             if (g.shelves.get(f.id)?.length && (collectShelf(g, f.id) > 0 || job))
                 return;
             if (job) {
-                g.say(job.done ? `It's done, waiting for room ${RECIPES.find((x) => x.id === job.recipeId)?.storedIn === "piesafe" ? "in the pie safe" : "on the shelf"}.` : "Still cooking. Hold Space here to hurry it a little.");
+                g.say(job.done ? "It's done, waiting for room on the shelf." : "Still cooking. Hold Space here to hurry it a little.");
                 return;
             }
             openCraftMenu(g, f);

@@ -91,7 +91,7 @@ function garnishSpec(g: Game, st: GarnishState): MenuSpec {
 export function openOfferScreen(g: Game, p: Patron): void {
   const st = { focus: 0 };
   const build = (): MenuSpec => {
-    const items = trayItems(g);
+    const items = trayItems(g).filter((i) => !i.whole); // a whole pie goes to the pie safe, not to a guest
     const give = (i: number) => { const it = items[i]; if (!it) return; closeAll(); serveUnasked(g, p, it); };
     return {
       title: `🃏 Something for ${p.name}?`,
