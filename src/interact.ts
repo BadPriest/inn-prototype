@@ -140,10 +140,12 @@ export function promptFor(g: Game, t: Target | null): string {
       const slots = f.slots ?? [];
       const plan = stationPlan(g, f);
       const status = slots.length === 1 ? "" : slots.map((sl) => `${sl.name}: ${slotStatus(g, sl)}`).join(" · ") + " · ";
-      if (plan.direct && slots.length === 1) return slotPrompt(g, slots[0]);
-      if (plan.direct) return `${status}Space: ${plan.direct.label.toLowerCase()}`;
-      if (plan.choices.length) return `${status}Space: choose (${plan.choices.map((c) => c.short).filter((x, i, a) => a.indexOf(x) === i).join(", ")})`;
-      return slots.length === 1 ? slotPrompt(g, slots[0]) : `${status}still cooking`;
+      const side = sideHint(g, f);
+      const more = side ? ` · ${side}` : "";
+      if (plan.direct && slots.length === 1) return slotPrompt(g, slots[0]) + more;
+      if (plan.direct) return `${status}Space: ${plan.direct.label.toLowerCase()}${more}`;
+      if (plan.choices.length) return `${status}Space: choose (${plan.choices.map((c) => c.short).filter((x, i, a) => a.indexOf(x) === i).join(", ")})${more}`;
+      return (slots.length === 1 ? slotPrompt(g, slots[0]) : `${status}still cooking`) + more;
     }
     case "gramophone":
       if (!recordsReady()) return "The gramophone (no records yet)";
@@ -315,14 +317,8 @@ function slotPrompt(g: Game, sl: Slot): string {
   return ready || `Space: cook at the ${sl.f.name.toLowerCase()}`;
 }
 
-/** One thing you could do at a station. `main`: what you'd usually come for; the rest only shows in the choice. */
+/** One thing you could do at a station. `main`: what Space does (serve, pick up, cook); the rest have their own keys (R puts back, X empties). */
 interface StationAct { label: string; sub: string; short: string; main: boolean; run: () => void }
-
-/** Somebody's waiting on this dish and you aren't already carrying enough of it. */
-function wanted(g: Game, recipeId: string): boolean {
-  const open = g.orders.filter((o) => o.open && o.recipeId === recipeId).length;
-  return open > trayItems(g).filter((i) => i.recipeId === recipeId).length;
-}
 
 const dishList = (items: { name: string; ticketName?: string }[]) => items.map((i) => (i.ticketName ? `${i.name} for ${i.ticketName}` : i.name)).join(", ");
 
@@ -345,7 +341,7 @@ function slotActs(g: Game, sl: Slot, many: boolean): StationAct[] {
     if (pot.item.recipeId === "water") acts.push({ label: "🍵 Steep a cup of tea", sub: `${where}hot water for ${pot.left} more`, short: "steep", main: true, run: () => openSteepScreen(g, sl) });
     else acts.push({
       label: `${iconFor(pot.item.recipeId) || "🍲"} ${pot.item.kind === "drink" ? "Pour a cup of" : "Take a serving of"} ${name}`, sub: `${where}${pot.left} left`,
-      short: pot.item.kind === "drink" ? "pour" : "take a serving", main: wanted(g, pot.item.recipeId),
+      short: pot.item.kind === "drink" ? "pour" : "take a serving", main: true,
       run: () => (pot.item.kind === "drink" ? startPour(g, sl.id) : serveFromPot(g, sl.id)),
     });
     acts.push({ label: `🗑️ Empty the ${pot.item.recipeId === "water" ? "kettle" : sl.kinds.includes("kettle") ? "urn" : "pot"}`, sub: `${where}${pot.left} ${pot.item.recipeId === "water" ? "cups of hot water" : `servings of ${name}`} · frees it to cook`, short: "empty it", main: false,
@@ -356,16 +352,14 @@ function slotActs(g: Game, sl: Slot, many: boolean): StationAct[] {
 }
 
 /**
- * What pressing Space at a station does: the one thing you'd come for, done straight away, or a choice
- * when there's more than one (two dishes ready, a hob free and the oven done, something to put back, a
- * pot nobody's asked for that you might want to empty).
+ * What pressing Space at a station does: the one thing you'd come for (serve, pick up, cook), done
+ * straight away, or a choice when there's more than one (two dishes ready on the range, a hob free and
+ * the oven done). Putting a dish back (R) and emptying a pot (X) never come up here.
  */
 function stationPlan(g: Game, f: Furniture): { direct?: StationAct; choices: StationAct[] } {
   const slots = f.slots ?? [];
-  const acts = slots.flatMap((sl) => slotActs(g, sl, slots.length > 1));
-  const main = acts.filter((a) => a.main);
-  const putBacks = acts.some((a) => a.short === "put back");
-  if (!putBacks && main.length === 1) return { direct: main[0], choices: acts };
+  const acts = slots.flatMap((sl) => slotActs(g, sl, slots.length > 1)).filter((a) => a.main);
+  if (acts.length === 1) return { direct: acts[0], choices: acts };
   // More than one dish ready: one choice picks up the lot.
   const pickups = slots.filter((sl) => g.shelves.get(sl.id)?.length);
   if (pickups.length > 1) {
@@ -373,6 +367,38 @@ function stationPlan(g: Game, f: Furniture): { direct?: StationAct; choices: Sta
       run: () => { for (const sl of pickups) if (!collectShelf(g, sl.id)) break; } });
   }
   return { choices: acts.sort((a, b) => Number(b.main) - Number(a.main)) };
+}
+
+/** R and X at a station: put a dish back, or empty a pot. One choice does it; several, you pick. */
+function sideActs(g: Game, f: Furniture, short: "put back" | "empty it"): StationAct[] {
+  const slots = f.slots ?? [];
+  return slots.flatMap((sl) => slotActs(g, sl, slots.length > 1)).filter((a) => a.short === short);
+}
+
+function runSide(g: Game, f: Furniture, short: "put back" | "empty it", title: string): void {
+  const acts = sideActs(g, f, short);
+  if (acts.length === 1) { acts[0].run(); return; }
+  openMenu({ title: f.name, subtitle: title, items: acts.map((a) => ({ label: a.label, sub: a.sub, action: () => { closeAll(); a.run(); } })) });
+}
+
+/** R: put back something you picked up here by mistake. */
+export function putBackHere(g: Game, t: Target | null): void {
+  const f = t?.type === "furniture" && t.f.kind === "station" ? t.f : null;
+  if (!f || !sideActs(g, f, "put back").length) { g.say("Stand at the stove or oven it came from to put a dish back."); return; }
+  runSide(g, f, "put back", "Put back which?");
+}
+
+/** X: empty a pot, urn or kettle so it's free to cook again. */
+export function emptyHere(g: Game, t: Target | null): void {
+  const f = t?.type === "furniture" && t.f.kind === "station" ? t.f : null;
+  if (!f || !sideActs(g, f, "empty it").length) { g.say("Stand at a pot, urn or kettle to empty it."); return; }
+  runSide(g, f, "empty it", "Empty which?");
+}
+
+/** What R and X would do here, for the prompt. */
+function sideHint(g: Game, f: Furniture): string {
+  const back = sideActs(g, f, "put back"), empty = sideActs(g, f, "empty it");
+  return [back.length ? "R: put back" : "", empty.length ? "X: empty" : ""].filter(Boolean).join(" · ");
 }
 
 function useStation(g: Game, f: Furniture): void {

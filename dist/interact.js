@@ -144,13 +144,15 @@ export function promptFor(g, t) {
             const slots = f.slots ?? [];
             const plan = stationPlan(g, f);
             const status = slots.length === 1 ? "" : slots.map((sl) => `${sl.name}: ${slotStatus(g, sl)}`).join(" · ") + " · ";
+            const side = sideHint(g, f);
+            const more = side ? ` · ${side}` : "";
             if (plan.direct && slots.length === 1)
-                return slotPrompt(g, slots[0]);
+                return slotPrompt(g, slots[0]) + more;
             if (plan.direct)
-                return `${status}Space: ${plan.direct.label.toLowerCase()}`;
+                return `${status}Space: ${plan.direct.label.toLowerCase()}${more}`;
             if (plan.choices.length)
-                return `${status}Space: choose (${plan.choices.map((c) => c.short).filter((x, i, a) => a.indexOf(x) === i).join(", ")})`;
-            return slots.length === 1 ? slotPrompt(g, slots[0]) : `${status}still cooking`;
+                return `${status}Space: choose (${plan.choices.map((c) => c.short).filter((x, i, a) => a.indexOf(x) === i).join(", ")})${more}`;
+            return (slots.length === 1 ? slotPrompt(g, slots[0]) : `${status}still cooking`) + more;
         }
         case "gramophone":
             if (!recordsReady())
@@ -382,11 +384,6 @@ function slotPrompt(g, sl) {
     }
     return ready || `Space: cook at the ${sl.f.name.toLowerCase()}`;
 }
-/** Somebody's waiting on this dish and you aren't already carrying enough of it. */
-function wanted(g, recipeId) {
-    const open = g.orders.filter((o) => o.open && o.recipeId === recipeId).length;
-    return open > trayItems(g).filter((i) => i.recipeId === recipeId).length;
-}
 const dishList = (items) => items.map((i) => (i.ticketName ? `${i.name} for ${i.ticketName}` : i.name)).join(", ");
 /** Everything you could do at one place to cook. */
 function slotActs(g, sl, many) {
@@ -413,7 +410,7 @@ function slotActs(g, sl, many) {
         else
             acts.push({
                 label: `${iconFor(pot.item.recipeId) || "🍲"} ${pot.item.kind === "drink" ? "Pour a cup of" : "Take a serving of"} ${name}`, sub: `${where}${pot.left} left`,
-                short: pot.item.kind === "drink" ? "pour" : "take a serving", main: wanted(g, pot.item.recipeId),
+                short: pot.item.kind === "drink" ? "pour" : "take a serving", main: true,
                 run: () => (pot.item.kind === "drink" ? startPour(g, sl.id) : serveFromPot(g, sl.id)),
             });
         acts.push({ label: `🗑️ Empty the ${pot.item.recipeId === "water" ? "kettle" : sl.kinds.includes("kettle") ? "urn" : "pot"}`, sub: `${where}${pot.left} ${pot.item.recipeId === "water" ? "cups of hot water" : `servings of ${name}`} · frees it to cook`, short: "empty it", main: false,
@@ -424,17 +421,15 @@ function slotActs(g, sl, many) {
     return acts;
 }
 /**
- * What pressing Space at a station does: the one thing you'd come for, done straight away, or a choice
- * when there's more than one (two dishes ready, a hob free and the oven done, something to put back, a
- * pot nobody's asked for that you might want to empty).
+ * What pressing Space at a station does: the one thing you'd come for (serve, pick up, cook), done
+ * straight away, or a choice when there's more than one (two dishes ready on the range, a hob free and
+ * the oven done). Putting a dish back (R) and emptying a pot (X) never come up here.
  */
 function stationPlan(g, f) {
     const slots = f.slots ?? [];
-    const acts = slots.flatMap((sl) => slotActs(g, sl, slots.length > 1));
-    const main = acts.filter((a) => a.main);
-    const putBacks = acts.some((a) => a.short === "put back");
-    if (!putBacks && main.length === 1)
-        return { direct: main[0], choices: acts };
+    const acts = slots.flatMap((sl) => slotActs(g, sl, slots.length > 1)).filter((a) => a.main);
+    if (acts.length === 1)
+        return { direct: acts[0], choices: acts };
     // More than one dish ready: one choice picks up the lot.
     const pickups = slots.filter((sl) => g.shelves.get(sl.id)?.length);
     if (pickups.length > 1) {
@@ -444,6 +439,42 @@ function stationPlan(g, f) {
                     break; } });
     }
     return { choices: acts.sort((a, b) => Number(b.main) - Number(a.main)) };
+}
+/** R and X at a station: put a dish back, or empty a pot. One choice does it; several, you pick. */
+function sideActs(g, f, short) {
+    const slots = f.slots ?? [];
+    return slots.flatMap((sl) => slotActs(g, sl, slots.length > 1)).filter((a) => a.short === short);
+}
+function runSide(g, f, short, title) {
+    const acts = sideActs(g, f, short);
+    if (acts.length === 1) {
+        acts[0].run();
+        return;
+    }
+    openMenu({ title: f.name, subtitle: title, items: acts.map((a) => ({ label: a.label, sub: a.sub, action: () => { closeAll(); a.run(); } })) });
+}
+/** R: put back something you picked up here by mistake. */
+export function putBackHere(g, t) {
+    const f = t?.type === "furniture" && t.f.kind === "station" ? t.f : null;
+    if (!f || !sideActs(g, f, "put back").length) {
+        g.say("Stand at the stove or oven it came from to put a dish back.");
+        return;
+    }
+    runSide(g, f, "put back", "Put back which?");
+}
+/** X: empty a pot, urn or kettle so it's free to cook again. */
+export function emptyHere(g, t) {
+    const f = t?.type === "furniture" && t.f.kind === "station" ? t.f : null;
+    if (!f || !sideActs(g, f, "empty it").length) {
+        g.say("Stand at a pot, urn or kettle to empty it.");
+        return;
+    }
+    runSide(g, f, "empty it", "Empty which?");
+}
+/** What R and X would do here, for the prompt. */
+function sideHint(g, f) {
+    const back = sideActs(g, f, "put back"), empty = sideActs(g, f, "empty it");
+    return [back.length ? "R: put back" : "", empty.length ? "X: empty" : ""].filter(Boolean).join(" · ");
 }
 function useStation(g, f) {
     const plan = stationPlan(g, f);

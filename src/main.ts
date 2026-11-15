@@ -19,7 +19,7 @@ import { initLight, updateLamps } from "./ui/light.js";
 import { updateFrontDoor } from "./door.js";
 import { cancelPour, updatePour } from "./serving.js";
 import { watchObjectives } from "./objectives.js";
-import { askSetDown, offerUnasked, cleanable, cleanStep, findTargets, targetName, forcedTurnIn, interact, openGarnishMenu, openJournal, promptFor, targetId, type Target } from "./interact.js";
+import { askSetDown, emptyHere, offerUnasked, putBackHere, cleanable, cleanStep, findTargets, targetName, forcedTurnIn, interact, openGarnishMenu, openJournal, promptFor, targetId, type Target } from "./interact.js";
 import { draw, computeView, type View } from "./ui/render.js";
 import { computeIsoView, drawIso, isoPick } from "./ui/render-iso.js";
 import { screenDir } from "./ui/proj.js";
@@ -120,6 +120,12 @@ window.addEventListener("keydown", (e) => {
       break;
     case "c":
       offerUnasked(g, target);
+      break;
+    case "r":
+      putBackHere(g, target);
+      break;
+    case "x":
+      emptyHere(g, target);
       break;
     case "o":
       g.showObjectives = !g.showObjectives;
@@ -349,6 +355,8 @@ bindButton("tb-objectives", () => { g.showObjectives = !g.showObjectives; docume
 bindButton("tb-card", () => { if (!menuOpen()) offerUnasked(g, target); });
 bindButton("card", () => { if (!menuOpen()) offerUnasked(g, target); });
 bindButton("tb-setdown", () => { if (!menuOpen()) askSetDown(g); });
+bindButton("tb-putback", () => { if (!menuOpen()) putBackHere(g, target); });
+bindButton("tb-empty", () => { if (!menuOpen()) emptyHere(g, target); });
 bindButton("tb-journal", () => { if (!menuOpen()) openJournal(g); });
 document.getElementById("status")?.addEventListener("click", () => { if (!menuOpen() && !g.modal) openCalendar(g); });
 bindButton("tb-sound", () => g.say(toggleMute() ? "Sound off." : "Sound on."));
@@ -781,7 +789,7 @@ function openPause(): void {
 const touch = window.matchMedia("(pointer: coarse)").matches;
 const controls = touch
   ? `<b>Tap</b> the floor to walk, <b>double tap</b> to run. <b>Tap</b> things and people to use them. <b>Keep your finger</b> on a pot or a mess to hurry or clean. The buttons on the side do the rest.`
-  : `<b>Click</b> the floor to walk, <b>click</b> things and people to use them, <b>double-click</b> to run, <b>right-click</b> to stop. Or <b>WASD</b> to walk (<b>Shift</b> runs) and <b>Space</b> to use. Hold <b>Space</b> to hurry cooking; hold <b>Space</b> or the mouse on a mess to clean it. When several things are in reach, <b>Tab</b> picks one. The <b>wheel</b> zooms; <b>V</b> switches to an isometric view. <b>P</b> pauses.`;
+  : `<b>Click</b> the floor to walk, <b>click</b> things and people to use them, <b>double-click</b> to run, <b>right-click</b> to stop. Or <b>WASD</b> to walk (<b>Shift</b> runs) and <b>Space</b> to use. Hold <b>Space</b> to hurry cooking; hold <b>Space</b> or the mouse on a mess to clean it. <b>R</b> puts back a dish picked up by mistake; <b>X</b> empties a pot. When several things are in reach, <b>Tab</b> picks one. The <b>wheel</b> zooms; <b>V</b> switches to an isometric view. <b>P</b> pauses.`;
 function welcomeBody(): string {
   return `<div class="welcome">
     <p><b>${longDate(g.date)}.</b></p>
