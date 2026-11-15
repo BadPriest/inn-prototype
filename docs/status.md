@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 15, 2026 · build 82 (builds 74–82 committed, not pushed yet) · https://inn-prototype.vercel.app
+Updated Nov 15, 2026 · build 83 (builds 74–83 committed, not pushed yet) · https://inn-prototype.vercel.app
 
 Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was done in each task's comments. Design decisions come from [design-session-journal.md](design-session-journal.md) and [design-session-journal_game-start_nov-15.md](design-session-journal_game-start_nov-15.md).
 
@@ -28,6 +28,7 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 
 - #37 readable chatter: dark plates with tails, one voice per table, bubbles nudge apart; lines last as long as they take to read
 - #42 bill of fare: all-day bill (default) or meal times, a tab per meal plus between meals (drinks only)
+- #50 kitchen equipment: buy it at the desk (free for now), arrange it any time (the clock stops); two-hob stove, stove with an oven, copper kettle, urn; the pan is gone
 - #48 breakfast (scrambled eggs, toast, fried breakfast, porridge) and roasts in the oven
 - #49 pause screen tabs with volume and UI size sliders; sound fades in as the keeper wakes
 - #43 guests show by role until they tell you their name; regulars by how open they are (Hedda takes a long while)
