@@ -228,7 +228,9 @@ export function draw(ctx, g, v, target, clickDest) {
     // A bowl you can see from across the room: the snack's icon in a pale bowl, a ring for how full it is.
     for (const [key, b] of g.bowls) {
         const [tx, ty] = key.split(",").map(Number);
-        const cx = X(tx) + ts * 0.5, cy = Y(ty) + ts * 0.5;
+        // On a table, the bowl sits in the middle of the whole table (a long table is keyed by its first tile).
+        const table = g.world.furniture.find((f) => f.kind === "table" && f.tiles[0].x === tx && f.tiles[0].y === ty);
+        const cx = table ? X(table.center.x) : X(tx) + ts * 0.5, cy = table ? Y(table.center.y) : Y(ty) + ts * 0.5;
         const r = ts * 0.3;
         ctx.fillStyle = "#efe3c8";
         ctx.strokeStyle = "#5a4636";
