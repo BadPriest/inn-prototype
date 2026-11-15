@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 15, 2026 · build 90 (87 deployed; 88–90 committed, not pushed) · https://inn-prototype.vercel.app
+Updated Nov 15, 2026 · build 91 (87 deployed; 88–91 committed, not pushed) · https://inn-prototype.vercel.app
 
 Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was done in each task's comments. Design decisions come from [design-session-journal.md](design-session-journal.md) and [design-session-journal_game-start_nov-15.md](design-session-journal_game-start_nov-15.md).
 
@@ -24,11 +24,11 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
 
-## Built, not yet deployed (builds 88–90)
+## Built, not yet deployed (builds 88–91)
 
 - Equipment shop: tabs (Cooking, Drinks, Storage, Supplies), what you own first with a gold border and a count, fuel shown on each card (🪵 wood for stoves and ovens)
 - Ale and cider barrels: buyable and movable like the rest (the two at the bar are now barrels too)
-- Stations: Space always serves, picks up or cooks; when two things are ready (the range's hob and oven) you choose which. R puts back a dish picked up by mistake, X empties a pot to free the hob (touch: ↩️ and 🗑️ on the toolbar)
+- Stations: Space always serves, picks up or cooks; when two things are ready (the range's hob and oven) you choose which. R puts back a dish picked up by mistake (only into the pot it came from, or its hob if that is empty now), X empties a pot to free the hob (touch: ↩️ and 🗑️ on the toolbar)
 
 - Buy while arranging the kitchen: a Buy button (B) in the arrange banner opens the equipment without leaving; after placing something you bought, "+ Another" (A) hands you one more
 

@@ -237,23 +237,34 @@ export function steepTea(g: Game, fid: string, leaf: string): void {
 export function serveFromPot(g: Game, fid: string): void {
   const pot = g.pots.get(fid);
   if (!pot) return;
-  const serving: Item = { ...pot.item, id: uid(), tags: [...pot.item.tags], from: fid, fromPot: true };
+  const serving: Item = { ...pot.item, id: uid(), tags: [...pot.item.tags], from: fid, fromPot: true, fromPotId: pot.item.id };
   if (!addToTray(g, serving)) { g.say("No room on your trays."); return; }
   pot.left--;
   g.say(`A serving of ${pot.item.name.toLowerCase()} (${pot.left} left).`);
   if (pot.left <= 0) { g.pots.delete(fid); g.say("The pot is empty."); }
 }
 
-/** Put a dish picked up here back where it was: on the shelf, or into its pot. False if there's no room for it now. */
+/**
+ * Can this dish go back here? Only where it was picked up: a serving into the very pot it came out of
+ * (not another pot of the same thing), or onto its hob if that's empty now; a dish onto its shelf.
+ */
+export function canPutBack(g: Game, fid: string, item: Item): boolean {
+  if (item.from !== fid) return false;
+  if (!item.fromPot) return true;
+  const pot = g.pots.get(fid);
+  return pot ? pot.item.id === item.fromPotId : !g.jobs.has(fid);
+}
+
+/** Put a dish picked up here back where it was: on the shelf, or into its pot. False if it can't go back. */
 export function putBack(g: Game, fid: string, item: Item): boolean {
+  if (!canPutBack(g, fid, item)) return false;
   const pot = g.pots.get(fid);
   if (item.fromPot) {
-    if (pot && pot.item.recipeId === item.recipeId) { pot.left++; pot.total = Math.max(pot.total, pot.left); }
-    else if (!pot && !g.jobs.has(fid)) g.pots.set(fid, { item: { ...item, from: undefined, fromPot: undefined }, left: 1, total: 1 });
-    else return false;
+    if (pot) { pot.left++; pot.total = Math.max(pot.total, pot.left); }
+    else g.pots.set(fid, { item: { ...item, from: undefined, fromPot: undefined, fromPotId: undefined }, left: 1, total: 1 });
   } else g.shelves.set(fid, [...(g.shelves.get(fid) ?? []), item]);
   removeFromTray(g, item); // accounted for: it left the trays on purpose
-  item.from = undefined; item.fromPot = undefined;
+  item.from = undefined; item.fromPot = undefined; item.fromPotId = undefined;
   return true;
 }
 

@@ -2,7 +2,7 @@
 import { organic } from "./core.js";
 import { GRAMOPHONE, RECIPES, REGULARS, TUNING } from "./data.js";
 import { dist } from "./world.js";
-import { collectShelf, emptyPot, putBack, recipesFor, serveFromPot } from "./crafting.js";
+import { canPutBack, collectShelf, emptyPot, putBack, recipesFor, serveFromPot } from "./crafting.js";
 import { tableKey } from "./patrons.js";
 import { servePatron, serveTable, iconFor, trayItems, pickUpTray, startPour, setTrayDown } from "./serving.js";
 import { endDay, startNextDay, toggleInn } from "./day.js";
@@ -393,7 +393,7 @@ function slotActs(g, sl, many) {
     const shelf = g.shelves.get(sl.id) ?? [];
     const job = g.jobs.get(sl.id);
     // Picked up from here by mistake: put it back (one of each dish).
-    const back = trayItems(g).filter((i) => i.from === sl.id);
+    const back = trayItems(g).filter((i) => canPutBack(g, sl.id, i));
     for (const it of back.filter((x, i) => back.findIndex((y) => y.recipeId === x.recipeId) === i)) {
         acts.push({ label: `↩️ Put back the ${it.name.toLowerCase()}`, sub: `${where}it goes back ${it.fromPot ? "in the pot" : "where it was"}`, short: "put back", main: false,
             run: () => { if (putBack(g, sl.id, it))
@@ -457,7 +457,8 @@ function runSide(g, f, short, title) {
 export function putBackHere(g, t) {
     const f = t?.type === "furniture" && t.f.kind === "station" ? t.f : null;
     if (!f || !sideActs(g, f, "put back").length) {
-        g.say("Stand at the stove or oven it came from to put a dish back.");
+        const fromHere = f && trayItems(g).some((i) => (f.slots ?? []).some((sl) => sl.id === i.from));
+        g.say(fromHere ? "That came out of a different pot: it can't go into this one." : "Stand at the stove or oven it came from to put a dish back.");
         return;
     }
     runSide(g, f, "put back", "Put back which?");

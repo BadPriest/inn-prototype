@@ -4,7 +4,7 @@ import { organic } from "./core.js";
 import { GARNISHES, GRAMOPHONE, INGREDIENTS, RECIPES, REGULARS, SNACKS, TUNING, UPGRADES, type Recipe } from "./data.js";
 import type { Game, Patron, SetDownTray, Spill } from "./game.js";
 import { dist, type Furniture, type Slot } from "./world.js";
-import { collectShelf, emptyPot, putBack, recipesFor, returnSlice, startJob, makeItem, serveFromPot, takeSlice, ticketFor } from "./crafting.js";
+import { canPutBack, collectShelf, emptyPot, putBack, recipesFor, returnSlice, startJob, makeItem, serveFromPot, takeSlice, ticketFor } from "./crafting.js";
 import { tableKey } from "./patrons.js";
 import { applyGarnish, removeFromTray, servePatron, serveTable, garnishableDrinks, iconFor, itemLabel, serveUnasked, trayItems, pickupFromHatch, pickUpTray, startPour, setTrayDown, takeFromHatch } from "./serving.js";
 import { endDay, startNextDay, toggleInn } from "./day.js";
@@ -330,7 +330,7 @@ function slotActs(g: Game, sl: Slot, many: boolean): StationAct[] {
   const shelf = g.shelves.get(sl.id) ?? [];
   const job = g.jobs.get(sl.id);
   // Picked up from here by mistake: put it back (one of each dish).
-  const back = trayItems(g).filter((i) => i.from === sl.id);
+  const back = trayItems(g).filter((i) => canPutBack(g, sl.id, i));
   for (const it of back.filter((x, i) => back.findIndex((y) => y.recipeId === x.recipeId) === i)) {
     acts.push({ label: `↩️ Put back the ${it.name.toLowerCase()}`, sub: `${where}it goes back ${it.fromPot ? "in the pot" : "where it was"}`, short: "put back", main: false,
       run: () => { if (putBack(g, sl.id, it)) g.say(`You put the ${it.name.toLowerCase()} back.`); else g.say("There's no room for it there now."); } });
@@ -384,7 +384,11 @@ function runSide(g: Game, f: Furniture, short: "put back" | "empty it", title: s
 /** R: put back something you picked up here by mistake. */
 export function putBackHere(g: Game, t: Target | null): void {
   const f = t?.type === "furniture" && t.f.kind === "station" ? t.f : null;
-  if (!f || !sideActs(g, f, "put back").length) { g.say("Stand at the stove or oven it came from to put a dish back."); return; }
+  if (!f || !sideActs(g, f, "put back").length) {
+    const fromHere = f && trayItems(g).some((i) => (f.slots ?? []).some((sl) => sl.id === i.from));
+    g.say(fromHere ? "That came out of a different pot: it can't go into this one." : "Stand at the stove or oven it came from to put a dish back.");
+    return;
+  }
   runSide(g, f, "put back", "Put back which?");
 }
 

@@ -300,7 +300,7 @@ export function serveFromPot(g, fid) {
     const pot = g.pots.get(fid);
     if (!pot)
         return;
-    const serving = { ...pot.item, id: uid(), tags: [...pot.item.tags], from: fid, fromPot: true };
+    const serving = { ...pot.item, id: uid(), tags: [...pot.item.tags], from: fid, fromPot: true, fromPotId: pot.item.id };
     if (!addToTray(g, serving)) {
         g.say("No room on your trays.");
         return;
@@ -312,24 +312,37 @@ export function serveFromPot(g, fid) {
         g.say("The pot is empty.");
     }
 }
-/** Put a dish picked up here back where it was: on the shelf, or into its pot. False if there's no room for it now. */
+/**
+ * Can this dish go back here? Only where it was picked up: a serving into the very pot it came out of
+ * (not another pot of the same thing), or onto its hob if that's empty now; a dish onto its shelf.
+ */
+export function canPutBack(g, fid, item) {
+    if (item.from !== fid)
+        return false;
+    if (!item.fromPot)
+        return true;
+    const pot = g.pots.get(fid);
+    return pot ? pot.item.id === item.fromPotId : !g.jobs.has(fid);
+}
+/** Put a dish picked up here back where it was: on the shelf, or into its pot. False if it can't go back. */
 export function putBack(g, fid, item) {
+    if (!canPutBack(g, fid, item))
+        return false;
     const pot = g.pots.get(fid);
     if (item.fromPot) {
-        if (pot && pot.item.recipeId === item.recipeId) {
+        if (pot) {
             pot.left++;
             pot.total = Math.max(pot.total, pot.left);
         }
-        else if (!pot && !g.jobs.has(fid))
-            g.pots.set(fid, { item: { ...item, from: undefined, fromPot: undefined }, left: 1, total: 1 });
         else
-            return false;
+            g.pots.set(fid, { item: { ...item, from: undefined, fromPot: undefined, fromPotId: undefined }, left: 1, total: 1 });
     }
     else
         g.shelves.set(fid, [...(g.shelves.get(fid) ?? []), item]);
     removeFromTray(g, item); // accounted for: it left the trays on purpose
     item.from = undefined;
     item.fromPot = undefined;
+    item.fromPotId = undefined;
     return true;
 }
 /** Empty a pot (porridge nobody wants) so the hob is free: it goes to the hens with the scraps. */

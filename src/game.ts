@@ -23,6 +23,8 @@ export interface Item {
   /** Picked up from this place to cook (a slot id), off its shelf or (`fromPot`) as a serving from its pot: it can go back. */
   from?: string;
   fromPot?: boolean;
+  /** Which pot exactly (its dish's id): a serving only goes back into the pot it came out of. */
+  fromPotId?: number;
 }
 
 export interface Tray {
