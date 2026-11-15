@@ -54,13 +54,13 @@ export class World {
                 continue;
             tiles.forEach((t, i) => {
                 const tile = this.tile(t.x, t.y);
-                tile.def = { kind: "furniture", floor: tile.def.floor, label: i === 0 ? eq.label : "", name: eq.name, interact: "station" };
+                tile.def = { kind: "furniture", floor: tile.def.floor, label: i === 0 ? eq.label : "", name: eq.name, interact: eq.kind ?? "station" };
                 tile.keeperWalk = false;
                 tile.patronWalk = false;
                 tile.equip = p.uid;
             });
             const f = {
-                id: p.uid, kind: "station", name: eq.name, tiles,
+                id: p.uid, kind: eq.kind ?? "station", name: eq.name, tiles,
                 center: { x: p.x + eq.w / 2, y: p.y + eq.h / 2 }, equip: eq,
             };
             const counts = new Map();

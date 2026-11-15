@@ -102,7 +102,7 @@ function pieSpec(g: Game, st: { focus: number }): MenuSpec {
     name: w.name,
     note: `${pips(w.whole ?? 0, w.whole ?? 0)}<br>whole, from the oven: put it away`,
     tags: w.tags,
-    off: g.pieSafe.length >= TUNING.pieSafeCapacity,
+    off: g.pieSafe.length >= g.pieSafeCapacity,
     focus: i === st.focus,
   }));
   const pies: CardSpec[] = g.pieSafe.map((p, i0) => { const i = wholes.length + i0;
@@ -126,7 +126,7 @@ function pieSpec(g: Game, st: { focus: number }): MenuSpec {
   }));
   const html = `
     <p class="blurb">Pies keep here for the day they're baked. Tomorrow they're day-old; the day after, they go to the hens.</p>
-    ${store.length ? `<div class="need">${g.pieSafe.length >= TUNING.pieSafeCapacity ? "The pie safe is full." : "From the oven (pick to put away):"}</div><div class="cards">${store.map(card).join("")}</div>` : ""}
+    ${store.length ? `<div class="need">${g.pieSafe.length >= g.pieSafeCapacity ? "The pie safe is full." : "From the oven (pick to put away):"}</div><div class="cards">${store.map(card).join("")}</div>` : ""}
     ${pies.length ? `<div class="need">${room ? "Pick a pie to cut a slice:" : "No room on your trays for a slice."}</div><div class="cards">${pies.map(card).join("")}</div>`
       : `<div class="need">No whole pies. Bake one in the oven.</div>`}
     ${back.length ? `<div class="need" style="margin-top:12px">On your tray (pick to put back):</div><div class="cards">${back.map(card).join("")}</div>` : ""}`;

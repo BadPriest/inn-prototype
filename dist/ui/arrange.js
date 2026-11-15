@@ -2,7 +2,7 @@
 // you've just bought. The clock stops while you do. What's cooking on it moves with it (its slots keep
 // their ids). A spot is allowed when it's kitchen floor, behind the bar or a nook in the counter wall,
 // nothing else stands there, and the keeper can still reach everything.
-import { EQUIPMENT, PLACEABLE_ON } from "../data.js";
+import { EQUIPMENT, PLACEABLE_ON, TUNING } from "../data.js";
 let grab = { x: 0, y: 0 }; // where on the piece it was picked up
 const verdicts = new Map();
 const newUid = () => `eq-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
@@ -117,6 +117,10 @@ export function arrangeRemove(g) {
         g.say("Something's still on it. Finish with that first.");
         return;
     }
+    if (h.type === "piesafe" && g.pieSafe.length > g.pieSafeCapacity - TUNING.pieSafeCapacity) {
+        g.say("There are pies in it with nowhere else to go.");
+        return;
+    }
     g.layout = g.layout.filter((x) => x.uid !== h.uid);
     g.say(`The ${eqOf(h.type).name.toLowerCase()} goes out to the shed.`);
     g.arranging.holding = undefined;
@@ -136,7 +140,7 @@ function bar(g) {
     const what = h ? eqOf(h.type).name.toLowerCase() : "";
     el.innerHTML = `<span>🛠 <b>Arranging the kitchen</b> · the clock's stopped · ${h
         ? `click where the ${what} should go · Esc ${h.isNew ? "sends it back" : "puts it back"}${h.isNew ? "" : " · Delete gets rid of it"}`
-        : "click a stove, oven, kettle or coffee pot to move it"}</span><button>Done</button>`;
+        : "click a stove, oven, kettle, coffee pot or pie safe to move it"}</span><button>Done</button>`;
     el.querySelector("button").onclick = () => stopArranging(g);
 }
 /** Over the map: where things can go, the piece in hand (green where it fits, red where it doesn't). */

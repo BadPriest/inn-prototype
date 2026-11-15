@@ -4,7 +4,7 @@
 // The hatch is for a hired cook, later.
 
 import { organic, uid } from "./core.js";
-import { INGREDIENTS, RECIPES, TUNING, type Recipe } from "./data.js";
+import { FIREWOOD_BOOST, INGREDIENTS, RECIPES, TUNING, type Recipe } from "./data.js";
 import type { Game, Item, Job } from "./game.js";
 import { dist, type Furniture, type Slot } from "./world.js";
 import { addToTray, removeFromTray, trayItems } from "./serving.js";
@@ -80,6 +80,7 @@ export function updateCrafting(g: Game, simDt: number, target: Furniture | null)
     if (!job.done) {
       const near = keeperNear(g, f);
       let rate = recipe.tended && !near ? 0 : 1;
+      if (g.upgrades.has("firewood") && recipe.station !== "prep" && recipe.station !== "tap") rate *= FIREWOOD_BOOST; // anything heated
       if (near && g.holdingSpace && target?.id === f.id) rate *= TUNING.speedUpFactor;
       job.progress += simDt * rate;
       if (job.progress >= job.total) {
@@ -159,7 +160,7 @@ export function takeSlice(g: Game, pieId: number): void {
 
 /** Put a whole pie, carried from the oven, into the pie safe. False if the safe is full. */
 export function storePie(g: Game, pie: Item): boolean {
-  if (g.pieSafe.length >= TUNING.pieSafeCapacity) { g.say("The pie safe is full."); return false; }
+  if (g.pieSafe.length >= g.pieSafeCapacity) { g.say("The pie safe is full."); return false; }
   removeFromTray(g, pie);
   const n = pie.whole ?? 6;
   g.pieSafe.push({ id: uid(), item: { ...pie, whole: undefined }, left: n, total: n, bakedDay: pie.madeDay ?? g.day });
@@ -174,7 +175,7 @@ export function returnSlice(g: Game, slice: Item): void {
   const baseName = slice.name.replace(/^(Day-old )?[Ss]lice of /, "");
   const pie = g.pieSafe.find((p) => p.item.name.toLowerCase() === baseName.toLowerCase() || p.item.tags.join() === slice.tags.join());
   if (pie) { pie.left = Math.min(pie.total, pie.left + 1); }
-  else if (g.pieSafe.length < TUNING.pieSafeCapacity) {
+  else if (g.pieSafe.length < g.pieSafeCapacity) {
     g.pieSafe.push({ id: uid(), item: { ...slice, name: baseName.charAt(0).toUpperCase() + baseName.slice(1) }, left: 1, total: 1, bakedDay: slice.madeDay ?? g.day });
   } else { addToTray(g, slice); g.say("The pie safe is full."); return; }
   g.say(`${slice.name} goes back in the pie safe.`);

@@ -3,7 +3,7 @@
 // order they were made for), pots on the station, whole pies in the pie safe. You pick them up there.
 // The hatch is for a hired cook, later.
 import { organic, uid } from "./core.js";
-import { INGREDIENTS, RECIPES, TUNING } from "./data.js";
+import { FIREWOOD_BOOST, INGREDIENTS, RECIPES, TUNING } from "./data.js";
 import { dist } from "./world.js";
 import { addToTray, removeFromTray, trayItems } from "./serving.js";
 export function recipesFor(_g, slot) {
@@ -82,6 +82,8 @@ export function updateCrafting(g, simDt, target) {
         if (!job.done) {
             const near = keeperNear(g, f);
             let rate = recipe.tended && !near ? 0 : 1;
+            if (g.upgrades.has("firewood") && recipe.station !== "prep" && recipe.station !== "tap")
+                rate *= FIREWOOD_BOOST; // anything heated
             if (near && g.holdingSpace && target?.id === f.id)
                 rate *= TUNING.speedUpFactor;
             job.progress += simDt * rate;
@@ -177,7 +179,7 @@ export function takeSlice(g, pieId) {
 }
 /** Put a whole pie, carried from the oven, into the pie safe. False if the safe is full. */
 export function storePie(g, pie) {
-    if (g.pieSafe.length >= TUNING.pieSafeCapacity) {
+    if (g.pieSafe.length >= g.pieSafeCapacity) {
         g.say("The pie safe is full.");
         return false;
     }
@@ -196,7 +198,7 @@ export function returnSlice(g, slice) {
     if (pie) {
         pie.left = Math.min(pie.total, pie.left + 1);
     }
-    else if (g.pieSafe.length < TUNING.pieSafeCapacity) {
+    else if (g.pieSafe.length < g.pieSafeCapacity) {
         g.pieSafe.push({ id: uid(), item: { ...slice, name: baseName.charAt(0).toUpperCase() + baseName.slice(1) }, left: 1, total: 1, bakedDay: slice.madeDay ?? g.day });
     }
     else {

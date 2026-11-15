@@ -325,6 +325,11 @@ export class Game {
     return new Set([...this.meals.flatMap((m) => [...m.menu]), ...this.betweenMenu]);
   }
 
+  /** How many whole pies fit: each pie safe holds its share. */
+  get pieSafeCapacity(): number {
+    return T2.pieSafeCapacity * this.layout.filter((p) => p.type === "piesafe").length;
+  }
+
   /** The equipment moved: build the inn again around it. Seats keep who's sitting in them. */
   rebuildWorld(): void {
     const sitting = new Map(this.world.seats.map((s) => [s.id, s.occupant]));

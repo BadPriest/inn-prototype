@@ -3,7 +3,7 @@
 // their ids). A spot is allowed when it's kitchen floor, behind the bar or a nook in the counter wall,
 // nothing else stands there, and the keeper can still reach everything.
 
-import { EQUIPMENT, PLACEABLE_ON } from "../data.js";
+import { EQUIPMENT, PLACEABLE_ON, TUNING } from "../data.js";
 import type { Game } from "../game.js";
 import type { Vec } from "../world.js";
 import type { View } from "./render.js";
@@ -103,6 +103,7 @@ export function arrangeRemove(g: Game): void {
   const f = g.world.furniture.find((x) => x.id === h.uid);
   const busy = (f?.slots ?? []).some((sl) => g.jobs.has(sl.id) || g.pots.has(sl.id) || g.shelves.get(sl.id)?.length);
   if (busy) { g.say("Something's still on it. Finish with that first."); return; }
+  if (h.type === "piesafe" && g.pieSafe.length > g.pieSafeCapacity - TUNING.pieSafeCapacity) { g.say("There are pies in it with nowhere else to go."); return; }
   g.layout = g.layout.filter((x) => x.uid !== h.uid);
   g.say(`The ${eqOf(h.type).name.toLowerCase()} goes out to the shed.`);
   g.arranging!.holding = undefined;
@@ -123,7 +124,7 @@ function bar(g: Game): void {
   const what = h ? eqOf(h.type).name.toLowerCase() : "";
   el.innerHTML = `<span>🛠 <b>Arranging the kitchen</b> · the clock's stopped · ${h
     ? `click where the ${what} should go · Esc ${h.isNew ? "sends it back" : "puts it back"}${h.isNew ? "" : " · Delete gets rid of it"}`
-    : "click a stove, oven, kettle or coffee pot to move it"}</span><button>Done</button>`;
+    : "click a stove, oven, kettle, coffee pot or pie safe to move it"}</span><button>Done</button>`;
   el.querySelector("button")!.onclick = () => stopArranging(g);
 }
 

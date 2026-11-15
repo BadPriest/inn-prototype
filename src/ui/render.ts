@@ -208,7 +208,11 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
       }
     });
     if (f.kind === "piesafe" && g.pieSafe.length) {
-      badge(ctx, px + pw - 2, py + 2, String(g.pieSafe.reduce((a, p) => a + p.left, 0)), ts);
+      // Pie safes share the pies, filling in order: each shows the slices in its own share.
+      const safes = g.layout.filter((p) => p.type === "piesafe").map((p) => p.uid);
+      const i = Math.max(0, safes.indexOf(f.id)), cap = TUNING.pieSafeCapacity;
+      const mine = g.pieSafe.slice(i * cap, (i + 1) * cap).reduce((a, p) => a + p.left, 0);
+      if (mine) badge(ctx, px + pw - 2, py + 2, String(mine), ts);
     }
     if (f.kind === "hatch" && g.hatch.length) {
       badge(ctx, px + pw - 2, py + 2, String(g.hatch.length), ts);

@@ -114,6 +114,7 @@ export interface Equipment {
   blurb: string;
   boilSpeed?: number; // kettles: how much faster than the plain one
   urn?: boolean; // brews a whole urn of tea, poured by the cup
+  kind?: "piesafe"; // not a place to cook: works like this furniture instead
 }
 
 const HOB: EquipSlot = { name: "Hob", kinds: ["stove", "griddle"] }; // a pot or a pan
@@ -126,8 +127,8 @@ export const EQUIPMENT: Equipment[] = [
     blurb: "Wood-burning, with two hobs: a pot and a pan, two pots, two pans, whatever the day needs." },
   { id: "range", name: "Stove with an oven", label: "Range", icon: "🥧", w: 2, h: 1, slots: [HOB, OVEN],
     blurb: "A wood-burning range: one hob on top and an oven below, for pies and roasts." },
-  { id: "oven", name: "Bread oven", label: "Oven", icon: "🍞", w: 1, h: 1, slots: [OVEN],
-    blurb: "A brick oven on its own, for pies and roasts." },
+  { id: "oven", name: "Bread oven", label: "Oven", icon: "🍞", w: 2, h: 1, slots: [OVEN, OVEN],
+    blurb: "A big brick oven with room for two bakes at once: bread, pies, a roast, in any pair." },
   { id: "prep", name: "Prep table", label: "Prep", icon: "🔪", w: 2, h: 1, slots: [{ name: "Table", kinds: ["prep"] }],
     blurb: "A scrubbed table and a good knife, for cold dishes put together by hand." },
   { id: "kettle", name: "Tea kettle", label: "Kettle", icon: "🫖", w: 1, h: 1, slots: [{ name: "Kettle", kinds: ["kettle"] }],
@@ -138,12 +139,14 @@ export const EQUIPMENT: Equipment[] = [
     blurb: "Brews a whole urn of one tea, about 8 cups, poured straight from it." },
   { id: "coffee", name: "Coffee pot", label: "Coffee", icon: "☕", w: 1, h: 1, slots: [{ name: "Coffee pot", kinds: ["coffee"] }],
     blurb: "A whole pot at a time, poured by the cup until it's gone." },
+  { id: "piesafe", name: "Pie safe", label: "Pies", icon: "🥧", w: 1, h: 1, slots: [], kind: "piesafe",
+    blurb: "A screened cupboard that keeps whole pies, sliced as they're asked for. Each holds 4 pies; your pie safes share them." },
 ];
 
 /** Where the first equipment stands, by map letter. The old separate pan ("R") is gone: hobs take pans now. */
-export const EQUIPMENT_OF_TILE: Record<string, string> = { S: "stove1", O: "oven", K: "prep", H: "kettle", V: "coffee" };
+export const EQUIPMENT_OF_TILE: Record<string, string> = { S: "stove1", O: "oven", K: "prep", H: "kettle", V: "coffee", Z: "piesafe" };
 /** What's under an equipment letter once it's lifted off the map. */
-export const UNDER_EQUIPMENT: Record<string, string> = { S: ",", R: ",", O: ",", K: ",", H: "n", V: "n" };
+export const UNDER_EQUIPMENT: Record<string, string> = { S: ",", R: ",", O: ",", K: ",", H: "n", V: "n", Z: "n" };
 /** Tiles equipment can stand on: the kitchen floor, behind the bar, and the nooks in the counter wall. */
 export const PLACEABLE_ON = [",", "_", "n"];
 
@@ -151,7 +154,10 @@ export const PLACEABLE_ON = [",", "_", "n"];
 export interface Goods { id: string; name: string; icon: string; blurb: string }
 export const GOODS: Goods[] = [
   { id: "trays", name: "Wider trays", icon: "🍽️", blurb: "Carry 3 dishes per tray, and 5 drinks." },
+  { id: "firewood", name: "Seasoned oak", icon: "🪵", blurb: "Dry, well-split firewood that burns hotter: everything on a hob, in an oven or over a flame cooks a little faster." },
 ];
+/** Seasoned oak: how much faster anything heated cooks. */
+export const FIREWOOD_BOOST = 1.12;
 
 /** Which drink each tap letter pours. */
 export const TAP_OF_TILE: Record<string, string> = { A: "ale", Y: "cider" };
@@ -246,6 +252,9 @@ export const RECIPES: Recipe[] = [
   // A pot for the morning
   { id: "porridge", blurb: "Oats, milk and a long slow stir. A pot of it carries the morning crowd, a bowl at a time.", icon: "🥣", name: "Porridge", kind: "food", station: "stove", baseTags: ["warm", "homely", "mild"], slots: 1,
     options: ["honey", "apple", "berry", "walnut", "butter"], minutes: [10, 2], servings: [7, 1] },
+  // Bread: a batch of loaves, sliced to order until it's gone. Good alongside a stew or a soup.
+  { id: "bread", blurb: "A batch of loaves from the oven, crusty outside and soft in the middle, sliced to order. Good alongside a stew.", icon: "🍞", name: "Bread", kind: "food", station: "oven", baseTags: ["warm", "homely"], slots: 1,
+    options: ["butter", "herbs", "walnut", "cheese", "honey"], minutes: [18, 3], servings: [8, 1], batch: "a batch of bread" },
   // Roasts: a whole joint in the oven, carved to order until it's gone. It holds the oven while it lasts.
   { id: "roast", blurb: "A whole joint in the oven, an afternoon's work, carved to order until the bone's bare. The oven's taken while it lasts.", icon: "🍖", name: "Roast", kind: "food", station: "oven", baseTags: ["warm", "hearty", "rich"], slots: 2,
     options: ["beef", "pork", "lamb", "fowl", "roots", "herbs", "apple"], minutes: [26, 4], servings: [9, 1.5], batch: "a roast" },
@@ -268,6 +277,13 @@ export const SNACKS: Snack[] = [
   { id: "peanuts", name: "Salted peanuts", icon: "🥜", tags: ["salty", "crisp"], thirsty: 0.3, blurb: "Roasted and well salted. Nothing sends people to the bar faster." },
   { id: "olives", name: "Olives", icon: "🫒", tags: ["briny", "salty"], thirsty: 0.25, blurb: "Brined and glossy, for those who like a sharp edge." },
   { id: "eggs", name: "Pickled eggs", icon: "🥚", tags: ["tart", "savoury"], thirsty: 0.1, blurb: "From the big jar on the counter. An acquired taste, fondly acquired." },
+  { id: "crostini", name: "Crostini", icon: "🥖", tags: ["crisp", "savoury"], thirsty: 0.15, blurb: "Little toasts rubbed with garlic and a slick of oil. Gone before you've turned round." },
+  { id: "breadbutter", name: "Bread & butter", icon: "🍞", tags: ["homely", "rich"], thirsty: 0.05, blurb: "Thick slices and a pat of butter. Nobody says no to it." },
+  { id: "cheese", name: "Cheese board", icon: "🧀", tags: ["rich", "savoury"], thirsty: 0.15, blurb: "A hard cheese, a soft one and something blue, cut into cubes." },
+  { id: "pretzels", name: "Pretzels", icon: "🥨", tags: ["salty", "crisp"], thirsty: 0.3, blurb: "Knotted, baked dark, crusted with salt. Thirsty work." },
+  { id: "chestnuts", name: "Roast chestnuts", icon: "🌰", tags: ["earthy", "sweet"], thirsty: 0.05, blurb: "Split and roasted by the fire, still warm in the paper." },
+  { id: "onions", name: "Pickled onions", icon: "🧅", tags: ["tart", "fiery"], thirsty: 0.15, blurb: "Small, sharp and vinegary, from the crock under the counter." },
+  { id: "apples", name: "Dried apple rings", icon: "🍎", tags: ["sweet", "crisp"], thirsty: 0.05, blurb: "Chewy, sweet, and gentle on the thirst." },
 ];
 
 export interface Garnish { id: string; name: string; tags: string[]; icon: string }
@@ -1134,7 +1150,7 @@ export const TUNING = {
   trayCapacity: { drink: 4, food: 2 },
   hatchCapacity: 8,
   shelfCapacity: 2, // finished dishes a station can hold, waiting to be picked up
-  pieSafeCapacity: 4, // whole pies
+  pieSafeCapacity: 4, // whole pies per pie safe
   // Freshness, first pass: food left over a night turns day-old (still servable, a bit less nice);
   // anything older goes to the hens.
   staleTag: "day-old",
