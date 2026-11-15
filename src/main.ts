@@ -4,7 +4,7 @@ import { TUNING, type LocationId } from "./data.js";
 import { openLocationPicker } from "./ui/location.js";
 import { updateTickets } from "./ui/tickets.js";
 import { openBillOfFare, openDeskScreen } from "./ui/desk.js";
-import { arrangeCancel, arrangeClick, arrangeHover, arrangeRemove, drawArrange } from "./ui/arrange.js";
+import { arrangeAnother, arrangeBuy, arrangeCancel, arrangeClick, arrangeHover, arrangeRemove, drawArrange } from "./ui/arrange.js";
 import { openCalendar } from "./ui/calendar.js";
 import { newWeather } from "./weather.js";
 import { Game } from "./game.js";
@@ -91,9 +91,12 @@ window.addEventListener("keydown", (e) => {
   }
   if (g.modal) return; // fading to sleep
   if (g.arranging) {
-    // Arranging the kitchen: the mouse does it all; Esc puts back or finishes, Delete gets rid of one.
+    // Arranging the kitchen: the mouse does it all; Esc puts back or finishes, Delete gets rid of one,
+    // B buys something else, A another of what you just placed.
     if (e.key === "Escape") arrangeCancel(g);
     else if (e.key === "Delete" || e.key === "Backspace") arrangeRemove(g);
+    else if (e.key.toLowerCase() === "b" && !e.repeat) arrangeBuy(g);
+    else if (e.key.toLowerCase() === "a" && !e.repeat) arrangeAnother(g);
     keys.clear();
     return;
   }

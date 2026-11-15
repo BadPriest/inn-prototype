@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 15, 2026 · build 87 (deployed) · https://inn-prototype.vercel.app
+Updated Nov 15, 2026 · build 88 (87 deployed; 88 committed, not pushed) · https://inn-prototype.vercel.app
 
 Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was done in each task's comments. Design decisions come from [design-session-journal.md](design-session-journal.md) and [design-session-journal_game-start_nov-15.md](design-session-journal_game-start_nov-15.md).
 
@@ -23,6 +23,10 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - #9 gramophone: horn and turntable tone; winding has a progress bar; the spring runs ~4 min (short for testing) and sags the record when it gives out (per [specs/sound.md](specs/sound.md))
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
+
+## Built, not yet deployed (build 88)
+
+- Buy while arranging the kitchen: a Buy button (B) in the arrange banner opens the equipment without leaving; after placing something you bought, "+ Another" (A) hands you one more
 
 ## Built and deployed (Nov 15, build 87)
 

@@ -4,11 +4,15 @@
 // nothing else stands there, and the keeper can still reach everything.
 import { EQUIPMENT, PLACEABLE_ON, TUNING } from "../data.js";
 import { P, floorPath } from "./proj.js";
+import { openShop } from "./desk.js";
 let grab = { x: 0, y: 0 }; // where on the piece it was picked up
+let lastBought = null; // what you just bought and placed: "another" buys one more
 const verdicts = new Map();
 const newUid = () => `eq-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 const eqOf = (type) => EQUIPMENT.find((e) => e.id === type);
 export function startArranging(g, buyType) {
+    if (!g.arranging)
+        lastBought = null;
     g.arranging = buyType ? { holding: { uid: newUid(), type: buyType, isNew: true } } : {};
     grab = { x: 0, y: 0 };
     g.keeper.path = [];
@@ -20,6 +24,7 @@ export function stopArranging(g) {
     if (g.arranging?.holding?.isNew)
         g.say(`You send the ${eqOf(g.arranging.holding.type).name.toLowerCase()} back.`);
     g.arranging = null;
+    lastBought = null;
     document.getElementById("arrange-bar")?.remove();
 }
 /** Where the held piece would go, from the tile under the mouse. */
@@ -75,6 +80,7 @@ export function arrangeClick(g, p) {
     if (h.isNew) {
         g.layout.push({ uid: h.uid, type: h.type, x: at.x, y: at.y });
         g.say(`The ${name} is in.`);
+        lastBought = h.type;
     }
     else if (placed) {
         placed.x = at.x;
@@ -129,7 +135,18 @@ export function arrangeRemove(g) {
     g.rebuildWorld();
     bar(g);
 }
-/** The banner at the top: what to do now, and Done. */
+/** While arranging: open the equipment to buy something else (B), without leaving the kitchen. */
+export function arrangeBuy(g) {
+    if (g.arranging?.holding?.isNew)
+        arrangeCancel(g); // swap it for something else
+    openShop(g);
+}
+/** Another of what you just placed (A). */
+export function arrangeAnother(g) {
+    if (lastBought && !g.arranging?.holding)
+        startArranging(g, lastBought);
+}
+/** The banner along the bottom: what to do now, buying more, and Done. */
 function bar(g) {
     let el = document.getElementById("arrange-bar");
     if (!el) {
@@ -141,8 +158,10 @@ function bar(g) {
     const what = h ? eqOf(h.type).name.toLowerCase() : "";
     el.innerHTML = `<span>🛠 <b>Arranging the kitchen</b> · the clock's stopped · ${h
         ? `click where the ${what} should go · Esc ${h.isNew ? "sends it back" : "puts it back"}${h.isNew ? "" : " · Delete gets rid of it"}`
-        : "click a stove, oven, kettle, coffee pot or pie safe to move it"}</span><button>Done</button>`;
-    el.querySelector("button").onclick = () => stopArranging(g);
+        : "click a stove, oven, kettle, coffee pot or pie safe to move it"}</span>${!h && lastBought
+        ? `<button class="ghost" data-act="another">＋ Another ${eqOf(lastBought).name.toLowerCase()} <small>A</small></button>` : ""}<button class="ghost" data-act="buy">🛒 Buy <small>B</small></button><button data-act="done">Done</button>`;
+    const act = { done: () => stopArranging(g), buy: () => arrangeBuy(g), another: () => arrangeAnother(g) };
+    el.querySelectorAll("button[data-act]").forEach((b) => { b.onclick = () => act[b.dataset.act](); });
 }
 /** Over the map: where things can go, the piece in hand (green where it fits, red where it doesn't). */
 export function drawArrange(ctx, g, view) {

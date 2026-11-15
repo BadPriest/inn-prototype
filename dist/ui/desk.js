@@ -243,7 +243,7 @@ export function openShop(g) {
             subtitle: "Money's no object, for now",
             holdsClock: true,
             view: {
-                html: `<p class="explain"><b>Pick something to buy.</b> Stoves, ovens and kettles go straight to the kitchen for you to place; you can move them any time (desk → Arrange the kitchen).</p>${grid(cards)}`,
+                html: `<p class="explain"><b>Pick something to buy.</b> Stoves, ovens and kettles go straight to the kitchen for you to place; you can move them any time (desk → Arrange the kitchen). While you arrange, <b>B</b> brings you back here.</p>${grid(cards)}`,
                 onPick: (v) => buy(Number(v)),
                 onKey: gridKeys(() => items.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, buy),
             },
