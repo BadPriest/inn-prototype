@@ -9,22 +9,20 @@ import { RING_TRACK, ringColor } from "./tickets.js";
 import { walkoutProgress } from "../patrons.js";
 
 /** `iso`: drawn isometric (render-iso.ts); otherwise straight down, `ts` pixels a tile. */
-export interface View { ts: number; ox: number; oy: number; iso?: boolean }
+/** `rot`, `mw`, `mh` (isometric): which corner the camera stands at (quarter turns), and the map's size. */
+export interface View { ts: number; ox: number; oy: number; iso?: boolean; rot?: number; mw?: number; mh?: number }
 
 /** Fit the whole inn if it's big enough to read; otherwise zoom in and follow the keeper. */
 /** `top`: canvas pixels kept clear at the top (the status card sits there). */
-export function computeView(canvas: HTMLCanvasElement, g: Game, minTile = 22, top = 0): View {
-  const fit = Math.floor(Math.min(canvas.width / g.world.w, (canvas.height - top) / g.world.h));
-  const dpr = window.devicePixelRatio || 1;
-  const min = Math.floor(minTile * dpr);
-  if (fit >= min) {
-    return { ts: fit, ox: Math.floor((canvas.width - fit * g.world.w) / 2), oy: top + Math.floor((canvas.height - top - fit * g.world.h) / 2) };
-  }
-  const ts = min;
+/** `zoom`: 1 is that size; more is closer (following the keeper), less is farther. */
+export function computeView(canvas: HTMLCanvasElement, g: Game, minTile = 22, top = 0, zoom = 1): View {
+  const fit = Math.min(canvas.width / g.world.w, (canvas.height - top) / g.world.h);
+  const min = minTile * (window.devicePixelRatio || 1);
+  const ts = Math.max(6, Math.floor(Math.max(fit, min) * zoom));
   const mapW = ts * g.world.w, mapH = ts * g.world.h;
   const clampAxis = (want: number, map: number, view: number) => map <= view ? Math.floor((view - map) / 2) : Math.min(0, Math.max(view - map, want));
   const ox = clampAxis(Math.floor(canvas.width / 2 - g.keeper.pos.x * ts), mapW, canvas.width);
-  const oy = clampAxis(Math.floor(canvas.height / 2 - g.keeper.pos.y * ts), mapH, canvas.height);
+  const oy = top + clampAxis(Math.floor((canvas.height - top) / 2 - g.keeper.pos.y * ts), mapH, canvas.height - top);
   return { ts, ox, oy };
 }
 

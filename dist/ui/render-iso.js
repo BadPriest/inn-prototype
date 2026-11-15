@@ -3,12 +3,13 @@
 //
 // Everything with height is a block per tile, painted back to front (by x + y), with people in among
 // them, so the keeper passes behind a table or the counter. Walls are low except along the back edges
-// (top and left), so nothing in the room hides behind them. What you need to read (labels, cooking,
+// (the two edges farthest from the camera, whichever corner it stands at), so nothing in the room hides
+// behind them. What you need to read (labels, cooking,
 // bowls, orders, speech) is drawn over the blocks, so a guest standing in front never hides it.
 import { RECIPES, ROOM_LABELS, SNACKS, SOAKING, TUNING } from "../data.js";
 import { iconFor } from "../serving.js";
 import { drawLight, windowColor } from "./light.js";
-import { ISO, P, floorPath, unproject } from "./proj.js";
+import { ISO, P, Pt, floorPath, turn, turnedSize, unproject, unturn } from "./proj.js";
 import { badge, drawPatronWords, drawSpeech, say } from "./render.js";
 /** Height of the back walls, in tiles; every other wall is a low stub so you can see past it. */
 const TALL = 1.5;
@@ -25,21 +26,33 @@ const PIECE_COLOR = {
 };
 /** How far each kind sits in from its tile's edges (not between tiles of the same piece). */
 const INSET = { chair: 0.28, stool: 0.3, bench: 0.12, table: 0.08, counter: 0.06, furniture: 0.06 };
-export function computeIsoView(canvas, g, minTile = 34, top = 0) {
-    const { w, h } = g.world;
+/** `zoom`: 1 fits the inn (or the smallest readable size, following the keeper); more is closer. `rot`: camera corner. */
+export function computeIsoView(canvas, g, minTile = 34, top = 0, zoom = 1, rot = 0) {
+    const base = { iso: true, rot, mw: g.world.w, mh: g.world.h, ts: 1, ox: 0, oy: 0 };
+    const { w, h } = turnedSize(base);
     const cw = canvas.width, ch = canvas.height - top;
     const spanX = (w + h) * ISO.a, spanY = (w + h) * ISO.b + TALL * ISO.z; // the map's size, in ts
-    const fit = Math.floor(Math.min(cw / spanX, ch / spanY));
-    const min = Math.floor(minTile * (window.devicePixelRatio || 1));
-    if (fit >= min) {
-        return { iso: true, ts: fit, ox: Math.floor((cw - spanX * fit) / 2 + h * ISO.a * fit), oy: Math.floor(top + (ch - spanY * fit) / 2 + TALL * ISO.z * fit) };
-    }
-    // Too small to fit: zoom in and follow the keeper, keeping the map's edges on screen.
-    const ts = min, k = g.keeper.pos;
+    const fit = Math.min(cw / spanX, ch / spanY);
+    const min = minTile * (window.devicePixelRatio || 1);
+    const ts = Math.max(6, Math.floor(Math.max(fit, min) * zoom));
+    // Centred when it fits; otherwise follow the keeper, keeping the map's edges on screen.
+    const k = turn(base, g.keeper.pos.x, g.keeper.pos.y);
     const kx = (k.x - k.y) * ISO.a * ts, ky = (k.x + k.y) * ISO.b * ts;
-    const ox = Math.max(cw - w * ISO.a * ts, Math.min(h * ISO.a * ts, cw / 2 - kx));
-    const oy = Math.max(top + ch - (w + h) * ISO.b * ts, Math.min(top + TALL * ISO.z * ts, top + ch / 2 - ky));
-    return { iso: true, ts, ox: Math.floor(ox), oy: Math.floor(oy) };
+    const axis = (span, view, lead, want) => span <= view ? (view - span) / 2 + lead : Math.max(view - span + lead, Math.min(lead, want));
+    const ox = axis(spanX * ts, cw, h * ISO.a * ts, cw / 2 - kx);
+    const oy = top + axis(spanY * ts, ch, TALL * ISO.z * ts, ch / 2 - ky);
+    return { ...base, ts, ox: Math.floor(ox), oy: Math.floor(oy) };
+}
+/** Where a tile sits on the turned floor (its corner nearest the back), and its depth for painting. */
+function turnedTile(v, x, y) {
+    const c = turn(v, x + 0.5, y + 0.5);
+    return { u: c.x - 0.5, w: c.y - 0.5, d: c.x + c.y };
+}
+const depth = (v, p) => { const t = turn(v, p.x, p.y); return t.x + t.y; };
+/** Which way in the inn is toward the camera: the turned floor's +u (lower right) and +w (lower left). */
+function towardViewer(v) {
+    const o = unturn(v, 0, 0), a = unturn(v, 1, 0), b = unturn(v, 0, 1);
+    return { u: { x: Math.round(a.x - o.x), y: Math.round(a.y - o.y) }, w: { x: Math.round(b.x - o.x), y: Math.round(b.y - o.y) } };
 }
 // ---------------------------------------------------------------------------
 // Shapes
@@ -55,26 +68,28 @@ function poly(ctx, pts) {
         ctx.lineTo(q.x, q.y);
     ctx.closePath();
 }
-/** A block: its two faces toward the viewer (+x lower right, +y lower left), then its top. */
+/** A block: its two faces toward the viewer (+u lower right, +w lower left), then its top. */
 function drawBox(ctx, v, b) {
-    const { x0, y0, x1, y1, z } = b;
-    if (b.faceY) {
+    const a = turn(v, b.x0, b.y0), c = turn(v, b.x1, b.y1);
+    const u0 = Math.min(a.x, c.x), u1 = Math.max(a.x, c.x), w0 = Math.min(a.y, c.y), w1 = Math.max(a.y, c.y), z = b.z;
+    if (b.faceW) {
         ctx.fillStyle = shade(b.color, 0.72);
-        poly(ctx, [P(v, x0, y1, z), P(v, x1, y1, z), P(v, x1, y1, 0), P(v, x0, y1, 0)]);
+        poly(ctx, [Pt(v, u0, w1, z), Pt(v, u1, w1, z), Pt(v, u1, w1, 0), Pt(v, u0, w1, 0)]);
         ctx.fill();
     }
-    if (b.faceX) {
+    if (b.faceU) {
         ctx.fillStyle = shade(b.color, 0.55);
-        poly(ctx, [P(v, x1, y0, z), P(v, x1, y1, z), P(v, x1, y1, 0), P(v, x1, y0, 0)]);
+        poly(ctx, [Pt(v, u1, w0, z), Pt(v, u1, w1, z), Pt(v, u1, w1, 0), Pt(v, u1, w0, 0)]);
         ctx.fill();
     }
     ctx.fillStyle = b.color;
-    poly(ctx, [P(v, x0, y0, z), P(v, x1, y0, z), P(v, x1, y1, z), P(v, x0, y1, z)]);
+    poly(ctx, [Pt(v, u0, w0, z), Pt(v, u1, w0, z), Pt(v, u1, w1, z), Pt(v, u0, w1, z)]);
     ctx.fill();
 }
-/** Where a block's outline is on screen (for clicks): a hexagon. */
+/** Where a tile's block is on screen (for clicks): a hexagon. */
 function boxOutline(v, x, y, z) {
-    return [P(v, x, y, z), P(v, x + 1, y, z), P(v, x + 1, y, 0), P(v, x + 1, y + 1, 0), P(v, x, y + 1, 0), P(v, x, y + 1, z)];
+    const { u, w } = turnedTile(v, x, y);
+    return [Pt(v, u, w, z), Pt(v, u + 1, w, z), Pt(v, u + 1, w, 0), Pt(v, u + 1, w + 1, 0), Pt(v, u, w + 1, 0), Pt(v, u, w + 1, z)];
 }
 function inside(pts, p) {
     let hit = false;
@@ -94,11 +109,15 @@ function pieceIndex(g) {
             m.set(`${t.x},${t.y}`, f);
     return m;
 }
-const isBackWall = (t) => t.x === 0 || t.y === 0;
-function heightOf(t, f) {
+/** A wall along one of the two edges farthest from the camera. */
+function isBackWall(v, t) {
+    const { u, w } = turnedTile(v, t.x, t.y);
+    return Math.round(u) === 0 || Math.round(w) === 0;
+}
+function heightOf(v, t, f) {
     const k = t.def.kind;
     if (k === "wall")
-        return isBackWall(t) ? TALL : LOW_WALL;
+        return isBackWall(v, t) ? TALL : LOW_WALL;
     if (k === "floor" || k === "staff" || k === "door" || k === "front")
         return 0;
     if (f && PIECE_HEIGHT[f.kind] !== undefined && k === "furniture")
@@ -129,19 +148,19 @@ function colorOf(g, t, f) {
         return g.fireLit ? "#d2691e" : "#3a3330";
     return (f && PIECE_COLOR[f.kind]) ?? "#3d2d22";
 }
-function solids(g) {
+function solids(g, v) {
     const idx = pieceIndex(g);
     const out = [];
     for (const row of g.world.tiles)
         for (const t of row) {
             const f = idx.get(`${t.x},${t.y}`);
-            const z = heightOf(t, f);
+            const z = heightOf(v, t, f);
             if (z > 0)
                 out.push({ t, f, z });
         }
     return out;
 }
-function boxFor(g, s, all) {
+function boxFor(g, v, s, all) {
     const { t, f, z } = s;
     const grp = group(t, f);
     const inset = INSET[t.def.kind] ?? 0;
@@ -151,10 +170,11 @@ function boxFor(g, s, all) {
     };
     const sameHeight = (dx, dy) => joins(dx, dy) && all.get(`${t.x + dx},${t.y + dy}`).z === z;
     const flap = t.ch === "f";
+    const toward = towardViewer(v);
     return {
         x0: t.x + (joins(-1, 0) ? 0 : inset), x1: t.x + 1 - (joins(1, 0) ? 0 : inset),
         y0: t.y + (joins(0, -1) ? 0 : inset), y1: t.y + 1 - (joins(0, 1) ? 0 : inset),
-        z, color: flap ? "#6b4a32" : colorOf(g, t, f), faceX: !sameHeight(1, 0), faceY: !sameHeight(0, 1),
+        z, color: flap ? "#6b4a32" : colorOf(g, t, f), faceU: !sameHeight(toward.u.x, toward.u.y), faceW: !sameHeight(toward.w.x, toward.w.y),
     };
 }
 // ---------------------------------------------------------------------------
@@ -252,15 +272,15 @@ export function drawIso(ctx, g, v, target, clickDest) {
         shadow(ctx, v, p.pos);
     shadow(ctx, v, g.keeper.pos);
     // Blocks and people, back to front.
-    const solid = solids(g);
+    const solid = solids(g, v);
     const byTile = new Map(solid.map((s) => [`${s.t.x},${s.t.y}`, s]));
-    const items = solid.map((s) => ({ d: s.t.x + s.t.y + 1, pri: 0, draw: () => drawSolid(ctx, g, v, s, byTile) }));
+    const items = solid.map((s) => ({ d: turnedTile(v, s.t.x, s.t.y).d, pri: 0, draw: () => drawSolid(ctx, g, v, s, byTile) }));
     for (const p of g.patrons) {
-        items.push({ d: p.pos.x + p.pos.y, pri: 1, draw: () => personBody(ctx, v, p.pos, p.color, p.state === "leaving" ? 0.6 : 1, p.soaked ?? 0, p.id) });
+        items.push({ d: depth(v, p.pos), pri: 1, draw: () => personBody(ctx, v, p.pos, p.color, p.state === "leaving" ? 0.6 : 1, p.soaked ?? 0, p.id) });
     }
     const k = g.keeper;
     items.push({
-        d: k.pos.x + k.pos.y, pri: 1, draw: () => {
+        d: depth(v, k.pos), pri: 1, draw: () => {
             personBody(ctx, v, k.pos, "#f2e2c2", 1, 0, 0);
             const eye = P(v, k.pos.x + k.facing.x * 0.16, k.pos.y + k.facing.y * 0.16, HEAD_Z);
             ctx.fillStyle = "#2a1d14";
@@ -319,19 +339,20 @@ function drawSolid(ctx, g, v, s, byTile) {
     const t = s.t;
     if (t.ch === "f") {
         // The counter flap: a hinged plank folded back against its edge, and a gap to walk through.
-        drawBox(ctx, v, { x0: t.x + 0.78, x1: t.x + 0.94, y0: t.y + 0.08, y1: t.y + 0.92, z: 0.5, color: "#6b4a32", faceX: true, faceY: true });
+        drawBox(ctx, v, { x0: t.x + 0.78, x1: t.x + 0.94, y0: t.y + 0.08, y1: t.y + 0.92, z: 0.5, color: "#6b4a32", faceU: true, faceW: true });
         return;
     }
-    const b = boxFor(g, s, byTile);
+    const b = boxFor(g, v, s, byTile);
     drawBox(ctx, v, b);
     if (t.def.name === "Window") {
         // Glass: on the face toward the room for a back wall, on top of a low one.
         ctx.fillStyle = windowColor(g);
         const m = 0.15, z0 = s.z * 0.25, z1 = s.z * 0.85;
-        if (s.z === TALL && t.y === 0)
-            poly(ctx, [P(v, t.x + m, t.y + 1, z1), P(v, t.x + 1 - m, t.y + 1, z1), P(v, t.x + 1 - m, t.y + 1, z0), P(v, t.x + m, t.y + 1, z0)]);
+        const { u, w } = turnedTile(v, t.x, t.y);
+        if (s.z === TALL && Math.round(w) === 0)
+            poly(ctx, [Pt(v, u + m, w + 1, z1), Pt(v, u + 1 - m, w + 1, z1), Pt(v, u + 1 - m, w + 1, z0), Pt(v, u + m, w + 1, z0)]);
         else if (s.z === TALL)
-            poly(ctx, [P(v, t.x + 1, t.y + m, z1), P(v, t.x + 1, t.y + 1 - m, z1), P(v, t.x + 1, t.y + 1 - m, z0), P(v, t.x + 1, t.y + m, z0)]);
+            poly(ctx, [Pt(v, u + 1, w + m, z1), Pt(v, u + 1, w + 1 - m, z1), Pt(v, u + 1, w + 1 - m, z0), Pt(v, u + 1, w + m, z0)]);
         else
             floorPath(ctx, v, t.x, t.y, 1, 1, 0.18, s.z);
         ctx.fill();
@@ -527,13 +548,13 @@ function drawReadables(ctx, g, v, byTile, target) {
 /** The point in the inn (tiles) under a canvas pixel, allowing for height: clicking the side of the counter means the counter. */
 export function isoPick(g, v, sx, sy) {
     const ts = v.ts;
-    const people = [...g.patrons].sort((a, b) => b.pos.x + b.pos.y - (a.pos.x + a.pos.y));
+    const people = [...g.patrons].sort((a, b) => depth(v, b.pos) - depth(v, a.pos));
     for (const p of people) {
         const foot = P(v, p.pos.x, p.pos.y);
         if (Math.abs(sx - foot.x) < ts * 0.3 && sy < foot.y + ts * 0.12 && sy > foot.y - (HEAD_Z * ISO.z + HEAD_R) * ts)
             return { ...p.pos };
     }
-    const blocks = solids(g).filter((s) => s.t.def.kind !== "wall").sort((a, b) => b.t.x + b.t.y - (a.t.x + a.t.y));
+    const blocks = solids(g, v).filter((s) => s.t.def.kind !== "wall").sort((a, b) => turnedTile(v, b.t.x, b.t.y).d - turnedTile(v, a.t.x, a.t.y).d);
     for (const s of blocks)
         if (inside(boxOutline(v, s.t.x, s.t.y, s.z), { x: sx, y: sy }))
             return { x: s.t.x + 0.5, y: s.t.y + 0.5 };

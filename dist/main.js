@@ -21,6 +21,7 @@ import { watchObjectives } from "./objectives.js";
 import { askSetDown, offerUnasked, cleanable, cleanStep, findTargets, targetName, forcedTurnIn, interact, openGarnishMenu, openJournal, promptFor, targetId } from "./interact.js";
 import { draw, computeView } from "./ui/render.js";
 import { computeIsoView, drawIso, isoPick } from "./ui/render-iso.js";
+import { screenDir } from "./ui/proj.js";
 import { updateHud, initDebug, toggleDebug } from "./ui/hud.js";
 import { back, initMenus, menuKey, menuOpen } from "./ui/menu.js";
 import { initSound, isMuted, soundscape, toggleMute, unlockAudio } from "./sound.js";
@@ -141,6 +142,18 @@ window.addEventListener("keydown", (e) => {
         case "v":
             toggleIso();
             g.say(settings.iso ? "Isometric view." : "Top-down view.");
+            break;
+        case "[":
+            setZoom(zoom() / ZOOM_STEP);
+            break;
+        case "]":
+            setZoom(zoom() * ZOOM_STEP);
+            break;
+        case ",":
+            turnCamera(-1);
+            break;
+        case ".":
+            turnCamera(1);
             break;
         case "p":
         case "escape":
@@ -320,6 +333,8 @@ canvas.addEventListener("pointerdown", (e) => {
     }
     // Touch: tap a thing to use it, tap the floor to walk, double tap to run.
     e.preventDefault();
+    if (fingers.size > 1)
+        return; // a pinch, not a tap
     holdSince = performance.now();
     document.getElementById("touchhint")?.remove(); // the hint goes once you've got the idea
     const p = toTile(e);
@@ -343,18 +358,44 @@ canvas.addEventListener("pointermove", (e) => { if (g.arranging)
     arrangeHover(g, toTile(e)); if (mouseHeld)
     mouseAt = toTile(e); });
 window.addEventListener("pointerup", () => { mouseHeld = false; release(); });
-// When several things are in reach, Tab or the mouse wheel chooses between them.
-let lastWheel = 0;
+// The wheel zooms (a trackpad's small steps zoom a little; a mouse notch about 15%).
 canvas.addEventListener("wheel", (e) => {
-    if (menuOpen() || candidates.length < 2)
-        return;
     e.preventDefault();
-    const now = performance.now();
-    if (now - lastWheel < 160)
-        return; // a trackpad sends a flurry
-    lastWheel = now;
-    cyclePick(e.deltaY > 0 ? 1 : -1);
+    if (menuOpen())
+        return;
+    const steps = e.deltaMode === 1 ? e.deltaY / 3 : e.deltaY / 100; // lines or pixels, in mouse notches
+    setZoom(zoom() * Math.pow(ZOOM_STEP, -steps));
 }, { passive: false });
+// Two fingers pinch to zoom. The first finger's tap already went; the second calls it off.
+const fingers = new Map();
+let pinchFrom = 0;
+const spread = () => { const [a, b] = [...fingers.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+canvas.addEventListener("pointerdown", (e) => {
+    if (e.pointerType !== "touch")
+        return;
+    fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (fingers.size === 2) {
+        stopKeeper();
+        touchHolding = false;
+        g.holdingSpace = false;
+        release();
+        pinchFrom = spread();
+    }
+}, { capture: true });
+canvas.addEventListener("pointermove", (e) => {
+    if (!fingers.has(e.pointerId))
+        return;
+    fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (fingers.size === 2 && pinchFrom > 0) {
+        const now = spread();
+        setZoom(zoom() * (now / pinchFrom));
+        pinchFrom = now;
+    }
+});
+const liftFinger = (e) => { fingers.delete(e.pointerId); if (fingers.size < 2)
+    pinchFrom = 0; };
+canvas.addEventListener("pointerup", liftFinger);
+canvas.addEventListener("pointercancel", liftFinger);
 canvas.addEventListener("pointerup", endTouch);
 canvas.addEventListener("pointercancel", endTouch);
 canvas.addEventListener("pointerleave", endTouch);
@@ -413,7 +454,7 @@ function release() {
 function holding() {
     return performance.now() - holdSince >= HOLD_MS;
 }
-// Several things in reach: the best is chosen, unless you've picked another with Tab or the wheel.
+// Several things in reach: the best is chosen, unless you've picked another with Tab.
 let candidates = [];
 let pickedId = null;
 function cyclePick(dir) {
@@ -557,7 +598,7 @@ function moveKeeper(dt) {
         dx += 1;
     const run = keys.has("shift");
     if ((dx || dy) && view.iso)
-        [dx, dy] = [(dx + dy) / 2, (dy - dx) / 2]; // isometric: screen directions to the floor's
+        ({ x: dx, y: dy } = screenDir(view, dx, dy)); // isometric: up on screen is up
     if (dx || dy) {
         k.path = [];
         k.pendingInteract = null;
@@ -692,6 +733,55 @@ applySound();
 function toggleIso() {
     settings.iso = !settings.iso;
     saveSettings();
+    showView(settings.iso ? "Isometric" : "Top-down");
+}
+// Zoom (wheel, pinch, [ and ]) and the isometric camera's corner (, and .), each kept per view.
+const ZOOM_STEP = 1.15;
+const ZOOM_MIN = 0.5, ZOOM_MAX = 3;
+function zoom() { return (settings.iso ? settings.zoomIso : settings.zoomFlat) ?? 1; }
+function setZoom(z) {
+    z = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
+    if (Math.abs(z - 1) < 0.03)
+        z = 1; // snaps to "fits the inn" on the way past
+    if (settings.iso)
+        settings.zoomIso = z;
+    else
+        settings.zoomFlat = z;
+    saveSettings();
+    showView(`Zoom ${Math.round(z * 100)}%`);
+}
+const CORNERS = ["south-east", "north-east", "north-west", "south-west"];
+function turnCamera(by) {
+    if (!settings.iso) {
+        showView("Turning works in the isometric view (V)");
+        return;
+    }
+    settings.rot = (((settings.rot ?? 0) + by) % 4 + 4) % 4;
+    saveSettings();
+    showView(`Looking from the ${CORNERS[settings.rot]}`);
+}
+/** A note over the map for a moment: the zoom level, or where the camera is. */
+let viewNote = { text: "", until: 0 };
+function showView(text) { viewNote = { text, until: performance.now() + 1400 }; }
+function drawViewNote() {
+    const left = viewNote.until - performance.now();
+    if (left <= 0)
+        return;
+    const dpr = window.devicePixelRatio || 1;
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, left / 300);
+    ctx.font = `600 ${Math.round(14 * dpr * uiScale())}px system-ui, sans-serif`;
+    const w = ctx.measureText(viewNote.text).width + 28 * dpr;
+    const x = canvas.width / 2 - w / 2, y = canvas.height - 64 * dpr * uiScale();
+    ctx.fillStyle = "rgba(22,17,13,0.85)";
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, 30 * dpr * uiScale(), 8 * dpr);
+    ctx.fill();
+    ctx.fillStyle = "#f3e6d0";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(viewNote.text, canvas.width / 2, y + 15 * dpr * uiScale());
+    ctx.restore();
 }
 function autoUi() {
     // 1 on laptops and phones, larger on big high-resolution screens (a 4K screen at 100% gets about 2).
@@ -746,6 +836,8 @@ function openPause() {
             panel = `<div class="set-list">
         ${slider("ui", "🔍", "UI size", "panels, cards, pop-ups and tickets", Math.round(uiScale() * 100), 75, 250, 5, `${Math.round(uiScale() * 100)}%`)}
         <button class="set-btn" data-pick="iso">${settings.iso ? "◆ Isometric view" : "▦ Top-down view"} <small>switch to ${settings.iso ? "top-down" : "isometric"} (V)</small></button>
+        ${slider("zoom", "🔎", "Zoom", `${settings.iso ? "isometric" : "top-down"} view · wheel, pinch, [ ]`, Math.round(zoom() * 100), ZOOM_MIN * 100, ZOOM_MAX * 100, 5, `${Math.round(zoom() * 100)}%`)}
+        ${settings.iso ? `<button class="set-btn" data-pick="turn">🧭 Looking from the ${CORNERS[settings.rot ?? 0]} <small>turn the camera ( , and . )</small></button>` : ""}
         <button class="set-btn" data-pick="uiauto">${uiChoice === "auto" ? "☑" : "☐"} Automatic <small>size to fit the screen (${Math.round(autoUi() * 100)}% here)</small></button>
       </div>`;
         }
@@ -772,6 +864,10 @@ function openPause() {
                     }
                     else if (k === "iso") {
                         toggleIso();
+                        redraw();
+                    }
+                    else if (k === "turn") {
+                        turnCamera(1);
                         redraw();
                     }
                     else if (k === "uiauto") {
@@ -801,6 +897,12 @@ function openPause() {
                                     label.textContent = `${Math.round(v * 100)}%`;
                                 return;
                             } // applied on release: resizing mid-drag jumps the slider
+                            if (key === "zoom") {
+                                setZoom(v);
+                                if (label)
+                                    label.textContent = `${Math.round(zoom() * 100)}%`;
+                                return;
+                            }
                             settings[key] = v;
                             if (label)
                                 label.textContent = pct(v);
@@ -828,7 +930,7 @@ function openPause() {
 const touch = window.matchMedia("(pointer: coarse)").matches;
 const controls = touch
     ? `<b>Tap</b> the floor to walk, <b>double tap</b> to run. <b>Tap</b> things and people to use them. <b>Keep your finger</b> on a pot or a mess to hurry or clean. The buttons on the side do the rest.`
-    : `<b>Click</b> the floor to walk, <b>click</b> things and people to use them, <b>double-click</b> to run, <b>right-click</b> to stop. Or <b>WASD</b> to walk (<b>Shift</b> runs) and <b>Space</b> to use. Hold <b>Space</b> to hurry cooking; hold <b>Space</b> or the mouse on a mess to clean it. When several things are in reach, <b>Tab</b> or the mouse wheel picks one. <b>P</b> pauses.`;
+    : `<b>Click</b> the floor to walk, <b>click</b> things and people to use them, <b>double-click</b> to run, <b>right-click</b> to stop. Or <b>WASD</b> to walk (<b>Shift</b> runs) and <b>Space</b> to use. Hold <b>Space</b> to hurry cooking; hold <b>Space</b> or the mouse on a mess to clean it. When several things are in reach, <b>Tab</b> picks one. The <b>wheel</b> zooms; <b>V</b> switches to an isometric view. <b>P</b> pauses.`;
 function welcomeBody() {
     return `<div class="welcome">
     <p><b>${longDate(g.date)}.</b></p>
@@ -893,9 +995,10 @@ function frame(now) {
     watchTrays();
     watchObjectives(g);
     soundscape(g, realDt);
-    view = settings.iso ? computeIsoView(canvas, g, 34, statusClearance()) : computeView(canvas, g, 22, statusClearance());
+    view = settings.iso ? computeIsoView(canvas, g, 34, statusClearance(), zoom(), settings.rot ?? 0) : computeView(canvas, g, 22, statusClearance(), zoom());
     (view.iso ? drawIso : draw)(ctx, g, view, g.arranging ? null : target, clickDest);
     drawArrange(ctx, g, view);
+    drawViewNote();
     updateTickets(g);
     hudTimer -= realDt;
     if (hudTimer <= 0) {
