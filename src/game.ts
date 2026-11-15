@@ -86,6 +86,8 @@ export interface Patron {
   consuming?: { icon: string; kind: ItemKind; from: number; tags?: string[] }; // what's in front of them
   marker?: { text: Outcome | string; until: number };
   line?: { text: string; until: number };
+  /** Lines waiting their turn: one voice per table at a time (see Game.speak). */
+  lineQueue?: { text: string; minutes: number; queuedAt: number }[];
   leftEarly: boolean;
   /** Why they came in: out of the rain, to eat, to drink, or for the company. */
   reason: "shelter" | "food" | "drink" | "company";
@@ -279,6 +281,41 @@ export class Game {
 
   say(text: string): void {
     this.bus.emit({ type: "Log", text });
+  }
+
+  /**
+   * A guest says something over their head. One voice per table at a time: if someone at the same
+   * table is still talking, the line waits its turn (flushed by `flushLines`). Stale lines are dropped.
+   */
+  /** `toKeeper`: a reply to the keeper (a dish, a reminder) goes to the front of the queue. */
+  speak(p: Patron, text: string, minutes = 6, toKeeper = false): void {
+    const entry = { text, minutes, queuedAt: this.minute };
+    if (toKeeper) (p.lineQueue ??= []).unshift(entry);
+    else (p.lineQueue ??= []).push(entry);
+    this.flushLines();
+  }
+
+  /** Who shares a voice with this guest: their table, or just themselves at the counter or on the bench. */
+  voiceOf(p: Patron): string {
+    const seat = this.world.seats.find((s) => s.id === p.seatId);
+    return seat?.table ? `t${seat.table.x},${seat.table.y}` : `p${p.id}`;
+  }
+
+  /** Let the next waiting line through wherever its table has gone quiet. */
+  flushLines(): void {
+    const talking = new Set<string>();
+    for (const q of this.patrons) if (q.line && this.minute < q.line.until) talking.add(this.voiceOf(q));
+    for (const q of this.patrons) {
+      const queue = q.lineQueue;
+      if (!queue?.length) continue;
+      while (queue.length && this.minute - queue[0].queuedAt > TUNING.lineStaleMinutes) queue.shift();
+      if (!queue.length || q.state === "leaving") continue;
+      const voice = this.voiceOf(q);
+      if (talking.has(voice)) continue;
+      const next = queue.shift()!;
+      q.line = { text: next.text, until: this.minute + next.minutes };
+      talking.add(voice);
+    }
   }
 
   get speed(): number {

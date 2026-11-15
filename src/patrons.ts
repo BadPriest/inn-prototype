@@ -332,7 +332,7 @@ function placeOrder(g: Game, p: Patron): void {
   }
   const menu = offered(kind);
   if (!menu.length) {
-    p.line = { text: g.pickLine(["Nothing on the board for me {now}.", "Is the kitchen closed?"]), until: g.minute + 6 };
+    g.speak(p, g.pickLine(["Nothing on the board for me {now}.", "Is the kitchen closed?"]));
     g.say(`${p.name} finds nothing on the bill of fare, and leaves.`);
     startLeaving(g, p);
     return;
@@ -373,19 +373,19 @@ function placeOrder(g: Game, p: Patron): void {
   p.hadRecipes = [...(p.hadRecipes ?? []), recipe.id];
   if (grace) {
     p.lastGraceAt = g.minute;
-    p.line = { text: pick(["Go on then, one more.", "Just the one more.", "Well, since I'm here…"]), until: g.minute + 6 };
+    g.speak(p, pick(["Go on then, one more.", "Just the one more.", "Well, since I'm here…"]));
   }
   if (inspired && insp) {
     p.inspiredTimes = (p.inspiredTimes ?? 0) + 1;
     const said = `I'll have what ${insp.from} had.`;
-    p.line = { text: said, until: g.minute + 6 };
+    g.speak(p, said);
     g.journal(p, `ordered ${recipe.name.toLowerCase()} after seeing ${insp.from} enjoy it.`, "note");
     return;
   }
   // A craving hint, the first time they order this visit (the reserved keep it to themselves).
   if (p.craving && p.ordersPlaced === 1 && p.schema !== "reserved") {
     const hint = g.pickLine([`Something ${p.craving.tag} would be nice.`, `I could do with something ${p.craving.tag}.`, `Feel like something ${p.craving.tag} {now}.`]);
-    p.line = { text: hint, until: g.minute + 8 };
+    g.speak(p, hint, 8);
     g.journal(p, `said: “${hint}”`, "said");
   }
 }
@@ -486,7 +486,7 @@ function waitOutRain(g: Game, p: Patron): void {
   p.nextThinkAt = g.minute + organic(SHELTER.checkEvery);
   if (g.minute - p.stayUntil > organic(SHELTER.waitOut)) {
     done();
-    if (p.schema !== "reserved") p.line = { text: pick(SHELTER.braveLines), until: g.minute + 6 };
+    if (p.schema !== "reserved") g.speak(p, pick(SHELTER.braveLines));
     startLeaving(g, p);
     return;
   }
@@ -548,7 +548,7 @@ function chatter(g: Game, p: Patron): void {
   const weather = !hint && chance(CHATTER.weatherChance) ? weatherLine(g, p) : null;
   const text = hint ?? weather?.text ?? g.pickLine(CHATTER.small);
   if (weather?.taste && dist(g.keeper.pos, p.pos) <= TALK_TUNING.overhearRange) g.journal(p, `overheard: “${weather.text}”`, "said");
-  p.line = { text, until: g.minute + 6 };
+  g.speak(p, text);
   if (mates.length && chance(0.7)) {
     const m = pick(mates);
     m.nextChatAt = Math.max(m.nextChatAt ?? 0, g.minute + 3);
@@ -720,7 +720,7 @@ function nibble(g: Game, p: Patron, simDt: number): void {
       return;
     }
     const line = hitLove ? pick([`Oh, ${name}. You spoil us.`, `These ${name} are lovely.`]) : pick([`Not one for ${name}, me.`, `Could do without the ${name}.`]);
-    p.line = { text: line, until: g.minute + 6 };
+    g.speak(p, line);
     g.journal(p, `about the ${name}: “${line}”`, "said");
   }
   if (bowl.left <= 0) g.say(`The ${snack.name.toLowerCase()} bowl is empty.`);
@@ -758,11 +758,12 @@ export function updatePatrons(g: Game, simDt: number): void {
 
   processQueue(g);
   greetings(g);
+  g.flushLines();
   for (let i = pendingLines.length - 1; i >= 0; i--) {
     const l = pendingLines[i];
     if (g.minute >= l.at) {
       const q = g.patron(l.id);
-      if (q && q.state !== "leaving") q.line = { text: l.text, until: g.minute + 6 };
+      if (q && q.state !== "leaving") g.speak(q, l.text);
       pendingLines.splice(i, 1);
     }
   }
@@ -779,7 +780,7 @@ export function updatePatrons(g: Game, simDt: number): void {
           p.nextThinkAt = g.minute + organic([2, 1.5]);
           // In from the rain: they might say so.
           const from = p.cameIn?.band ? CHATTER.cameIn[p.cameIn.band] : undefined;
-          if (from && p.schema !== "reserved" && chance(0.5)) p.line = { text: pick(from), until: g.minute + 6 };
+          if (from && p.schema !== "reserved" && chance(0.5)) g.speak(p, pick(from));
         }
         break;
       case "queued":
@@ -801,8 +802,9 @@ export function updatePatrons(g: Game, simDt: number): void {
             p.remindedOnce = true;
             p.waitedSince = g.minute - p.patience * (fussy ? 0.6 : 0);
             if (p.schema !== "reserved") {
-              p.line = { text: fussy ? "Is anyone coming?" : `Still hoping for that ${o?.label.toLowerCase() ?? "order"}.`, until: g.minute + 6 };
-              g.say(`${p.name}: “${p.line.text}”`);
+              const nudge = fussy ? "Is anyone coming?" : `Still hoping for that ${o?.label.toLowerCase() ?? "order"}.`;
+              g.speak(p, nudge, 6, true);
+              g.say(`${p.name}: “${nudge}”`);
             }
           } else {
             g.say(`${p.name} gives up waiting and leaves.`);
@@ -829,7 +831,7 @@ export function updatePatrons(g: Game, simDt: number): void {
             p.state = "seated";
             p.waitingOut = g.minute;
             p.nextThinkAt = g.minute + organic(SHELTER.checkEvery);
-            if (p.schema !== "reserved" && chance(0.5)) p.line = { text: pick(SHELTER.waitLines), until: g.minute + 6 };
+            if (p.schema !== "reserved" && chance(0.5)) g.speak(p, pick(SHELTER.waitLines));
           } else if (group && othersPresent(g, p).length && (group.leaving || chance(0.8))) {
             // Parties mostly leave together: wait for the others to finish.
             group.leaving = true;

@@ -1011,6 +1011,7 @@ export const TUNING = {
   dayLengthMinutes: 20 * 60, // 6 AM to 2 AM
   realSecondsPerGameMinute: 2.5, // at speed x1. A chill pace.
   speeds: [0.5, 1, 2, 4],
+  lineStaleMinutes: 12, // a guest's line that waited this long for their table to go quiet is dropped
   quietClockBoost: 5, // extra speed while the inn is closed or empty
   keeperWalk: 4.2, // tiles per real second
   keeperRun: 7,

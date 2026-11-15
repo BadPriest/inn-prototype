@@ -203,9 +203,9 @@ export function serveUnasked(g, p, item) {
     const v = judge(g, p, item, null);
     p.marker = { text: v.outcome, until: g.minute + TUNING.outcomeShowMinutes };
     if (v.line)
-        p.line = { text: v.line, until: g.minute + 6 };
+        g.speak(p, v.line, 6, true);
     else if (v.outcome === "DELIGHT")
-        p.line = { text: "For me? Oh!", until: g.minute + 6 };
+        g.speak(p, "For me? Oh!", 6, true);
     g.stats.served++;
     g.totalServed++;
     p.consuming = { icon: iconFor(item.recipeId, item.garnish) || "🥣", kind: item.kind, from: g.minute, tags: item.tags };
@@ -256,7 +256,7 @@ export function deliverTo(g, p, quiet = false, extra = []) {
     p.consumeUntil = g.minute + (v.outcome === "UNFINISHED" || v.outcome === "COMPLAINS" ? base * 0.4 : base);
     p.marker = { text: v.outcome, until: g.minute + TUNING.outcomeShowMinutes };
     if (v.line)
-        p.line = { text: v.line, until: g.minute + 6 };
+        g.speak(p, v.line, 6, true);
     g.stats.served++;
     g.totalServed++;
     p.consuming = { icon: iconFor(item.recipeId, item.garnish) || "🥣", kind: item.kind, from: g.minute, tags: item.tags };

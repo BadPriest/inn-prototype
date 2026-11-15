@@ -276,14 +276,9 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
   });
 
   if (g.keeperLine && g.minute < g.keeperLine.until) {
-    ctx.font = `italic ${Math.floor(ts * 0.3)}px Georgia, serif`;
-    ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillStyle = "#ffe08a"; ctx.strokeStyle = "rgba(0,0,0,0.75)"; ctx.lineWidth = 3;
-    const t = `“${g.keeperLine.text}”`;
-    ctx.strokeText(t, X(k.pos.x), Y(k.pos.y) - ts * 0.62);
-    ctx.fillText(t, X(k.pos.x), Y(k.pos.y) - ts * 0.62);
-    ctx.lineWidth = 1;
+    speech.push({ x: X(k.pos.x), anchor: Y(k.pos.y) - ts * 0.38, text: `“${g.keeperLine.text}”`, color: "#ffe08a" });
   }
+  drawSpeech(ctx, ts);
 
   const busy = g.cleaning ?? g.pouring ?? g.winding;
   if (busy) {
@@ -367,24 +362,84 @@ function drawPatron(ctx: CanvasRenderingContext2D, g: Game, p: Patron, X: (n: nu
   // Outcome marker (debug-visible state)
   if (p.marker && g.minute < p.marker.until) {
     ctx.font = `bold ${Math.floor(ts * 0.3)}px system-ui, sans-serif`;
+    ctx.textBaseline = "middle";
+    const w = ctx.measureText(p.marker.text).width + ts * 0.3;
+    ctx.fillStyle = PLATE;
+    roundRect(ctx, x - w / 2, lineY - ts * 0.2, w, ts * 0.4, ts * 0.12);
+    ctx.fill();
     ctx.fillStyle = OUTCOME_COLOR[p.marker.text] ?? "#fff";
-    ctx.strokeStyle = "rgba(0,0,0,0.7)";
-    ctx.lineWidth = 3;
-    ctx.strokeText(p.marker.text, x, lineY);
-    ctx.fillText(p.marker.text, x, lineY);
-    ctx.lineWidth = 1;
-    lineY -= ts * 0.4;
+    ctx.fillText(p.marker.text, x, lineY + 1);
+    lineY -= ts * 0.45;
   }
-  // Spoken line
+  // Spoken line: collected here, laid out together after everyone's drawn so bubbles don't overlap.
   if (p.line && g.minute < p.line.until && p.line.text) {
-    ctx.font = `italic ${Math.floor(ts * 0.28)}px Georgia, serif`;
-    ctx.fillStyle = "#fff6e0";
-    ctx.strokeStyle = "rgba(0,0,0,0.75)";
-    ctx.lineWidth = 3;
-    ctx.strokeText(`“${p.line.text}”`, x, lineY);
-    ctx.fillText(`“${p.line.text}”`, x, lineY);
-    ctx.lineWidth = 1;
+    speech.push({ x, anchor: lineY + ts * 0.2, text: `“${p.line.text}”`, color: "#fff6e0" });
   }
+}
+
+// ---------------------------------------------------------------------------
+// Speech bubbles: a dark, semi-transparent rounded plate with a small tail pointing at the speaker.
+// Collected during the frame, then placed so plates from different speakers nudge apart.
+
+const PLATE = "rgba(22,17,13,0.82)";
+interface Speech { x: number; anchor: number; text: string; color: string }
+const speech: Speech[] = [];
+
+function wrapText(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
+  const words = text.split(" ");
+  const lines: string[] = [];
+  let cur = "";
+  for (const w of words) {
+    const next = cur ? `${cur} ${w}` : w;
+    if (cur && ctx.measureText(next).width > maxW) { lines.push(cur); cur = w; } else cur = next;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
+function drawSpeech(ctx: CanvasRenderingContext2D, ts: number): void {
+  if (!speech.length) return;
+  ctx.font = `italic ${Math.floor(ts * 0.28)}px Georgia, serif`;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  const lh = ts * 0.34, padX = ts * 0.18, padY = ts * 0.1, tail = ts * 0.16, gap = ts * 0.06;
+  const boxes = speech.map((s) => {
+    const lines = wrapText(ctx, s.text, ts * 5.5);
+    const w = Math.max(...lines.map((l) => ctx.measureText(l).width)) + padX * 2;
+    const h = lines.length * lh + padY * 2;
+    let bx = s.x - w / 2;
+    bx = Math.max(2, Math.min(ctx.canvas.width - w - 2, bx));
+    return { s, lines, w, h, x: bx, y: s.anchor - tail - h };
+  });
+  // Lowest speakers first; anyone above who'd overlap gets nudged up (or sideways if there's no room above).
+  boxes.sort((a, b) => b.s.anchor - a.s.anchor);
+  const placed: typeof boxes = [];
+  const hits = (a: (typeof boxes)[0], b: (typeof boxes)[0]) =>
+    a.x < b.x + b.w + gap && a.x + a.w + gap > b.x && a.y < b.y + b.h + gap && a.y + a.h + gap > b.y;
+  for (const b of boxes) {
+    for (let tries = 0; tries < 12; tries++) {
+      const other = placed.find((o) => hits(b, o));
+      if (!other) break;
+      b.y = other.y - b.h - gap;
+    }
+    if (b.y < 2) b.y = 2;
+    placed.push(b);
+  }
+  for (const b of placed) {
+    ctx.fillStyle = PLATE;
+    roundRect(ctx, b.x, b.y, b.w, b.h, ts * 0.14);
+    ctx.fill();
+    // The tail: from the plate's bottom edge to just above the speaker (it stretches if the plate was nudged).
+    const tx = Math.max(b.x + ts * 0.2, Math.min(b.x + b.w - ts * 0.2, b.s.x));
+    ctx.beginPath();
+    ctx.moveTo(tx - ts * 0.09, b.y + b.h - 0.5);
+    ctx.lineTo(tx + ts * 0.09, b.y + b.h - 0.5);
+    ctx.lineTo(b.s.x, b.s.anchor);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = b.s.color;
+    b.lines.forEach((l, i) => ctx.fillText(l, b.x + b.w / 2, b.y + padY + lh * (i + 0.5) + 1));
+  }
+  speech.length = 0;
 }
 
 function badge(ctx: CanvasRenderingContext2D, x: number, y: number, text: string, ts: number): void {
