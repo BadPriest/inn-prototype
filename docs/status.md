@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 15, 2026 · build 75 (builds 74–75 committed, not pushed yet) · https://inn-prototype.vercel.app
+Updated Nov 15, 2026 · build 76 (builds 74–76 committed, not pushed yet) · https://inn-prototype.vercel.app
 
 Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was done in each task's comments. Design decisions come from [design-session-journal.md](design-session-journal.md) and [design-session-journal_game-start_nov-15.md](design-session-journal_game-start_nov-15.md).
 
@@ -27,7 +27,7 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 ## Built, not yet deployed (push `main` to deploy)
 
 - #37 readable chatter: dark plates with tails, one voice per table, bubbles nudge apart
-- #38 daily order tickets along the top, number plaques over guests, a ring that counts down honestly to a walkout (the ring is your suggestion, built to judge; the plaque replaced the order bubble)
+- #38 order tickets: upright cards along the top, the number plaque on the bottom border; the same ringed plaque over the guest, both counting down together to a walkout (the plaque replaced the order bubble)
 
 ## Waiting on Bruno
 
