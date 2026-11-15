@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 15, 2026 · build 76 (builds 74–76 committed, not pushed yet) · https://inn-prototype.vercel.app
+Updated Nov 15, 2026 · build 77 (builds 74–77 committed, not pushed yet) · https://inn-prototype.vercel.app
 
 Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was done in each task's comments. Design decisions come from [design-session-journal.md](design-session-journal.md) and [design-session-journal_game-start_nov-15.md](design-session-journal_game-start_nov-15.md).
 
@@ -26,7 +26,9 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 
 ## Built, not yet deployed (push `main` to deploy)
 
-- #37 readable chatter: dark plates with tails, one voice per table, bubbles nudge apart
+- #37 readable chatter: dark plates with tails, one voice per table, bubbles nudge apart; lines last as long as they take to read
+- #42 bill of fare: all-day bill (default) or meal times, a tab per meal plus between meals (drinks only)
+- #43 guests show by role until they tell you their name; regulars by how open they are (Hedda takes a long while)
 - #38 order tickets: upright cards along the top, the number plaque on the bottom border; the same ringed plaque over the guest, both counting down together to a walkout (the plaque replaced the order bubble)
 
 ## Waiting on Bruno
@@ -45,8 +47,6 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 **From the Nov 15 game start session** (#36 done in the journal; open questions left)
 - #7 small start: not ready yet (waits on #11, the starter set). #39 bill of fare marks waits on it.
 - #40 day one prologue: card tutorial at turn-in or on waking, or after a long stretch of plain service?
-- #42 meal times: approve the suggested shape (one all-day bill first, a day strip at the desk, meal tabs).
-- #43 names learned over time: approve using each guest's openness.
 - #44 permits and the inspector; #45 reputation and crowds.
 - #47 holds the smaller seeds (keeper eats, pipes, board games, skills found, bathrooms…).
 
