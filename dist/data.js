@@ -650,6 +650,14 @@ export const DOOR_TUNING = {
     fadeMs: 70, // a door sound that's cut off fades out this quickly
 };
 // ---------------------------------------------------------------------------
+// Order tickets along the top of the map (see ui/tickets.ts).
+export const TICKETS = {
+    width: 128, // px per ticket, before UI scaling
+    gap: 6,
+    restMs: 320, // a new ticket rests this long at the snap point before sliding into the row
+    warmFrom: [0.6, 0.85], // share of the way to a walkout where the ring turns amber, then red
+};
+// ---------------------------------------------------------------------------
 // The bill of fare: what's on today. Set at the desk.
 export const DEFAULT_MENU = ["ale", "cider"];
 export const UPGRADES = [

@@ -95,6 +95,7 @@ function tone(freq, start, dur, vol, type = "sine") {
 const synth = {
     moment: () => { tone(659, 0, 0.6, 0.05); tone(880, 0.12, 0.8, 0.05); tone(1319, 0.24, 1.2, 0.04); },
     leave: () => tone(330, 0, 0.25, 0.03, "sine"),
+    snap: () => { tone(1800, 0, 0.035, 0.035, "triangle"); tone(900, 0.012, 0.05, 0.03, "triangle"); },
 };
 export function initSound(g) {
     attach(g);
@@ -116,6 +117,7 @@ export function initSound(g) {
                 const o = g.order(e.orderId);
                 const p = o && g.patrons.find((x) => x.id === o.patronId);
                 play("order", p ? { ...p.pos } : null);
+                setTimeout(() => synth.snap(), 60); // the ticket snapping into place up top
                 break;
             }
             case "ServeOutcome": {

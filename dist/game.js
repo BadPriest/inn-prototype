@@ -6,7 +6,7 @@ import { newWeather } from "./weather.js";
 import { TIME_WORDS, TUNING, timeOfDayAt } from "./data.js";
 export function emptyStats(day) {
     return {
-        day, arrivals: 0, served: 0, leftEarly: 0, leftUnserved: 0, crafted: 0, garnished: 0, cleaned: 0,
+        day, arrivals: 0, orders: 0, served: 0, leftEarly: 0, leftUnserved: 0, crafted: 0, garnished: 0, cleaned: 0,
         outcomes: { DELIGHT: 0, PLEASED: 0, FULFILLED: 0, UNFINISHED: 0, COMPLAINS: 0 },
         moments: [], unmet: [], weather: { rainMinutes: 0, storm: false, sky: {} },
     };

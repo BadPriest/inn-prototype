@@ -451,6 +451,7 @@ function goToSleep(g) {
             modal: true,
             body: `<table class="summary">
         ${row("Patrons", s.arrivals)}
+        ${row("Orders taken", s.orders ?? 0)}
         ${row("Served", s.served)}
         ${row("Delight", o.DELIGHT)}
         ${row("Pleased", o.PLEASED)}

@@ -394,20 +394,25 @@ function drawPatron(ctx, g, p, X, Y, ts, part) {
         ctx.fillText(p.consuming.icon, cx, cy + 1);
     }
     let lineY = y - ts * 0.58;
-    // Order bubble
+    // Order plaque: the ticket's number, like a platform sign (the ticket up top says what and how long).
     const o = g.order(p.orderId);
     if (o?.open && p.state === "waiting") {
-        const waited = g.minute - p.waitedSince;
-        const urgency = Math.min(1, waited / p.patience);
-        const text = `${iconFor(o.recipeId, o.wantGarnish)} ${o.label}`;
-        ctx.font = `${Math.floor(ts * 0.3)}px system-ui, sans-serif`;
-        const w = ctx.measureText(text).width + ts * 0.3;
-        ctx.fillStyle = `rgb(255,${Math.floor(250 - urgency * 120)},${Math.floor(235 - urgency * 160)})`;
-        roundRect(ctx, x - w / 2, lineY - ts * 0.22, w, ts * 0.42, ts * 0.12);
+        const r = ts * 0.27;
+        ctx.fillStyle = "#f4efe4";
+        ctx.strokeStyle = "#222";
+        ctx.lineWidth = Math.max(1, ts * 0.04);
+        ctx.beginPath();
+        ctx.arc(x, lineY, r, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = "#2a1d14";
-        ctx.fillText(text, x, lineY);
-        lineY -= ts * 0.5;
+        ctx.stroke();
+        ctx.lineWidth = 1;
+        ctx.fillStyle = "#222";
+        const digits = String(o.no).length;
+        ctx.font = `700 ${Math.floor(ts * (digits >= 3 ? 0.24 : digits === 2 ? 0.29 : 0.33))}px "Playfair Display", Georgia, serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(String(o.no), x, lineY + 1);
+        lineY -= ts * 0.55;
     }
     // Outcome marker (debug-visible state)
     if (p.marker && g.minute < p.marker.until) {

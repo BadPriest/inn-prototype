@@ -2,6 +2,7 @@
 
 import { TUNING, type LocationId } from "./data.js";
 import { openLocationPicker } from "./ui/location.js";
+import { updateTickets } from "./ui/tickets.js";
 import { openCalendar } from "./ui/calendar.js";
 import { newWeather } from "./weather.js";
 import { Game } from "./game.js";
@@ -29,7 +30,8 @@ import { openMenu, closeAll, replaceMenu } from "./ui/menu.js";
 const g = new Game();
 load(g);
 beginDay(g);
-(window as unknown as { game: Game }).game = g; // handy from the browser console
+(window as unknown as { game: Game }).game = g;
+void document.fonts?.load('700 16px "Playfair Display"'); // the ticket numerals, on the canvas too // handy from the browser console
 (window as unknown as { __innView: () => View }).__innView = () => view; // for tests: where tiles are on screen
 
 const canvas = document.getElementById("view") as HTMLCanvasElement;
@@ -650,6 +652,7 @@ function frame(now: number): void {
   soundscape(g, realDt);
   view = computeView(canvas, g, 22, statusClearance());
   draw(ctx, g, view, target, clickDest);
+  updateTickets(g);
   hudTimer -= realDt;
   if (hudTimer <= 0) {
     hudTimer = 0.15;

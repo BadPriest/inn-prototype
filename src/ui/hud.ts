@@ -35,12 +35,12 @@ export function updateHud(g: Game, prompt: string): void {
   const carrying = g.keeper.trays.map((t) => t.items.map((i) => iconFor(i.recipeId, i.garnish) || "🥣").join("") || "–").join(" | ");
   if (mini) mini.innerHTML = `${$("clock").innerHTML}<div>Trays: ${carrying}</div>${prompt ? `<div style="color:var(--accent)">${prompt}</div>` : ""}`;
 
-  const orders = g.orders.filter((o) => o.open).sort((a, b) => a.placedAt - b.placedAt);
+  const orders = g.orders.filter((o) => o.open).sort((a, b) => a.no - b.no);
   $("orders").innerHTML = orders.length
     ? orders.map((o) => {
         const p = g.patron(o.patronId);
         const waited = Math.floor(g.minute - o.placedAt);
-        return `<div class="order"><span><span class="ic">${iconFor(o.recipeId, o.wantGarnish)}</span> ${o.label}</span><span class="who">${p?.name ?? "?"} · ${waited}m</span></div>`;
+        return `<div class="order"><span>#${o.no} <span class="ic">${iconFor(o.recipeId, o.wantGarnish)}</span> ${o.label}</span><span class="who">${p?.name ?? "?"} · ${waited}m</span></div>`;
       }).join("")
     : `<div class="muted">No orders.</div>`;
 

@@ -361,7 +361,7 @@ function placeOrder(g, p) {
     const o = {
         id: uid(), patronId: p.id, recipeId: recipe.id, wantGarnish, wantOption,
         label: garName ? `${named} with ${garName}` : named,
-        placedAt: g.minute, open: true,
+        placedAt: g.minute, open: true, no: g.stats.orders = (g.stats.orders ?? 0) + 1,
     };
     g.orders.push(o);
     p.orderId = o.id;
@@ -432,6 +432,22 @@ export function inspireOthers(g, p, item) {
         if (chance(Math.max(0, Math.min(0.85, pull))))
             q.inspiredBy = { recipeId: item.recipeId, from: p.name };
     }
+}
+const isFussy = (p) => p.fussiness >= 0.55;
+/** After the reminder, the share of their patience a guest still gives you: fussy ones less. */
+const secondWait = (p) => (isFussy(p) ? 0.4 : 1);
+/**
+ * How close a waiting guest is to giving up, 0 (just ordered) to 1 (walking out), honestly: it follows
+ * the same clock as the walkout (patience, one reminder, then a shorter or equal second wait).
+ * null when they aren't waiting on an order.
+ */
+export function walkoutProgress(g, p) {
+    if (p.state !== "waiting")
+        return null;
+    const total = p.patience * (1 + secondWait(p));
+    const leftNow = p.waitedSince + p.patience - g.minute;
+    const left = p.remindedOnce ? leftNow : leftNow + p.patience * secondWait(p);
+    return Math.max(0, Math.min(1, 1 - left / total));
 }
 export function startLeaving(g, p, early = false) {
     if (p.state === "leaving")
@@ -875,12 +891,12 @@ export function updatePatrons(g, simDt) {
                 }
                 break;
             case "waiting": {
-                const fussy = p.fussiness >= 0.55;
+                const fussy = isFussy(p);
                 if (g.minute - p.waitedSince > p.patience) {
                     const o = g.order(p.orderId);
                     if (!p.remindedOnce) {
                         p.remindedOnce = true;
-                        p.waitedSince = g.minute - p.patience * (fussy ? 0.6 : 0);
+                        p.waitedSince = g.minute - p.patience * (1 - secondWait(p));
                         if (p.schema !== "reserved") {
                             const nudge = fussy ? "Is anyone coming?" : `Still hoping for that ${o?.label.toLowerCase() ?? "order"}.`;
                             g.speak(p, nudge, 6, true);

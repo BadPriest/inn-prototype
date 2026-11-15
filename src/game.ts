@@ -36,6 +36,8 @@ export interface Order {
   label: string;
   placedAt: number; // game minute
   open: boolean;
+  /** Today's ticket number: 1, 2, 3… reset each morning, never reused within a day. */
+  no: number;
 }
 
 export type PatronState = "entering" | "queued" | "seated" | "waiting" | "consuming" | "leaving";
@@ -151,6 +153,8 @@ export interface Keeper {
 export interface DayStats {
   day: number;
   arrivals: number;
+  /** Orders taken today: also the last ticket's number. Missing in saves from before tickets. */
+  orders?: number;
   served: number;
   outcomes: Record<string, number>;
   leftEarly: number;
@@ -166,7 +170,7 @@ export interface DayStats {
 
 export function emptyStats(day: number): DayStats {
   return {
-    day, arrivals: 0, served: 0, leftEarly: 0, leftUnserved: 0, crafted: 0, garnished: 0, cleaned: 0,
+    day, arrivals: 0, orders: 0, served: 0, leftEarly: 0, leftUnserved: 0, crafted: 0, garnished: 0, cleaned: 0,
     outcomes: { DELIGHT: 0, PLEASED: 0, FULFILLED: 0, UNFINISHED: 0, COMPLAINS: 0 },
     moments: [], unmet: [], weather: { rainMinutes: 0, storm: false, sky: {} },
   };
