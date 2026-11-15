@@ -27,7 +27,7 @@
   #card .card-ic { font-size:26px; }
   #card .card-k { font-size:10px; color:var(--muted); font-family:system-ui; }
   #side, #menu .menu, #debug, #miniclock, #card, #touchbar, #touchhint { zoom: var(--ui, 1); }
-  #toast { position:absolute; left:50%; top:72px; transform:translateX(-50%); max-width:min(80%, 560px); background:rgba(42,33,27,.94); border:1px solid #c9a24a; color:var(--ink); padding:6px 12px; border-radius:8px; font-size:13px; opacity:0; transition:opacity .4s; pointer-events:none; z-index:3; zoom:var(--ui,1); }
+  #toast { position:absolute; left:50%; top:108px; transform:translateX(-50%); max-width:min(80%, 560px); background:rgba(42,33,27,.94); border:1px solid #c9a24a; color:var(--ink); padding:6px 12px; border-radius:8px; font-size:13px; opacity:0; transition:opacity .4s; pointer-events:none; z-index:3; zoom:var(--ui,1); }
   #journal-new { color:#c9a24a; font-size:12px; }
   #touchbar button[data-badge]:not([data-badge=""]) { position:relative; }
   #touchbar button[data-badge]:not([data-badge=""])::after { content:attr(data-badge); position:absolute; top:-4px; right:-4px; background:#c9a24a; color:#1a1410; font:700 10px system-ui; border-radius:8px; padding:1px 4px; }
@@ -148,17 +148,17 @@
   #status .st-time b { font:600 17px system-ui; letter-spacing:.02em; }
   #status .st-wx { font-size:13px; color:#d9cbb4; margin-left:4px; }
   /* Order tickets: a row along the top, oldest beside the status card; the snap point and stack at the right. */
-  #tickets { position:absolute; top:10px; right:10px; height:52px; z-index:2; pointer-events:none; zoom:var(--ui,1); }
+  #tickets { position:absolute; top:8px; right:10px; height:92px; z-index:2; pointer-events:none; zoom:var(--ui,1); }
   #tickets:not([data-stack=""])::after { content:attr(data-stack); position:absolute; right:-6px; top:-6px; z-index:2000; background:#c9a24a; color:#1a1410; font:700 11px system-ui; border-radius:9px; padding:1px 6px; }
-  .ticket { position:absolute; top:0; width:128px; height:52px; box-sizing:border-box; display:flex; align-items:center; gap:7px; padding:5px 8px 5px 5px; background:rgba(26,20,16,.92); border:1px solid #5a4636; border-radius:9px; box-shadow:0 3px 10px rgba(0,0,0,.4); transition:left .38s cubic-bezier(.2,.8,.3,1), opacity .25s, transform .25s; }
+  /* A ticket is a small upright card: what was ordered on it, the number plaque centred on its bottom border. */
+  .ticket { position:absolute; top:0; width:76px; height:72px; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; gap:2px; padding:5px 5px 20px; background:linear-gradient(#3a2c22,#241a14); border:1.5px solid #c9a24a; border-radius:8px; box-shadow:0 3px 10px rgba(0,0,0,.45); text-align:center; transition:left .38s cubic-bezier(.2,.8,.3,1), opacity .25s, transform .25s; }
   .ticket.pop { animation:tk-snap .3s cubic-bezier(.3,1.6,.5,1); }
   .ticket.gone { opacity:0; transform:translateY(-10px) scale(.92); }
   @keyframes tk-snap { 0% { transform:translateX(18px) scale(.9); opacity:.4; } 70% { transform:translateX(-2px) scale(1.04); opacity:1; } 100% { transform:none; } }
-  .tk-ring { flex:0 0 40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
-  .tk-plaque { width:33px; height:33px; border-radius:50%; background:#f4efe4; border:1.5px solid #222; box-sizing:border-box; display:flex; align-items:center; justify-content:center; color:#222; font:700 16px "Playfair Display", "Libre Caslon Text", Georgia, serif; font-variant-numeric:lining-nums; }
-  .tk-what { min-width:0; font-size:12px; line-height:1.2; color:var(--ink); display:flex; gap:4px; align-items:flex-start; }
-  .tk-ic { flex:none; }
-  .tk-label { overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .tk-ic { font-size:18px; line-height:1.1; }
+  .tk-label { font-size:10.5px; line-height:1.15; color:var(--ink); overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .tk-ring { position:absolute; left:50%; bottom:-19px; transform:translateX(-50%); width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,.45); }
+  .tk-plaque { width:30px; height:30px; border-radius:50%; background:#f4efe4; border:1.5px solid #222; box-sizing:border-box; display:flex; align-items:center; justify-content:center; color:#222; font:700 15px "Playfair Display", "Libre Caslon Text", Georgia, serif; font-variant-numeric:lining-nums; }
   #debug { position:absolute; left:8px; top:84px; width:360px; max-height:calc(100% - 92px); overflow:auto; background:rgba(20,16,14,.92); border:1px solid #5a4636; border-radius:6px; padding:8px 10px; font-size:12px; z-index:6; } /* above pop-ups and the pause screen */
   #debug h4 { margin:6px 0 2px; color:var(--accent); font-size:11px; text-transform:uppercase; letter-spacing:.08em; }
   #debug .dp { padding:3px 0; border-bottom:1px dotted var(--line); }

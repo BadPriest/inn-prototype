@@ -19,14 +19,16 @@ function container() {
 function makeCard(o) {
     const el = document.createElement("div");
     el.className = "ticket pop";
-    el.innerHTML = `<div class="tk-ring"><div class="tk-plaque">${o.no}</div></div>`
-        + `<div class="tk-what"><span class="tk-ic">${iconFor(o.recipeId, o.wantGarnish)}</span><span class="tk-label"></span></div>`;
+    el.innerHTML = `<span class="tk-ic">${iconFor(o.recipeId, o.wantGarnish)}</span><span class="tk-label"></span>`
+        + `<div class="tk-ring"><div class="tk-plaque">${o.no}</div></div>`;
     el.querySelector(".tk-label").textContent = o.label;
     el.title = o.label;
     return { el, ring: el.querySelector(".tk-ring"), born: performance.now() };
 }
-/** Cream for most of the wait, then amber, then a soft red as the walkout nears. */
-function ringColor(f) {
+/** The ring's empty part: solid, so it reads over the map as well as on the card. */
+export const RING_TRACK = "#3a2e26";
+/** Cream for most of the wait, then amber, then a soft red as the walkout nears. Shared with the plaque over the guest. */
+export function ringColor(f) {
     const [warmFrom, redFrom] = TICKETS.warmFrom;
     const mix = (a, b, t) => `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * t)).join(",")})`;
     const cream = [233, 223, 201], amber = [224, 168, 74], red = [208, 100, 79];
@@ -104,7 +106,7 @@ export function updateTickets(g) {
         }
         const p = g.patron(o.patronId);
         const f = p ? walkoutProgress(g, p) ?? 0 : 0;
-        c.ring.style.background = `conic-gradient(${ringColor(f)} ${(f * 360).toFixed(1)}deg, rgba(255,248,235,0.14) 0)`;
+        c.ring.style.background = `conic-gradient(${ringColor(f)} ${(f * 360).toFixed(1)}deg, ${RING_TRACK} 0)`;
     });
     // How many more are hidden under the top of the stack.
     const under = stacked > 1 ? `+${stacked - 1}` : "";

@@ -5,6 +5,8 @@ import type { Game, Patron } from "../game.js";
 import type { Target } from "../interact.js";
 import { iconFor } from "../serving.js";
 import { drawLight } from "./light.js";
+import { RING_TRACK, ringColor } from "./tickets.js";
+import { walkoutProgress } from "../patrons.js";
 
 export interface View { ts: number; ox: number; oy: number }
 
@@ -344,10 +346,20 @@ function drawPatron(ctx: CanvasRenderingContext2D, g: Game, p: Patron, X: (n: nu
     ctx.fillText(p.consuming.icon, cx, cy + 1);
   }
   let lineY = y - ts * 0.58;
-  // Order plaque: the ticket's number, like a platform sign (the ticket up top says what and how long).
+  // Order plaque: the same as the one on the ticket, ring and all, on the same clock.
   const o = g.order(p.orderId);
   if (o?.open && p.state === "waiting") {
-    const r = ts * 0.27;
+    const f = walkoutProgress(g, p) ?? 0;
+    const R = ts * 0.34, r = R * (30 / 38); // the ticket's proportions: 38px ring, 30px plaque
+    lineY -= ts * 0.06;
+    ctx.fillStyle = RING_TRACK;
+    ctx.beginPath(); ctx.arc(x, lineY, R, 0, Math.PI * 2); ctx.fill();
+    if (f > 0) {
+      ctx.fillStyle = ringColor(f);
+      ctx.beginPath(); ctx.moveTo(x, lineY);
+      ctx.arc(x, lineY, R, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * f);
+      ctx.closePath(); ctx.fill();
+    }
     ctx.fillStyle = "#f4efe4";
     ctx.strokeStyle = "#222";
     ctx.lineWidth = Math.max(1, ts * 0.04);
@@ -355,10 +367,10 @@ function drawPatron(ctx: CanvasRenderingContext2D, g: Game, p: Patron, X: (n: nu
     ctx.lineWidth = 1;
     ctx.fillStyle = "#222";
     const digits = String(o.no).length;
-    ctx.font = `700 ${Math.floor(ts * (digits >= 3 ? 0.24 : digits === 2 ? 0.29 : 0.33))}px "Playfair Display", Georgia, serif`;
+    ctx.font = `700 ${Math.floor(r * (digits >= 3 ? 0.85 : digits === 2 ? 1.0 : 1.15))}px "Playfair Display", Georgia, serif`;
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText(String(o.no), x, lineY + 1);
-    lineY -= ts * 0.55;
+    lineY -= ts * 0.62;
   }
   // Outcome marker (debug-visible state)
   if (p.marker && g.minute < p.marker.until) {
