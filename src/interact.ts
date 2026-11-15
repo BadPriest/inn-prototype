@@ -4,7 +4,7 @@ import { organic } from "./core.js";
 import { GARNISHES, GRAMOPHONE, INGREDIENTS, RECIPES, REGULARS, SNACKS, TUNING, UPGRADES, type Recipe } from "./data.js";
 import type { Game, Patron, SetDownTray, Spill } from "./game.js";
 import { dist, type Furniture, type Slot } from "./world.js";
-import { collectShelf, recipesFor, returnSlice, startJob, makeItem, serveFromPot, takeSlice, ticketFor } from "./crafting.js";
+import { collectShelf, emptyPot, putBack, recipesFor, returnSlice, startJob, makeItem, serveFromPot, takeSlice, ticketFor } from "./crafting.js";
 import { tableKey } from "./patrons.js";
 import { applyGarnish, removeFromTray, servePatron, serveTable, garnishableDrinks, iconFor, itemLabel, serveUnasked, trayItems, pickupFromHatch, pickUpTray, startPour, setTrayDown, takeFromHatch } from "./serving.js";
 import { endDay, startNextDay, toggleInn } from "./day.js";
@@ -138,8 +138,12 @@ export function promptFor(g: Game, t: Target | null): string {
     }
     case "station": {
       const slots = f.slots ?? [];
-      if (slots.length === 1) return slotPrompt(g, slots[0]);
-      return slots.map((sl) => `${sl.name}: ${slotStatus(g, sl)}`).join(" · ") + " · Space: use";
+      const plan = stationPlan(g, f);
+      const status = slots.length === 1 ? "" : slots.map((sl) => `${sl.name}: ${slotStatus(g, sl)}`).join(" · ") + " · ";
+      if (plan.direct && slots.length === 1) return slotPrompt(g, slots[0]);
+      if (plan.direct) return `${status}Space: ${plan.direct.label.toLowerCase()}`;
+      if (plan.choices.length) return `${status}Space: choose (${plan.choices.map((c) => c.short).filter((x, i, a) => a.indexOf(x) === i).join(", ")})`;
+      return slots.length === 1 ? slotPrompt(g, slots[0]) : `${status}still cooking`;
     }
     case "gramophone":
       if (!recordsReady()) return "The gramophone (no records yet)";
@@ -311,44 +315,78 @@ function slotPrompt(g: Game, sl: Slot): string {
   return ready || `Space: cook at the ${sl.f.name.toLowerCase()}`;
 }
 
-/** Use one place to cook: steep, pour, serve from the pot, pick up what's ready, or cook something. */
-function useSlot(g: Game, sl: Slot): void {
+/** One thing you could do at a station. `main`: what you'd usually come for; the rest only shows in the choice. */
+interface StationAct { label: string; sub: string; short: string; main: boolean; run: () => void }
+
+/** Somebody's waiting on this dish and you aren't already carrying enough of it. */
+function wanted(g: Game, recipeId: string): boolean {
+  const open = g.orders.filter((o) => o.open && o.recipeId === recipeId).length;
+  return open > trayItems(g).filter((i) => i.recipeId === recipeId).length;
+}
+
+const dishList = (items: { name: string; ticketName?: string }[]) => items.map((i) => (i.ticketName ? `${i.name} for ${i.ticketName}` : i.name)).join(", ");
+
+/** Everything you could do at one place to cook. */
+function slotActs(g: Game, sl: Slot, many: boolean): StationAct[] {
+  const where = many ? `${sl.name} · ` : "";
+  const acts: StationAct[] = [];
   const pot = g.pots.get(sl.id);
-  if (pot?.item.recipeId === "water") { openSteepScreen(g, sl); return; }
-  if (pot) {
-    if (pot.item.kind === "drink") startPour(g, sl.id); // a cup from the urn takes pouring
-    else serveFromPot(g, sl.id);
-    return;
-  }
+  const shelf = g.shelves.get(sl.id) ?? [];
   const job = g.jobs.get(sl.id);
-  // Finished dishes first: they wait on the station until you pick them up.
-  if (g.shelves.get(sl.id)?.length && (collectShelf(g, sl.id) > 0 || job)) return;
-  if (job) { g.say(job.done ? "It's done, waiting for room on the shelf." : "Still cooking. Hold Space here to hurry it a little."); return; }
-  openCraftMenu(g, sl);
+  // Picked up from here by mistake: put it back (one of each dish).
+  const back = trayItems(g).filter((i) => i.from === sl.id);
+  for (const it of back.filter((x, i) => back.findIndex((y) => y.recipeId === x.recipeId) === i)) {
+    acts.push({ label: `↩️ Put back the ${it.name.toLowerCase()}`, sub: `${where}it goes back ${it.fromPot ? "in the pot" : "where it was"}`, short: "put back", main: false,
+      run: () => { if (putBack(g, sl.id, it)) g.say(`You put the ${it.name.toLowerCase()} back.`); else g.say("There's no room for it there now."); } });
+  }
+  if (shelf.length) acts.push({ label: `Pick up ${dishList(shelf)}`, sub: `${where}ready`, short: "pick up", main: true, run: () => collectShelf(g, sl.id) });
+  if (pot) {
+    const name = pot.item.name.toLowerCase();
+    if (pot.item.recipeId === "water") acts.push({ label: "🍵 Steep a cup of tea", sub: `${where}hot water for ${pot.left} more`, short: "steep", main: true, run: () => openSteepScreen(g, sl) });
+    else acts.push({
+      label: `${iconFor(pot.item.recipeId) || "🍲"} ${pot.item.kind === "drink" ? "Pour a cup of" : "Take a serving of"} ${name}`, sub: `${where}${pot.left} left`,
+      short: pot.item.kind === "drink" ? "pour" : "take a serving", main: wanted(g, pot.item.recipeId),
+      run: () => (pot.item.kind === "drink" ? startPour(g, sl.id) : serveFromPot(g, sl.id)),
+    });
+    acts.push({ label: `🗑️ Empty the ${pot.item.recipeId === "water" ? "kettle" : sl.kinds.includes("kettle") ? "urn" : "pot"}`, sub: `${where}${pot.left} ${pot.item.recipeId === "water" ? "cups of hot water" : `servings of ${name}`} · frees it to cook`, short: "empty it", main: false,
+      run: () => emptyPot(g, sl.id) });
+  }
+  if (!pot && !job && !shelf.length) acts.push({ label: `Cook something`, sub: `${where}free`, short: "cook", main: true, run: () => openCraftMenu(g, sl) });
+  return acts;
 }
 
 /**
- * A station with several places to cook (two hobs; a hob and an oven): pick up whatever's ready first;
- * then, if only one thing can be done, do it; otherwise choose which hob or oven.
+ * What pressing Space at a station does: the one thing you'd come for, done straight away, or a choice
+ * when there's more than one (two dishes ready, a hob free and the oven done, something to put back, a
+ * pot nobody's asked for that you might want to empty).
  */
-function useStation(g: Game, f: Furniture): void {
+function stationPlan(g: Game, f: Furniture): { direct?: StationAct; choices: StationAct[] } {
   const slots = f.slots ?? [];
-  if (slots.length === 1) { useSlot(g, slots[0]); return; }
-  let took = false;
-  for (const sl of slots) if (g.shelves.get(sl.id)?.length) took = collectShelf(g, sl.id) > 0 || took;
-  if (took) return;
-  const usable = slots.filter((sl) => g.pots.has(sl.id) || !g.jobs.has(sl.id));
-  if (usable.length === 1) { useSlot(g, usable[0]); return; }
-  if (!usable.length) { g.say("Everything on it is still cooking. Hold Space here to hurry it a little."); return; }
+  const acts = slots.flatMap((sl) => slotActs(g, sl, slots.length > 1));
+  const main = acts.filter((a) => a.main);
+  const putBacks = acts.some((a) => a.short === "put back");
+  if (!putBacks && main.length === 1) return { direct: main[0], choices: acts };
+  // More than one dish ready: one choice picks up the lot.
+  const pickups = slots.filter((sl) => g.shelves.get(sl.id)?.length);
+  if (pickups.length > 1) {
+    acts.unshift({ label: "Pick up everything that's ready", sub: dishList(pickups.flatMap((sl) => g.shelves.get(sl.id)!)), short: "pick up", main: true,
+      run: () => { for (const sl of pickups) if (!collectShelf(g, sl.id)) break; } });
+  }
+  return { choices: acts.sort((a, b) => Number(b.main) - Number(a.main)) };
+}
+
+function useStation(g: Game, f: Furniture): void {
+  const plan = stationPlan(g, f);
+  if (plan.direct) { plan.direct.run(); return; }
+  if (!plan.choices.length) {
+    const job = (f.slots ?? []).map((sl) => g.jobs.get(sl.id)).find(Boolean);
+    g.say(job?.done ? "It's done, waiting for room on the shelf." : "Still cooking. Hold Space here to hurry it a little.");
+    return;
+  }
   openMenu({
     title: f.name,
-    subtitle: "Which one?",
-    items: slots.map((sl) => {
-      const pot = g.pots.get(sl.id);
-      const busy = !pot && g.jobs.has(sl.id);
-      const what = pot ? (pot.item.kind === "drink" ? "pour a cup" : "take a serving") : busy ? "cooking" : "cook something";
-      return { label: `${sl.name}: ${slotStatus(g, sl)}`, sub: what, disabled: busy, action: () => { closeAll(); useSlot(g, sl); } };
-    }),
+    subtitle: "What now?",
+    items: plan.choices.map((a) => ({ label: a.label, sub: a.sub, action: () => { closeAll(); a.run(); } })),
   });
 }
 

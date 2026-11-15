@@ -61,7 +61,7 @@ export class World {
             });
             const f = {
                 id: p.uid, kind: eq.kind ?? "station", name: eq.name, tiles,
-                center: { x: p.x + eq.w / 2, y: p.y + eq.h / 2 }, equip: eq,
+                center: { x: p.x + eq.w / 2, y: p.y + eq.h / 2 }, equip: eq, tap: eq.tap,
             };
             const counts = new Map();
             for (const s of eq.slots)

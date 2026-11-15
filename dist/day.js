@@ -1,6 +1,7 @@
 // The clock and the day cycle: open, last call, turn in, next morning. Days never end.
 import { MEALS, TUNING } from "./data.js";
 import { emptyStats } from "./game.js";
+import { defaultLayout } from "./world.js";
 import { callLastOrders, clearPatrons, scheduleRegulars, unlockRegulars } from "./patrons.js";
 import { ageFood, finishAllJobs } from "./crafting.js";
 import { closeAllStretches } from "./needs.js";
@@ -149,6 +150,12 @@ export function load(g) {
         g.menuChosen = !!s.menuChosen;
         if (Array.isArray(s.layout) && s.layout.length) {
             g.layout = s.layout;
+            // Saved before barrels could be bought: they were part of the inn then, so they stand where they were.
+            if (!g.layout.some((p) => p.type === "alekeg" || p.type === "ciderkeg")) {
+                for (const p of defaultLayout())
+                    if (p.type === "alekeg" || p.type === "ciderkeg")
+                        g.layout.push(p);
+            }
             g.rebuildWorld();
         }
         g.mealMode = !!s.mealMode;

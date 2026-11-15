@@ -140,7 +140,7 @@ function bar(g: Game): void {
   const what = h ? eqOf(h.type).name.toLowerCase() : "";
   el.innerHTML = `<span>🛠 <b>Arranging the kitchen</b> · the clock's stopped · ${h
     ? `click where the ${what} should go · Esc ${h.isNew ? "sends it back" : "puts it back"}${h.isNew ? "" : " · Delete gets rid of it"}`
-    : "click a stove, oven, kettle, coffee pot or pie safe to move it"}</span>${!h && lastBought
+    : "click a stove, oven, kettle, barrel or pie safe to move it"}</span>${!h && lastBought
     ? `<button class="ghost" data-act="another">＋ Another ${eqOf(lastBought).name.toLowerCase()} <small>A</small></button>` : ""}<button class="ghost" data-act="buy">🛒 Buy <small>B</small></button><button data-act="done">Done</button>`;
   const act: Record<string, () => void> = { done: () => stopArranging(g), buy: () => arrangeBuy(g), another: () => arrangeAnother(g) };
   el.querySelectorAll<HTMLButtonElement>("button[data-act]").forEach((b) => { b.onclick = () => act[b.dataset.act!](); });

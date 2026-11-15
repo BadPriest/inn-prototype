@@ -1,5 +1,5 @@
 // The desk in your room: the bill of fare, equipment to buy and arrange, and the way to the journal. Card screens (cards.ts).
-import { EQUIPMENT, GOODS, MEALS, RECIPES, TUNING } from "../data.js";
+import { EQUIP_GROUPS, EQUIPMENT, FUELS, GOODS, MEALS, RECIPES, TUNING } from "../data.js";
 import { back, closeAll, confirmed, openMenu, replaceMenu } from "./menu.js";
 import { startArranging } from "./arrange.js";
 import { grid, gridKeys } from "./cards.js";
@@ -207,13 +207,17 @@ export function openBillOfFare(g) {
 }
 // ---------------------------------------------------------------------------
 // Equipment: buy a piece and place it (money is no object, for now). Goods like wider trays just arrive.
+let shopTab = "cooking"; // the shop opens where you left it
 export function openShop(g) {
     const st = { focus: 0 };
-    const items = [
-        ...EQUIPMENT.map((e) => ({ id: e.id, icon: e.icon, name: e.name, blurb: e.blurb, goods: false })),
-        ...GOODS.map((x) => ({ id: x.id, icon: x.icon, name: x.name, blurb: x.blurb, goods: true })),
+    const all = [
+        ...EQUIPMENT.map((e) => ({ id: e.id, icon: e.icon, name: e.name, blurb: e.blurb, goods: false, group: e.group, fuel: e.fuel })),
+        ...GOODS.map((x) => ({ id: x.id, icon: x.icon, name: x.name, blurb: x.blurb, goods: true, group: "goods", fuel: x.fuel })),
     ];
+    const ownedOf = (it) => (it.goods ? (g.upgrades.has(it.id) ? 1 : 0) : g.layout.filter((p) => p.type === it.id).length);
     const build = () => {
+        // What you have comes first, so you can see your kitchen at a glance.
+        const items = all.filter((it) => it.group === shopTab).sort((a, b) => Number(ownedOf(b) > 0) - Number(ownedOf(a) > 0));
         const buy = (i) => {
             const it = items[i];
             if (!it)
@@ -231,21 +235,48 @@ export function openShop(g) {
             closeAll();
             startArranging(g, it.id); // straight to placing it
         };
+        const switchTab = (by) => {
+            const i = EQUIP_GROUPS.findIndex((t) => t.id === shopTab);
+            shopTab = EQUIP_GROUPS[(i + by + EQUIP_GROUPS.length) % EQUIP_GROUPS.length].id;
+            st.focus = 0;
+            replaceMenu(build());
+        };
         const cards = items.map((it, i) => {
-            const owned = it.goods ? (g.upgrades.has(it.id) ? 1 : 0) : g.layout.filter((p) => p.type === it.id).length;
+            const owned = ownedOf(it);
+            const fuel = it.fuel ? FUELS[it.fuel] : null;
             return {
-                pick: String(i), icon: it.icon, name: it.name, focus: i === st.focus, on: it.goods && owned > 0,
-                note: `${it.goods ? (owned ? "yours" : "buy") : owned ? `you have ${owned} · buy another` : "buy and place"}<br><span class="muted">${it.blurb}</span>`,
+                pick: String(i), icon: it.icon, name: it.name, focus: i === st.focus, owned: it.goods ? 0 : owned, on: it.goods && owned > 0,
+                tags: fuel ? [`${fuel.icon} ${fuel.name}`] : undefined,
+                note: `${it.goods ? (owned ? "yours" : "buy") : owned ? "buy another" : "buy and place"}<br><span class="muted">${it.blurb}</span>`,
             };
         });
+        const tabs = `<div class="bf-tabs">${EQUIP_GROUPS.map((t) => {
+            const n = all.filter((it) => it.group === t.id).reduce((a, it) => a + (it.goods ? 0 : ownedOf(it)), 0);
+            return `<button class="${shopTab === t.id ? "on" : ""}" data-pick="tab:${t.id}">${t.icon} ${t.name}${n ? ` <small>${n}</small>` : ""}</button>`;
+        }).join("")}</div>`;
         return {
             title: "🛒 Equipment",
             subtitle: "Money's no object, for now",
             holdsClock: true,
             view: {
-                html: `<p class="explain"><b>Pick something to buy.</b> Stoves, ovens and kettles go straight to the kitchen for you to place; you can move them any time (desk → Arrange the kitchen). While you arrange, <b>B</b> brings you back here.</p>${grid(cards)}`,
-                onPick: (v) => buy(Number(v)),
-                onKey: gridKeys(() => items.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, buy),
+                html: `${tabs}<p class="explain"><b>Pick something to buy.</b> It goes straight to the kitchen for you to place; you can move things any time (desk → Arrange the kitchen). While you arrange, <b>B</b> brings you back here. <b>Tab</b> switches lists.</p>${grid(cards)}`,
+                onPick: (v) => {
+                    if (v.startsWith("tab:")) {
+                        shopTab = v.slice(4);
+                        st.focus = 0;
+                        replaceMenu(build());
+                        return;
+                    }
+                    buy(Number(v));
+                },
+                onKey: (e) => {
+                    if (e.key === "Tab") {
+                        e.preventDefault();
+                        switchTab(e.shiftKey ? -1 : 1);
+                        return true;
+                    }
+                    return gridKeys(() => items.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, buy)(e);
+                },
             },
             items: [],
         };

@@ -4,8 +4,8 @@ export function chip(tag, highlight = false) {
     return `<span class="chip ${highlight ? "new" : ""}">${tag}</span>`;
 }
 export function card(c) {
-    return `<div class="icard ${c.on ? "on" : ""} ${c.off ? "off" : ""} ${c.focus ? "focus" : ""}" data-pick="${c.pick}"${c.title ? ` title="${c.title}"` : ""}>
-      <span class="ic">${c.icon}</span>${c.name}
+    return `<div class="icard ${c.on ? "on" : ""} ${c.off ? "off" : ""} ${c.focus ? "focus" : ""} ${c.owned ? "owned" : ""}" data-pick="${c.pick}"${c.title ? ` title="${c.title}"` : ""}>
+      ${c.owned ? `<span class="have">×${c.owned}</span>` : ""}<span class="ic">${c.icon}</span>${c.name}
       ${c.note ? `<div class="note">${c.note}</div>` : ""}
       ${c.tags?.length ? `<div class="chips">${c.tags.map((t) => chip(t)).join("")}</div>` : ""}
     </div>`;

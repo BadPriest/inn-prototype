@@ -2,6 +2,7 @@
 
 import { MEALS, TUNING } from "./data.js";
 import { emptyStats, type DayStats, type Game, type RegularState } from "./game.js";
+import { defaultLayout } from "./world.js";
 import { callLastOrders, clearPatrons, scheduleRegulars, unlockRegulars } from "./patrons.js";
 import { ageFood, finishAllJobs } from "./crafting.js";
 import { closeAllStretches } from "./needs.js";
@@ -140,7 +141,14 @@ export function load(g: Game): void {
       menu?: string[]; menuChosen?: boolean; layout?: Game["layout"]; mealMode?: boolean; meals?: unknown; betweenMenu?: string[]; upgrades?: string[]; totalServed?: number; showObjectives?: boolean };
     if (s.menu) g.menu = new Set(s.menu);
     g.menuChosen = !!s.menuChosen;
-    if (Array.isArray(s.layout) && s.layout.length) { g.layout = s.layout; g.rebuildWorld(); }
+    if (Array.isArray(s.layout) && s.layout.length) {
+      g.layout = s.layout;
+      // Saved before barrels could be bought: they were part of the inn then, so they stand where they were.
+      if (!g.layout.some((p) => p.type === "alekeg" || p.type === "ciderkeg")) {
+        for (const p of defaultLayout()) if (p.type === "alekeg" || p.type === "ciderkeg") g.layout.push(p);
+      }
+      g.rebuildWorld();
+    }
     g.mealMode = !!s.mealMode;
     if (Array.isArray(s.meals)) for (const m of s.meals as { id: string; from: number; to: number; menu: string[] }[]) {
       const meal = g.meals.find((x) => x.id === m.id);

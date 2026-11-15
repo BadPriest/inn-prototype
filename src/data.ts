@@ -115,47 +115,66 @@ export interface Equipment {
   blurb: string;
   boilSpeed?: number; // kettles: how much faster than the plain one
   urn?: boolean; // brews a whole urn of tea, poured by the cup
-  kind?: "piesafe"; // not a place to cook: works like this furniture instead
+  kind?: "piesafe" | "tap"; // not a place to cook: works like this furniture instead
+  tap?: string; // a barrel: the drink it pours (a recipe id)
+  /** Where it's listed in the shop. */
+  group: EquipGroup;
+  /** What it burns, if anything. */
+  fuel?: Fuel;
 }
+
+export type EquipGroup = "cooking" | "drinks" | "storage";
+export const EQUIP_GROUPS: { id: EquipGroup | "goods"; name: string; icon: string }[] = [
+  { id: "cooking", name: "Cooking", icon: "🔥" },
+  { id: "drinks", name: "Drinks", icon: "🍺" },
+  { id: "storage", name: "Storage", icon: "🗄️" },
+  { id: "goods", name: "Supplies", icon: "📦" },
+];
+export type Fuel = "wood";
+export const FUELS: Record<Fuel, { icon: string; name: string }> = { wood: { icon: "🪵", name: "wood" } };
 
 const HOB: EquipSlot = { name: "Hob", kinds: ["stove", "griddle"] }; // a pot or a pan
 const OVEN: EquipSlot = { name: "Oven", kinds: ["oven"] };
 
 export const EQUIPMENT: Equipment[] = [
-  { id: "stove1", name: "Wood stove", label: "Stove", icon: "🔥", w: 2, h: 1, slots: [HOB],
-    blurb: "A small wood-burning stove with one hob: a pot of stew or porridge, or a pan for eggs, toast or fish. One at a time." },
-  { id: "stove2", name: "Two-hob stove", label: "Stove ⚬⚬", icon: "🍳", w: 2, h: 1, slots: [HOB, HOB],
-    blurb: "Wood-burning, with two hobs: a pot and a pan, two pots, two pans, whatever the day needs." },
-  { id: "range", name: "Stove with an oven", label: "Range", icon: "🥧", w: 2, h: 1, slots: [HOB, OVEN],
-    blurb: "A wood-burning range: one hob on top and an oven below, for pies and roasts." },
-  { id: "oven", name: "Bread oven", label: "Oven", icon: "🍞", w: 2, h: 1, slots: [OVEN, OVEN],
+  { id: "stove1", name: "Wood stove", label: "Stove", icon: "🔥", w: 2, h: 1, slots: [HOB], group: "cooking", fuel: "wood",
+    blurb: "A small stove with one hob: a pot of stew or porridge, or a pan for eggs, toast or fish. One at a time." },
+  { id: "stove2", name: "Two-hob stove", label: "Stove ⚬⚬", icon: "🍳", w: 2, h: 1, slots: [HOB, HOB], group: "cooking", fuel: "wood",
+    blurb: "Two hobs: a pot and a pan, two pots, two pans, whatever the day needs." },
+  { id: "range", name: "Stove with an oven", label: "Range", icon: "🥧", w: 2, h: 1, slots: [HOB, OVEN], group: "cooking", fuel: "wood",
+    blurb: "A range: one hob on top and an oven below, for pies and roasts." },
+  { id: "oven", name: "Bread oven", label: "Oven", icon: "🍞", w: 2, h: 1, slots: [OVEN, OVEN], group: "cooking", fuel: "wood",
     blurb: "A big brick oven with room for two bakes at once: bread, pies, a roast, in any pair." },
-  { id: "prep", name: "Prep table", label: "Prep", icon: "🔪", w: 2, h: 1, slots: [{ name: "Table", kinds: ["prep"] }],
+  { id: "prep", name: "Prep table", label: "Prep", icon: "🔪", w: 2, h: 1, slots: [{ name: "Table", kinds: ["prep"] }], group: "cooking",
     blurb: "A scrubbed table and a good knife, for cold dishes put together by hand." },
-  { id: "kettle", name: "Tea kettle", label: "Kettle", icon: "🫖", w: 1, h: 1, slots: [{ name: "Kettle", kinds: ["kettle"] }],
+  { id: "kettle", name: "Tea kettle", label: "Kettle", icon: "🫖", w: 1, h: 1, slots: [{ name: "Kettle", kinds: ["kettle"] }], group: "drinks",
     blurb: "Boil it once, then steep a cup at a time, each with its own leaf." },
-  { id: "copperkettle", name: "Copper kettle", label: "Copper", icon: "🫖", w: 1, h: 1, slots: [{ name: "Kettle", kinds: ["kettle"] }], boilSpeed: 2,
+  { id: "copperkettle", name: "Copper kettle", label: "Copper", icon: "🫖", w: 1, h: 1, slots: [{ name: "Kettle", kinds: ["kettle"] }], boilSpeed: 2, group: "drinks",
     blurb: "Boils twice as fast as the plain one." },
-  { id: "urn", name: "Tea urn", label: "Urn", icon: "⚱️", w: 1, h: 1, slots: [{ name: "Urn", kinds: ["kettle"] }], urn: true,
+  { id: "urn", name: "Tea urn", label: "Urn", icon: "⚱️", w: 1, h: 1, slots: [{ name: "Urn", kinds: ["kettle"] }], urn: true, group: "drinks",
     blurb: "Brews a whole urn of one tea, about 8 cups, poured straight from it." },
-  { id: "coffee", name: "Coffee pot", label: "Coffee", icon: "☕", w: 1, h: 1, slots: [{ name: "Coffee pot", kinds: ["coffee"] }],
+  { id: "coffee", name: "Coffee pot", label: "Coffee", icon: "☕", w: 1, h: 1, slots: [{ name: "Coffee pot", kinds: ["coffee"] }], group: "drinks",
     blurb: "A whole pot at a time, poured by the cup until it's gone." },
-  { id: "piesafe", name: "Pie safe", label: "Pies", icon: "🥧", w: 1, h: 1, slots: [], kind: "piesafe",
+  { id: "alekeg", name: "Ale barrel", label: "Ale", icon: "🍺", w: 1, h: 1, slots: [], kind: "tap", tap: "ale", group: "drinks",
+    blurb: "A barrel of ale on a tap. Another one means a second place to pour from." },
+  { id: "ciderkeg", name: "Cider barrel", label: "Cid", icon: "🍏", w: 1, h: 1, slots: [], kind: "tap", tap: "cider", group: "drinks",
+    blurb: "A barrel of cider on a tap. Another one means a second place to pour from." },
+  { id: "piesafe", name: "Pie safe", label: "Pies", icon: "🥧", w: 1, h: 1, slots: [], kind: "piesafe", group: "storage",
     blurb: "A screened cupboard that keeps whole pies, sliced as they're asked for. Each holds 4 pies; your pie safes share them." },
 ];
 
 /** Where the first equipment stands, by map letter. The old separate pan ("R") is gone: hobs take pans now. */
-export const EQUIPMENT_OF_TILE: Record<string, string> = { S: "stove1", O: "oven", K: "prep", H: "kettle", V: "coffee", Z: "piesafe" };
+export const EQUIPMENT_OF_TILE: Record<string, string> = { S: "stove1", O: "oven", K: "prep", H: "kettle", V: "coffee", Z: "piesafe", A: "alekeg", Y: "ciderkeg" };
 /** What's under an equipment letter once it's lifted off the map. */
-export const UNDER_EQUIPMENT: Record<string, string> = { S: ",", R: ",", O: ",", K: ",", H: "n", V: "n", Z: "n" };
+export const UNDER_EQUIPMENT: Record<string, string> = { S: ",", R: ",", O: ",", K: ",", H: "n", V: "n", Z: "n", A: "n", Y: "n" };
 /** Tiles equipment can stand on: the kitchen floor, behind the bar, and the nooks in the counter wall. */
 export const PLACEABLE_ON = [",", "_", "n"];
 
 /** Things to buy that aren't placed. */
-export interface Goods { id: string; name: string; icon: string; blurb: string }
+export interface Goods { id: string; name: string; icon: string; blurb: string; fuel?: Fuel }
 export const GOODS: Goods[] = [
   { id: "trays", name: "Wider trays", icon: "🍽️", blurb: "Carry 3 dishes per tray, and 5 drinks." },
-  { id: "firewood", name: "Seasoned oak", icon: "🪵", blurb: "Dry, well-split firewood that burns hotter: everything on a hob, in an oven or over a flame cooks a little faster." },
+  { id: "firewood", name: "Seasoned oak", icon: "🪵", fuel: "wood", blurb: "Dry, well-split firewood that burns hotter: everything on a hob, in an oven or over a flame cooks a little faster." },
 ];
 /** Seasoned oak: how much faster anything heated cooks. */
 export const FIREWOOD_BOOST = 1.12;

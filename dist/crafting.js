@@ -136,6 +136,8 @@ export function collectShelf(g, fid) {
         return 0;
     let took = 0;
     for (const item of [...shelf]) {
+        item.from = fid;
+        item.fromPot = false;
         if (!addToTray(g, item))
             break;
         shelf.splice(shelf.indexOf(item), 1);
@@ -298,7 +300,7 @@ export function serveFromPot(g, fid) {
     const pot = g.pots.get(fid);
     if (!pot)
         return;
-    const serving = { ...pot.item, id: uid(), tags: [...pot.item.tags] };
+    const serving = { ...pot.item, id: uid(), tags: [...pot.item.tags], from: fid, fromPot: true };
     if (!addToTray(g, serving)) {
         g.say("No room on your trays.");
         return;
@@ -309,6 +311,34 @@ export function serveFromPot(g, fid) {
         g.pots.delete(fid);
         g.say("The pot is empty.");
     }
+}
+/** Put a dish picked up here back where it was: on the shelf, or into its pot. False if there's no room for it now. */
+export function putBack(g, fid, item) {
+    const pot = g.pots.get(fid);
+    if (item.fromPot) {
+        if (pot && pot.item.recipeId === item.recipeId) {
+            pot.left++;
+            pot.total = Math.max(pot.total, pot.left);
+        }
+        else if (!pot && !g.jobs.has(fid))
+            g.pots.set(fid, { item: { ...item, from: undefined, fromPot: undefined }, left: 1, total: 1 });
+        else
+            return false;
+    }
+    else
+        g.shelves.set(fid, [...(g.shelves.get(fid) ?? []), item]);
+    removeFromTray(g, item); // accounted for: it left the trays on purpose
+    item.from = undefined;
+    item.fromPot = undefined;
+    return true;
+}
+/** Empty a pot (porridge nobody wants) so the hob is free: it goes to the hens with the scraps. */
+export function emptyPot(g, fid) {
+    const pot = g.pots.get(fid);
+    if (!pot)
+        return;
+    g.pots.delete(fid);
+    g.say(pot.item.recipeId === "water" ? "You tip out the hot water." : `You scrape the last of the ${pot.item.name.toLowerCase()} into the scraps for the hens.`);
 }
 /** End of day: anything still cooking finishes and waits on its shelf. Nothing is ruined. */
 export function finishAllJobs(g) {

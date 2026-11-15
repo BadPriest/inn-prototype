@@ -20,6 +20,9 @@ export interface Item {
   whole?: number; // a whole pie, this many slices: carried from the oven to the pie safe, never served
   ticket?: number; // patron id this single serving was made for
   ticketName?: string;
+  /** Picked up from this place to cook (a slot id), off its shelf or (`fromPot`) as a serving from its pot: it can go back. */
+  from?: string;
+  fromPot?: boolean;
 }
 
 export interface Tray {

@@ -134,6 +134,9 @@
   .icard.on { border-color:#ffd34d; background:linear-gradient(#5a4428,#3a2c1c); transform:translateY(-3px); box-shadow:0 4px 12px rgba(0,0,0,.45); }
   .icard.on::after { content:"✓"; position:absolute; top:3px; right:6px; color:#ffd34d; font:700 13px system-ui; }
   .icard.off { opacity:.4; cursor:default; }
+  /* Things you have (equipment): gold, with the count in the corner. */
+  .icard.owned { border-color:#c9a24a; background:linear-gradient(#4a3a26,#2e2318); }
+  .icard .have { position:absolute; top:-8px; left:-6px; background:#ffd34d; color:#1a1410; font:700 12px system-ui; border-radius:10px; padding:1px 7px; box-shadow:0 2px 5px rgba(0,0,0,.5); }
   .icard.focus { outline:2px solid var(--accent); outline-offset:2px; }
   .chip { display:inline-block; font:10.5px system-ui; padding:1px 6px; margin:1px; border-radius:9px; background:#3a2e26; color:#cdbda4; border:1px solid #4d3c2e; }
   .chip.new { background:#5a4428; color:#ffe08a; border-color:#a8854a; }
