@@ -232,10 +232,14 @@ export class World {
    * Path between two points. Searches the tile grid in 8 directions, then pulls the
    * string tight so people walk in straight, natural lines rather than along the grid.
    */
-  path(from: Vec, to: Vec, who: "keeper" | "patron"): Vec[] | null {
+  /** `avoid`: tiles to route around if there's another way (where people are standing or sitting). */
+  path(from: Vec, to: Vec, who: "keeper" | "patron", avoid?: Set<string>): Vec[] | null {
     const sx = Math.floor(from.x), sy = Math.floor(from.y);
     const tx = Math.floor(to.x), ty = Math.floor(to.y);
-    const ok = this.walkFn(who, tx, ty);
+    const base = this.walkFn(who, tx, ty);
+    const ok = avoid?.size
+      ? (x: number, y: number) => base(x, y) && ((x === tx && y === ty) || (x === sx && y === sy) || !avoid.has(`${x},${y}`))
+      : base;
     const key = (x: number, y: number) => y * this.w + x;
     const startK = key(sx, sy), goalK = key(tx, ty);
     const g = new Map<number, number>([[startK, 0]]);

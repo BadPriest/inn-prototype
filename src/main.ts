@@ -177,7 +177,7 @@ let lastClickAt = 0;
 let lastClickTile = "";
 
 /** Left-click or tap on something: interact if close, otherwise walk over and then interact. */
-function clickAt(p: Vec): boolean {
+function clickAt(p: Vec, slop = 0): boolean {
   const now = performance.now();
   const tileKey = `${Math.floor(p.x)},${Math.floor(p.y)}`;
   const dbl = now - lastClickAt < 350 && tileKey === lastClickTile;
@@ -207,7 +207,11 @@ function clickAt(p: Vec): boolean {
     if (dist(g.keeper.pos, { x: tx + 0.5, y: ty + 0.5 }) > 1.1) walkTo({ x: tx, y: ty }, null);
     return true;
   }
-  const f = g.world.furniture.find((ff) => ff.tiles.some((t) => t.x === tx && t.y === ty));
+  // On a touch screen a finger is less exact than a mouse: a tap just off a table's edge counts as on it.
+  const off = (t: Vec) => Math.hypot(Math.max(t.x - p.x, 0, p.x - (t.x + 1)), Math.max(t.y - p.y, 0, p.y - (t.y + 1)));
+  const f = g.world.furniture.find((ff) => ff.tiles.some((t) => t.x === tx && t.y === ty))
+    ?? (slop > 0 ? g.world.furniture.filter((ff) => ff.kind === "table" && ff.tiles.some((t) => off(t) <= slop))
+      .sort((a, b) => Math.min(...a.tiles.map(off)) - Math.min(...b.tiles.map(off)))[0] : undefined);
   if (f) {
     const near = f.tiles.some((t) => dist(g.keeper.pos, { x: t.x + 0.5, y: t.y + 0.5 }) <= 1.45);
     if (near) {
@@ -217,7 +221,7 @@ function clickAt(p: Vec): boolean {
     }
     const spots = g.world.approachTiles(f).sort((a, b) => dist(a, g.keeper.pos) - dist(b, g.keeper.pos));
     for (const s of spots) {
-      if (g.world.path(g.keeper.pos, s, "keeper")) { go(s, f.id); return true; }
+      if (keeperPath(s)) { go(s, f.id); return true; }
     }
     return true;
   }
@@ -271,7 +275,7 @@ canvas.addEventListener("pointerdown", (e) => {
   const p = toTile(e);
   const near = dist(g.keeper.pos, p) <= 1.6;
   if (near) faceTowards(p);
-  const handled = clickAt(p);
+  const handled = clickAt(p, TOUCH_SLOP);
   if (!handled) walkToPoint(p);
   // Holding a finger on something close by works like holding Space (hurry cooking, clean).
   if (near) { touchHolding = true; g.holdingSpace = true; }
@@ -369,12 +373,27 @@ function nearestReachable(pos: Vec, range: number): Vec | null {
     }
   }
   cands.sort((a, b) => dist(a, g.keeper.pos) - dist(b, g.keeper.pos));
-  return cands.find((c) => g.world.path(g.keeper.pos, c, "keeper")) ?? null;
+  return cands.find((c) => keeperPath(c)) ?? null;
+}
+
+/** Tiles where guests are standing or sitting: the keeper walks round them when there's a way. */
+function guestTiles(): Set<string> {
+  const out = new Set<string>();
+  for (const p of g.patrons) out.add(`${Math.floor(p.pos.x)},${Math.floor(p.pos.y)}`);
+  for (const s of g.world.seats) if (s.occupant !== null) out.add(`${s.tile.x},${s.tile.y}`);
+  return out;
+}
+
+/** The keeper's way to a tile: round the guests if possible, straight through the gaps if not. */
+function keeperPath(tile: Vec): Vec[] | null {
+  return g.world.path(g.keeper.pos, tile, "keeper", guestTiles()) ?? g.world.path(g.keeper.pos, tile, "keeper");
 }
 
 function walkTo(tile: Vec, interactWith: string | null): void {
-  const path = g.world.path(g.keeper.pos, tile, "keeper");
+  const path = keeperPath(tile);
   if (!path) return;
+  replans = 0;
+  walkGoal = tile;
   g.keeper.path = path;
   g.keeper.pendingInteract = interactWith;
   clickDest = { x: tile.x + 0.5, y: tile.y + 0.5 };
@@ -393,6 +412,7 @@ function walkable(x: number, y: number): boolean {
 
 /** Guests are solid: a step may not bring the keeper into one (stepping away is always fine). */
 const BODY = 0.6; // keeper and guest centres stay at least this far apart
+const TOUCH_SLOP = 0.4; // tiles: how far off a table's edge a tap still counts as on it
 function bumpsGuest(from: Vec, to: Vec): boolean {
   for (const p of g.patrons) {
     const d = dist(to, p.pos);
@@ -446,6 +466,8 @@ function stopKeeper(): void {
 }
 
 let blockedFor = 0;
+let replans = 0; // fresh routes tried since someone got in the way
+let walkGoal: Vec | null = null;
 function moveKeeper(dt: number): void {
   const k = g.keeper;
   if (menuOpen() || g.paused || g.modal) return;
@@ -487,7 +509,13 @@ function moveKeeper(dt: number): void {
     blockedFor += dt;
     const t = k.pendingInteract ? resolveTarget(k.pendingInteract) : null;
     if (t && inReach(t)) { blockedFor = 0; arriveAndUse(); return; }
-    if (blockedFor > 1.5) { blockedFor = 0; stopKeeper(); g.say("Someone's in the way."); }
+    // Someone stepped into the way: after a moment, find a way round them. Only give up if there's none.
+    if (blockedFor > 0.3 && walkGoal) {
+      blockedFor = 0;
+      const round = g.world.path(k.pos, walkGoal, "keeper", guestTiles());
+      if (round && replans++ < 8) { k.path = round; return; }
+      if (replans > 8 || !round) { stopKeeper(); g.say("Someone's in the way."); }
+    }
   }
 }
 
