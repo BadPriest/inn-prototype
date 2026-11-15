@@ -3,7 +3,7 @@
 import { TUNING, type LocationId } from "./data.js";
 import { openLocationPicker } from "./ui/location.js";
 import { updateTickets } from "./ui/tickets.js";
-import { openBillOfFare } from "./ui/desk.js";
+import { openBillOfFare, openDeskScreen } from "./ui/desk.js";
 import { openCalendar } from "./ui/calendar.js";
 import { newWeather } from "./weather.js";
 import { Game } from "./game.js";
@@ -35,6 +35,7 @@ beginDay(g);
 void document.fonts?.load('700 16px "Playfair Display"'); // the ticket numerals, on the canvas too // handy from the browser console
 (window as unknown as { __innView: () => View }).__innView = () => view; // for tests: where tiles are on screen
 (window as unknown as { __innBill: () => void }).__innBill = () => openBillOfFare(g); // for tests: the bill of fare without walking to the desk
+(window as unknown as { __innDesk: () => void }).__innDesk = () => openDeskScreen(g, () => openJournal(g)); // for tests: the desk
 
 const canvas = document.getElementById("view") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;
