@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 15, 2026 · build 92 (deployed) · https://inn-prototype.vercel.app
+Updated Nov 16, 2026 · build 92 (deployed) · https://inn-prototype.vercel.app
 
 History by build: [../CHANGELOG.md](../CHANGELOG.md). What the prototype is and how to play: [../README.md](../README.md).
 
