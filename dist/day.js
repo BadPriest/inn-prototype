@@ -1,5 +1,5 @@
 // The clock and the day cycle: open, last call, turn in, next morning. Days never end.
-import { TUNING } from "./data.js";
+import { MEALS, TUNING } from "./data.js";
 import { emptyStats } from "./game.js";
 import { callLastOrders, clearPatrons, scheduleRegulars, unlockRegulars } from "./patrons.js";
 import { ageFood, finishAllJobs } from "./crafting.js";
@@ -18,12 +18,32 @@ export function simDelta(g, realDt) {
         s *= TUNING.quietClockBoost;
     return s;
 }
+/** Meal times mode: say when a meal starts and ends, while the inn is open. */
+function mealChanges(g) {
+    const now = g.mealNow()?.id ?? null;
+    if (g.mealOn === undefined) {
+        g.mealOn = now;
+        return;
+    }
+    if (now === g.mealOn)
+        return;
+    const was = MEALS.find((m) => m.id === g.mealOn);
+    const is = MEALS.find((m) => m.id === now);
+    g.mealOn = now;
+    if (!g.open)
+        return;
+    if (is)
+        g.say(`${is.icon} ${is.name} is on: the ${is.name.toLowerCase()} bill goes up.`);
+    else if (was)
+        g.say(`${was.name} is over. Drinks only until the next meal.`);
+}
 export function updateClock(g, simDt, onTurnIn) {
     const before = g.timeOfDay;
     g.minute += simDt;
     const after = g.timeOfDay;
     if (after !== before)
         g.bus.emit({ type: "TimeOfDayChanged", from: before, to: after });
+    mealChanges(g);
     if (!g.turnInPrompted && g.minute >= TUNING.dayLengthMinutes) {
         g.minute = TUNING.dayLengthMinutes;
         g.turnInPrompted = true;
@@ -111,7 +131,8 @@ export function save(g) {
         // The needs log is big: keep it for the last two weeks of days only, so the save stays small.
         const history = g.history.map((d, i) => (i < g.history.length - 14 ? { ...d, unmet: undefined } : d));
         localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, calendarStart: g.calendarStart, location: g.location, weather: g.weather, history, regulars, visitorNotes: g.visitorNotes,
-            menu: [...g.menu], menuChosen: g.menuChosen, upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives }));
+            menu: [...g.menu], menuChosen: g.menuChosen,
+            mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives }));
     }
     catch { /* storage unavailable: carry on */ }
 }
@@ -126,6 +147,18 @@ export function load(g) {
         if (s.menu)
             g.menu = new Set(s.menu);
         g.menuChosen = !!s.menuChosen;
+        g.mealMode = !!s.mealMode;
+        if (Array.isArray(s.meals))
+            for (const m of s.meals) {
+                const meal = g.meals.find((x) => x.id === m.id);
+                if (meal) {
+                    meal.from = m.from;
+                    meal.to = m.to;
+                    meal.menu = new Set(m.menu);
+                }
+            }
+        if (Array.isArray(s.betweenMenu))
+            g.betweenMenu = new Set(s.betweenMenu);
         g.upgrades = new Set(s.upgrades ?? []);
         g.totalServed = s.totalServed ?? 0;
         g.showObjectives = s.showObjectives ?? true;

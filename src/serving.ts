@@ -6,7 +6,7 @@ import type { Game, Item, Patron, SetDownTray } from "./game.js";
 import { dist } from "./world.js";
 import { organic, uid } from "./core.js";
 import { afterServe, describeReaction, judge } from "./tastes.js";
-import { inspireOthers } from "./patrons.js";
+import { inspireOthers, maybeIntroduce } from "./patrons.js";
 
 export function trayItems(g: Game): Item[] {
   return [...g.keeper.trays[0].items, ...g.keeper.trays[1].items];
@@ -186,8 +186,8 @@ export function serveUnasked(g: Game, p: Patron, item: Item): void {
   removeFromTray(g, item);
   const v = judge(g, p, item, null);
   p.marker = { text: v.outcome, until: g.minute + TUNING.outcomeShowMinutes };
-  if (v.line) g.speak(p, v.line, 6, true);
-  else if (v.outcome === "DELIGHT") g.speak(p, "For me? Oh!", 6, true);
+  if (v.line) g.speak(p, v.line, 1, true);
+  else if (v.outcome === "DELIGHT") g.speak(p, "For me? Oh!", 1, true);
   g.stats.served++;
   g.totalServed++;
   p.consuming = { icon: iconFor(item.recipeId, item.garnish) || "🥣", kind: item.kind, from: g.minute, tags: item.tags };
@@ -232,7 +232,7 @@ export function deliverTo(g: Game, p: Patron, quiet = false, extra: Item[] = [])
   const base = c + (Math.random() - 0.5) * s;
   p.consumeUntil = g.minute + (v.outcome === "UNFINISHED" || v.outcome === "COMPLAINS" ? base * 0.4 : base);
   p.marker = { text: v.outcome, until: g.minute + TUNING.outcomeShowMinutes };
-  if (v.line) g.speak(p, v.line, 6, true);
+  if (v.line) g.speak(p, v.line, 1, true);
   g.stats.served++;
   g.totalServed++;
   p.consuming = { icon: iconFor(item.recipeId, item.garnish) || "🥣", kind: item.kind, from: g.minute, tags: item.tags };
@@ -247,6 +247,7 @@ export function deliverTo(g: Game, p: Patron, quiet = false, extra: Item[] = [])
     g.stats.moments.push(m);
     g.say(`✦ ${m}`);
   }
+  maybeIntroduce(g, p);
   g.say(`${p.name}: ${item.name} → ${v.outcome}${v.line ? ` “${v.line}”` : ""}`);
   if (v.outcome === "DELIGHT") inspireOthers(g, p, item);
   return true;

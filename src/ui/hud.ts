@@ -1,6 +1,6 @@
 // The side panel (clock, orders, trays, log) and the debug view.
 
-import { ARCHETYPES, NEED_IDS, REGULARS, TIME_WORDS, TUNING } from "../data.js";
+import { ARCHETYPES, MEALS, NEED_IDS, REGULARS, TIME_WORDS, TUNING } from "../data.js";
 import type { Game, Patron, UnmetStretch } from "../game.js";
 import { unmetLogText } from "../needs.js";
 import { isMuted, voicesNow } from "../sound/engine.js";
@@ -18,7 +18,9 @@ const $ = (id: string) => document.getElementById(id)!;
 export function updateHud(g: Game, prompt: string): void {
   const status = g.open ? (g.lastCall ? "LAST CALL" : "OPEN") : "CLOSED";
   updateStatus(g);
-  $("clock").innerHTML = `<span class="st ${status.replace(" ", "")}">${status}</span> · ×${g.speed}${g.paused ? " · paused" : ""}`;
+  const meal = g.mealMode ? MEALS.find((m) => m.id === g.mealNow()?.id) : undefined;
+  const serving = g.mealMode ? ` · ${meal ? `${meal.icon} ${meal.name}` : "between meals"}` : "";
+  $("clock").innerHTML = `<span class="st ${status.replace(" ", "")}">${status}</span>${serving} · ×${g.speed}${g.paused ? " · paused" : ""}`;
   $("prompt").textContent = prompt;
   // Journal heads-up: a toast for the latest note, and a count until the journal is opened.
   const toast = document.getElementById("toast");

@@ -5,3 +5,6 @@ node_modules/
 
 # Original songs (the game plays the smaller copies in assets/sounds/gramophone)
 assets/sounds/music/
+
+# Never commit or deploy account recovery codes
+*recovery-codes*

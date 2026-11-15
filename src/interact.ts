@@ -319,7 +319,7 @@ export function openJournal(g: Game): void {
     items: [
       ...known.map((d) => {
         const st = g.regulars.get(d.id)!;
-        return { label: d.name, sub: `${st.visits} visit${st.visits === 1 ? "" : "s"}`, action: () => journalPage(g, d.id) };
+        return { label: st.nameKnown || !d.role ? d.name : d.role, sub: `${st.visits} visit${st.visits === 1 ? "" : "s"}`, action: () => journalPage(g, d.id) };
       }),
       { label: "Passing visitors", sub: `${g.visitorNotes.length} notes`, action: () => visitorPage(g) },
     ],
@@ -331,7 +331,7 @@ function journalPage(g: Game, id: string): void {
   const st = g.regulars.get(id)!;
   const entries = st.journal.slice(-40).reverse();
   openMenu({
-    title: d.name,
+    title: st.nameKnown || !d.role ? d.name : `${d.role} (name not known yet)`,
     body: `<div class="journal"><i>${d.blurb}</i>${entries.map((e) => `<div class="je ${e.kind ?? ""}"><span class="t">${compactDate(g.dateOfDay(e.day), g.date.year)} ${e.time}</span> ${e.text}</div>`).join("") || `<div class="muted">No notes yet. Serve them something.</div>`}</div>`,
     items: [{ label: "Back", action: () => back() }],
   });

@@ -79,6 +79,23 @@
   .menu-btn[disabled] { opacity:.4; cursor:default; box-shadow:none; }
   .menu-view { margin-bottom:6px; }
   .blurb { font:italic 14px/1.45 Georgia, serif; color:#e3d3b8; margin:0 0 10px; }
+  /* Bill of fare: all-day or meal times; meal tabs, a strip of the day, the meal's hours. */
+  .bf-modes { display:inline-flex; border:1px solid #6b5338; border-radius:8px; overflow:hidden; margin-bottom:10px; }
+  .bf-modes button, .bf-tabs button, .bf-times button { background:#2a1f18; color:var(--ink); border:none; font:12.5px Georgia, serif; padding:5px 12px; cursor:pointer; }
+  .bf-modes button.on { background:#5a4428; color:#ffd34d; }
+  .bf-tabs { display:flex; gap:4px; margin-bottom:8px; flex-wrap:wrap; }
+  .bf-tabs button { border:1px solid #6b5338; border-radius:7px 7px 0 0; border-bottom-width:2px; display:flex; flex-direction:column; align-items:center; padding:4px 10px; }
+  .bf-tabs button small { font:10.5px system-ui; color:var(--muted); }
+  .bf-tabs button.on { border-color:#ffd34d; background:#3a2c1c; }
+  .bf-tabs button.live::after { content:"now"; font:700 9px system-ui; color:#9be27a; }
+  .bf-strip { position:relative; height:26px; margin:2px 0 24px; background:#1a1410; border:1px solid #3d3027; border-radius:6px; }
+  .bf-seg { position:absolute; top:2px; bottom:2px; background:#4a3826; border:1px solid #8a6a40; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:13px; cursor:pointer; box-sizing:border-box; }
+  .bf-seg.on { background:#6a5030; border-color:#ffd34d; }
+  .bf-now { position:absolute; top:-3px; bottom:-3px; width:2px; background:#9be27a; }
+  .bf-tick { position:absolute; top:28px; transform:translateX(-50%); font:10px system-ui; color:var(--muted); }
+  .bf-times { font-size:13px; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  .bf-times button { border:1px solid #6b5338; border-radius:5px; padding:1px 8px; }
+  .bf-times b { min-width:44px; text-align:center; }
   .explain { font-size:12.5px; color:#d9cbb4; margin:0 0 10px; }
   .need { font-size:12px; color:var(--muted); margin:2px 0 8px; }
   .need b { color:var(--ink); }
@@ -158,7 +175,7 @@
   .tk-ic { font-size:18px; line-height:1.1; }
   .tk-label { font-size:10.5px; line-height:1.15; color:var(--ink); overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
   .tk-ring { position:absolute; left:50%; bottom:-19px; transform:translateX(-50%); width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,.45); }
-  .tk-plaque { width:30px; height:30px; border-radius:50%; background:#f4efe4; border:1.5px solid #222; box-sizing:border-box; display:flex; align-items:center; justify-content:center; color:#222; font:700 15px "Playfair Display", "Libre Caslon Text", Georgia, serif; font-variant-numeric:lining-nums; }
+  .tk-plaque { width:30px; height:30px; border-radius:50%; background:#f4efe4; border:1.5px solid #222; box-sizing:border-box; display:flex; align-items:center; justify-content:center; color:#222; font:700 19px "Playfair Display", "Libre Caslon Text", Georgia, serif; font-variant-numeric:lining-nums; }
   #debug { position:absolute; left:8px; top:84px; width:360px; max-height:calc(100% - 92px); overflow:auto; background:rgba(20,16,14,.92); border:1px solid #5a4636; border-radius:6px; padding:8px 10px; font-size:12px; z-index:6; } /* above pop-ups and the pause screen */
   #debug h4 { margin:6px 0 2px; color:var(--accent); font-size:11px; text-transform:uppercase; letter-spacing:.08em; }
   #debug .dp { padding:3px 0; border-bottom:1px dotted var(--line); }

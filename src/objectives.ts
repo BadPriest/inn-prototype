@@ -8,7 +8,7 @@ import { stockOf } from "./crafting.js";
 export interface Objective { text: string; done: boolean; optional?: boolean }
 
 export function objectives(g: Game): Objective[] {
-  const big = RECIPES.filter((r) => g.menu.has(r.id) && r.servings);
+  const big = RECIPES.filter((r) => g.billAllDay().has(r.id) && r.servings);
   const bigText = big.length
     ? `Prepare the big dishes on the menu: ${big.map((r) => `${r.icon} ${r.name.toLowerCase()}${stockOf(g, r.id) ? " ✓" : ""}`).join(", ")}`
     : "Prepare the big dishes on the menu (none today)";

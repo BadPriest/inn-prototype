@@ -52,7 +52,7 @@ function circumstances(g: Game, p: Patron, need: NeedId): string[] {
   if (p.lingering) out.push("waiting for their party");
   if (p.state === "consuming" && p.consuming?.kind === kind) out.push(`has ${kind}`);
   if (kind === "food" && seat?.kind === "stool") out.push("on a stool (drinks only)");
-  if (!RECIPES.some((r) => r.kind === kind && g.menu.has(r.id))) out.push(`no ${kind} on the bill of fare`);
+  if (!RECIPES.some((r) => r.kind === kind && g.billNow().has(r.id))) out.push(`no ${kind} on the bill of fare`);
   if (!g.open || g.lastCall) out.push("last call");
   return out;
 }

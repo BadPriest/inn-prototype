@@ -56,7 +56,7 @@ function circumstances(g, p, need) {
         out.push(`has ${kind}`);
     if (kind === "food" && seat?.kind === "stool")
         out.push("on a stool (drinks only)");
-    if (!RECIPES.some((r) => r.kind === kind && g.menu.has(r.id)))
+    if (!RECIPES.some((r) => r.kind === kind && g.billNow().has(r.id)))
         out.push(`no ${kind} on the bill of fare`);
     if (!g.open || g.lastCall)
         out.push("last call");

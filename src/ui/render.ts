@@ -27,6 +27,9 @@ export function computeView(canvas: HTMLCanvasElement, g: Game, minTile = 22, to
   return { ts, ox, oy };
 }
 
+/** Numeral size on the plaque over a guest, as a share of the plaque's radius (1-digit numbers; 2 and 3 digits shrink to fit). The ticket's size is .tk-plaque in index.html. */
+const PLAQUE_FONT = 1.4;
+
 const OUTCOME_COLOR: Record<string, string> = {
   DELIGHT: "#ffd34d",
   PLEASED: "#9be27a",
@@ -367,7 +370,7 @@ function drawPatron(ctx: CanvasRenderingContext2D, g: Game, p: Patron, X: (n: nu
     ctx.lineWidth = 1;
     ctx.fillStyle = "#222";
     const digits = String(o.no).length;
-    ctx.font = `700 ${Math.floor(r * (digits >= 3 ? 0.85 : digits === 2 ? 1.0 : 1.15))}px "Playfair Display", Georgia, serif`;
+    ctx.font = `700 ${Math.floor(r * (digits >= 3 ? PLAQUE_FONT * 0.72 : digits === 2 ? PLAQUE_FONT * 0.86 : PLAQUE_FONT))}px "Playfair Display", Georgia, serif`;
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText(String(o.no), x, lineY + 1);
     lineY -= ts * 0.62;

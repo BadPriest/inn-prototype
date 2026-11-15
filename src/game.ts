@@ -5,7 +5,7 @@ import { World, type Vec } from "./world.js";
 import { dateOf, randomStartSeason, type GameDate } from "./calendar.js";
 import { newWeather, type CameIn, type WeatherState } from "./weather.js";
 import type { Paper } from "./newspaper.js";
-import { TIME_WORDS, TUNING, timeOfDayAt, type Archetype, type ItemKind, type Line, type NeedId, type Regular, type SchemaId, type TasteSet, type TimeOfDay, type WeatherTaste, type Location, type LocationId } from "./data.js";
+import { TIME_WORDS, TUNING, timeOfDayAt, type Archetype, type ItemKind, type Line, type NeedId, type Regular, type SchemaId, type TasteSet, type TimeOfDay, type WeatherTaste, type Location, type LocationId, type MealId, MEALS } from "./data.js";
 
 export interface Item {
   id: number;
@@ -26,6 +26,8 @@ export interface Tray {
   kind: ItemKind | null;
   items: Item[];
 }
+
+export interface Meal { id: MealId; from: number; to: number; menu: Set<string> }
 
 export interface Order {
   id: number;
@@ -49,7 +51,10 @@ export interface Tastes { food: TasteSet; drink: TasteSet }
 
 export interface Patron {
   id: number;
+  /** What you call them: their role ("Farmhand") until they tell you their name. */
   name: string;
+  /** Their real name, once known it becomes `name`. */
+  trueName?: string;
   archetype?: Archetype;
   regularId?: string;
   groupId?: number;
@@ -87,7 +92,8 @@ export interface Patron {
   nextChatAt?: number;
   consuming?: { icon: string; kind: ItemKind; from: number; tags?: string[] }; // what's in front of them
   marker?: { text: Outcome | string; until: number };
-  line?: { text: string; until: number };
+  /** What they're saying: shown until `until`; cut short at `minUntil` if someone at the table is waiting to talk. */
+  line?: { text: string; until: number; minUntil?: number };
   /** Lines waiting their turn: one voice per table at a time (see Game.speak). */
   lineQueue?: { text: string; minutes: number; queuedAt: number }[];
   leftEarly: boolean;
@@ -186,6 +192,8 @@ export interface RegularState {
   locks: Tastes; // unformed: tags locked in so far
   resolved: boolean; // unformed and veiled: solved, now plays as open
   openedUp: boolean; // reserved
+  /** They've told you their name. */
+  nameKnown?: boolean;
   journal: JournalEntry[];
   // today only (not saved)
   arriveAt?: number;
@@ -245,6 +253,12 @@ export class Game {
   bowls = new Map<string, { snack: string; left: number }>(); // table key -> snack bowl (left: 0..1)
   menu = new Set<string>(DEFAULT_MENU); // recipe ids on today's bill of fare
   menuChosen = false; // the keeper has set the bill of fare at least once
+  /** Meal times mode: each meal has its own bill; between meals, only the drinks on `betweenMenu`. */
+  mealMode = false;
+  meals: Meal[] = MEALS.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: new Set<string>() }));
+  betweenMenu = new Set<string>();
+  /** The meal that was on last time we looked (for "Lunch is on" in the log). */
+  mealOn?: MealId | null;
   upgrades = new Set<string>();
   totalServed = 0; // across all days
   showObjectives = true;
@@ -283,6 +297,30 @@ export class Game {
     });
   }
 
+  /** Clock hour right now, with the fraction: 13.5 is half past one; past midnight goes on to 24, 25… */
+  get clockHour(): number {
+    return TUNING.dayStartHour + this.minute / 60;
+  }
+
+  /** The meal being served right now, in meal times mode. */
+  mealNow(): Meal | null {
+    if (!this.mealMode) return null;
+    const h = this.clockHour;
+    return this.meals.find((m) => h >= m.from && h < m.to) ?? null;
+  }
+
+  /** The bill of fare that applies right now: the all-day bill, this meal's, or between meals (drinks). */
+  billNow(): Set<string> {
+    if (!this.mealMode) return this.menu;
+    return this.mealNow()?.menu ?? this.betweenMenu;
+  }
+
+  /** Everything that's on any bill today (for what to prepare). */
+  billAllDay(): Set<string> {
+    if (!this.mealMode) return this.menu;
+    return new Set([...this.meals.flatMap((m) => [...m.menu]), ...this.betweenMenu]);
+  }
+
   say(text: string): void {
     this.bus.emit({ type: "Log", text });
   }
@@ -291,12 +329,23 @@ export class Game {
    * A guest says something over their head. One voice per table at a time: if someone at the same
    * table is still talking, the line waits its turn (flushed by `flushLines`). Stale lines are dropped.
    */
-  /** `toKeeper`: a reply to the keeper (a dish, a reminder) goes to the front of the queue. */
-  speak(p: Patron, text: string, minutes = 6, toKeeper = false): void {
-    const entry = { text, minutes, queuedAt: this.minute };
+  /** `toKeeper`: a reply to the keeper (a dish, a reminder) goes to the front of the queue. `weight` > 1 lingers longer. */
+  speak(p: Patron, text: string, weight = 1, toKeeper = false): void {
+    const entry = { text, minutes: weight, queuedAt: this.minute };
     if (toKeeper) (p.lineQueue ??= []).unshift(entry);
     else (p.lineQueue ??= []).push(entry);
     this.flushLines();
+  }
+
+  /**
+   * How long a line stays up, in game minutes, from how long it takes to read in real seconds at the
+   * current speed. `min` is the shortest it may be cut to when someone else at the table wants to talk.
+   */
+  readTime(text: string, weight = 1): { full: number; min: number } {
+    const T = TUNING.speech;
+    const secs = Math.max(T.minSeconds, Math.min(T.maxSeconds, T.baseSeconds + text.length * T.perChar)) * weight;
+    const perSec = this.speed / TUNING.realSecondsPerGameMinute; // game minutes per real second
+    return { full: secs * perSec, min: secs * T.cutShare * perSec };
   }
 
   /** Who shares a voice with this guest: their table, or just themselves at the counter or on the bench. */
@@ -305,22 +354,37 @@ export class Game {
     return seat?.table ? `t${seat.table.x},${seat.table.y}` : `p${p.id}`;
   }
 
-  /** Let the next waiting line through wherever its table has gone quiet. */
+  /** Let the next waiting line through wherever its table has gone quiet (or has had long enough). */
   flushLines(): void {
-    const talking = new Set<string>();
-    for (const q of this.patrons) if (q.line && this.minute < q.line.until) talking.add(this.voiceOf(q));
+    const waiting = new Set<string>();
     for (const q of this.patrons) {
       const queue = q.lineQueue;
       if (!queue?.length) continue;
       while (queue.length && this.minute - queue[0].queuedAt > TUNING.lineStaleMinutes) queue.shift();
-      if (!queue.length || q.state === "leaving") continue;
+      if (queue.length && q.state !== "leaving") waiting.add(this.voiceOf(q));
+    }
+    if (!waiting.size) return;
+    // A voice is busy while its line is up; with someone waiting, only until its minimum read.
+    const busy = new Set<string>();
+    for (const q of this.patrons) {
+      if (!q.line || this.minute >= q.line.until) continue;
+      const v = this.voiceOf(q);
+      if (this.minute < (waiting.has(v) ? q.line.minUntil ?? q.line.until : q.line.until)) busy.add(v);
+    }
+    for (const q of this.patrons) {
+      const queue = q.lineQueue;
+      if (!queue?.length || q.state === "leaving") continue;
       const voice = this.voiceOf(q);
-      if (talking.has(voice)) continue;
+      if (busy.has(voice)) continue;
+      // Whoever was still talking at this table stops: one voice at a time.
+      for (const o of this.patrons) if (o.line && this.voiceOf(o) === voice) o.line.until = Math.min(o.line.until, this.minute);
       const next = queue.shift()!;
-      q.line = { text: next.text, until: this.minute + next.minutes };
-      talking.add(voice);
+      const t = this.readTime(next.text, next.minutes);
+      q.line = { text: next.text, until: this.minute + t.full, minUntil: this.minute + t.min };
+      busy.add(voice);
     }
   }
+
 
   get speed(): number {
     return TUNING.speeds[this.speedIndex];

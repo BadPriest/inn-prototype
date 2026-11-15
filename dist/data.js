@@ -142,28 +142,28 @@ export const GARNISHES = [
     { id: "sprig", icon: "🌿", name: "Mint sprig", tags: ["fragrant"] },
 ];
 export const ARCHETYPES = [
-    { id: "dock", name: "Dockworker", color: "#b5651d", weight: 3,
+    { id: "dock", openness: 0.45, name: "Dockworker", color: "#b5651d", weight: 3,
         weather: { love: [], dislike: ["stormy", "cold"] },
         needs: { hunger: [0.5, 0.15], thirst: [0.75, 0.15], warmth: [0.3, 0.15] },
         tastes: { love: ["rich", "hearty"], like: ["smoky", "savoury", "bitter", "salty"], dislike: ["light", "fragrant"] },
         extraLikes: ["fiery", "briny", "warm"],
         fussiness: [0.5, 0.2], patience: [40, 10], stay: [120, 40], consume: [22, 6], walk: [2.6, 0.4],
         foodBias: 0.6, garnishAsk: 0.15, messiness: [0.7, 0.2] },
-    { id: "scholar", name: "Scholar", color: "#5b7fb5", weight: 2,
+    { id: "scholar", openness: 0.2, name: "Scholar", color: "#5b7fb5", weight: 2,
         weather: { love: ["rain", "light-rain"], dislike: ["sunny"] },
         needs: { hunger: [0.35, 0.15], thirst: [0.45, 0.15], warmth: [0.4, 0.15] },
         tastes: { love: ["fragrant"], like: ["mild", "homely", "bright"], dislike: ["fiery", "smoky", "salty"] },
         extraLikes: ["tart", "crisp", "warm"],
         fussiness: [0.7, 0.15], patience: [32, 8], stay: [100, 30], consume: [26, 6], walk: [2.0, 0.3],
         foodBias: 0.4, garnishAsk: 0.4, messiness: [0.15, 0.1] },
-    { id: "traveller", name: "Traveller", color: "#6f9e5a", weight: 3,
+    { id: "traveller", openness: 0.55, name: "Traveller", color: "#6f9e5a", weight: 3,
         weather: { love: ["sunny"], dislike: ["rain", "stormy"] },
         needs: { hunger: [0.75, 0.15], thirst: [0.5, 0.15], warmth: [0.45, 0.15] },
         tastes: { love: ["warm"], like: ["hearty", "sweet", "homely", "savoury", "crisp"], dislike: [] },
         extraLikes: ["earthy", "rich", "bright"],
         fussiness: [0.2, 0.15], patience: [55, 15], stay: [90, 30], consume: [20, 5], walk: [2.4, 0.4],
         foodBias: 0.55, garnishAsk: 0.2, messiness: [0.4, 0.2] },
-    { id: "farmer", name: "Farmhand", color: "#a89a3c", weight: 2,
+    { id: "farmer", openness: 0.7, name: "Farmhand", color: "#a89a3c", weight: 2,
         weather: { love: ["light-rain"], dislike: ["cold"] },
         needs: { hunger: [0.6, 0.15], thirst: [0.55, 0.15], warmth: [0.3, 0.15] },
         tastes: { love: ["earthy"], like: ["homely", "tart", "crisp"], dislike: ["sweet", "briny"] },
@@ -171,8 +171,22 @@ export const ARCHETYPES = [
         fussiness: [0.4, 0.2], patience: [45, 10], stay: [110, 35], consume: [20, 5], walk: [2.2, 0.4],
         foodBias: 0.5, garnishAsk: 0.15, messiness: [0.5, 0.2] },
 ];
+// ---------------------------------------------------------------------------
+// Names. Every guest has one; at first you know them by their role ("Farmhand"). Regulars give their
+// name once you know them well enough, by how open they are (their taste schema); passing visitors
+// might tell you at a hello or a serve, by their archetype's openness.
+export const NAMES = {
+    /** Familiarity a regular needs before they'll tell you their name, by schema. */
+    learnAt: { open: 0, unformed: 2, veiled: 5, reserved: 10 },
+    /** Passing visitors' names. */
+    visitors: ["Tomas", "Ada", "Bram", "Elsie", "Corin", "Mabel", "Osric", "Nell", "Pip", "Rowan", "Tilda", "Edwin",
+        "Ivy", "Garrick", "Lise", "Hob", "Agnes", "Fenn", "Wren", "Jory", "Bess", "Alder", "Mott", "Clem", "Odo", "Petra",
+        "Saul", "Hetty", "Arn", "Greta", "Lew", "Marta", "Ned", "Orla", "Rudd", "Sabine"],
+    lines: ["I'm {name}, by the way.", "Name's {name}.", "Call me {name}.", "{name}. Pleased to meet you."],
+    reservedLines: ["It's {name}.", "{name}.", "You can call me {name}."],
+};
 export const REGULARS = [
-    { id: "hedda", name: "Hedda", color: "#c9a0dc", schema: "reserved", joinsOnDay: 1, habit: [11, 13],
+    { id: "hedda", role: "Miller's widow", name: "Hedda", color: "#c9a0dc", schema: "reserved", joinsOnDay: 1, habit: [11, 13],
         weather: { love: ["rain", "grey"], dislike: ["stormy"] },
         needs: { hunger: [0.55, 0.1], thirst: [0.3, 0.1], warmth: [0.55, 0.1] },
         blurb: "The miller's widow. Says little.",
@@ -181,7 +195,7 @@ export const REGULARS = [
         cravings: ["earthy", "homely", "rich"],
         fussiness: 0, patience: [80, 10], stay: [90, 20], consume: [28, 5], walk: [1.6, 0.2],
         foodBias: 0.7, garnishAsk: 0, messiness: 0.1 },
-    { id: "tobin", name: "Tobin", color: "#e07b5f", schema: "unformed", joinsOnDay: 1, habit: [18, 20],
+    { id: "tobin", role: "Newcomer", name: "Tobin", color: "#e07b5f", schema: "unformed", joinsOnDay: 1, habit: [18, 20],
         weather: { love: ["stormy"], dislike: ["grey"] },
         needs: { hunger: [0.5, 0.2], thirst: [0.6, 0.2], warmth: [0.2, 0.1] },
         blurb: "New in town. Doesn't seem to know what he likes.",
@@ -190,7 +204,7 @@ export const REGULARS = [
         cravings: ["sweet", "smoky", "fiery", "tart", "rich", "briny", "crisp", "earthy"],
         fussiness: 0.2, patience: [50, 10], stay: [150, 30], consume: [18, 5], walk: [2.8, 0.3],
         foodBias: 0.55, garnishAsk: 0.3, messiness: 0.8 },
-    { id: "maren", name: "Maren", color: "#f0c05a", schema: "open", joinsOnDay: 3, habit: [15, 17],
+    { id: "maren", role: "Baker", name: "Maren", color: "#f0c05a", schema: "open", joinsOnDay: 3, habit: [15, 17],
         weather: { love: ["sunny"], dislike: ["grey", "cold"] },
         needs: { hunger: [0.35, 0.1], thirst: [0.45, 0.1], warmth: [0.3, 0.1] },
         blurb: "Bakes for half the street. Hopeful about most things.",
@@ -208,7 +222,7 @@ export const REGULARS = [
         cravings: ["smoky", "briny", "fiery", "rich"],
         fussiness: 0.55, patience: [40, 8], stay: [120, 30], consume: [20, 5], walk: [2.0, 0.3],
         foodBias: 0.6, garnishAsk: 0.2, messiness: 0.4 },
-    { id: "wil", name: "Old Wil", color: "#b0b0a0", schema: "open", joinsOnDay: 7, habit: [9, 11],
+    { id: "wil", role: "Old-timer", name: "Old Wil", color: "#b0b0a0", schema: "open", joinsOnDay: 7, habit: [9, 11],
         weather: { love: [], dislike: ["cold"] },
         needs: { hunger: [0.65, 0.1], thirst: [0.6, 0.1], warmth: [0.4, 0.1] },
         blurb: "Eats anything, says so loudly. Hard to surprise.",
@@ -217,7 +231,7 @@ export const REGULARS = [
         cravings: ["fiery", "briny"],
         fussiness: 0.1, patience: [70, 10], stay: [140, 30], consume: [15, 4], walk: [1.5, 0.2],
         foodBias: 0.6, garnishAsk: 0.1, messiness: 0.6 },
-    { id: "ysolde", name: "Ysolde", color: "#9db4ff", schema: "unformed", joinsOnDay: 9, habit: [16, 19],
+    { id: "ysolde", role: "Courier", name: "Ysolde", color: "#9db4ff", schema: "unformed", joinsOnDay: 9, habit: [16, 19],
         weather: { love: ["sunny", "cold"], dislike: ["rain", "stormy"] },
         needs: { hunger: [0.55, 0.15], thirst: [0.5, 0.15], warmth: [0.4, 0.1] },
         blurb: "A courier between towns. Picky, or maybe just unsure.",
@@ -660,6 +674,11 @@ export const TICKETS = {
 // ---------------------------------------------------------------------------
 // The bill of fare: what's on today. Set at the desk.
 export const DEFAULT_MENU = ["ale", "cider"];
+export const MEALS = [
+    { id: "breakfast", name: "Breakfast", icon: "🍳", from: 7, to: 10 },
+    { id: "lunch", name: "Lunch", icon: "🥪", from: 12, to: 14 },
+    { id: "dinner", name: "Dinner", icon: "🍽️", from: 18, to: 21 },
+];
 export const UPGRADES = [
     { id: "kettle", name: "Copper kettle", icon: "🫖", desc: "The kettle boils twice as fast.", unlockAtServed: 8 },
     { id: "urn", name: "Tea urn", icon: "⚱️", desc: "Adds a choice at the kettle: brew a whole urn, about 8 cups, poured straight from it. Single cups stay.", unlockAtServed: 20 },
@@ -773,7 +792,10 @@ export const TUNING = {
     dayLengthMinutes: 20 * 60, // 6 AM to 2 AM
     realSecondsPerGameMinute: 2.5, // at speed x1. A chill pace.
     speeds: [0.5, 1, 2, 4],
-    lineStaleMinutes: 12, // a guest's line that waited this long for their table to go quiet is dropped
+    lineStaleMinutes: 12,
+    // How long a spoken line stays up, in real seconds: base + per character, clamped. With someone at the
+    // table waiting to talk, a line can be cut after this share of it.
+    speech: { baseSeconds: 1.4, perChar: 0.05, minSeconds: 2.2, maxSeconds: 6, cutShare: 0.5 }, // a guest's line that waited this long for their table to go quiet is dropped
     quietClockBoost: 5, // extra speed while the inn is closed or empty
     keeperWalk: 4.2, // tiles per real second
     keeperRun: 7,

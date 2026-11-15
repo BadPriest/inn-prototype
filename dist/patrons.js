@@ -1,13 +1,12 @@
 // Patrons: arrivals, walking, ordering, waiting, eating, mess and leaving.
 import { chance, organic, pick, uid, weightedPick } from "./core.js";
-import { ARCHETYPES, CHATTER, GARNISHES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING, SHELTER, SEASONAL_TASTES, MARKET, SPECIFIC_ORDERS } from "./data.js";
+import { ARCHETYPES, CHATTER, NAMES, GARNISHES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING, SHELTER, SEASONAL_TASTES, MARKET, SPECIFIC_ORDERS } from "./data.js";
 import { emptyTastes } from "./game.js";
 import { appeal, prepareVisit, tagScore } from "./tastes.js";
 import { arrivalNeeds, closeAllStretches } from "./needs.js";
 import { cameIn, weatherTags } from "./weather.js";
 import { marketDay } from "./newspaper.js";
 import { dist } from "./world.js";
-const counts = new Map();
 function clamp01(n) {
     return Math.max(0, Math.min(1, n));
 }
@@ -100,6 +99,41 @@ function admit(g, p, seat) {
     g.say(`${p.name} comes in.`);
     return p;
 }
+/** A name for a passing visitor: not one that's in the room already, nor a regular's. */
+function visitorName(g) {
+    const taken = new Set([...g.patrons.map((q) => q.trueName), ...REGULARS.map((r) => r.name)]);
+    const free = NAMES.visitors.filter((n) => !taken.has(n));
+    return pick(free.length ? free : NAMES.visitors);
+}
+/**
+ * Maybe they tell you their name (after a hello or a serve). Regulars do once you know them well
+ * enough for how open they are; a passing visitor might, by how open their kind is.
+ */
+export function maybeIntroduce(g, p) {
+    if (!p.trueName || p.name === p.trueName || p.state === "leaving")
+        return;
+    const def = g.regularDef(p.regularId);
+    const st = g.regular(p.regularId);
+    if (def && st) {
+        if (st.familiarity < (NAMES.learnAt[def.schema] ?? 0))
+            return;
+        st.nameKnown = true;
+    }
+    else if (!chance(p.archetype?.openness ?? 0.4))
+        return;
+    const role = p.name;
+    p.name = p.trueName;
+    const lines = p.schema === "reserved" ? NAMES.reservedLines : NAMES.lines;
+    setTimeoutGame(g, p, pick(lines).replace("{name}", p.name), 1.5);
+    if (def) {
+        const m = `${role}: their name is ${p.name}.`;
+        g.journal(p, m, "moment");
+        g.stats.moments.push(m);
+        g.say(`✦ ${m}`);
+    }
+    else
+        g.say(`You learn the ${role.toLowerCase()}'s name: ${p.name}.`);
+}
 export function spawnPatron(g, archetype, forced) {
     const a = archetype ?? passerBy(g);
     const fussiness = clamp01(organic(a.fussiness));
@@ -109,8 +143,6 @@ export function spawnPatron(g, archetype, forced) {
     const seat = forced?.seat ?? chooseSeat(g, hungrier(needs, a.foodBias), fussiness, soaked);
     if (!seat)
         return null;
-    const n = (counts.get(a.id) ?? 0) + 1;
-    counts.set(a.id, n);
     const extra = a.extraLikes.filter((t) => !a.tastes.love.includes(t) && !a.tastes.dislike.includes(t));
     const t = {
         love: [...a.tastes.love],
@@ -119,7 +151,8 @@ export function spawnPatron(g, archetype, forced) {
     };
     const p = {
         ...basePatron(g, seat),
-        name: `${a.name} ${n}`,
+        name: a.name,
+        trueName: visitorName(g),
         archetype: a,
         schema: "open",
         color: a.color,
@@ -252,7 +285,8 @@ export function spawnRegular(g, def, st) {
         return null;
     const p = {
         ...basePatron(g, seat),
-        name: def.name,
+        name: st.nameKnown || !def.role ? def.name : def.role,
+        trueName: def.name,
         regularId: def.id,
         schema: def.schema,
         color: def.color,
@@ -299,7 +333,7 @@ export function unlockRegulars(g) {
             g.regulars.set(def.id, {
                 id: def.id, familiarity: 0, visits: 0, locks: emptyTastes(), resolved: false, openedUp: false, journal: [],
             });
-            joined.push(def.name);
+            joined.push(def.role ? `${/^[aeiou]/i.test(def.role) ? "an" : "a"} ${def.role.toLowerCase()}` : def.name);
         }
     }
     return joined;
@@ -310,7 +344,7 @@ function seatOf(g, p) {
 function placeOrder(g, p) {
     const seat = seatOf(g, p);
     // Only what's on the bill of fare. If it's run out, that's the keeper's problem.
-    const offered = (k) => RECIPES.filter((r) => r.kind === k && g.menu.has(r.id));
+    const offered = (k) => RECIPES.filter((r) => r.kind === k && g.billNow().has(r.id));
     // Food or drink, by how hungry and thirsty they are (salty snacks already showed up as thirst).
     // Stools are for drinks. On sitting down everyone has something, even if they're hardly in need.
     const stool = seat?.kind === "stool";
@@ -324,7 +358,7 @@ function placeOrder(g, p) {
     // Someone nearby was delighted by something: they might want the same, unless they're full of it.
     const insp = p.inspiredBy;
     p.inspiredBy = undefined;
-    const inspired = insp ? RECIPES.find((r) => r.id === insp.recipeId && g.menu.has(r.id) && (!stool || r.kind === "drink")
+    const inspired = insp ? RECIPES.find((r) => r.id === insp.recipeId && g.billNow().has(r.id) && (!stool || r.kind === "drink")
         && (wants(p.needs, p.foodBias, r.kind) > 0 || (grace && r.kind === "drink"))) : undefined;
     if (inspired) {
         kind = inspired.kind;
@@ -386,7 +420,7 @@ function placeOrder(g, p) {
     // A craving hint, the first time they order this visit (the reserved keep it to themselves).
     if (p.craving && p.ordersPlaced === 1 && p.schema !== "reserved") {
         const hint = g.pickLine([`Something ${p.craving.tag} would be nice.`, `I could do with something ${p.craving.tag}.`, `Feel like something ${p.craving.tag} {now}.`]);
-        g.speak(p, hint, 8);
+        g.speak(p, hint, 1.3);
         g.journal(p, `said: “${hint}”`, "said");
     }
 }
@@ -726,7 +760,7 @@ function greetings(g) {
         if (dist(g.keeper.pos, p.pos) > TALK_TUNING.greetRange)
             continue;
         p.greeted = true;
-        g.keeperLine = { text: CHATTER.greet[g.timeOfDay], until: g.minute + 4 };
+        g.keeperLine = { text: CHATTER.greet[g.timeOfDay], until: g.minute + g.readTime(CHATTER.greet[g.timeOfDay]).full };
         const st = g.regular(p.regularId);
         const fam = st?.familiarity ?? 0;
         let answer = g.pickLine(fam >= 8 ? CHATTER.answer.friend : fam >= 3 ? CHATTER.answer.known : CHATTER.answer.stranger);
@@ -737,6 +771,7 @@ function greetings(g) {
         setTimeoutGame(g, p, answer, 1);
         if (st)
             st.familiarity += 1; // a hello counts for something
+        maybeIntroduce(g, p);
     }
 }
 /** A puddle on the floor next to them. False if there's nowhere to put it. */
@@ -899,7 +934,7 @@ export function updatePatrons(g, simDt) {
                         p.waitedSince = g.minute - p.patience * (1 - secondWait(p));
                         if (p.schema !== "reserved") {
                             const nudge = fussy ? "Is anyone coming?" : `Still hoping for that ${o?.label.toLowerCase() ?? "order"}.`;
-                            g.speak(p, nudge, 6, true);
+                            g.speak(p, nudge, 1, true);
                             g.say(`${p.name}: “${nudge}”`);
                         }
                     }
