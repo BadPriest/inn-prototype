@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 15, 2026 · build 83 (builds 74–83 committed, not pushed yet) · https://inn-prototype.vercel.app
+Updated Nov 15, 2026 · build 84 (builds 74–84 committed, not pushed yet) · https://inn-prototype.vercel.app
 
 Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was done in each task's comments. Design decisions come from [design-session-journal.md](design-session-journal.md) and [design-session-journal_game-start_nov-15.md](design-session-journal_game-start_nov-15.md).
 
