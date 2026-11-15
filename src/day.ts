@@ -13,7 +13,7 @@ import { deliverPaper, marketDay } from "./newspaper.js";
 const SAVE_KEY = "travelling-inn-proto-v3"; // v3: the calendar (older saves start fresh)
 
 export function simDelta(g: Game, realDt: number): number {
-  if (g.paused || g.modal) return 0;
+  if (g.paused || g.modal || g.arranging) return 0;
   let s = (realDt / TUNING.realSecondsPerGameMinute) * g.speed;
   const quiet = !g.open || g.patrons.length === 0;
   if (quiet) s *= TUNING.quietClockBoost;
@@ -128,7 +128,7 @@ export function save(g: Game): void {
     const history = g.history.map((d, i) => (i < g.history.length - 14 ? { ...d, unmet: undefined } : d));
     localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, calendarStart: g.calendarStart, location: g.location, weather: g.weather, history, regulars, visitorNotes: g.visitorNotes,
       menu: [...g.menu], menuChosen: g.menuChosen,
-      mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives }));
+      layout: g.layout, mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives }));
   } catch { /* storage unavailable: carry on */ }
 }
 
@@ -137,9 +137,10 @@ export function load(g: Game): void {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) { save(g); return; } // a new save: keep the calendar season it starts in, even before day 1 ends
     const s = JSON.parse(raw) as { day: number; calendarStart?: number; location?: Game["location"]; weather?: WeatherState; history: DayStats[]; regulars?: RegularState[]; visitorNotes?: Game["visitorNotes"];
-      menu?: string[]; menuChosen?: boolean; mealMode?: boolean; meals?: unknown; betweenMenu?: string[]; upgrades?: string[]; totalServed?: number; showObjectives?: boolean };
+      menu?: string[]; menuChosen?: boolean; layout?: Game["layout"]; mealMode?: boolean; meals?: unknown; betweenMenu?: string[]; upgrades?: string[]; totalServed?: number; showObjectives?: boolean };
     if (s.menu) g.menu = new Set(s.menu);
     g.menuChosen = !!s.menuChosen;
+    if (Array.isArray(s.layout) && s.layout.length) { g.layout = s.layout; g.rebuildWorld(); }
     g.mealMode = !!s.mealMode;
     if (Array.isArray(s.meals)) for (const m of s.meals as { id: string; from: number; to: number; menu: string[] }[]) {
       const meal = g.meals.find((x) => x.id === m.id);

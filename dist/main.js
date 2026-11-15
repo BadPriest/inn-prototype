@@ -3,6 +3,7 @@ import { TUNING } from "./data.js";
 import { openLocationPicker } from "./ui/location.js";
 import { updateTickets } from "./ui/tickets.js";
 import { openBillOfFare, openDeskScreen } from "./ui/desk.js";
+import { arrangeCancel, arrangeClick, arrangeHover, arrangeRemove, drawArrange } from "./ui/arrange.js";
 import { openCalendar } from "./ui/calendar.js";
 import { newWeather } from "./weather.js";
 import { Game } from "./game.js";
@@ -91,6 +92,15 @@ window.addEventListener("keydown", (e) => {
     }
     if (g.modal)
         return; // fading to sleep
+    if (g.arranging) {
+        // Arranging the kitchen: the mouse does it all; Esc puts back or finishes, Delete gets rid of one.
+        if (e.key === "Escape")
+            arrangeCancel(g);
+        else if (e.key === "Delete" || e.key === "Backspace")
+            arrangeRemove(g);
+        keys.clear();
+        return;
+    }
     const k = e.key.toLowerCase();
     keys.add(k);
     if (e.repeat)
@@ -271,6 +281,14 @@ canvas.addEventListener("pointerdown", (e) => {
     unlockAudio();
     if (menuOpen() || g.paused)
         return;
+    if (g.arranging) {
+        e.preventDefault();
+        if (e.button === 2)
+            arrangeCancel(g);
+        else
+            arrangeClick(g, toTile(e));
+        return;
+    }
     if (e.pointerType === "mouse") {
         // One button, like touch: click the floor to walk, click a thing or person to use it,
         // double-click to run, hold on a mess to clean it. Right-click stops.
@@ -309,7 +327,8 @@ const endTouch = () => { mouseHeld = false; release(); if (touchHolding) {
     touchHolding = false;
     g.holdingSpace = false;
 } };
-canvas.addEventListener("pointermove", (e) => { if (mouseHeld)
+canvas.addEventListener("pointermove", (e) => { if (g.arranging)
+    arrangeHover(g, toTile(e)); if (mouseHeld)
     mouseAt = toTile(e); });
 window.addEventListener("pointerup", () => { mouseHeld = false; release(); });
 // When several things are in reach, Tab or the mouse wheel chooses between them.
@@ -824,7 +843,8 @@ function frame(now) {
     watchObjectives(g);
     soundscape(g, realDt);
     view = computeView(canvas, g, 22, statusClearance());
-    draw(ctx, g, view, target, clickDest);
+    draw(ctx, g, view, g.arranging ? null : target, clickDest);
+    drawArrange(ctx, g, view);
     updateTickets(g);
     hudTimer -= realDt;
     if (hudTimer <= 0) {

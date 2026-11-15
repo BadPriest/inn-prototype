@@ -3,7 +3,7 @@
 import { organic } from "./core.js";
 import { GARNISHES, GRAMOPHONE, INGREDIENTS, RECIPES, REGULARS, SNACKS, TUNING, UPGRADES, type Recipe } from "./data.js";
 import type { Game, Patron, SetDownTray, Spill } from "./game.js";
-import { dist, type Furniture } from "./world.js";
+import { dist, type Furniture, type Slot } from "./world.js";
 import { collectShelf, recipesFor, returnSlice, startJob, makeItem, serveFromPot, takeSlice, ticketFor } from "./crafting.js";
 import { tableKey } from "./patrons.js";
 import { applyGarnish, removeFromTray, servePatron, serveTable, garnishableDrinks, iconFor, itemLabel, serveUnasked, trayItems, pickupFromHatch, pickUpTray, startPour, setTrayDown, takeFromHatch } from "./serving.js";
@@ -125,8 +125,6 @@ export function promptFor(g: Game, t: Target | null): string {
     return o?.open ? `Space: serve ${t.p.name} (${o.label}) · C: offer something unasked` : `${t.p.name} · C: offer something unasked`;
   }
   const f = t.f;
-  const job = g.jobs.get(f.id);
-  const pot = g.pots.get(f.id);
   switch (f.kind) {
     case "table": {
       const tk = `${f.tiles[0].x},${f.tiles[0].y}`;
@@ -138,19 +136,10 @@ export function promptFor(g: Game, t: Target | null): string {
       if (cleanable(g, t)) return `${tap} · hold to wipe${tableDirt(g, f) >= TUNING.tableDirtyAt ? " (it's dirty)" : ""}`;
       return n && !trayItems(g).length ? `${n} waiting here · ${tap}` : tap;
     }
-    case "station":
-      if (pot && g.pouring && g.pouring.from === f.id) return `Pouring… ${Math.round((g.pouring.progress / g.pouring.total) * 100)}%`;
-      if (pot?.item.recipeId === "water") return `Space: steep a cup of tea (hot water for ${pot.left} more)`;
-      if (pot) return `Space: ${pot.item.kind === "drink" ? "pour a cup of" : "take a serving of"} ${pot.item.name.toLowerCase()} (${pot.left} left)`;
-    {
-      const shelf = g.shelves.get(f.id) ?? [];
-      const ready = shelf.length ? `Space: pick up ${shelf.map((i) => i.ticketName ? `${i.name} for ${i.ticketName}` : i.name).join(", ")}` : "";
-      if (job) {
-        const r = RECIPES.find((x) => x.id === job.recipeId)!;
-        const cooking = job.done ? `${r.name} done, waiting for room on the shelf` : `${r.name} ${Math.floor((job.progress / job.total) * 100)}% · hold Space to hurry`;
-        return ready ? `${ready} · ${cooking}` : cooking;
-      }
-      return ready || `Space: cook at the ${f.name.toLowerCase()}`;
+    case "station": {
+      const slots = f.slots ?? [];
+      if (slots.length === 1) return slotPrompt(g, slots[0]);
+      return slots.map((sl) => `${sl.name}: ${slotStatus(g, sl)}`).join(" · ") + " · Space: use";
     }
     case "gramophone":
       if (!recordsReady()) return "The gramophone (no records yet)";
@@ -170,7 +159,7 @@ export function promptFor(g: Game, t: Target | null): string {
     case "frontdoor": return g.open ? (g.lastCall ? "Space: bolt the door" : "Space: call last orders") : "Space: open the inn";
     case "fireplace": return g.fireLit ? "Space: put out the fire" : "Space: light the fire";
     case "bed": return "Space: turn in";
-    case "desk": return g.paper && !g.paper.read ? "Space: the desk (today's paper is here)" : "Space: bill of fare, paper, upgrades, journal";
+    case "desk": return g.paper && !g.paper.read ? "Space: the desk (today's paper is here)" : "Space: bill of fare, paper, equipment, journal";
     default: return `Space: ${f.name.toLowerCase()}`;
   }
 }
@@ -196,20 +185,7 @@ export function interact(g: Game, t: Target | null): void {
       openSnackMenu(g, key);
       return;
     }
-    case "station": {
-      if (g.pots.get(f.id)?.item.recipeId === "water") { openSteepScreen(g, f); return; }
-      if (g.pots.has(f.id)) {
-        if (g.pots.get(f.id)!.item.kind === "drink") startPour(g, f.id); // a cup from the urn takes pouring
-        else serveFromPot(g, f.id);
-        return;
-      }
-      const job = g.jobs.get(f.id);
-      // Finished dishes first: they wait on the station until you pick them up.
-      if (g.shelves.get(f.id)?.length && (collectShelf(g, f.id) > 0 || job)) return;
-      if (job) { g.say(job.done ? "It's done, waiting for room on the shelf." : "Still cooking. Hold Space here to hurry it a little."); return; }
-      openCraftMenu(g, f);
-      return;
-    }
+    case "station": useStation(g, f); return;
     case "gramophone": {
       const gr = g.gramophone;
       if (!recordsReady()) { g.say("No records to play yet."); return; }
@@ -294,16 +270,85 @@ export function askSetDown(g: Game): void {
 // ---------------------------------------------------------------------------
 // Crafting menus
 
-function openCraftMenu(g: Game, f: Furniture): void {
-  const recipes = recipesFor(g, f);
+function openCraftMenu(g: Game, slot: Slot): void {
+  const recipes = recipesFor(g, slot);
   openMenu({
-    title: f.name,
+    title: (slot.f.slots?.length ?? 1) > 1 ? `${slot.f.name}: ${slot.name.toLowerCase()}` : slot.f.name,
     subtitle: "What will you make?",
     items: recipes.map((r) => ({
       label: `${r.icon} ${r.name}`,
       sub: `${r.servings ? `about ${r.servings[0]} servings · ` : ""}${r.baseTags.join(", ")} · ~${r.minutes[0]} min${r.tended ? " · tended" : ""}`,
-      action: () => openCookScreen(g, f, r),
+      action: () => openCookScreen(g, slot, r),
     })),
+  });
+}
+
+/** What a place to cook is doing, in a few words. */
+function slotStatus(g: Game, sl: Slot): string {
+  const pot = g.pots.get(sl.id);
+  if (pot) return `${pot.item.name.toLowerCase()} (${pot.left} left)`;
+  const job = g.jobs.get(sl.id);
+  const shelf = g.shelves.get(sl.id) ?? [];
+  if (job) return `${RECIPES.find((x) => x.id === job.recipeId)?.name.toLowerCase()} ${Math.floor((job.progress / job.total) * 100)}%`;
+  if (shelf.length) return `${shelf.length} ready`;
+  return "free";
+}
+
+/** The prompt for one place to cook (a station with a single slot reads just as it always did). */
+function slotPrompt(g: Game, sl: Slot): string {
+  const pot = g.pots.get(sl.id);
+  if (pot && g.pouring && g.pouring.from === sl.id) return `Pouring… ${Math.round((g.pouring.progress / g.pouring.total) * 100)}%`;
+  if (pot?.item.recipeId === "water") return `Space: steep a cup of tea (hot water for ${pot.left} more)`;
+  if (pot) return `Space: ${pot.item.kind === "drink" ? "pour a cup of" : "take a serving of"} ${pot.item.name.toLowerCase()} (${pot.left} left)`;
+  const shelf = g.shelves.get(sl.id) ?? [];
+  const ready = shelf.length ? `Space: pick up ${shelf.map((i) => i.ticketName ? `${i.name} for ${i.ticketName}` : i.name).join(", ")}` : "";
+  const job = g.jobs.get(sl.id);
+  if (job) {
+    const r = RECIPES.find((x) => x.id === job.recipeId)!;
+    const cooking = job.done ? `${r.name} done, waiting for room on the shelf` : `${r.name} ${Math.floor((job.progress / job.total) * 100)}% · hold Space to hurry`;
+    return ready ? `${ready} · ${cooking}` : cooking;
+  }
+  return ready || `Space: cook at the ${sl.f.name.toLowerCase()}`;
+}
+
+/** Use one place to cook: steep, pour, serve from the pot, pick up what's ready, or cook something. */
+function useSlot(g: Game, sl: Slot): void {
+  const pot = g.pots.get(sl.id);
+  if (pot?.item.recipeId === "water") { openSteepScreen(g, sl); return; }
+  if (pot) {
+    if (pot.item.kind === "drink") startPour(g, sl.id); // a cup from the urn takes pouring
+    else serveFromPot(g, sl.id);
+    return;
+  }
+  const job = g.jobs.get(sl.id);
+  // Finished dishes first: they wait on the station until you pick them up.
+  if (g.shelves.get(sl.id)?.length && (collectShelf(g, sl.id) > 0 || job)) return;
+  if (job) { g.say(job.done ? "It's done, waiting for room on the shelf." : "Still cooking. Hold Space here to hurry it a little."); return; }
+  openCraftMenu(g, sl);
+}
+
+/**
+ * A station with several places to cook (two hobs; a hob and an oven): pick up whatever's ready first;
+ * then, if only one thing can be done, do it; otherwise choose which hob or oven.
+ */
+function useStation(g: Game, f: Furniture): void {
+  const slots = f.slots ?? [];
+  if (slots.length === 1) { useSlot(g, slots[0]); return; }
+  let took = false;
+  for (const sl of slots) if (g.shelves.get(sl.id)?.length) took = collectShelf(g, sl.id) > 0 || took;
+  if (took) return;
+  const usable = slots.filter((sl) => g.pots.has(sl.id) || !g.jobs.has(sl.id));
+  if (usable.length === 1) { useSlot(g, usable[0]); return; }
+  if (!usable.length) { g.say("Everything on it is still cooking. Hold Space here to hurry it a little."); return; }
+  openMenu({
+    title: f.name,
+    subtitle: "Which one?",
+    items: slots.map((sl) => {
+      const pot = g.pots.get(sl.id);
+      const busy = !pot && g.jobs.has(sl.id);
+      const what = pot ? (pot.item.kind === "drink" ? "pour a cup" : "take a serving") : busy ? "cooking" : "cook something";
+      return { label: `${sl.name}: ${slotStatus(g, sl)}`, sub: what, disabled: busy, action: () => { closeAll(); useSlot(g, sl); } };
+    }),
   });
 }
 

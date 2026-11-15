@@ -6,7 +6,7 @@ import { play, stop } from "./engine.js";
 const loops = new Map(); // "<sound>@<furniture id>" -> voice
 function wanted(g) {
     const want = new Map();
-    const at = (fid) => g.world.furniture.find((x) => x.id === fid)?.center;
+    const at = (fid) => g.world.slot(fid)?.f.center;
     for (const [fid, job] of g.jobs) {
         const r = RECIPES.find((x) => x.id === job.recipeId);
         const c = at(fid);
@@ -14,12 +14,13 @@ function wanted(g) {
             continue;
         if (r.station === "kettle" || r.station === "coffee")
             want.set(`kettle@${fid}`, c);
-        else if (r.id === "stew")
+        else if (r.servings && r.station === "stove")
             want.set(`stewCooking@${fid}`, c);
     }
     for (const [fid, pot] of g.pots) {
         const c = at(fid);
-        if (pot.left > 0 && pot.item.recipeId === "stew" && c)
+        const r = RECIPES.find((x) => x.id === pot.item.recipeId);
+        if (pot.left > 0 && r?.station === "stove" && c)
             want.set(`stewSimmering@${fid}`, c);
     }
     return want;

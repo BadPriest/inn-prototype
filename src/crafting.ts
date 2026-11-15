@@ -6,15 +6,21 @@
 import { organic, uid } from "./core.js";
 import { INGREDIENTS, RECIPES, TUNING, type Recipe } from "./data.js";
 import type { Game, Item, Job } from "./game.js";
-import { dist, type Furniture } from "./world.js";
+import { dist, type Furniture, type Slot } from "./world.js";
 import { addToTray, removeFromTray, trayItems } from "./serving.js";
 
-export function recipesFor(g: Game, f: Furniture): Recipe[] {
-  // At the kettle, tea isn't made here as a job: you boil the kettle, then steep cups from the hot water.
-  const list = RECIPES.filter((r) => r.station === f.station && r.id !== "tea");
-  const tea = RECIPES.find((r) => r.id === "tea" && r.station === f.station);
-  if (tea && g.upgrades.has("urn")) list.push(urnTea(tea));
-  return list;
+export function recipesFor(_g: Game, slot: Slot): Recipe[] {
+  // At a kettle, tea isn't made as a job: you boil the kettle, then steep cups from the hot water.
+  // An urn brews a whole urn of one tea instead.
+  const tea = RECIPES.find((r) => r.id === "tea")!;
+  if (slot.f.equip?.urn) return [urnTea(tea)];
+  return RECIPES.filter((r) => slot.kinds.includes(r.station as never) && r.id !== "tea");
+}
+
+/** The name of where something's made, for the log: "the stove (hob 2)". */
+export function slotName(slot: Slot): string {
+  const base = slot.f.name.toLowerCase();
+  return (slot.f.slots?.length ?? 1) > 1 ? `${base} (${slot.name.toLowerCase()})` : base;
 }
 
 export function makeItem(recipe: Recipe, ingredients: string[]): Item {
@@ -50,16 +56,16 @@ export function effectiveRecipe(_g: Game, recipe: Recipe, batch = false): Recipe
   return batch && recipe.id === "tea" ? urnTea(recipe) : recipe;
 }
 
-export function startJob(g: Game, f: Furniture, recipeIn: Recipe, ingredients: string[], ticket: { id: number; name: string } | null): void {
+export function startJob(g: Game, slot: Slot, recipeIn: Recipe, ingredients: string[], ticket: { id: number; name: string } | null): void {
   const batch = recipeIn.id === "tea" && !!recipeIn.servings;
   const recipe = effectiveRecipe(g, RECIPES.find((r) => r.id === recipeIn.id)!, batch);
   if (recipe.servings) ticket = null;
   let total = Math.max(1, organic(recipe.minutes));
-  if (recipe.id === "water" && g.upgrades.has("kettle")) total *= 0.5;
-  g.jobs.set(f.id, { recipeId: recipe.id, ingredients, total, progress: 0, done: false, ticket: ticket?.id, ticketName: ticket?.name, batch });
+  if (recipe.id === "water") total /= slot.f.equip?.boilSpeed ?? 1;
+  g.jobs.set(slot.id, { recipeId: recipe.id, ingredients, total, progress: 0, done: false, ticket: ticket?.id, ticketName: ticket?.name, batch });
   const forWho = ticket ? ` for ${ticket.name}` : recipe.storedIn === "piesafe" ? " (a whole pie)" : recipe.servings ? " (a whole pot)" : "";
   if (recipe.id === "water") { g.say("You put the kettle on."); return; }
-  g.say(`Started ${recipe.name.toLowerCase()}${forWho} at the ${f.name.toLowerCase()}${recipe.tended ? ". Stay with it" : ""}.`);
+  g.say(`Started ${recipe.name.toLowerCase()}${forWho} at the ${slotName(slot)}${recipe.tended ? ". Stay with it" : ""}.`);
 }
 
 export function keeperNear(g: Game, f: Furniture, range = 1.5): boolean {
@@ -68,7 +74,8 @@ export function keeperNear(g: Game, f: Furniture, range = 1.5): boolean {
 
 export function updateCrafting(g: Game, simDt: number, target: Furniture | null): void {
   for (const [fid, job] of g.jobs) {
-    const f = g.world.furniture.find((x) => x.id === fid)!;
+    const f = g.world.slot(fid)?.f;
+    if (!f) continue;
     const recipe = effectiveRecipe(g, RECIPES.find((r) => r.id === job.recipeId)!, job.batch);
     if (!job.done) {
       const near = keeperNear(g, f);
@@ -105,8 +112,8 @@ function finish(g: Game, fid: string, job: Job, recipe: Recipe): void {
   shelf.push(job.item!);
   g.shelves.set(fid, shelf);
   g.bus.emit({ type: "ItemCrafted", itemId: job.item!.id });
-  const f = g.world.furniture.find((x) => x.id === fid);
-  g.say(`${job.item!.name}${job.item!.ticketName ? ` (for ${job.item!.ticketName})` : ""} is ready at the ${f?.name.toLowerCase() ?? "station"}.`);
+  const slot = g.world.slot(fid);
+  g.say(`${job.item!.name}${job.item!.ticketName ? ` (for ${job.item!.ticketName})` : ""} is ready at the ${slot ? slotName(slot) : "station"}.`);
   g.jobs.delete(fid);
 }
 

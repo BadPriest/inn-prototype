@@ -11,17 +11,18 @@ const loops = new Map<string, Voice | null>(); // "<sound>@<furniture id>" -> vo
 
 function wanted(g: Game): Map<string, Vec> {
   const want = new Map<string, Vec>();
-  const at = (fid: string) => g.world.furniture.find((x) => x.id === fid)?.center;
+  const at = (fid: string) => g.world.slot(fid)?.f.center;
   for (const [fid, job] of g.jobs) {
     const r = RECIPES.find((x) => x.id === job.recipeId);
     const c = at(fid);
     if (job.done || !r || !c) continue;
     if (r.station === "kettle" || r.station === "coffee") want.set(`kettle@${fid}`, c);
-    else if (r.id === "stew") want.set(`stewCooking@${fid}`, c);
+    else if (r.servings && r.station === "stove") want.set(`stewCooking@${fid}`, c);
   }
   for (const [fid, pot] of g.pots) {
     const c = at(fid);
-    if (pot.left > 0 && pot.item.recipeId === "stew" && c) want.set(`stewSimmering@${fid}`, c);
+    const r = RECIPES.find((x) => x.id === pot.item.recipeId);
+    if (pot.left > 0 && r?.station === "stove" && c) want.set(`stewSimmering@${fid}`, c);
   }
   return want;
 }

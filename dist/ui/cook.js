@@ -3,7 +3,7 @@
 // COOK becomes available once enough ingredients are chosen.
 import { INGREDIENTS, RECIPES } from "../data.js";
 import { startPour } from "../serving.js";
-import { makeItem, startJob, ticketFor } from "../crafting.js";
+import { makeItem, slotName, startJob, ticketFor } from "../crafting.js";
 import { closeAll, openMenu, replaceMenu } from "./menu.js";
 import { chip, grid, gridKeys } from "./cards.js";
 /** The kettle's boiled: pick a leaf for the next cup. Shows who's waiting for tea, and for which leaf. */
@@ -70,7 +70,7 @@ function cookSpec(g, f, r, st) {
     const time = `about ${Math.round(r.minutes[0])} min${r.tended ? ", and it needs you at the station" : ""}`;
     const makes = r.storedIn === "piesafe" ? `a whole pie, about ${r.servings?.[0] ?? 6} slices, for the pie safe`
         : r.id === "water" ? `hot water for about ${r.servings?.[0] ?? 3} cups; you steep each with its own leaf`
-            : r.servings ? `a batch of about ${r.servings[0]} servings, served from the ${f.name.toLowerCase()}`
+            : r.servings ? `a batch of about ${r.servings[0]} servings, served from the ${slotName(f)}`
                 : "one serving, waiting here when it's done";
     const forWho = r.servings ? "" : ticket ? `For <b>${ticket.name}</b>: theirs is the oldest order for this.` : "Nobody's asked for this yet: it'll go to whoever does.";
     const left = min - st.chosen.length;
@@ -98,7 +98,7 @@ function cookSpec(g, f, r, st) {
     };
     return {
         title: `${r.icon} ${r.name}`,
-        subtitle: `At the ${f.name.toLowerCase()}`,
+        subtitle: `At the ${slotName(f)}`,
         view: {
             html,
             onPick: toggle,

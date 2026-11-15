@@ -20,7 +20,7 @@ export function updateHud(g: Game, prompt: string): void {
   updateStatus(g);
   const meal = g.mealMode ? MEALS.find((m) => m.id === g.mealNow()?.id) : undefined;
   const serving = g.mealMode ? ` · ${meal ? `${meal.icon} ${meal.name}` : "between meals"}` : "";
-  $("clock").innerHTML = `<span class="st ${status.replace(" ", "")}">${status}</span>${serving} · ×${g.speed}${g.paused ? " · paused" : g.modal ? " · clock stopped" : ""}`;
+  $("clock").innerHTML = `<span class="st ${status.replace(" ", "")}">${status}</span>${serving} · ×${g.speed}${g.paused ? " · paused" : g.modal || g.arranging ? " · clock stopped" : ""}`;
   $("prompt").textContent = prompt;
   // Journal heads-up: a toast for the latest note, and a count until the journal is opened.
   const toast = document.getElementById("toast");
@@ -61,7 +61,8 @@ export function updateHud(g: Game, prompt: string): void {
   // Ready to pick up: on the station shelves (and the hatch, once there's a cook).
   const ready = [
     ...[...g.shelves].flatMap(([fid, items]) => {
-      const where = g.world.furniture.find((f) => f.id === fid)?.name.toLowerCase() ?? "station";
+      const sl = g.world.slot(fid);
+      const where = sl ? ((sl.f.slots?.length ?? 1) > 1 ? `${sl.f.name.toLowerCase()} (${sl.name.toLowerCase()})` : sl.f.name.toLowerCase()) : "station";
       return items.map((it) => `<div class="it">${itemLabel(it)} <span class="muted">· ${where}</span></div>`);
     }),
     ...g.hatch.map((it) => `<div class="it">${itemLabel(it)} <span class="muted">· hatch</span></div>`),

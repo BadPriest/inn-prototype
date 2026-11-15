@@ -187,39 +187,61 @@ export function draw(ctx, g, v, target, clickDest) {
         ctx.font = `${Math.floor(ts * 0.32)}px system-ui, sans-serif`;
         if (label)
             ctx.fillText(label, px + pw / 2, py + ph / 2);
-        // Crafting progress
-        const job = g.jobs.get(f.id);
-        if (job) {
-            const r = RECIPES.find((x) => x.id === job.recipeId);
-            const pct = Math.min(1, job.progress / job.total);
-            ctx.fillStyle = "rgba(0,0,0,0.6)";
-            ctx.fillRect(px, py + ph + 2, pw, ts * 0.18);
-            ctx.fillStyle = job.done ? "#ffd34d" : r.tended ? "#ff9f43" : "#7fd37f";
-            ctx.fillRect(px, py + ph + 2, pw * pct, ts * 0.18);
-            ctx.fillStyle = "#fff";
-            ctx.font = `${Math.floor(ts * 0.28)}px system-ui, sans-serif`;
-            ctx.fillText(r.name, px + pw / 2, py + ph + ts * 0.45);
-        }
-        const pot = g.pots.get(f.id);
-        if (pot) {
-            ctx.fillStyle = "rgba(0,0,0,0.6)";
-            ctx.fillRect(px, py + ph + 2, pw, ts * 0.18);
-            ctx.fillStyle = "#e0b060";
-            ctx.fillRect(px, py + ph + 2, pw * (pot.left / pot.total), ts * 0.18);
-            badge(ctx, px + pw - 2, py + 2, String(pot.left), ts);
-        }
+        // Each place to cook (a hob, an oven) gets its share of the width: progress, pot, waiting dishes.
+        const slots = f.slots ?? [];
+        slots.forEach((sl, si) => {
+            const sw = pw / slots.length, sx = px + sw * si;
+            if (slots.length > 1) {
+                // Show the hobs and the oven: a ring for a hob, a door for an oven.
+                ctx.strokeStyle = "rgba(255,240,220,0.35)";
+                ctx.lineWidth = 1;
+                const cx = sx + sw / 2, cy = py + ph * 0.72;
+                if (sl.kinds.includes("oven"))
+                    ctx.strokeRect(cx - sw * 0.3, cy - ph * 0.14, sw * 0.6, ph * 0.22);
+                else {
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, Math.min(sw, ph) * 0.14, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            }
+            const job = g.jobs.get(sl.id);
+            if (job) {
+                const r = RECIPES.find((x) => x.id === job.recipeId);
+                const pct = Math.min(1, job.progress / job.total);
+                ctx.fillStyle = "rgba(0,0,0,0.6)";
+                ctx.fillRect(sx + 1, py + ph + 2, sw - 2, ts * 0.18);
+                ctx.fillStyle = job.done ? "#ffd34d" : r.tended ? "#ff9f43" : "#7fd37f";
+                ctx.fillRect(sx + 1, py + ph + 2, (sw - 2) * pct, ts * 0.18);
+                ctx.fillStyle = "#fff";
+                ctx.font = `${Math.floor(ts * (slots.length > 1 ? 0.24 : 0.28))}px system-ui, sans-serif`;
+                ctx.fillText(slots.length > 1 ? r.icon : r.name, sx + sw / 2, py + ph + ts * 0.45);
+            }
+            const pot = g.pots.get(sl.id);
+            if (pot) {
+                ctx.fillStyle = "rgba(0,0,0,0.6)";
+                ctx.fillRect(sx + 1, py + ph + 2, sw - 2, ts * 0.18);
+                ctx.fillStyle = "#e0b060";
+                ctx.fillRect(sx + 1, py + ph + 2, (sw - 2) * (pot.left / pot.total), ts * 0.18);
+                badge(ctx, sx + sw - 2, py + 2, String(pot.left), ts);
+                if (slots.length > 1) {
+                    ctx.font = `${Math.floor(ts * 0.24)}px system-ui, sans-serif`;
+                    ctx.fillText(iconFor(pot.item.recipeId) || "🍲", sx + sw / 2, py + ph + ts * 0.45);
+                }
+            }
+            // Finished dishes waiting: a warm outline and their icons, ready to pick up.
+            const shelf = g.shelves.get(sl.id);
+            if (shelf?.length) {
+                ctx.strokeStyle = "#ffd34d";
+                ctx.lineWidth = Math.max(1, ts * 0.06);
+                ctx.strokeRect(sx + 1, py + 1, sw - 2, ph - 2);
+                ctx.lineWidth = 1;
+                ctx.font = `${Math.floor(ts * 0.42)}px system-ui, sans-serif`;
+                ctx.textAlign = "center";
+                shelf.forEach((it, i) => ctx.fillText(iconFor(it.recipeId, it.garnish) || "🍽", sx + ts * 0.3 + i * ts * 0.42, py - ts * 0.18));
+            }
+        });
         if (f.kind === "piesafe" && g.pieSafe.length) {
             badge(ctx, px + pw - 2, py + 2, String(g.pieSafe.reduce((a, p) => a + p.left, 0)), ts);
-        }
-        // Finished dishes waiting on a station: a warm outline and their icons, ready to pick up.
-        const shelf = g.shelves.get(f.id);
-        if (shelf?.length) {
-            ctx.strokeStyle = "#ffd34d";
-            ctx.lineWidth = Math.max(1, ts * 0.06);
-            ctx.strokeRect(px + 1, py + 1, pw - 2, ph - 2);
-            ctx.font = `${Math.floor(ts * 0.42)}px system-ui, sans-serif`;
-            ctx.textAlign = "center";
-            shelf.forEach((it, i) => ctx.fillText(iconFor(it.recipeId, it.garnish) || "🍽", px + ts * 0.3 + i * ts * 0.42, py - ts * 0.18));
         }
         if (f.kind === "hatch" && g.hatch.length) {
             badge(ctx, px + pw - 2, py + 2, String(g.hatch.length), ts);

@@ -5,15 +5,15 @@
 import { INGREDIENTS, RECIPES, type Recipe } from "../data.js";
 import { startPour } from "../serving.js";
 import type { Game } from "../game.js";
-import type { Furniture } from "../world.js";
-import { makeItem, startJob, ticketFor } from "../crafting.js";
+import type { Slot } from "../world.js";
+import { makeItem, slotName, startJob, ticketFor } from "../crafting.js";
 import { closeAll, openMenu, replaceMenu, type MenuSpec } from "./menu.js";
 import { chip, grid, gridKeys } from "./cards.js";
 
 interface CookState { chosen: string[]; focus: number }
 
 /** The kettle's boiled: pick a leaf for the next cup. Shows who's waiting for tea, and for which leaf. */
-export function openSteepScreen(g: Game, f: Furniture): void {
+export function openSteepScreen(g: Game, f: Slot): void {
   const tea = RECIPES.find((r) => r.id === "tea")!;
   const water = g.pots.get(f.id);
   const st = { focus: 0 };
@@ -41,12 +41,12 @@ export function openSteepScreen(g: Game, f: Furniture): void {
   openMenu(build());
 }
 
-export function openCookScreen(g: Game, f: Furniture, r: Recipe): void {
+export function openCookScreen(g: Game, f: Slot, r: Recipe): void {
   const state: CookState = { chosen: [], focus: 0 };
   openMenu(cookSpec(g, f, r, state));
 }
 
-function cookSpec(g: Game, f: Furniture, r: Recipe, st: CookState): MenuSpec {
+function cookSpec(g: Game, f: Slot, r: Recipe, st: CookState): MenuSpec {
   const min = r.slots;
   const max = Math.max(min, r.maxSlots ?? min);
   const full = st.chosen.length >= max;
@@ -77,7 +77,7 @@ function cookSpec(g: Game, f: Furniture, r: Recipe, st: CookState): MenuSpec {
   const time = `about ${Math.round(r.minutes[0])} min${r.tended ? ", and it needs you at the station" : ""}`;
   const makes = r.storedIn === "piesafe" ? `a whole pie, about ${r.servings?.[0] ?? 6} slices, for the pie safe`
     : r.id === "water" ? `hot water for about ${r.servings?.[0] ?? 3} cups; you steep each with its own leaf`
-    : r.servings ? `a batch of about ${r.servings[0]} servings, served from the ${f.name.toLowerCase()}`
+    : r.servings ? `a batch of about ${r.servings[0]} servings, served from the ${slotName(f)}`
     : "one serving, waiting here when it's done";
   const forWho = r.servings ? "" : ticket ? `For <b>${ticket.name}</b>: theirs is the oldest order for this.` : "Nobody's asked for this yet: it'll go to whoever does.";
   const left = min - st.chosen.length;
@@ -107,7 +107,7 @@ function cookSpec(g: Game, f: Furniture, r: Recipe, st: CookState): MenuSpec {
 
   return {
     title: `${r.icon} ${r.name}`,
-    subtitle: `At the ${f.name.toLowerCase()}`,
+    subtitle: `At the ${slotName(f)}`,
     view: {
       html,
       onPick: toggle,

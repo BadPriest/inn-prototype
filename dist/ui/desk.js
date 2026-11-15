@@ -1,18 +1,19 @@
-// The desk in your room: the bill of fare, upgrades, and the way to the journal. Card screens (cards.ts).
-import { MEALS, RECIPES, TUNING, UPGRADES } from "../data.js";
-import { back, confirmed, openMenu, replaceMenu } from "./menu.js";
+// The desk in your room: the bill of fare, equipment to buy and arrange, and the way to the journal. Card screens (cards.ts).
+import { EQUIPMENT, GOODS, MEALS, RECIPES, TUNING } from "../data.js";
+import { back, closeAll, confirmed, openMenu, replaceMenu } from "./menu.js";
+import { startArranging } from "./arrange.js";
 import { grid, gridKeys } from "./cards.js";
 import { openNewspaper } from "./newspaper.js";
 import { openCalendar } from "./calendar.js";
 export function openDeskScreen(g, openJournal) {
     const st = { focus: 0 };
     const build = () => {
-        const ready = UPGRADES.filter((u) => !g.upgrades.has(u.id) && g.totalServed >= u.unlockAtServed).length;
         const cards = [
             { pick: "fare", icon: "📜", name: "Bill of fare", note: g.mealMode ? `meal times<br>${g.mealNow() ? `${MEALS.find((m) => m.id === g.mealNow().id).name} now` : "between meals now"}` : `what's on the menu<br>${g.menu.size} on today` },
             { pick: "calendar", icon: "📅", name: "Calendar", note: `${g.date.seasonName} ${g.date.dayOfSeason}<br>the season ahead` },
             { pick: "paper", icon: "📰", name: "Newspaper", note: g.paper?.read ? "read" : "today's, unread", on: !!g.paper && !g.paper.read },
-            { pick: "upgrades", icon: "🔧", name: "Upgrades", note: ready ? `${ready} ready to choose` : `${g.totalServed} served so far`, on: ready > 0 },
+            { pick: "shop", icon: "🛒", name: "Equipment", note: "stoves, ovens, kettles<br>to buy" },
+            { pick: "arrange", icon: "🛠", name: "Arrange the kitchen", note: "move your stoves,<br>kettles and pots" },
             { pick: "journal", icon: "📖", name: "Journal", note: g.journalUnread ? `${g.journalUnread} new` : "the people you've met", on: g.journalUnread > 0 },
         ].map((c, i) => ({ ...c, focus: i === st.focus }));
         const go = (v) => {
@@ -22,8 +23,12 @@ export function openDeskScreen(g, openJournal) {
                 openNewspaper(g);
             else if (v === "calendar")
                 openCalendar(g);
-            else if (v === "upgrades")
-                openUpgrades(g);
+            else if (v === "shop")
+                openShop(g);
+            else if (v === "arrange") {
+                closeAll();
+                startArranging(g);
+            }
             else
                 openJournal();
         };
@@ -201,41 +206,46 @@ export function openBillOfFare(g) {
     openMenu(build());
 }
 // ---------------------------------------------------------------------------
-// Upgrades: they open up as you serve more people. No coin yet.
-export function openUpgrades(g) {
+// Equipment: buy a piece and place it (money is no object, for now). Goods like wider trays just arrive.
+export function openShop(g) {
     const st = { focus: 0 };
+    const items = [
+        ...EQUIPMENT.map((e) => ({ id: e.id, icon: e.icon, name: e.name, blurb: e.blurb, goods: false })),
+        ...GOODS.map((x) => ({ id: x.id, icon: x.icon, name: x.name, blurb: x.blurb, goods: true })),
+    ];
     const build = () => {
-        const take = (i) => {
-            const u = UPGRADES[i];
-            if (g.upgrades.has(u.id) || g.totalServed < u.unlockAtServed)
+        const buy = (i) => {
+            const it = items[i];
+            if (!it)
                 return;
-            g.upgrades.add(u.id);
-            confirmed();
-            g.say(`${u.icon} ${u.name}: ${u.desc}`);
-            st.focus = i;
-            replaceMenu(build());
+            if (it.goods) {
+                if (g.upgrades.has(it.id))
+                    return;
+                g.upgrades.add(it.id);
+                confirmed();
+                g.say(`${it.icon} ${it.name}: delivered.`);
+                st.focus = i;
+                replaceMenu(build());
+                return;
+            }
+            closeAll();
+            startArranging(g, it.id); // straight to placing it
         };
-        const cards = UPGRADES.map((u, i) => {
-            const have = g.upgrades.has(u.id);
-            const open = g.totalServed >= u.unlockAtServed;
+        const cards = items.map((it, i) => {
+            const owned = it.goods ? (g.upgrades.has(it.id) ? 1 : 0) : g.layout.filter((p) => p.type === it.id).length;
             return {
-                pick: String(i),
-                icon: open || have ? u.icon : "🔒",
-                name: u.name,
-                note: have ? `yours<br>${u.desc}` : open ? u.desc : `opens after ${u.unlockAtServed} served`,
-                on: have,
-                off: !open && !have,
-                focus: i === st.focus,
+                pick: String(i), icon: it.icon, name: it.name, focus: i === st.focus, on: it.goods && owned > 0,
+                note: `${it.goods ? (owned ? "yours" : "buy") : owned ? `you have ${owned} · buy another` : "buy and place"}<br><span class="muted">${it.blurb}</span>`,
             };
         });
         return {
-            title: "🔧 Upgrades",
+            title: "🛒 Equipment",
+            subtitle: "Money's no object, for now",
             holdsClock: true,
-            subtitle: "Earned by serving",
             view: {
-                html: `<p class="explain">No coin yet: upgrades open up as you serve more people. Served so far: <b>${g.totalServed}</b>.</p>${grid(cards)}`,
-                onPick: (v) => take(Number(v)),
-                onKey: gridKeys(() => UPGRADES.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, take),
+                html: `<p class="explain"><b>Pick something to buy.</b> Stoves, ovens and kettles go straight to the kitchen for you to place; you can move them any time (desk → Arrange the kitchen).</p>${grid(cards)}`,
+                onPick: (v) => buy(Number(v)),
+                onKey: gridKeys(() => items.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, buy),
             },
             items: [],
         };

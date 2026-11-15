@@ -1,7 +1,7 @@
 // The shared game state. Systems read and change it; the UI only reads it.
 
 import { EventBus, type Outcome } from "./core.js";
-import { World, type Vec } from "./world.js";
+import { World, defaultLayout, type Placed, type Vec } from "./world.js";
 import { dateOf, randomStartSeason, type GameDate } from "./calendar.js";
 import { newWeather, type CameIn, type WeatherState } from "./weather.js";
 import type { Paper } from "./newspaper.js";
@@ -215,7 +215,11 @@ export interface SetDownTray { id: number; x: number; y: number; tray: Tray }
 
 export class Game {
   bus = new EventBus();
-  world = new World();
+  /** Where the kitchen equipment stands (bought, placed and moved by the keeper). Saved. */
+  layout: Placed[] = defaultLayout();
+  world = new World(this.layout);
+  /** Arranging the kitchen: the clock stops; `holding` is a piece being moved or just bought. */
+  arranging: { holding?: { uid: string; type: string; isNew: boolean }; hover?: Vec } | null = null;
   day = 1; // days played, from 1. The date is worked out from this: see `date`.
   calendarStart = randomStartSeason(); // index of the calendar season this save began in
   /** Where the inn stands; unset until the player picks, on a new save (town centre meanwhile). */
@@ -319,6 +323,14 @@ export class Game {
   billAllDay(): Set<string> {
     if (!this.mealMode) return this.menu;
     return new Set([...this.meals.flatMap((m) => [...m.menu]), ...this.betweenMenu]);
+  }
+
+  /** The equipment moved: build the inn again around it. Seats keep who's sitting in them. */
+  rebuildWorld(): void {
+    const sitting = new Map(this.world.seats.map((s) => [s.id, s.occupant]));
+    this.world = new World(this.layout);
+    for (const s of this.world.seats) s.occupant = sitting.get(s.id) ?? null;
+    this.keeper.pendingInteract = null;
   }
 
   say(text: string): void {

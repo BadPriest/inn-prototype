@@ -1,6 +1,6 @@
 // The physical inn: tiles, furniture, seats, and pathfinding.
 
-import { MAP, TILE_LEGEND, STATION_OF_TILE, TAP_OF_TILE, type TileDef, type StationKind } from "./data.js";
+import { EQUIPMENT, EQUIPMENT_OF_TILE, MAP, PLACEABLE_ON, TILE_LEGEND, TAP_OF_TILE, UNDER_EQUIPMENT, type Equipment, type TileDef, type StationKind } from "./data.js";
 
 export interface Vec { x: number; y: number }
 
@@ -11,7 +11,17 @@ export interface Tile {
   def: TileDef;
   keeperWalk: boolean;
   patronWalk: boolean;
+  /** The map character under any equipment standing here (equipment isn't part of the map). */
+  base: string;
+  /** Equipment standing on this tile (its layout uid). */
+  equip?: string;
 }
+
+/** A piece of equipment where it stands. `uid` is stable, so what's cooking on it moves with it. */
+export interface Placed { uid: string; type: string; x: number; y: number }
+
+/** One place to cook on a piece of equipment: a hob, an oven, a kettle. Jobs, pots and shelves are keyed by its id. */
+export interface Slot { id: string; name: string; kinds: StationKind[]; f: Furniture }
 
 /** Anything the keeper can interact with on the map. */
 export interface Furniture {
@@ -20,8 +30,10 @@ export interface Furniture {
   name: string;
   tiles: Vec[];
   center: Vec;
-  station?: StationKind;
   tap?: string; // recipe id
+  /** Equipment: what it is, and its places to cook. */
+  equip?: Equipment;
+  slots?: Slot[];
 }
 
 export interface Seat {
@@ -44,19 +56,20 @@ export class World {
   frontDoor: Vec = { x: 0, y: 0 };
   bedSide: Vec = { x: 2, y: 2 };
 
-  constructor() {
+  constructor(placed: Placed[] = defaultLayout()) {
     this.h = MAP.length;
     this.w = MAP[0].length;
-    this.tiles = MAP.map((row, y) =>
+    this.tiles = BASE_MAP.map((row, y) =>
       [...row].map((ch, x) => {
         const def = TILE_LEGEND[ch] ?? TILE_LEGEND["."];
         const k = def.kind;
         const keeperWalk = ["floor", "staff", "door", "front", "stool", "chair", "bench"].includes(k);
         const patronWalk = ["floor", "front", "stool", "chair", "bench"].includes(k);
-        return { x, y, ch, def, keeperWalk, patronWalk };
+        return { x, y, ch, def, keeperWalk, patronWalk, base: ch };
       }),
     );
     this.buildFurniture();
+    this.placeEquipment(placed);
     this.buildSeats();
     // Tables can span several tiles; each is keyed by its first (top-left) tile.
     for (const f of this.furniture) {
@@ -68,6 +81,79 @@ export class World {
       }
       this.tables.push({ key, tile: { ...anchor }, chairs: this.seats.filter((s) => s.table && s.table.x === anchor.x && s.table.y === anchor.y) });
     }
+  }
+
+  /** Every place to cook, by id. */
+  private slotIndex = new Map<string, Slot>();
+  slot(id: string): Slot | undefined {
+    return this.slotIndex.get(id);
+  }
+
+  /** Stand each piece of equipment on the floor. */
+  private placeEquipment(placed: Placed[]): void {
+    for (const p of placed) {
+      const eq = EQUIPMENT.find((e) => e.id === p.type);
+      if (!eq) continue;
+      const tiles: Vec[] = [];
+      for (let dy = 0; dy < eq.h; dy++) for (let dx = 0; dx < eq.w; dx++) tiles.push({ x: p.x + dx, y: p.y + dy });
+      if (!tiles.every((t) => this.tile(t.x, t.y))) continue;
+      tiles.forEach((t, i) => {
+        const tile = this.tile(t.x, t.y)!;
+        tile.def = { kind: "furniture", floor: tile.def.floor, label: i === 0 ? eq.label : "", name: eq.name, interact: "station" };
+        tile.keeperWalk = false;
+        tile.patronWalk = false;
+        tile.equip = p.uid;
+      });
+      const f: Furniture = {
+        id: p.uid, kind: "station", name: eq.name, tiles,
+        center: { x: p.x + eq.w / 2, y: p.y + eq.h / 2 }, equip: eq,
+      };
+      const counts = new Map<string, number>();
+      for (const s of eq.slots) counts.set(s.name, (counts.get(s.name) ?? 0) + 1);
+      const seen = new Map<string, number>();
+      f.slots = eq.slots.map((s, i) => {
+        const n = (seen.get(s.name) ?? 0) + 1;
+        seen.set(s.name, n);
+        const name = (counts.get(s.name) ?? 1) > 1 ? `${s.name} ${n}` : s.name;
+        const slot: Slot = { id: eq.slots.length === 1 ? p.uid : `${p.uid}#${i}`, name, kinds: s.kinds, f };
+        this.slotIndex.set(slot.id, slot);
+        return slot;
+      });
+      this.furniture.push(f);
+    }
+  }
+
+  /** Can this piece stand here? Floor it's allowed on, nothing else there, and everything still within reach. */
+  canPlace(type: string, x: number, y: number, moving: string | null, layout: Placed[], keeper: Vec): boolean {
+    const eq = EQUIPMENT.find((e) => e.id === type);
+    if (!eq) return false;
+    const kx = Math.floor(keeper.x), ky = Math.floor(keeper.y);
+    for (let dy = 0; dy < eq.h; dy++) for (let dx = 0; dx < eq.w; dx++) {
+      const t = this.tile(x + dx, y + dy);
+      if (!t || !PLACEABLE_ON.includes(t.base)) return false;
+      if (t.equip && t.equip !== moving) return false;
+      if (t.x === kx && t.y === ky) return false;
+    }
+    // Try it, and check the keeper can still get to everything: every piece of furniture and every door.
+    const trial = new World([...layout.filter((p) => p.uid !== moving), { uid: moving ?? "new", type, x, y }]);
+    const seen = new Set<number>();
+    const start = trial.tile(kx, ky);
+    if (!start) return false;
+    const queue: Vec[] = [{ x: kx, y: ky }];
+    seen.add(ky * trial.w + kx);
+    while (queue.length) {
+      const c = queue.shift()!;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const n = trial.tile(c.x + dx, c.y + dy);
+        if (!n || !n.keeperWalk || seen.has(n.y * trial.w + n.x)) continue;
+        seen.add(n.y * trial.w + n.x);
+        queue.push({ x: n.x, y: n.y });
+      }
+    }
+    const reached = (v: Vec) => seen.has(v.y * trial.w + v.x);
+    for (const f of trial.furniture) if (!trial.approachTiles(f).some(reached)) return false;
+    for (const row of trial.tiles) for (const t of row) if ((t.def.kind === "door" || t.def.kind === "front") && !reached(t)) return false;
+    return true;
   }
 
   tableAt(x: number, y: number): Table | undefined {
@@ -108,7 +194,6 @@ export class World {
           name: t.def.name ?? kind,
           tiles: group,
           center: { x: cx, y: cy },
-          station: STATION_OF_TILE[t.ch],
           tap: TAP_OF_TILE[t.ch],
         });
         if (t.ch === "B") this.bedSide = { x: t.x + 1, y: t.y };
@@ -224,6 +309,23 @@ export class World {
     }
     return out;
   }
+}
+
+/** The map with the equipment lifted off it: equipment is placed separately (see Game.layout). */
+const BASE_MAP: string[] = MAP.map((row) => [...row].map((ch) => UNDER_EQUIPMENT[ch] ?? ch).join(""));
+
+/** Where the equipment stands on a new game: wherever the map's letters put it. */
+export function defaultLayout(): Placed[] {
+  const out: Placed[] = [];
+  const seen = new Set<string>();
+  MAP.forEach((row, y) => [...row].forEach((ch, x) => {
+    const type = EQUIPMENT_OF_TILE[ch];
+    if (!type || seen.has(`${x},${y}`)) return;
+    const eq = EQUIPMENT.find((e) => e.id === type)!;
+    for (let dy = 0; dy < eq.h; dy++) for (let dx = 0; dx < eq.w; dx++) seen.add(`${x + dx},${y + dy}`);
+    out.push({ uid: `eq-${ch}${x},${y}`, type, x, y });
+  }));
+  return out;
 }
 
 export function dist(a: Vec, b: Vec): number {

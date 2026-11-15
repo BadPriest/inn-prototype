@@ -38,6 +38,7 @@ const C = {
 };
 export const TILE_LEGEND = {
     "#": { kind: "wall", floor: C.wall },
+    n: { kind: "wall", floor: "#4a3a2e", name: "Nook" }, // a gap in the counter wall where a kettle or a coffee pot can stand
     o: { kind: "wall", floor: C.window, name: "Window" }, // rain is heard at the windows
     ".": { kind: "floor", floor: C.tap },
     ";": { kind: "floor", floor: C.entry },
@@ -73,10 +74,37 @@ export const TILE_LEGEND = {
     w: { kind: "furniture", floor: C.bed, label: "Ward", name: "Wardrobe", interact: "wardrobe" },
     X: { kind: "furniture", floor: C.entry, label: "Coats", name: "Coat rack", interact: "coats" },
 };
-/** Which crafting station each map letter is. Multi-tile stations share one id. */
-export const STATION_OF_TILE = {
-    S: "stove", R: "griddle", O: "oven", H: "kettle", V: "coffee", K: "prep",
-};
+const HOB = { name: "Hob", kinds: ["stove", "griddle"] }; // a pot or a pan
+const OVEN = { name: "Oven", kinds: ["oven"] };
+export const EQUIPMENT = [
+    { id: "stove1", name: "Wood stove", label: "Stove", icon: "🔥", w: 2, h: 1, slots: [HOB],
+        blurb: "A small wood-burning stove with one hob: a pot of stew or porridge, or a pan for eggs, toast or fish. One at a time." },
+    { id: "stove2", name: "Two-hob stove", label: "Stove ⚬⚬", icon: "🍳", w: 2, h: 1, slots: [HOB, HOB],
+        blurb: "Wood-burning, with two hobs: a pot and a pan, two pots, two pans, whatever the day needs." },
+    { id: "range", name: "Stove with an oven", label: "Range", icon: "🥧", w: 2, h: 1, slots: [HOB, OVEN],
+        blurb: "A wood-burning range: one hob on top and an oven below, for pies and roasts." },
+    { id: "oven", name: "Bread oven", label: "Oven", icon: "🍞", w: 1, h: 1, slots: [OVEN],
+        blurb: "A brick oven on its own, for pies and roasts." },
+    { id: "prep", name: "Prep table", label: "Prep", icon: "🔪", w: 2, h: 1, slots: [{ name: "Table", kinds: ["prep"] }],
+        blurb: "A scrubbed table and a good knife, for cold dishes put together by hand." },
+    { id: "kettle", name: "Tea kettle", label: "Kettle", icon: "🫖", w: 1, h: 1, slots: [{ name: "Kettle", kinds: ["kettle"] }],
+        blurb: "Boil it once, then steep a cup at a time, each with its own leaf." },
+    { id: "copperkettle", name: "Copper kettle", label: "Copper", icon: "🫖", w: 1, h: 1, slots: [{ name: "Kettle", kinds: ["kettle"] }], boilSpeed: 2,
+        blurb: "Boils twice as fast as the plain one." },
+    { id: "urn", name: "Tea urn", label: "Urn", icon: "⚱️", w: 1, h: 1, slots: [{ name: "Urn", kinds: ["kettle"] }], urn: true,
+        blurb: "Brews a whole urn of one tea, about 8 cups, poured straight from it." },
+    { id: "coffee", name: "Coffee pot", label: "Coffee", icon: "☕", w: 1, h: 1, slots: [{ name: "Coffee pot", kinds: ["coffee"] }],
+        blurb: "A whole pot at a time, poured by the cup until it's gone." },
+];
+/** Where the first equipment stands, by map letter. The old separate pan ("R") is gone: hobs take pans now. */
+export const EQUIPMENT_OF_TILE = { S: "stove1", O: "oven", K: "prep", H: "kettle", V: "coffee" };
+/** What's under an equipment letter once it's lifted off the map. */
+export const UNDER_EQUIPMENT = { S: ",", R: ",", O: ",", K: ",", H: "n", V: "n" };
+/** Tiles equipment can stand on: the kitchen floor, behind the bar, and the nooks in the counter wall. */
+export const PLACEABLE_ON = [",", "_", "n"];
+export const GOODS = [
+    { id: "trays", name: "Wider trays", icon: "🍽️", blurb: "Carry 3 dishes per tray, and 5 drinks." },
+];
 /** Which drink each tap letter pours. */
 export const TAP_OF_TILE = { A: "ale", Y: "cider" };
 export const ROOM_LABELS = [

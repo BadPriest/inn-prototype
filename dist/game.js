@@ -1,6 +1,6 @@
 // The shared game state. Systems read and change it; the UI only reads it.
 import { EventBus } from "./core.js";
-import { World } from "./world.js";
+import { World, defaultLayout } from "./world.js";
 import { dateOf, randomStartSeason } from "./calendar.js";
 import { newWeather } from "./weather.js";
 import { TIME_WORDS, TUNING, timeOfDayAt, MEALS } from "./data.js";
@@ -16,7 +16,11 @@ export function emptyTastes() {
 }
 export class Game {
     bus = new EventBus();
-    world = new World();
+    /** Where the kitchen equipment stands (bought, placed and moved by the keeper). Saved. */
+    layout = defaultLayout();
+    world = new World(this.layout);
+    /** Arranging the kitchen: the clock stops; `holding` is a piece being moved or just bought. */
+    arranging = null;
     day = 1; // days played, from 1. The date is worked out from this: see `date`.
     calendarStart = randomStartSeason(); // index of the calendar season this save began in
     /** Where the inn stands; unset until the player picks, on a new save (town centre meanwhile). */
@@ -120,6 +124,14 @@ export class Game {
         if (!this.mealMode)
             return this.menu;
         return new Set([...this.meals.flatMap((m) => [...m.menu]), ...this.betweenMenu]);
+    }
+    /** The equipment moved: build the inn again around it. Seats keep who's sitting in them. */
+    rebuildWorld() {
+        const sitting = new Map(this.world.seats.map((s) => [s.id, s.occupant]));
+        this.world = new World(this.layout);
+        for (const s of this.world.seats)
+            s.occupant = sitting.get(s.id) ?? null;
+        this.keeper.pendingInteract = null;
     }
     say(text) {
         this.bus.emit({ type: "Log", text });
