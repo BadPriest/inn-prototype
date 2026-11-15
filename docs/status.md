@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 15, 2026 · build 84 (builds 74–84 committed, not pushed yet) · https://inn-prototype.vercel.app
+Updated Nov 15, 2026 · build 85, deployed · https://inn-prototype.vercel.app
 
 Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was done in each task's comments. Design decisions come from [design-session-journal.md](design-session-journal.md) and [design-session-journal_game-start_nov-15.md](design-session-journal_game-start_nov-15.md).
 
@@ -24,7 +24,7 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
 
-## Built, not yet deployed (push `main` to deploy)
+## Built and deployed (Nov 15, build 85)
 
 - #37 readable chatter: dark plates with tails, one voice per table, bubbles nudge apart; lines last as long as they take to read
 - #42 bill of fare: all-day bill (default) or meal times, a tab per meal plus between meals (drinks only)
