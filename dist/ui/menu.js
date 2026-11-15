@@ -126,6 +126,11 @@ function render() {
     const btn = (it, i) => `<button class="menu-btn ${it.button} ${i === top.index && (!s.view || it.button === "primary") ? "sel" : ""}" data-i="${i}" ${it.disabled ? "disabled" : ""}>${it.label}${it.sub ? `<span class="sub">${it.sub}</span>` : ""}</button>`;
     const listed = s.items.map((it, i) => (it.button ? "" : row(it, i))).join("");
     const buttons = s.items.map((it, i) => (it.button ? btn(it, i) : "")).join("");
+    // Redrawing the same screen (a card picked, a tab changed) keeps where its view was scrolled to.
+    const prevView = root.querySelector(".menu-view");
+    const prevTitle = root.dataset.title;
+    const keepScroll = prevView && prevTitle === s.title ? prevView.scrollTop : 0;
+    root.dataset.title = s.title;
     root.innerHTML = `
     <div class="menu ${s.modal ? "modal" : ""} ${s.view ? "wide" : ""}">
       <div class="menu-head">
@@ -142,6 +147,11 @@ function render() {
     if (s.view?.onPick) {
         const pick = s.view.onPick;
         root.querySelectorAll("[data-pick]").forEach((el) => { el.onclick = () => pick(el.dataset.pick); });
+    }
+    const view = root.querySelector(".menu-view");
+    if (view) {
+        view.scrollTop = keepScroll;
+        root.querySelector(".menu-view .focus")?.scrollIntoView({ block: "nearest" }); // keys move the focus off-screen
     }
     s.view?.onMount?.(root);
     root.querySelector('[data-act="back"]')?.addEventListener("click", () => back());
