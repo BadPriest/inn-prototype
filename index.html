@@ -96,6 +96,15 @@
   .bf-times { font-size:13px; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
   .bf-times button { border:1px solid #6b5338; border-radius:5px; padding:1px 8px; }
   .bf-times b { min-width:44px; text-align:center; }
+  /* Settings on the pause screen: tabs, sliders, toggles. */
+  .set-tabs { margin-bottom:12px; }
+  .set-list { display:flex; flex-direction:column; gap:10px; min-width:min(460px, 80vw); }
+  .set-row { display:grid; grid-template-columns:1fr 160px 44px; align-items:center; gap:10px; font:13px Georgia, serif; color:var(--ink); }
+  .set-name small, .set-btn small { display:block; font:11px system-ui; color:var(--muted); margin-top:1px; }
+  .set-row input[type=range] { width:100%; accent-color:#c9a24a; cursor:pointer; }
+  .set-val { font:600 12px system-ui; text-align:right; color:#e9dfc9; }
+  .set-btn { text-align:left; background:#2a1f18; color:var(--ink); border:1px solid #6b5338; border-radius:7px; padding:7px 10px; font:13px Georgia, serif; cursor:pointer; }
+  .set-btn:hover { border-color:#c9a24a; }
   .explain { font-size:12.5px; color:#d9cbb4; margin:0 0 10px; }
   .need { font-size:12px; color:var(--muted); margin:2px 0 8px; }
   .need b { color:var(--ink); }

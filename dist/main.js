@@ -601,7 +601,7 @@ function watchTrays() {
     carried = now;
 }
 // ---------------------------------------------------------------------------
-// Settings (kept in this browser): UI size for big screens.
+// Settings (kept in this browser): sound volumes and UI size.
 const SETTINGS_KEY = "travelling-inn-settings";
 let settings = {};
 try {
@@ -616,29 +616,27 @@ function saveSettings() {
     }
     catch { /* fine */ }
 }
-// Sound: cues (orders, outcomes, the bell) and atmosphere (crowd, rain, fire…) each have a volume;
-// music (the gramophone) can be switched off, to check the loop holds up without it.
-const VOLUME_STEPS = [0, 0.25, 0.5, 0.75, 1];
+function volume(k) {
+    const v = settings[k];
+    return v === false ? 0 : v === true || v === undefined ? 1 : v;
+}
 const pct = (v) => (v === 0 ? "off" : `${Math.round(v * 100)}%`);
 function applySound() {
-    setBusVolume("cue", settings.cues ?? 1);
-    setBusVolume("ambience", settings.atmosphere ?? 1);
-    setBusVolume("music", settings.music === false ? 0 : 1);
+    setBusVolume("cue", volume("cues"));
+    setBusVolume("ambience", volume("atmosphere"));
+    setBusVolume("music", volume("music"));
 }
 applySound();
-const nextStep = (v) => VOLUME_STEPS[(VOLUME_STEPS.indexOf(v ?? 1) + 1) % VOLUME_STEPS.length];
-const UI_STEPS = ["auto", 1, 1.25, 1.5, 1.75, 2, 2.5];
 function autoUi() {
     // 1 on laptops and phones, larger on big high-resolution screens (a 4K screen at 100% gets about 2).
     return Math.max(1, Math.min(2.5, Math.round((window.innerWidth / 1700) * 4) / 4));
 }
-function applyUi() {
-    const s = uiChoice === "auto" ? autoUi() : uiChoice;
-    document.documentElement.style.setProperty("--ui", String(s));
-    requestAnimationFrame(resize);
+function uiScale() {
+    return uiChoice === "auto" ? autoUi() : uiChoice;
 }
-function uiLabel() {
-    return uiChoice === "auto" ? `Auto (${Math.round(autoUi() * 100)}%)` : `${Math.round(uiChoice * 100)}%`;
+function applyUi() {
+    document.documentElement.style.setProperty("--ui", String(uiScale()));
+    requestAnimationFrame(resize);
 }
 applyUi();
 window.addEventListener("resize", () => { if (uiChoice === "auto")
@@ -648,28 +646,111 @@ function resume() {
     g.paused = false;
     g.bus.emit({ type: "Resumed" });
 }
+const PAUSE_TABS = [
+    { id: "game", label: "▶ Game" }, { id: "sound", label: "🔊 Sound" }, { id: "display", label: "🔍 Display" },
+];
+let pauseTab = "game";
+function slider(key, icon, name, sub, value, min, max, step, shown) {
+    return `<label class="set-row"><span class="set-name">${icon} ${name}<small>${sub}</small></span>
+    <input type="range" min="${min}" max="${max}" step="${step}" value="${value}" data-set="${key}">
+    <b class="set-val" data-val="${key}">${shown}</b></label>`;
+}
 function openPause() {
     g.paused = true;
     g.bus.emit({ type: "Paused" });
-    const build = () => ({
-        title: "Paused",
-        modal: true,
-        items: [
-            { label: "▶ Resume", sub: "P", button: "primary", action: () => resume() },
-            { label: "🔍 UI size", sub: uiLabel(), action: () => {
-                    uiChoice = UI_STEPS[(UI_STEPS.indexOf(uiChoice) + 1) % UI_STEPS.length];
-                    saveSettings();
-                    applyUi();
-                    replaceMenu(build());
-                } },
-            { label: "🔊 Sound", sub: isMuted() ? "off" : "on", action: () => { toggleMute(); replaceMenu(build()); } },
-            { label: "🔔 Cues", sub: `${pct(settings.cues ?? 1)} · orders, outcomes, the bell`, action: () => { settings.cues = nextStep(settings.cues); saveSettings(); applySound(); replaceMenu(build()); } },
-            { label: "🌧 Atmosphere", sub: `${pct(settings.atmosphere ?? 1)} · crowd, rain, fire, cooking`, action: () => { settings.atmosphere = nextStep(settings.atmosphere); saveSettings(); applySound(); replaceMenu(build()); } },
-            { label: "🎵 Music", sub: settings.music === false ? "off" : "on", action: () => { settings.music = settings.music === false; saveSettings(); applySound(); replaceMenu(build()); } },
-            { label: "✅ Objectives", sub: g.showObjectives ? "shown" : "hidden", action: () => { g.showObjectives = !g.showObjectives; replaceMenu(build()); } },
-            { label: "❔ How to play", sub: "", action: () => openMenu({ title: "How to play", body: welcomeBody(), items: [{ label: "Back", button: "secondary", action: () => back() }] }) },
-        ],
-    });
+    const build = () => {
+        const redraw = () => replaceMenu(build());
+        const tabs = `<div class="bf-tabs set-tabs">${PAUSE_TABS.map((t) => `<button class="${pauseTab === t.id ? "on" : ""}" data-pick="tab:${t.id}">${t.label}</button>`).join("")}</div>`;
+        let panel = "";
+        if (pauseTab === "game") {
+            panel = `<div class="set-list">
+        <button class="set-btn" data-pick="objectives">✅ Objectives <small>${g.showObjectives ? "shown" : "hidden"}</small></button>
+        <button class="set-btn" data-pick="howto">❔ How to play</button>
+      </div>`;
+        }
+        else if (pauseTab === "sound") {
+            panel = `<div class="set-list">
+        <button class="set-btn" data-pick="mute">${isMuted() ? "🔇 Sound is off" : "🔊 Sound is on"} <small>${isMuted() ? "turn it on" : "mute everything (M)"}</small></button>
+        ${slider("cues", "🔔", "Sound effects", "orders, outcomes, the bell, pouring", Math.round(volume("cues") * 100), 0, 100, 5, pct(volume("cues")))}
+        ${slider("music", "🎵", "Music", "the gramophone", Math.round(volume("music") * 100), 0, 100, 5, pct(volume("music")))}
+        ${slider("atmosphere", "🌧", "Background", "crowd, rain, wind, fire, cooking, the street", Math.round(volume("atmosphere") * 100), 0, 100, 5, pct(volume("atmosphere")))}
+      </div>`;
+        }
+        else {
+            panel = `<div class="set-list">
+        ${slider("ui", "🔍", "UI size", "panels, cards, pop-ups and tickets", Math.round(uiScale() * 100), 75, 250, 5, `${Math.round(uiScale() * 100)}%`)}
+        <button class="set-btn" data-pick="uiauto">${uiChoice === "auto" ? "☑" : "☐"} Automatic <small>size to fit the screen (${Math.round(autoUi() * 100)}% here)</small></button>
+      </div>`;
+        }
+        return {
+            title: "Paused",
+            modal: true,
+            view: {
+                html: tabs + panel,
+                onPick: (v) => {
+                    const [k, arg] = v.split(":");
+                    if (k === "tab") {
+                        pauseTab = arg;
+                        redraw();
+                    }
+                    else if (k === "objectives") {
+                        g.showObjectives = !g.showObjectives;
+                        redraw();
+                    }
+                    else if (k === "howto")
+                        openMenu({ title: "How to play", body: welcomeBody(), items: [{ label: "Back", button: "secondary", action: () => back() }] });
+                    else if (k === "mute") {
+                        toggleMute();
+                        redraw();
+                    }
+                    else if (k === "uiauto") {
+                        uiChoice = uiChoice === "auto" ? uiScale() : "auto";
+                        saveSettings();
+                        applyUi();
+                        redraw();
+                    }
+                },
+                onKey: (e) => {
+                    if (e.key !== "Tab")
+                        return false;
+                    e.preventDefault();
+                    const i = PAUSE_TABS.findIndex((t) => t.id === pauseTab);
+                    pauseTab = PAUSE_TABS[(i + (e.shiftKey ? -1 : 1) + PAUSE_TABS.length) % PAUSE_TABS.length].id;
+                    redraw();
+                    return true;
+                },
+                onMount: (root) => {
+                    root.querySelectorAll("input[data-set]").forEach((el) => {
+                        const key = el.dataset.set;
+                        const label = root.querySelector(`[data-val="${key}"]`);
+                        el.oninput = () => {
+                            const v = Number(el.value) / 100;
+                            if (key === "ui") {
+                                if (label)
+                                    label.textContent = `${Math.round(v * 100)}%`;
+                                return;
+                            } // applied on release: resizing mid-drag jumps the slider
+                            settings[key] = v;
+                            if (label)
+                                label.textContent = pct(v);
+                            applySound();
+                        };
+                        el.onchange = () => {
+                            if (key === "ui") {
+                                uiChoice = Number(el.value) / 100;
+                                applyUi();
+                            }
+                            saveSettings();
+                            el.blur(); // so P and Esc reach the game again
+                            if (key === "ui")
+                                redraw();
+                        };
+                    });
+                },
+            },
+            items: [{ label: "▶ Resume", sub: "P", button: "primary", action: () => resume() }],
+        };
+    };
     openMenu(build());
 }
 // A welcome before anything moves. The clock starts when the player presses Start.

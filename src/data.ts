@@ -143,6 +143,15 @@ export const INGREDIENTS: Ingredient[] = [
   { id: "darkroast", icon: "☕", name: "Dark roast", tags: ["bitter"] },
   { id: "chicory", icon: "🌾", name: "Chicory", tags: ["earthy"] },
   { id: "spiced", icon: "🧂", name: "Spiced blend", tags: ["fiery"] },
+  // Mornings and roasts
+  { id: "butter", icon: "🧈", name: "Butter", tags: ["rich", "homely"] },
+  { id: "honey", icon: "🍯", name: "Honey", tags: ["sweet"] },
+  { id: "bacon", icon: "🥓", name: "Bacon", tags: ["smoky", "salty"] },
+  { id: "tomato", icon: "🍅", name: "Fried tomato", tags: ["tart", "savoury"] },
+  { id: "chives", icon: "🌿", name: "Chives", tags: ["fragrant", "bright"] },
+  { id: "pork", icon: "🐖", name: "Pork", tags: ["rich", "savoury"] },
+  { id: "lamb", icon: "🐑", name: "Lamb", tags: ["rich", "fragrant"] },
+  { id: "fowl", icon: "🐓", name: "Fowl", tags: ["homely", "light"] },
 ];
 
 export type ItemKind = "food" | "drink";
@@ -162,6 +171,7 @@ export interface Recipe {
   servings?: Organic; // made whole and served in portions: a pot of stew, a pie in slices
   storedIn?: "piesafe"; // a whole one waits on the station; the keeper carries it to the pie safe, where it's sliced
   internal?: boolean; // made at a station but never ordered or put on the bill of fare (hot water for tea)
+  batch?: string; // what a whole batch is called when it's ready ("a roast"); default: a pot of it
   icon: string;
 }
 
@@ -174,6 +184,19 @@ export const RECIPES: Recipe[] = [
     options: ["apple", "berry", "meat", "cheese"], minutes: [20, 4], servings: [6, 1], storedIn: "piesafe" },
   { id: "salad", blurb: "Cold and crisp, put together by hand at the prep table. Quick to make, and easy to get just right.", icon: "🥗", name: "Salad", kind: "food", station: "prep", baseTags: ["cold", "light"], slots: 2,
     options: ["apple", "walnut", "radish", "herbs", "cheese", "herring"], minutes: [4, 1] },
+  // Breakfast and other quick pan dishes: tended, like the fish.
+  { id: "scrambled", blurb: "Beaten, into a buttered pan, stirred slow until they just set. Stay with them; they turn rubbery the moment you look away.", icon: "🍳", name: "Scrambled eggs", kind: "food", station: "griddle", baseTags: ["warm", "mild"], slots: 1,
+    options: ["chives", "cheese", "bacon", "mushroom", "pepper"], minutes: [4, 1], tended: true },
+  { id: "toast", blurb: "Thick slices from the baker's loaf, browned in the pan. Quick, cheap, and nobody's ever sorry to see it.", icon: "🍞", name: "Toast", kind: "food", station: "griddle", baseTags: ["warm", "crisp"], slots: 1,
+    options: ["butter", "honey", "berry", "cheese", "herring"], minutes: [3, 0.8], tended: true },
+  { id: "fryup", blurb: "The working breakfast: whatever's in the larder, fried in one pan and piled on one plate. Sets anyone up till noon.", icon: "🥓", name: "Fried breakfast", kind: "food", station: "griddle", baseTags: ["warm", "hearty", "savoury"], slots: 2,
+    options: ["bacon", "sausage", "mushroom", "tomato", "crumb"], minutes: [7, 1.5], tended: true },
+  // A pot for the morning
+  { id: "porridge", blurb: "Oats, milk and a long slow stir. A pot of it carries the morning crowd, a bowl at a time.", icon: "🥣", name: "Porridge", kind: "food", station: "stove", baseTags: ["warm", "homely", "mild"], slots: 1,
+    options: ["honey", "apple", "berry", "walnut", "butter"], minutes: [10, 2], servings: [7, 1] },
+  // Roasts: a whole joint in the oven, carved to order until it's gone. It holds the oven while it lasts.
+  { id: "roast", blurb: "A whole joint in the oven, an afternoon's work, carved to order until the bone's bare. The oven's taken while it lasts.", icon: "🍖", name: "Roast", kind: "food", station: "oven", baseTags: ["warm", "hearty", "rich"], slots: 2,
+    options: ["beef", "pork", "lamb", "fowl", "roots", "herbs", "apple"], minutes: [26, 4], servings: [9, 1.5], batch: "a roast" },
   { id: "coffee", blurb: "A whole pot at a time, poured by the cup until it's gone. The beans decide what kind of morning it is.", icon: "☕", name: "Coffee", kind: "drink", station: "coffee", baseTags: ["warm", "rich"], slots: 1,
     options: ["lightroast", "darkroast", "chicory", "spiced"], minutes: [8, 2], servings: [7, 1] },
   { id: "water", internal: true, blurb: "Boil the kettle once, then steep a cup at a time, each with the leaf its drinker likes, until the water's gone.", icon: "♨️", name: "Boil the kettle", kind: "drink", station: "kettle", baseTags: ["warm"], slots: 0,
@@ -824,6 +847,7 @@ export const WEATHER_SOUND = {
 };
 
 export const SOUND_TUNING = {
+  wakeSeconds: 9, // the soundscape fades in over this long when the game starts and each morning: the keeper waking
   targetLoudness: 0.12, // every file is evened out to about this (RMS of its audible part)
   fullVolumeWithin: 2.5, // tiles: full volume this close
   fadeOverTiles: 16, // tiles beyond that over which it fades to quiet

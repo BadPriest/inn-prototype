@@ -8,6 +8,7 @@ import { dist, type Vec } from "../world.js";
 
 let ac: AudioContext | null = null;
 let master: GainNode | null = null;
+let wake: GainNode | null = null; // between the buses and master: the waking fade-in, apart from mute
 /** Volume groups under the master: cues (the game telling you something), atmosphere, music. */
 export type Bus = "cue" | "ambience" | "music";
 const buses: Partial<Record<Bus, GainNode>> = {};
@@ -153,14 +154,26 @@ export function unlockAudio(): void {
     master = ac.createGain();
     master.gain.value = muted ? 0 : 1;
     master.connect(ac.destination);
+    wake = ac.createGain();
+    wake.connect(master);
+    wakeUp();
     for (const b of ["cue", "ambience", "music"] as Bus[]) {
       const n = ac.createGain();
       n.gain.value = busLevel[b];
-      n.connect(master);
+      n.connect(wake);
       buses[b] = n;
     }
   } catch { ac = null; }
   void loadAll();
+}
+
+/** Fade everything in from near silence, as the keeper wakes: at the start, and each morning. */
+export function wakeUp(): void {
+  if (!ac || !wake) return;
+  const t = ac.currentTime;
+  wake.gain.cancelScheduledValues(t);
+  wake.gain.setValueAtTime(0.001, t);
+  wake.gain.exponentialRampToValueAtTime(1, t + T.wakeSeconds);
 }
 
 export function suspend(): void { void ac?.suspend(); }

@@ -143,6 +143,7 @@ function render() {
         const pick = s.view.onPick;
         root.querySelectorAll("[data-pick]").forEach((el) => { el.onclick = () => pick(el.dataset.pick); });
     }
+    s.view?.onMount?.(root);
     root.querySelector('[data-act="back"]')?.addEventListener("click", () => back());
     root.querySelector('[data-act="close"]')?.addEventListener("click", () => closeAll());
     root.querySelectorAll(".menu-item, .menu-btn").forEach((el) => {

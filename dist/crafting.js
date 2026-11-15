@@ -101,7 +101,10 @@ function finish(g, fid, job, recipe) {
         const n = Math.max(2, Math.round(organic(recipe.servings)));
         g.pots.set(fid, { item: job.item, left: n, total: n });
         g.jobs.delete(fid);
-        g.say(recipe.id === "water" ? `The kettle's boiled: hot water for ${n} cups.` : `A pot of ${job.item.name.toLowerCase()} is ready: ${n} servings.`);
+        const what = recipe.batch
+            ? `${recipe.batch[0].toUpperCase()}${recipe.batch.slice(1)} (${(job.item.options ?? []).map((id) => INGREDIENTS.find((i) => i.id === id)?.name.toLowerCase()).filter(Boolean).join(", ")})`
+            : `A pot of ${job.item.name.toLowerCase()}`;
+        g.say(recipe.id === "water" ? `The kettle's boiled: hot water for ${n} cups.` : `${what} is ready: ${n} servings.`);
         return;
     }
     const shelf = g.shelves.get(fid) ?? [];

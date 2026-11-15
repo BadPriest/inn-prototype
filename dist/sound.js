@@ -8,7 +8,7 @@
 //   sound/gramophone.ts records from the gramophone, a few per winding
 // This file listens to game events and calls soundscape() every frame. M mutes; pause silences everything.
 import { DOOR_TUNING, OUTCOME_SOUND, SOUND_TUNING as T } from "./data.js";
-import { attach, output, play, ready, resume, ringsOut, stop, suspend, updateVoices, vary } from "./sound/engine.js";
+import { attach, output, play, ready, resume, ringsOut, stop, suspend, updateVoices, vary, wakeUp } from "./sound/engine.js";
 import { cookingLoops } from "./sound/loops.js";
 import { footsteps } from "./sound/footsteps.js";
 import { crowd } from "./sound/crowd.js";
@@ -128,6 +128,9 @@ export function initSound(g) {
             }
             case "Paper":
                 paper();
+                break;
+            case "DayStarted":
+                wakeUp();
                 break;
             case "Thunder":
                 thunder(e.near);

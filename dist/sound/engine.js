@@ -5,6 +5,7 @@ import { GRAMOPHONE_TONE as GT, ROOM_LINKS, ROOM_OF_TILE, SOUNDS, SOUND_TUNING a
 import { dist } from "../world.js";
 let ac = null;
 let master = null;
+let wake = null; // between the buses and master: the waking fade-in, apart from mute
 const buses = {};
 const busLevel = { cue: 1, ambience: 1, music: 1 };
 let muted = false;
@@ -158,10 +159,13 @@ export function unlockAudio() {
         master = ac.createGain();
         master.gain.value = muted ? 0 : 1;
         master.connect(ac.destination);
+        wake = ac.createGain();
+        wake.connect(master);
+        wakeUp();
         for (const b of ["cue", "ambience", "music"]) {
             const n = ac.createGain();
             n.gain.value = busLevel[b];
-            n.connect(master);
+            n.connect(wake);
             buses[b] = n;
         }
     }
@@ -169,6 +173,15 @@ export function unlockAudio() {
         ac = null;
     }
     void loadAll();
+}
+/** Fade everything in from near silence, as the keeper wakes: at the start, and each morning. */
+export function wakeUp() {
+    if (!ac || !wake)
+        return;
+    const t = ac.currentTime;
+    wake.gain.cancelScheduledValues(t);
+    wake.gain.setValueAtTime(0.001, t);
+    wake.gain.exponentialRampToValueAtTime(1, t + T.wakeSeconds);
 }
 export function suspend() { void ac?.suspend(); }
 export function resume() { void ac?.resume(); }

@@ -19,6 +19,8 @@ export interface MenuView {
   onPick?: (value: string) => void;
   /** Keys the view wants (arrows over cards, say). Return true if handled. */
   onKey?: (e: KeyboardEvent) => boolean;
+  /** After it's drawn: wire up what clicks alone can't (sliders, say). */
+  onMount?: (root: HTMLElement) => void;
 }
 
 export interface MenuSpec {
@@ -163,6 +165,7 @@ function render(): void {
     const pick = s.view.onPick;
     root.querySelectorAll<HTMLElement>("[data-pick]").forEach((el) => { el.onclick = () => pick(el.dataset.pick!); });
   }
+  s.view?.onMount?.(root);
   root.querySelector<HTMLElement>('[data-act="back"]')?.addEventListener("click", () => back());
   root.querySelector<HTMLElement>('[data-act="close"]')?.addEventListener("click", () => closeAll());
   root.querySelectorAll<HTMLElement>(".menu-item, .menu-btn").forEach((el) => {

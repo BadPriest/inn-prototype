@@ -10,7 +10,7 @@
 
 import type { Game } from "./game.js";
 import { DOOR_TUNING, OUTCOME_SOUND, SOUND_TUNING as T } from "./data.js";
-import { attach, output, play, ready, resume, ringsOut, stop, suspend, updateVoices, vary, type Voice } from "./sound/engine.js";
+import { attach, output, play, ready, resume, ringsOut, stop, suspend, updateVoices, vary, wakeUp, type Voice } from "./sound/engine.js";
 import { cookingLoops } from "./sound/loops.js";
 import { footsteps } from "./sound/footsteps.js";
 import { crowd } from "./sound/crowd.js";
@@ -116,6 +116,7 @@ export function initSound(g: Game): void {
       }
       case "ServeOutcome": { const s = OUTCOME_SOUND[e.outcome]; if (s) reaction(s); break; }
       case "Paper": paper(); break;
+      case "DayStarted": wakeUp(); break;
       case "Thunder": thunder(e.near); break;
       case "Confirmed": if (T.confirmSound) play("confirm", null); break;
       case "PatronLeft": if (e.early) synth.leave(); break;
