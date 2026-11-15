@@ -1,8 +1,8 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 15, 2026 · build 73 · https://inn-prototype.vercel.app
+Updated Nov 15, 2026 · build 75 (builds 74–75 committed, not pushed yet) · https://inn-prototype.vercel.app
 
-Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was done in each task's comments. Design decisions come from [design-session-journal.md](design-session-journal.md).
+Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was done in each task's comments. Design decisions come from [design-session-journal.md](design-session-journal.md) and [design-session-journal_game-start_nov-15.md](design-session-journal_game-start_nov-15.md).
 
 ## Done
 
@@ -24,20 +24,31 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
 
+## Built, not yet deployed (push `main` to deploy)
+
+- #37 readable chatter: dark plates with tails, one voice per table, bubbles nudge apart
+- #38 daily order tickets along the top, number plaques over guests, a ring that counts down honestly to a walkout (the ring is your suggestion, built to judge; the plaque replaced the order bubble)
+
 ## Waiting on Bruno
 
 ### Design sessions (an agenda)
 
-**#36 Game start and progression** (next; answers #11, redoes #7; Bruno's ideas are on the card)
-- Progression runs on the economy: buy everything from suppliers at first (smaller margin, no hassle), produce your own later. The game isn't out to bankrupt you.
-- Licences open the building (upstairs bedrooms, cellar, bigger kitchen). Each brings an official's visit; impress them, and they become a regular.
-- List the full kitchen and cellar equipment first; the starter set follows from that.
-- Choose a few starting recipes; learn more, and put more ingredients in them.
-- Trim food tags; flavour comes from mastery (a soup master cooks stones and water and people like it).
-- Keeper traits: start with 1–2, gain more slowly (tray on the head, play a card twice, haggler, charming).
-- Price follows quality, traits and the serving outcome; a Delight earns a tip; big effort pays.
-- Open: the first day; which permit comes first and how to impress an official; is the official one of the 10 regulars; does small/medium survive; what paces each kind of growth.
-- Topics of their own, later: suppliers, supplies, prices.
+**#46 Economy and suppliers** (next, per the Nov 15 journal; before progression)
+- Starting money; prices that challenge, never gouge.
+- How many bundles, and what's in them (kitchen-only up to kitchen and taproom).
+- Reseller start: ready-made goods are mediocre and get tiresome, which pushes you to make your own.
+- Suppliers as a network of small businesses, and as patrons; delivery dates.
+- Cut the draft equipment table: which column the small start takes per row, what sits behind a permit.
+- Bought or inherited.
+- Unblocks #41 (day two delivery), the pantry side of #39, #44 (permit fees).
+
+**From the Nov 15 game start session** (#36 done in the journal; open questions left)
+- #7 small start: not ready yet (waits on #11, the starter set). #39 bill of fare marks waits on it.
+- #40 day one prologue: card tutorial at turn-in or on waking, or after a long stretch of plain service?
+- #42 meal times: approve the suggested shape (one all-day bill first, a day strip at the desk, meal tabs).
+- #43 names learned over time: approve using each guest's openness.
+- #44 permits and the inspector; #45 reputation and crowds.
+- #47 holds the smaller seeds (keeper eats, pipes, board games, skills found, bathrooms…).
 
 **#10 Snow, and how patron schedules work** (unblocks #18 schedules, then #28 more regulars)
 - Snow: which calendar seasons and locations? Does it pile up and melt, or is it just weather?
