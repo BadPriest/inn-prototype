@@ -21,6 +21,7 @@ import { cancelPour, updatePour } from "./serving.js";
 import { watchObjectives } from "./objectives.js";
 import { askSetDown, offerUnasked, cleanable, cleanStep, findTargets, targetName, forcedTurnIn, interact, openGarnishMenu, openJournal, promptFor, targetId, type Target } from "./interact.js";
 import { draw, computeView, type View } from "./ui/render.js";
+import { computeIsoView, drawIso, isoPick } from "./ui/render-iso.js";
 import { updateHud, initDebug, toggleDebug } from "./ui/hud.js";
 import { back, initMenus, menuKey, menuOpen } from "./ui/menu.js";
 import { initSound, isMuted, soundscape, toggleMute, unlockAudio } from "./sound.js";
@@ -128,6 +129,10 @@ window.addEventListener("keydown", (e) => {
     case "m":
       g.say(toggleMute() ? "Sound off." : "Sound on.");
       break;
+    case "v":
+      toggleIso();
+      g.say(settings.iso ? "Isometric view." : "Top-down view.");
+      break;
     case "p": case "escape":
       openPause();
       break;
@@ -159,7 +164,9 @@ function pauseIfAway(): void {
 function toTile(e: { clientX: number; clientY: number }): Vec {
   const r = canvas.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
-  return { x: ((e.clientX - r.left) * dpr - view.ox) / view.ts, y: ((e.clientY - r.top) * dpr - view.oy) / view.ts };
+  const sx = (e.clientX - r.left) * dpr, sy = (e.clientY - r.top) * dpr;
+  if (view.iso) return isoPick(g, view, sx, sy); // allows for height: the side of the counter is the counter
+  return { x: (sx - view.ox) / view.ts, y: (sy - view.oy) / view.ts };
 }
 
 let lastWalk = 0;
@@ -477,6 +484,7 @@ function moveKeeper(dt: number): void {
   if (keys.has("a") || keys.has("arrowleft")) dx -= 1;
   if (keys.has("d") || keys.has("arrowright")) dx += 1;
   const run = keys.has("shift");
+  if ((dx || dy) && view.iso) [dx, dy] = [(dx + dy) / 2, (dy - dx) / 2]; // isometric: screen directions to the floor's
   if (dx || dy) {
     k.path = [];
     k.pendingInteract = null;
@@ -560,7 +568,7 @@ function watchTrays(): void {
 const SETTINGS_KEY = "travelling-inn-settings";
 type UiChoice = "auto" | number;
 /** Volumes 0..1. `music` was an on/off switch before sliders; false still means silent. */
-interface Settings { ui?: UiChoice; cues?: number; atmosphere?: number; music?: boolean | number }
+interface Settings { ui?: UiChoice; cues?: number; atmosphere?: number; music?: boolean | number; iso?: boolean }
 let settings: Settings = {};
 try { settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) ?? "{}") as Settings; } catch { /* defaults */ }
 let uiChoice: UiChoice = settings.ui ?? "auto";
@@ -580,6 +588,12 @@ function applySound(): void {
   setBusVolume("music", volume("music"));
 }
 applySound();
+
+/** Straight down or isometric (V, or the pause screen's Display tab). Only the drawing changes. */
+function toggleIso(): void {
+  settings.iso = !settings.iso;
+  saveSettings();
+}
 
 function autoUi(): number {
   // 1 on laptops and phones, larger on big high-resolution screens (a 4K screen at 100% gets about 2).
@@ -636,6 +650,7 @@ function openPause(): void {
     } else {
       panel = `<div class="set-list">
         ${slider("ui", "🔍", "UI size", "panels, cards, pop-ups and tickets", Math.round(uiScale() * 100), 75, 250, 5, `${Math.round(uiScale() * 100)}%`)}
+        <button class="set-btn" data-pick="iso">${settings.iso ? "◆ Isometric view" : "▦ Top-down view"} <small>switch to ${settings.iso ? "top-down" : "isometric"} (V)</small></button>
         <button class="set-btn" data-pick="uiauto">${uiChoice === "auto" ? "☑" : "☐"} Automatic <small>size to fit the screen (${Math.round(autoUi() * 100)}% here)</small></button>
       </div>`;
     }
@@ -650,6 +665,7 @@ function openPause(): void {
           else if (k === "objectives") { g.showObjectives = !g.showObjectives; redraw(); }
           else if (k === "howto") openMenu({ title: "How to play", body: welcomeBody(), items: [{ label: "Back", button: "secondary", action: () => back() }] });
           else if (k === "mute") { toggleMute(); redraw(); }
+          else if (k === "iso") { toggleIso(); redraw(); }
           else if (k === "uiauto") { uiChoice = uiChoice === "auto" ? uiScale() : "auto"; saveSettings(); applyUi(); redraw(); }
         },
         onKey: (e) => {
@@ -754,8 +770,8 @@ function frame(now: number): void {
   watchTrays();
   watchObjectives(g);
   soundscape(g, realDt);
-  view = computeView(canvas, g, 22, statusClearance());
-  draw(ctx, g, view, g.arranging ? null : target, clickDest);
+  view = settings.iso ? computeIsoView(canvas, g, 34, statusClearance()) : computeView(canvas, g, 22, statusClearance());
+  (view.iso ? drawIso : draw)(ctx, g, view, g.arranging ? null : target, clickDest);
   drawArrange(ctx, g, view);
   updateTickets(g);
   hudTimer -= realDt;

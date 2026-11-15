@@ -3,6 +3,7 @@
 // their ids). A spot is allowed when it's kitchen floor, behind the bar or a nook in the counter wall,
 // nothing else stands there, and the keeper can still reach everything.
 import { EQUIPMENT, PLACEABLE_ON, TUNING } from "../data.js";
+import { P, floorPath } from "./proj.js";
 let grab = { x: 0, y: 0 }; // where on the piece it was picked up
 const verdicts = new Map();
 const newUid = () => `eq-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
@@ -148,14 +149,16 @@ export function drawArrange(ctx, g, view) {
     const a = g.arranging;
     if (!a)
         return;
-    const { ts, ox, oy } = view;
-    const X = (x) => ox + x * ts, Y = (y) => oy + y * ts;
+    const ts = view.ts;
+    const inset = 2 / ts; // two pixels, in tiles
     // Free spots for equipment: a faint wash.
     ctx.fillStyle = "rgba(160,220,140,0.08)";
     for (const row of g.world.tiles)
         for (const t of row) {
-            if (PLACEABLE_ON.includes(t.base) && !t.equip)
-                ctx.fillRect(X(t.x) + 1, Y(t.y) + 1, ts - 2, ts - 2);
+            if (PLACEABLE_ON.includes(t.base) && !t.equip) {
+                floorPath(ctx, view, t.x, t.y, 1, 1, inset / 2);
+                ctx.fill();
+            }
         }
     // Every piece of equipment, outlined; the one in hand dimmed where it stood.
     ctx.setLineDash([ts * 0.12, ts * 0.08]);
@@ -163,11 +166,12 @@ export function drawArrange(ctx, g, view) {
     for (const p of g.layout) {
         const eq = eqOf(p.type);
         const held = a.holding?.uid === p.uid;
+        floorPath(ctx, view, p.x, p.y, eq.w, eq.h, inset);
         ctx.strokeStyle = held ? "rgba(255,255,255,0.35)" : "#ffd34d";
-        ctx.strokeRect(X(p.x) + 2, Y(p.y) + 2, eq.w * ts - 4, eq.h * ts - 4);
+        ctx.stroke();
         if (held) {
             ctx.fillStyle = "rgba(0,0,0,0.45)";
-            ctx.fillRect(X(p.x) + 2, Y(p.y) + 2, eq.w * ts - 4, eq.h * ts - 4);
+            ctx.fill();
         }
     }
     ctx.setLineDash([]);
@@ -179,13 +183,15 @@ export function drawArrange(ctx, g, view) {
         ctx.fillStyle = ok ? "rgba(110,190,110,0.55)" : "rgba(210,90,80,0.5)";
         ctx.strokeStyle = ok ? "#9be27a" : "#e07060";
         ctx.lineWidth = 2;
-        ctx.fillRect(X(at.x) + 2, Y(at.y) + 2, eq.w * ts - 4, eq.h * ts - 4);
-        ctx.strokeRect(X(at.x) + 2, Y(at.y) + 2, eq.w * ts - 4, eq.h * ts - 4);
+        floorPath(ctx, view, at.x, at.y, eq.w, eq.h, inset);
+        ctx.fill();
+        ctx.stroke();
         ctx.fillStyle = "#fff";
         ctx.font = `${Math.floor(ts * 0.32)}px system-ui, sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(eq.label, X(at.x) + (eq.w * ts) / 2, Y(at.y) + (eq.h * ts) / 2);
+        const c = P(view, at.x + eq.w / 2, at.y + eq.h / 2);
+        ctx.fillText(eq.label, c.x, c.y);
         ctx.lineWidth = 1;
     }
 }

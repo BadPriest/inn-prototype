@@ -8,7 +8,8 @@ import { drawLight } from "./light.js";
 import { RING_TRACK, ringColor } from "./tickets.js";
 import { walkoutProgress } from "../patrons.js";
 
-export interface View { ts: number; ox: number; oy: number }
+/** `iso`: drawn isometric (render-iso.ts); otherwise straight down, `ts` pixels a tile. */
+export interface View { ts: number; ox: number; oy: number; iso?: boolean }
 
 /** Fit the whole inn if it's big enough to read; otherwise zoom in and follow the keeper. */
 /** `top`: canvas pixels kept clear at the top (the status card sits there). */
@@ -30,7 +31,7 @@ export function computeView(canvas: HTMLCanvasElement, g: Game, minTile = 22, to
 /** Numeral size on the plaque over a guest, as a share of the plaque's radius (1-digit numbers; 2 and 3 digits shrink to fit). The ticket's size is .tk-plaque in index.html. */
 const PLAQUE_FONT = 1.4;
 
-const OUTCOME_COLOR: Record<string, string> = {
+export const OUTCOME_COLOR: Record<string, string> = {
   DELIGHT: "#ffd34d",
   PLEASED: "#9be27a",
   FULFILLED: "#d8d8d8",
@@ -292,7 +293,7 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
   ctx.fillStyle = "#2a1d14";
   ctx.beginPath(); ctx.arc(X(k.pos.x + k.facing.x * 0.22), Y(k.pos.y + k.facing.y * 0.22), ts * 0.07, 0, Math.PI * 2); ctx.fill();
 
-  drawLight(ctx, g, X, Y, ts);
+  drawLight(ctx, g, (x, y) => ({ x: X(x), y: Y(y) }), ts);
   for (const p of g.patrons) drawPatron(ctx, g, p, X, Y, ts, "words");
   // Trays: one per arm, showing what's on them
   k.trays.forEach((tray, i) => {
@@ -355,6 +356,11 @@ function drawPatron(ctx: CanvasRenderingContext2D, g: Game, p: Patron, X: (n: nu
   ctx.globalAlpha = 1;
   return;
   }
+  drawPatronWords(ctx, g, p, x, y, ts);
+}
+
+/** Name, what's in front of them, the order plaque, a marker and what they say, around a guest standing at (x, y) on screen. */
+export function drawPatronWords(ctx: CanvasRenderingContext2D, g: Game, p: Patron, x: number, y: number, ts: number): void {
   ctx.fillStyle = "#f8f0e0";
   ctx.font = `${Math.floor(ts * 0.26)}px system-ui, sans-serif`;
   ctx.textAlign = "center";
@@ -424,9 +430,11 @@ function drawPatron(ctx: CanvasRenderingContext2D, g: Game, p: Patron, X: (n: nu
 // Speech bubbles: a dark, semi-transparent rounded plate with a small tail pointing at the speaker.
 // Collected during the frame, then placed so plates from different speakers nudge apart.
 
-const PLATE = "rgba(22,17,13,0.82)";
+export const PLATE = "rgba(22,17,13,0.82)";
 interface Speech { x: number; anchor: number; text: string; color: string }
 const speech: Speech[] = [];
+/** A line to show this frame, over the point (x, anchor); laid out with the rest by drawSpeech. */
+export function say(x: number, anchor: number, text: string, color: string): void { speech.push({ x, anchor, text, color }); }
 
 function wrapText(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
   const words = text.split(" ");
@@ -440,7 +448,7 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxW: number): st
   return lines;
 }
 
-function drawSpeech(ctx: CanvasRenderingContext2D, ts: number): void {
+export function drawSpeech(ctx: CanvasRenderingContext2D, ts: number): void {
   if (!speech.length) return;
   ctx.font = `italic ${Math.floor(ts * 0.28)}px Georgia, serif`;
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
@@ -485,7 +493,7 @@ function drawSpeech(ctx: CanvasRenderingContext2D, ts: number): void {
   speech.length = 0;
 }
 
-function badge(ctx: CanvasRenderingContext2D, x: number, y: number, text: string, ts: number): void {
+export function badge(ctx: CanvasRenderingContext2D, x: number, y: number, text: string, ts: number): void {
   ctx.fillStyle = "#ffd34d";
   ctx.beginPath(); ctx.arc(x, y, ts * 0.2, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "#2a1d14";
@@ -493,7 +501,7 @@ function badge(ctx: CanvasRenderingContext2D, x: number, y: number, text: string
   ctx.fillText(text, x, y + 1);
 }
 
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
+export function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
   ctx.arcTo(x + w, y, x + w, y + h, r);

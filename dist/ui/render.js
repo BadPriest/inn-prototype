@@ -22,7 +22,7 @@ export function computeView(canvas, g, minTile = 22, top = 0) {
 }
 /** Numeral size on the plaque over a guest, as a share of the plaque's radius (1-digit numbers; 2 and 3 digits shrink to fit). The ticket's size is .tk-plaque in index.html. */
 const PLAQUE_FONT = 1.4;
-const OUTCOME_COLOR = {
+export const OUTCOME_COLOR = {
     DELIGHT: "#ffd34d",
     PLEASED: "#9be27a",
     FULFILLED: "#d8d8d8",
@@ -344,7 +344,7 @@ export function draw(ctx, g, v, target, clickDest) {
     ctx.beginPath();
     ctx.arc(X(k.pos.x + k.facing.x * 0.22), Y(k.pos.y + k.facing.y * 0.22), ts * 0.07, 0, Math.PI * 2);
     ctx.fill();
-    drawLight(ctx, g, X, Y, ts);
+    drawLight(ctx, g, (x, y) => ({ x: X(x), y: Y(y) }), ts);
     for (const p of g.patrons)
         drawPatron(ctx, g, p, X, Y, ts, "words");
     // Trays: one per arm, showing what's on them
@@ -413,6 +413,10 @@ function drawPatron(ctx, g, p, X, Y, ts, part) {
         ctx.globalAlpha = 1;
         return;
     }
+    drawPatronWords(ctx, g, p, x, y, ts);
+}
+/** Name, what's in front of them, the order plaque, a marker and what they say, around a guest standing at (x, y) on screen. */
+export function drawPatronWords(ctx, g, p, x, y, ts) {
     ctx.fillStyle = "#f8f0e0";
     ctx.font = `${Math.floor(ts * 0.26)}px system-ui, sans-serif`;
     ctx.textAlign = "center";
@@ -492,8 +496,10 @@ function drawPatron(ctx, g, p, X, Y, ts, part) {
 // ---------------------------------------------------------------------------
 // Speech bubbles: a dark, semi-transparent rounded plate with a small tail pointing at the speaker.
 // Collected during the frame, then placed so plates from different speakers nudge apart.
-const PLATE = "rgba(22,17,13,0.82)";
+export const PLATE = "rgba(22,17,13,0.82)";
 const speech = [];
+/** A line to show this frame, over the point (x, anchor); laid out with the rest by drawSpeech. */
+export function say(x, anchor, text, color) { speech.push({ x, anchor, text, color }); }
 function wrapText(ctx, text, maxW) {
     const words = text.split(" ");
     const lines = [];
@@ -511,7 +517,7 @@ function wrapText(ctx, text, maxW) {
         lines.push(cur);
     return lines;
 }
-function drawSpeech(ctx, ts) {
+export function drawSpeech(ctx, ts) {
     if (!speech.length)
         return;
     ctx.font = `italic ${Math.floor(ts * 0.28)}px Georgia, serif`;
@@ -558,7 +564,7 @@ function drawSpeech(ctx, ts) {
     }
     speech.length = 0;
 }
-function badge(ctx, x, y, text, ts) {
+export function badge(ctx, x, y, text, ts) {
     ctx.fillStyle = "#ffd34d";
     ctx.beginPath();
     ctx.arc(x, y, ts * 0.2, 0, Math.PI * 2);
@@ -567,7 +573,7 @@ function badge(ctx, x, y, text, ts) {
     ctx.font = `bold ${Math.floor(ts * 0.26)}px system-ui, sans-serif`;
     ctx.fillText(text, x, y + 1);
 }
-function roundRect(ctx, x, y, w, h, r) {
+export function roundRect(ctx, x, y, w, h, r) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
     ctx.arcTo(x + w, y, x + w, y + h, r);

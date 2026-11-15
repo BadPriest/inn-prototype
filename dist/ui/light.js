@@ -53,23 +53,34 @@ export function initLight(g) {
     });
 }
 let shade = null;
-/** The darkness layer, with light cut out of it, and a warm haze around flames. */
-export function drawLight(ctx, g, X, Y, ts) {
+/** A window pane's tint: pale with daylight, grey in the rain, dark blue at night. */
+export function windowColor(g) {
+    const day = daylight(g);
+    const a = 0.15 + 0.45 * day * weatherDim(g);
+    return day > 0.05 ? (g.weather.sky === "rain" ? `rgba(170,185,200,${a})` : `rgba(225,238,248,${a})`) : "rgba(20,30,60,0.35)";
+}
+/**
+ * The darkness layer, with light cut out of it, and a warm haze around flames.
+ * `P`: a floor point (in tiles) to the screen. `unit`: pixels a tile across. `squash`: how flat a pool of
+ * light looks (1 seen from above; 0.5 isometric). `windows`: tint the panes here (the isometric view does its own).
+ */
+export function drawLight(ctx, g, P, unit, squash = 1, windows = true) {
+    const ts = unit;
     const W = ctx.canvas.width, H = ctx.canvas.height;
     const inside = indoorLight(g);
     const dark = LIGHT.maxDark * (1 - inside);
     const t = performance.now() / 1000;
     // Windows: pale with daylight, grey in the rain, dark blue at night.
     const day = daylight(g);
-    const wet = g.weather.sky === "rain";
-    for (const row of g.world.tiles)
-        for (const tile of row) {
-            if (tile.def.name !== "Window")
-                continue;
-            const a = 0.15 + 0.45 * day * weatherDim(g);
-            ctx.fillStyle = day > 0.05 ? (wet ? `rgba(170,185,200,${a})` : `rgba(225,238,248,${a})`) : "rgba(20,30,60,0.35)";
-            ctx.fillRect(X(tile.x) + 3, Y(tile.y) + 3, ts - 6, ts - 6);
-        }
+    if (windows)
+        for (const row of g.world.tiles)
+            for (const tile of row) {
+                if (tile.def.name !== "Window")
+                    continue;
+                ctx.fillStyle = windowColor(g);
+                const c = P(tile.x, tile.y);
+                ctx.fillRect(c.x + 3, c.y + 3, ts - 6, ts - 6);
+            }
     const glows = [];
     // Daylight spills in at the windows.
     if (day > 0.05)
@@ -114,13 +125,17 @@ export function drawLight(ctx, g, X, Y, ts) {
         // Light cuts the darkness away.
         s.globalCompositeOperation = "destination-out";
         for (const gl of glows) {
-            const cx = X(gl.x), cy = Y(gl.y), r = gl.r * ts;
-            const grad = s.createRadialGradient(cx, cy, 0, cx, cy, r);
+            const c = P(gl.x, gl.y), r = gl.r * ts;
+            s.save();
+            s.translate(c.x, c.y);
+            s.scale(1, squash);
+            const grad = s.createRadialGradient(0, 0, 0, 0, 0, r);
             grad.addColorStop(0, `rgba(0,0,0,${gl.strength})`);
             grad.addColorStop(0.5, `rgba(0,0,0,${gl.strength * 0.55})`);
             grad.addColorStop(1, "rgba(0,0,0,0)");
             s.fillStyle = grad;
-            s.fillRect(cx - r, cy - r, r * 2, r * 2);
+            s.fillRect(-r, -r, r * 2, r * 2);
+            s.restore();
         }
         ctx.drawImage(shade, 0, 0);
     }
@@ -129,12 +144,16 @@ export function drawLight(ctx, g, X, Y, ts) {
     for (const gl of glows) {
         if (!gl.warm)
             continue;
-        const cx = X(gl.x), cy = Y(gl.y), r = gl.r * ts;
-        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+        const c = P(gl.x, gl.y), r = gl.r * ts;
+        ctx.save();
+        ctx.translate(c.x, c.y);
+        ctx.scale(1, squash);
+        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
         grad.addColorStop(0, `rgba(255,170,80,${gl.warm * haze})`);
         grad.addColorStop(1, "rgba(255,170,80,0)");
         ctx.fillStyle = grad;
-        ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+        ctx.fillRect(-r, -r, r * 2, r * 2);
+        ctx.restore();
     }
     // Thunder: a flash that fades in a few tenths of a second.
     if (flash > 0) {
