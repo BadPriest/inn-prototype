@@ -13,9 +13,9 @@ export const MAP: string[] = [
   "o~~~~~~~D::#,,,,,,,,KK,,,,,,,,,,,#",
   "#~~~~~~~#::#,,,,,,,,,,,,,,,,,,,,,#",
   "#~~~~~~~#::#W,,,,,,,,,,,,,,,,,,,,#",
-  "#########::##D####h###Z#H#D#A#Y#V#",
+  "#########::#nDnnnnhnnnZnHnDnAnYnV#",
   "#..........#_____________________#",
-  "#..........#_==k===k===k=g==k===##",
+  "#..........#_==k===k===k=g==k===f#",
   "#.............s.s.s.s.s.s.s.s.s..#",
   "o................................o",
   "#G..............c....c...........#",
@@ -61,6 +61,7 @@ const C = {
 export const TILE_LEGEND: Record<string, TileDef> = {
   "#": { kind: "wall", floor: C.wall },
   n: { kind: "wall", floor: "#4a3a2e", name: "Nook" }, // a gap in the counter wall where a kettle or a coffee pot can stand
+  f: { kind: "door", floor: C.staff, name: "Counter flap" }, // the service door through the counter: the keeper only
   o: { kind: "wall", floor: C.window, name: "Window" }, // rain is heard at the windows
   ".": { kind: "floor", floor: C.tap },
   ";": { kind: "floor", floor: C.entry },

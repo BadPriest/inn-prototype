@@ -79,7 +79,15 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
     for (const t of row) {
       const k = t.def.kind;
       const x = X(t.x), y = Y(t.y);
-      if (k === "door") { ctx.fillStyle = "#4a3426"; ctx.fillRect(x + ts * 0.1, y + ts * 0.1, ts * 0.8, ts * 0.8); }
+      if (k === "door" && t.ch !== "f") { ctx.fillStyle = "#4a3426"; ctx.fillRect(x + ts * 0.1, y + ts * 0.1, ts * 0.8, ts * 0.8); }
+      if (t.ch === "f") {
+        // The counter flap: a hinged plank folded back against the wall, and a gap you can walk through.
+        ctx.fillStyle = "#6b4a32";
+        ctx.fillRect(X(t.x) + ts * 0.78, Y(t.y) + ts * 0.08, ts * 0.16, ts * 0.84);
+        ctx.strokeStyle = "rgba(255,230,190,0.35)"; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(X(t.x) + ts * 0.06, Y(t.y) + ts * 0.5); ctx.lineTo(X(t.x) + ts * 0.7, Y(t.y) + ts * 0.5); ctx.stroke();
+      }
+
       if (k === "front") {
         ctx.fillStyle = g.open ? (g.lastCall ? "#c98a3a" : "#6fbf5f") : "#7a3a2a";
         if (g.frontDoor.open) {
