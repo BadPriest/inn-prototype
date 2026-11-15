@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 15, 2026 · build 87 (86 deployed; 87 committed, not pushed) · https://inn-prototype.vercel.app
+Updated Nov 15, 2026 · build 87 (deployed) · https://inn-prototype.vercel.app
 
 Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was done in each task's comments. Design decisions come from [design-session-journal.md](design-session-journal.md) and [design-session-journal_game-start_nov-15.md](design-session-journal_game-start_nov-15.md).
 
@@ -24,7 +24,7 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
 
-## Built, not yet deployed (build 87)
+## Built and deployed (Nov 15, build 87)
 
 - #52 isometric view (the end goal; top-down stays the default for now): V or Pause → Display switches; blocks drawn in code, people as pawns, low walls except at the back. Zoom in both views (wheel, pinch, [ ]); turn the isometric camera (, and .). The wheel no longer picks between things in reach: Tab does
 - #51 the keeper walks round guests; tables are easier to tap on tablets (deployed in 86)
