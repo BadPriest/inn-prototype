@@ -27,6 +27,7 @@ export function openDeskScreen(g: Game, openJournal: () => void): void {
     };
     return {
       title: "🕯️ Desk",
+      holdsClock: true,
       subtitle: "In your room",
       view: {
         html: grid(cards),
@@ -157,6 +158,7 @@ export function openBillOfFare(g: Game): void {
     }
     return {
       title: "📜 Bill of fare",
+      holdsClock: true,
       subtitle: g.mealMode ? "A bill for each meal; it carries over day to day." : "What's on the menu today?",
       view: {
         html: `${modes}${head}${grid(cards)}`,
@@ -214,6 +216,7 @@ export function openUpgrades(g: Game): void {
     });
     return {
       title: "🔧 Upgrades",
+      holdsClock: true,
       subtitle: "Earned by serving",
       view: {
         html: `<p class="explain">No coin yet: upgrades open up as you serve more people. Served so far: <b>${g.totalServed}</b>.</p>${grid(cards)}`,

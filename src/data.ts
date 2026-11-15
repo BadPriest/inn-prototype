@@ -778,9 +778,9 @@ export const SOUNDS: Record<string, SoundDef> = {
   serveNegative: { bus: "cue", files: [SND + "serving-outcome-negative-1-chord.opus", SND + "serving-outcome-negative-2-chord.opus"], volume: 0.45, pitch: 0.01, trim: true },
   delight: { bus: "cue", files: [SND + "delight-1.opus", SND + "delight-2.opus"], volume: 0.6, pitch: 0.01, trim: true },
   // The fire, heard from the fireplace. Which plays when: FIRE below.
-  fireSmall: { files: [SND + "fireplace-small-loop.opus"], volume: 0.25, pitch: 0.03, loop: true },
-  fireMedium: { files: [SND + "fireplace-med-loop.opus"], volume: 0.35, pitch: 0.03, loop: true },
-  fireLarge: { files: [SND + "fireplace-large-loop.opus"], volume: 0.42, pitch: 0.03, loop: true },
+  fireSmall: { files: [SND + "fireplace-small-loop.opus"], volume: 0.21, pitch: 0.03, loop: true },
+  fireMedium: { files: [SND + "fireplace-med-loop.opus"], volume: 0.3, pitch: 0.03, loop: true },
+  fireLarge: { files: [SND + "fireplace-large-loop.opus"], volume: 0.36, pitch: 0.03, loop: true },
   // The murmur of the taproom, by how many people are in it (CROWD below).
   crowdLow: { files: [SND + "occupancy-bg-low-1-loop.opus", SND + "occupancy-bg-low-2-loop.opus"], volume: 0.28, pitch: 0.02, loop: true, room: "taproom" },
   crowdComfortable: { files: [SND + "occupancy-bg-comfortable-1-loop.opus"], volume: 0.36, pitch: 0.02, loop: true, room: "taproom" },
@@ -801,11 +801,11 @@ export const SOUNDS: Record<string, SoundDef> = {
   windMedium: { files: [SND + "wind-medium-outside-ambience-loop.opus"], volume: 0.45, pitch: 0.02, loop: true },
   windStrong: { files: [SND + "wind-strong-outside-ambience-loop.opus"], volume: 0.55, pitch: 0.02, loop: true },
   // The gramophone's records (assets/sounds/gramophone: smaller copies of the originals in music/).
-  recordBoat: { tone: "gramophone", bus: "music", files: [SND + "gramophone/go-little-boat.opus"], volume: 0.34, pitch: 0 },
-  recordBlow: { tone: "gramophone", bus: "music", files: [SND + "gramophone/let-it-blow.opus"], volume: 0.34, pitch: 0 },
-  recordRound: { tone: "gramophone", bus: "music", files: [SND + "gramophone/round-we-go.opus"], volume: 0.34, pitch: 0 },
-  recordApple: { tone: "gramophone", bus: "music", files: [SND + "gramophone/the-apple-tree.opus"], volume: 0.34, pitch: 0 },
-  recordRoad: { tone: "gramophone", bus: "music", files: [SND + "gramophone/the-road-can-wait.opus"], volume: 0.34, pitch: 0 },
+  recordBoat: { tone: "gramophone", bus: "music", files: [SND + "gramophone/go-little-boat.opus"], volume: 0.2, pitch: 0 },
+  recordBlow: { tone: "gramophone", bus: "music", files: [SND + "gramophone/let-it-blow.opus"], volume: 0.2, pitch: 0 },
+  recordRound: { tone: "gramophone", bus: "music", files: [SND + "gramophone/round-we-go.opus"], volume: 0.2, pitch: 0 },
+  recordApple: { tone: "gramophone", bus: "music", files: [SND + "gramophone/the-apple-tree.opus"], volume: 0.2, pitch: 0 },
+  recordRoad: { tone: "gramophone", bus: "music", files: [SND + "gramophone/the-road-can-wait.opus"], volume: 0.2, pitch: 0 },
   // The gramophone's own sounds: winding it, the needle, the surface noise, the end of a record, the spring giving out.
   gramoCrank: { bus: "music", files: [SND + "sfx-gramophone-winding-crank.opus"], volume: 0.5, pitch: 0.03 },
   gramoNeedle: { bus: "music", files: [SND + "sfx-gramophone-needle-drop.opus"], volume: 0.45, pitch: 0.04, trim: true },

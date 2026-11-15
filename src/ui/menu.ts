@@ -31,6 +31,9 @@ export interface MenuSpec {
   items: MenuItem[];
   /** Modal menus stop the clock and can't be dismissed with Esc. */
   modal?: boolean;
+  /** Stops the clock while it (or anything opened over it) is up, but closes as usual: the desk and its
+   *  screens (bill of fare, calendar, newspaper, upgrades, journal), wherever they're opened from. */
+  holdsClock?: boolean;
   onClose?: () => void;
 }
 
@@ -127,7 +130,7 @@ export function menuKey(e: KeyboardEvent): boolean {
 }
 
 function render(): void {
-  onModalChange(isModal());
+  onModalChange(isModal() || stack.some((o) => o.spec.holdsClock));
   if (!root) return;
   if (!stack.length) {
     root.innerHTML = "";

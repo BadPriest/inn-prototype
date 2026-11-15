@@ -315,6 +315,7 @@ export function openJournal(g: Game): void {
   const known = REGULARS.filter((d) => (g.regulars.get(d.id)?.visits ?? 0) > 0);
   openMenu({
     title: "Journal",
+    holdsClock: true,
     body: known.length ? undefined : "Nobody you know yet. Regulars will turn up over the days.",
     items: [
       ...known.map((d) => {

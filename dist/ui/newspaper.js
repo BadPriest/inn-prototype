@@ -10,6 +10,7 @@ export function openNewspaper(g) {
     const title = `The ${g.loc.name === "Town centre" ? "Town" : g.loc.name} Courier`;
     openMenu({
         title: `📰 ${title}`,
+        holdsClock: true,
         subtitle: longDate(g.date),
         body: `<div class="paper">
       <h4>Weather</h4><p>${p.forecast} <span class="muted">(Forecasts are a guess.)</span></p>

@@ -105,7 +105,7 @@ export function menuKey(e) {
     return true; // swallow other keys while a menu is open
 }
 function render() {
-    onModalChange(isModal());
+    onModalChange(isModal() || stack.some((o) => o.spec.holdsClock));
     if (!root)
         return;
     if (!stack.length) {

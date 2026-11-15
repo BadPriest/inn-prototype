@@ -15,7 +15,7 @@ export function updateHud(g, prompt) {
     updateStatus(g);
     const meal = g.mealMode ? MEALS.find((m) => m.id === g.mealNow()?.id) : undefined;
     const serving = g.mealMode ? ` · ${meal ? `${meal.icon} ${meal.name}` : "between meals"}` : "";
-    $("clock").innerHTML = `<span class="st ${status.replace(" ", "")}">${status}</span>${serving} · ×${g.speed}${g.paused ? " · paused" : ""}`;
+    $("clock").innerHTML = `<span class="st ${status.replace(" ", "")}">${status}</span>${serving} · ×${g.speed}${g.paused ? " · paused" : g.modal ? " · clock stopped" : ""}`;
     $("prompt").textContent = prompt;
     // Journal heads-up: a toast for the latest note, and a count until the journal is opened.
     const toast = document.getElementById("toast");
