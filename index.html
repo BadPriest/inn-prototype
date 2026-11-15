@@ -54,9 +54,18 @@
   .obj.done { color:var(--muted); text-decoration:line-through; }
   #log { font-size:12px; flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding-right:4px; }
   #log .t { color:var(--muted); font-variant-numeric:tabular-nums; }
-  #logsec { flex:1; min-height:0; overflow:hidden; display:flex; flex-direction:column; }
+  #logsec { flex:1; min-height:130px; overflow:hidden; display:flex; flex-direction:column; }
+  /* A busy night: the orders scroll in their own box (the tickets show them too), so the log keeps its room. */
+  #orders { max-height:20vh; overflow-y:auto; overscroll-behavior:contain; padding-right:4px; }
+  #side > section:not(#logsec) { flex:none; }
   #help { font-size:11.5px; color:var(--muted); }
   #help b { color:var(--ink); font-weight:600; }
+  /* The keys screen (H). */
+  .keys { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:10px 18px; }
+  .keys-group h4 { margin:0 0 4px; font:600 11px system-ui; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  .keys-row { display:flex; gap:10px; font-size:13px; padding:2px 0; border-bottom:1px solid rgba(255,255,255,.04); }
+  .keys-row b { flex:0 0 46%; color:var(--ink); font-weight:600; }
+  .keys-row span { color:#cdbda4; }
   #menu { position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.35); z-index:5; }
   /* Never taller than the screen, at any UI size (zoom scales lengths, so divide it back out). The view
      (cards, tabs) scrolls; the title and the buttons stay in sight. */
@@ -304,9 +313,7 @@
     <section><h3>Pie safe</h3><div id="pies"></div></section>
     <section id="logsec"><h3>What's happening</h3><div id="log"></div></section>
     <section id="help">
-      <b>Click</b> the floor to walk, <b>click</b> things and people to use them · <b>double-click</b> runs · <b>right-click</b> stops<br>
-      <b>WASD</b> walk · <b>Shift</b> run · <b>Space</b> use · hold <b>Space</b> to hurry cooking · hold <b>Space</b> or the <b>mouse</b> on a mess to clean · <b>Tab</b>: pick between things in reach · <b>wheel</b> or <b>[ ]</b> zoom · <b>V</b> isometric · <b>, .</b> turn<br>
-      <b>E</b> garnish at the counter · <b>C</b> offer unasked · <b>Q</b> set a tray down · <b>R</b> put a dish back · <b>X</b> empty a pot · <b>J</b> journal · <b>K</b> calendar · <b>O</b> objectives · <b>M</b> sound · <b>P</b> pause &amp; settings · <b>− / =</b> time speed · <b>`</b> debug
+      <b>Space</b> use · <b>R</b> put back · <b>X</b> empty · <b>H</b> all keys
     </section>
   </div>
 </div>

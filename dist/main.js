@@ -141,6 +141,10 @@ window.addEventListener("keydown", (e) => {
         case "o":
             g.showObjectives = !g.showObjectives;
             break;
+        case "h":
+        case "?":
+            openKeys();
+            break;
         case "j":
             openJournal(g);
             break;
@@ -837,6 +841,7 @@ function openPause() {
             panel = `<div class="set-list">
         <button class="set-btn" data-pick="objectives">✅ Objectives <small>${g.showObjectives ? "shown" : "hidden"}</small></button>
         <button class="set-btn" data-pick="howto">❔ How to play</button>
+        <button class="set-btn" data-pick="keys">⌨️ Keys and controls <small>H</small></button>
       </div>`;
         }
         else if (pauseTab === "sound") {
@@ -871,6 +876,8 @@ function openPause() {
                         g.showObjectives = !g.showObjectives;
                         redraw();
                     }
+                    else if (k === "keys")
+                        openKeys(true);
                     else if (k === "howto")
                         openMenu({ title: "How to play", body: welcomeBody(), items: [{ label: "Back", button: "secondary", action: () => back() }] });
                     else if (k === "mute") {
@@ -941,11 +948,45 @@ function openPause() {
     };
     openMenu(build());
 }
+// Every key and control in one place (H, or the pause screen). The side panel keeps just a line.
+const KEYS = [
+    { group: "Getting about", rows: [
+            ["Click / tap the floor", "walk there (double: run)"], ["Right-click", "stop"], ["WASD or arrows", "walk"], ["Shift", "run"],
+        ] },
+    { group: "Using things", rows: [
+            ["Click / tap a thing or person", "go and use it"], ["Space", "use what's in reach: serve, pick up, pour, cook"],
+            ["Tab", "pick between things in reach"], ["Hold Space / hold the mouse", "hurry cooking · clean a mess"],
+        ] },
+    { group: "Serving", rows: [
+            ["E", "garnish a drink (at the counter)"], ["C", "offer something unasked"], ["Q", "set a tray down"],
+            ["R", "put a dish back where you picked it up"], ["X", "empty a pot, urn or kettle"],
+        ] },
+    { group: "Arranging the kitchen", rows: [
+            ["Click", "pick up a piece, then click where it goes"], ["B", "buy something else"], ["A", "another of what you just placed"],
+            ["Delete", "get rid of the piece in hand"], ["Esc", "put it back · finish"],
+        ] },
+    { group: "Looking", rows: [
+            ["Wheel / pinch / [ ]", "zoom"], ["V", "top-down or isometric"], [", .", "turn the isometric camera"],
+        ] },
+    { group: "The day", rows: [
+            ["J", "journal"], ["K", "calendar"], ["O", "objectives"], ["− / =", "slower / faster"],
+            ["M", "sound on or off"], ["P / Esc", "pause and settings"], ["H", "this list"], ["` / F2", "debug"],
+        ] },
+];
+function openKeys(fromPause = false) {
+    const html = `<div class="keys">${KEYS.map((k) => `<div class="keys-group"><h4>${k.group}</h4>${k.rows.map(([key, what]) => `<div class="keys-row"><b>${key}</b><span>${what}</span></div>`).join("")}</div>`).join("")}</div>`;
+    openMenu({
+        title: "⌨️ Keys and controls",
+        holdsClock: true,
+        view: { html },
+        items: [{ label: fromPause ? "Back" : "Close", button: "secondary", action: () => (fromPause ? back() : closeAll()) }],
+    });
+}
 // A welcome before anything moves. The clock starts when the player presses Start.
 const touch = window.matchMedia("(pointer: coarse)").matches;
 const controls = touch
     ? `<b>Tap</b> the floor to walk, <b>double tap</b> to run. <b>Tap</b> things and people to use them. <b>Keep your finger</b> on a pot or a mess to hurry or clean. The buttons on the side do the rest.`
-    : `<b>Click</b> the floor to walk, <b>click</b> things and people to use them, <b>double-click</b> to run, <b>right-click</b> to stop. Or <b>WASD</b> to walk (<b>Shift</b> runs) and <b>Space</b> to use. Hold <b>Space</b> to hurry cooking; hold <b>Space</b> or the mouse on a mess to clean it. <b>R</b> puts back a dish picked up by mistake; <b>X</b> empties a pot. When several things are in reach, <b>Tab</b> picks one. The <b>wheel</b> zooms; <b>V</b> switches to an isometric view. <b>P</b> pauses.`;
+    : `<b>Click</b> the floor to walk, <b>click</b> things and people to use them, <b>double-click</b> to run, <b>right-click</b> to stop. Or <b>WASD</b> to walk (<b>Shift</b> runs) and <b>Space</b> to use. Hold <b>Space</b> to hurry cooking; hold <b>Space</b> or the mouse on a mess to clean it. <b>R</b> puts back a dish picked up by mistake; <b>X</b> empties a pot. When several things are in reach, <b>Tab</b> picks one. The <b>wheel</b> zooms; <b>V</b> switches to an isometric view. <b>P</b> pauses; <b>H</b> lists every key.`;
 function welcomeBody() {
     return `<div class="welcome">
     <p><b>${longDate(g.date)}.</b></p>
