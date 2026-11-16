@@ -19,7 +19,7 @@ import { initLight, updateLamps } from "./ui/light.js";
 import { updateFrontDoor } from "./door.js";
 import { cancelPour, updatePour } from "./serving.js";
 import { watchObjectives } from "./objectives.js";
-import { askSetDown, emptyHere, offerUnasked, putBackHere, cleanable, cleanStep, findTargets, targetName, forcedTurnIn, interact, openGarnishMenu, openJournal, promptFor, targetId } from "./interact.js";
+import { emptyHere, offerUnasked, putDownHere, cleanable, cleanStep, findTargets, targetName, forcedTurnIn, interact, openGarnishMenu, openJournal, promptFor, targetId } from "./interact.js";
 import { draw, computeView } from "./ui/render.js";
 import { computeIsoView, drawIso, isoPick } from "./ui/render-iso.js";
 import { P, screenDir } from "./ui/proj.js";
@@ -129,13 +129,11 @@ window.addEventListener("keydown", (e) => {
                 openGarnishMenu(g);
             break;
         case "q":
-            askSetDown(g);
+        case "r": // one key puts things down: back where they came from, or a tray on the nearest spot
+            putDownHere(g, target);
             break;
         case "c":
             offerUnasked(g, target);
-            break;
-        case "r":
-            putBackHere(g, target);
             break;
         case "x":
             emptyHere(g, target);
@@ -465,9 +463,7 @@ initPad({
 bindButton("card", () => { if (!menuOpen())
     offerUnasked(g, target); });
 bindButton("tb-setdown", () => { if (!menuOpen())
-    askSetDown(g); });
-bindButton("tb-putback", () => { if (!menuOpen())
-    putBackHere(g, target); });
+    putDownHere(g, target); });
 bindButton("tb-empty", () => { if (!menuOpen())
     emptyHere(g, target); });
 bindButton("tb-journal", () => { if (!menuOpen())
@@ -999,8 +995,8 @@ const KEYS = [
             ["Tab", "pick between things in reach · in menus: switch tabs (PageUp/PageDown: the tabs inside)"], ["Hold Space / hold the mouse", "hurry cooking · clean a mess"],
         ] },
     { group: "Serving", rows: [
-            ["E", "garnish a drink (at the counter)"], ["C", "offer something unasked"], ["Q", "set a tray down"],
-            ["R", "put a dish back where you picked it up"], ["X", "empty a pot, urn or kettle"],
+            ["E", "garnish a drink (at the counter)"], ["C", "offer something unasked"],
+            ["R (or Q)", "put down: a dish back where you picked it up, or else a tray on the nearest spot"], ["X", "empty a pot, urn or kettle"],
         ] },
     { group: "Arranging the kitchen", rows: [
             ["Click", "pick up a piece, then click where it goes"], ["B", "buy something else"], ["A", "another of what you just placed"],
@@ -1011,8 +1007,8 @@ const KEYS = [
         ] },
     { group: "Controller (PS5 or similar)", rows: [
             ["Left stick", "walk (all the way, or R2: run)"], ["✕", "use, like Space (hold: hurry, clean)"],
-            ["L1 / R1", "pick between things in reach · menu tabs"], ["△", "set a tray down"],
-            ["D-pad ← →, ↑", "choose a card, play it"], ["D-pad ↓ / hold ↓", "put a dish back / empty a pot"], ["Right stick", "zoom ↑↓ · turn the camera ←→"],
+            ["L1 / R1", "pick between things in reach · menu tabs"],
+            ["D-pad ← →, ↑", "choose a card, play it"], ["D-pad ↓ / hold ↓", "put down (a dish back, or a tray) / empty a pot"], ["Right stick", "zoom ↑↓ · turn the camera ←→"],
             ["In menus", "✕ pick · □ confirm (Cook, Put up…) · ○ back or close"],
             ["L1 / R1 · L2 / R2", "in menus: tabs · the tabs inside them (the meals)"],
             ["R3 · Options · touchpad", "isometric · pause · this list"], ["Arranging", "stick moves the cursor · ✕ click · □ buy · △ another · L2 get rid of it"],

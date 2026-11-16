@@ -16,7 +16,7 @@ Design decisions live in [docs/design-session-journal.md](docs/design-session-jo
 
 ## How to play
 
-1. **Morning.** You wake in your room at 6:00. The newspaper on the desk has the forecast and the town's news. At the **desk** you set the **bill of fare** (what's on the menu today), buy equipment, and arrange the kitchen.
+1. **Morning.** You wake in your room at 6:00. The newspaper on the desk has the forecast and the town's news. At the **desk** ("manage your business") you set the **bill of fare** (what's on the menu today), buy equipment, and arrange the kitchen. Until you've set the bill of fare once, the desk glows and an arrow points to it.
 2. **Open up.** Light the fire, set out snacks if you like, and open the **front door**. The "Today" checklist on the side shows where to start.
 3. **Take orders.** Guests sit at tables, on the benches, or at the counter, and order from your bill of fare. Each order becomes a **ticket** along the top of the screen. A matching numbered plaque floats over the guest. Its ring fills as their patience runs down.
 4. **Cook and pour.** Cook at the stoves, ovens and prep table, and choose ingredients as you go. Pour ale and cider at the barrels. Make coffee by the pot and tea by the kettle (or the urn). Some dishes are single servings made for one guest; stew, porridge, roasts and bread come by the pot or batch; pies go to the pie safe and are sliced to order. Finished dishes wait where they were made until you pick them up.
@@ -25,7 +25,7 @@ Design decisions live in [docs/design-session-journal.md](docs/design-session-jo
 7. **Keep the place nice.** Wipe tables, mop spills, keep the fire going and the lamps lit. Wind the gramophone for music.
 8. **Close and sleep.** Close the door when you're done, see out the last guests, and turn in. The next day starts with a new paper.
 
-Controls are listed in-game: press **H** (or the touchpad on a controller). A PS5 controller works in Chrome and Edge: left stick walks, ✕ uses, △ sets a tray down, D-pad ↓ puts a dish back (hold: empty a pot); in menus ✕ picks, □ confirms, ○ goes back. The keyboard and mouse basics:
+Controls are listed in-game: press **H** (or the touchpad on a controller). A PS5 controller works in Chrome and Edge: left stick walks, ✕ uses, D-pad ↓ puts down (a dish back where it came from, or a tray; hold: empty a pot); in menus ✕ picks, □ confirms, ○ goes back. The keyboard and mouse basics:
 
 | | |
 | --- | --- |
@@ -34,8 +34,9 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 | WASD / arrows, Shift | walk, run |
 | Space | use what's in reach: serve, pick up, pour, cook (hold to hurry cooking or clean) |
 | Tab | pick between things in reach |
-| R / X | put a dish back / empty a pot |
-| E · C · Q | garnish · offer something unasked · set a tray down |
+| R (or Q) | put down: a dish back where you picked it up, or a tray on the nearest counter or table |
+| X | empty a pot, urn or kettle |
+| E · C | garnish · offer something unasked |
 | Wheel or [ ] · V · , . | zoom · isometric view · turn the camera |
 | J · K · O · P · H | journal · calendar · objectives · pause and settings · all the keys |
 
@@ -50,13 +51,13 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 - Mains: stew, fried fish, salad, pie, roast, bread.
 - Drinks: ale and cider on tap, coffee by the pot, tea by the cup or the urn, with garnishes.
 - Snacks in bowls on the tables and the counter: peanuts, olives, pickled eggs, crostini, bread and butter, cheese, pretzels, chestnuts, pickled onions, apple rings.
-- The bill of fare can be one all-day bill, or a bill per meal time. Dishes your kitchen can't make are greyed out, with what they need.
+- The bill of fare can be one all-day bill, or a bill per meal time. Each dish says where it's made (a pot on a hob, a pan, an oven, the kettle…). Dishes your kitchen can't make are greyed out, with what they need.
 
 **The kitchen.**
-- Equipment to buy at the desk: wood stoves with one or two hobs, a range (hob and oven), a bread oven that bakes two at once, a prep table, kettles, a copper kettle, an urn, coffee pots, ale and cider barrels, pie safes, wider trays, seasoned firewood.
+- Equipment to buy at the desk: wood stoves with one or two hobs, a range stove (hob and oven), a bread oven that bakes two at once, a prep table, kettles, a copper kettle, an urn, coffee pots, ale and cider barrels, pie safes, wider trays, seasoned firewood.
 - Money is no object for now. The economy is the next design topic.
 - Arrange the kitchen any time. The clock stops, and what's cooking moves with the piece.
-- Hobs take a pot or a pan. Put back what you picked up by mistake, and empty a pot you don't need.
+- Hobs take a pot or a pan. Tended dishes (fish, eggs, toast, a fry-up) need you at the stove, and go straight onto your tray when they're done if there's room. Put back what you picked up by mistake, and empty a pot you don't need.
 
 **The inn.** Light changes with the hour, the calendar season and the weather. The keeper lights the lamps when it gets gloomy and carries a candle at night. The other parts of the inn:
 - a fire to light and keep going

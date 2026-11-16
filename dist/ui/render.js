@@ -4,6 +4,7 @@ import { iconFor } from "../serving.js";
 import { drawLight } from "./light.js";
 import { RING_TRACK, ringColor } from "./tickets.js";
 import { walkoutProgress } from "../patrons.js";
+import { P } from "./proj.js";
 /** Fit the whole inn if it's big enough to read; otherwise zoom in and follow the keeper. */
 /** `top`: canvas pixels kept clear at the top (the status card sits there). */
 /** `zoom`: 1 is that size; more is closer (following the keeper), less is farther. */
@@ -360,6 +361,7 @@ export function draw(ctx, g, v, target, clickDest) {
     if (g.keeperLine && g.minute < g.keeperLine.until) {
         speech.push({ x: X(k.pos.x), anchor: Y(k.pos.y) - ts * 0.38, text: `“${g.keeperLine.text}”`, color: "#ffe08a" });
     }
+    drawDeskHint(ctx, g, v);
     drawSpeech(ctx, ts);
     const busy = g.cleaning ?? g.pouring ?? g.winding;
     if (busy) {
@@ -560,6 +562,64 @@ export function drawSpeech(ctx, ts) {
         b.lines.forEach((l, i) => ctx.fillText(l, b.x + b.w / 2, b.y + padY + lh * (i + 0.5) + 1));
     }
     speech.length = 0;
+}
+/**
+ * Until the bill of fare has been set once: the desk glows and an arrow bobs over it, so a new keeper
+ * knows where to start. Both views; drawn over everything but the speech.
+ */
+export function drawDeskHint(ctx, g, v) {
+    if (g.menuChosen || g.arranging)
+        return;
+    const desk = g.world.furniture.find((f) => f.kind === "desk");
+    if (!desk)
+        return;
+    const t = performance.now() / 1000, ts = v.ts;
+    const pulse = 0.5 + 0.5 * Math.sin(t * 3.2);
+    const squash = v.iso ? 0.5 : 1;
+    // The glow: a ring on the floor round each of the desk's tiles' middle.
+    const c = P(v, desk.center.x, desk.center.y, 0);
+    const r = ts * (0.75 + 0.15 * pulse) * Math.max(1, desk.tiles.length * 0.7);
+    ctx.save();
+    ctx.lineWidth = Math.max(2, ts * 0.08);
+    ctx.strokeStyle = `rgba(255,211,77,${0.45 + 0.45 * pulse})`;
+    ctx.shadowColor = "rgba(255,211,77,0.9)";
+    ctx.shadowBlur = ts * 0.5 * pulse;
+    ctx.beginPath();
+    ctx.ellipse(c.x, c.y, r, r * squash, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    // The arrow, bobbing, with a word.
+    const top = P(v, desk.center.x, desk.center.y, v.iso ? 1.2 : 0);
+    const ay = top.y - ts * (v.iso ? 0.3 : 0.9) - ts * 0.18 * Math.abs(Math.sin(t * 3.2));
+    const aw = ts * 0.32;
+    ctx.shadowBlur = ts * 0.2;
+    ctx.shadowColor = "rgba(0,0,0,0.6)";
+    ctx.fillStyle = "#ffd34d";
+    ctx.strokeStyle = "#3a2a00";
+    ctx.lineWidth = Math.max(1.5, ts * 0.05);
+    ctx.beginPath();
+    ctx.moveTo(top.x - aw * 0.45, ay - aw * 1.3);
+    ctx.lineTo(top.x + aw * 0.45, ay - aw * 1.3);
+    ctx.lineTo(top.x + aw * 0.45, ay - aw * 0.6);
+    ctx.lineTo(top.x + aw, ay - aw * 0.6);
+    ctx.lineTo(top.x, ay + aw * 0.3);
+    ctx.lineTo(top.x - aw, ay - aw * 0.6);
+    ctx.lineTo(top.x - aw * 0.45, ay - aw * 0.6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.font = `bold ${Math.max(11, Math.floor(ts * 0.34))}px system-ui, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    const label = "Set the bill of fare";
+    // Above the arrow in isometric; top-down, the desk is against the top wall, so the words go under the ring.
+    const lw = ctx.measureText(label).width + ts * 0.3, lh = Math.max(14, ts * 0.46), ly = v.iso ? ay - aw * 1.45 : c.y + r + lh + ts * 0.1;
+    ctx.fillStyle = "rgba(20,14,6,0.85)";
+    roundRect(ctx, top.x - lw / 2, ly - lh, lw, lh, lh * 0.3);
+    ctx.fill();
+    ctx.fillStyle = "#ffd34d";
+    ctx.fillText(label, top.x, ly - lh * 0.12);
+    ctx.restore();
 }
 export function badge(ctx, x, y, text, ts) {
     ctx.fillStyle = "#ffd34d";

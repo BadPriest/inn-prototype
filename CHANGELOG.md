@@ -6,6 +6,21 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 98 · Nov 16, 2026 · not deployed
+
+### Added
+- **The desk teaches itself.** Until you've set the bill of fare once, the desk glows and an arrow points to it ("Set the bill of fare"), in both views.
+- The desk screen says what it's for ("Manage your business"). While the bill of fare isn't set, a warning sits over the cards and the Bill of fare card pulses.
+- **Where each dish is made**, on the bill of fare cards: a pot on a hob, a pan on a hob, in an oven, the kettle, the coffee pot, the prep table, a barrel. Hover for the equipment that can make it.
+
+### Changed
+- **One button puts things down**: R (or Q), D-pad ↓ on a controller, 🫳 on touch. At the station a dish came from, it goes back there; anywhere else, a tray goes down on the nearest counter or table. △ is free while playing; the touch bar's ↩️ is gone.
+- **Tended dishes come to you.** Fish, eggs, toast and a fry-up need you at the stove; when they're done they go straight onto your tray if there's room, and wait on the shelf if not.
+- The "range" is called the **range stove**.
+
+### Fixed
+- Small tavern: a chair at the right-hand table stood off the table's corner.
+
 ## Build 97 · Nov 16, 2026 · not deployed
 
 ### Added

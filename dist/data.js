@@ -90,8 +90,8 @@ export const EQUIPMENT = [
         blurb: "A small stove with one hob: a pot of stew or porridge, or a pan for eggs, toast or fish. One at a time." },
     { id: "stove2", name: "Two-hob stove", label: "Stove ⚬⚬", icon: "🍳", w: 2, h: 1, slots: [HOB, HOB], group: "cooking", fuel: "wood",
         blurb: "Two hobs: a pot and a pan, two pots, two pans, whatever the day needs." },
-    { id: "range", name: "Stove with an oven", label: "Range", icon: "🥧", w: 2, h: 1, slots: [HOB, OVEN], group: "cooking", fuel: "wood",
-        blurb: "A range: one hob on top and an oven below, for pies and roasts." },
+    { id: "range", name: "Range stove", label: "Range stove", icon: "🥧", w: 2, h: 1, slots: [HOB, OVEN], group: "cooking", fuel: "wood",
+        blurb: "A range stove: one hob on top and an oven below, for pies and roasts." },
     { id: "oven", name: "Bread oven", label: "Oven", icon: "🍞", w: 2, h: 1, slots: [OVEN, OVEN], group: "cooking", fuel: "wood",
         blurb: "A big brick oven with room for two bakes at once: bread, pies, a roast, in any pair." },
     { id: "prep", name: "Prep table", label: "Prep", icon: "🔪", w: 2, h: 1, slots: [{ name: "Table", kinds: ["prep"] }], group: "cooking",
@@ -149,7 +149,7 @@ export const SMALL_MAP = [
     "o...c...............F#",
     "#..ctc.........c....F#",
     "#...c.........ctc....#",
-    "#...............c....o",
+    "#..............c.....o",
     "####o###E######o######",
 ];
 export const INNS = [

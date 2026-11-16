@@ -12,13 +12,14 @@ export function openDeskScreen(g: Game, openJournal: () => void): void {
   const st = { focus: 0 };
   const build = (): MenuSpec => {
     const cards: CardSpec[] = [
-      { pick: "fare", icon: "📜", name: "Bill of fare", note: g.mealMode ? `meal times<br>${g.mealNow() ? `${MEALS.find((m) => m.id === g.mealNow()!.id)!.name} now` : "between meals now"}` : `what's on the menu<br>${g.menu.size} on today` },
+      { pick: "fare", icon: "📜", name: "Bill of fare", warn: !g.menuChosen,
+        note: !g.menuChosen ? `⚠️ not set yet<br>guests get the default` : g.mealMode ? `meal times<br>${g.mealNow() ? `${MEALS.find((m) => m.id === g.mealNow()!.id)!.name} now` : "between meals now"}` : `what's on the menu<br>${g.menu.size} on today` },
       { pick: "calendar", icon: "📅", name: "Calendar", note: `${g.date.seasonName} ${g.date.dayOfSeason}<br>the season ahead` },
       { pick: "paper", icon: "📰", name: "Newspaper", note: g.paper?.read ? "read" : "today's, unread", on: !!g.paper && !g.paper.read },
       { pick: "shop", icon: "🛒", name: "Equipment", note: "stoves, ovens, kettles<br>to buy" },
       { pick: "arrange", icon: "🛠", name: "Arrange the kitchen", note: "move your stoves,<br>kettles and pots" },
       { pick: "journal", icon: "📖", name: "Journal", note: g.journalUnread ? `${g.journalUnread} new` : "the people you've met", on: g.journalUnread > 0 },
-    ].map((c, i) => ({ ...c, focus: i === st.focus }));
+    ].map((c, i) => ({ ...c, focus: i === st.focus })) as CardSpec[];
     const go = (v: string) => {
       if (v === "fare") openBillOfFare(g);
       else if (v === "paper") openNewspaper(g);
@@ -30,9 +31,11 @@ export function openDeskScreen(g: Game, openJournal: () => void): void {
     return {
       title: "🕯️ Desk",
       holdsClock: true,
-      subtitle: "In your room",
+      subtitle: "Manage your business",
       view: {
-        html: grid(cards),
+        html: `<p class="explain">What's on the menu, what's in the kitchen and where it stands, the news and the season ahead, and the people you've met.</p>`
+          + (!g.menuChosen ? `<p class="desk-warn">⚠️ <b>You haven't set the bill of fare.</b> Guests are ordering from a default one. Choose what you're ready to make.</p>` : "")
+          + grid(cards),
         onPick: go,
         onKey: gridKeys(() => cards.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, (i) => go(cards[i].pick)),
       },
@@ -59,6 +62,13 @@ const hourLabel = (h: number) => `${h % 24}:00`;
 
 /** What a dish needs that this kitchen hasn't got (buy it at the desk). */
 const NEEDS: Record<string, string> = { stove: "needs a hob", griddle: "needs a hob", oven: "needs an oven", kettle: "needs a kettle", coffee: "needs a coffee pot", prep: "needs a prep table" };
+/** Where a dish is made, in a few words, and in full (which pieces of equipment) for the hover. */
+const WHERE: Record<string, string> = { stove: "🔥 a pot on a hob", griddle: "🍳 a pan on a hob", oven: "🍞 in an oven", kettle: "🫖 the kettle", coffee: "☕ the coffee pot", prep: "🔪 the prep table" };
+const whereShort = (r: (typeof RECIPES)[number]) => (r.station === "tap" ? `🍺 the ${r.name.toLowerCase()} barrel` : WHERE[r.station] ?? "");
+const whereFull = (r: (typeof RECIPES)[number]) => {
+  const on = EQUIPMENT.filter((e) => (r.station === "tap" ? e.tap === r.id : e.slots.some((sl) => (sl.kinds as string[]).includes(r.station)))).map((e) => e.name.toLowerCase());
+  return on.length ? `Made at: ${on.join(", ")}` : "";
+};
 const needs = (r: (typeof RECIPES)[number]) => (r.station === "tap" ? `needs a barrel of ${r.name.toLowerCase()}` : NEEDS[r.station] ?? "needs equipment");
 
 /** First time into meal times: every meal starts as a copy of the all-day bill; between meals, its drinks. */
@@ -136,6 +146,8 @@ export function openBillOfFare(g: Game): void {
       icon: r.icon,
       name: r.name,
       note: !g.canMake(r.id) ? needs(r) : `${set.has(r.id) ? "on the board · " : ""}${r.storedIn === "piesafe" ? "whole pies, sliced" : r.servings ? "by the pot" : r.station === "tap" ? "on tap" : `about ${r.minutes[0]} min`}`,
+      where: whereShort(r),
+      title: whereFull(r),
       tags: r.baseTags,
       on: set.has(r.id),
       off: !g.canMake(r.id),

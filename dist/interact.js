@@ -453,15 +453,21 @@ function runSide(g, f, short, title) {
     }
     openMenu({ title: f.name, subtitle: title, items: acts.map((a) => ({ label: a.label, sub: a.sub, action: () => { closeAll(); a.run(); } })) });
 }
-/** R: put back something you picked up here by mistake. */
-export function putBackHere(g, t) {
+/**
+ * R (or Q): put something down. At the station a dish came from, it goes back there (into its pot, onto
+ * its shelf); anywhere else, a tray goes down on the nearest free spot.
+ */
+export function putDownHere(g, t) {
     const f = t?.type === "furniture" && t.f.kind === "station" ? t.f : null;
-    if (!f || !sideActs(g, f, "put back").length) {
-        const fromHere = f && trayItems(g).some((i) => (f.slots ?? []).some((sl) => sl.id === i.from));
-        g.say(fromHere ? "That came out of a different pot: it can't go into this one." : "Stand at the stove or oven it came from to put a dish back.");
+    if (f && sideActs(g, f, "put back").length) {
+        runSide(g, f, "put back", "Put back which?");
         return;
     }
-    runSide(g, f, "put back", "Put back which?");
+    if (f && trayItems(g).some((i) => (f.slots ?? []).some((sl) => sl.id === i.from)) && !trayItems(g).some((i) => !(f.slots ?? []).some((sl) => sl.id === i.from))) {
+        g.say("That came out of a different pot: it can't go into this one.");
+        return;
+    }
+    askSetDown(g);
 }
 /** X: empty a pot, urn or kettle so it's free to cook again. */
 export function emptyHere(g, t) {

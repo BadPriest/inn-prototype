@@ -10,7 +10,7 @@ import { RECIPES, SNACKS, SOAKING, TUNING } from "../data.js";
 import { iconFor } from "../serving.js";
 import { drawLight, windowColor } from "./light.js";
 import { ISO, P, Pt, floorPath, turn, turnedSize, unproject, unturn } from "./proj.js";
-import { badge, drawPatronWords, drawSpeech, say } from "./render.js";
+import { badge, drawDeskHint, drawPatronWords, drawSpeech, say } from "./render.js";
 /** Height of the back walls, in tiles; every other wall is a low stub so you can see past it. */
 const TALL = 1.5;
 const LOW_WALL = 0.3;
@@ -314,6 +314,7 @@ export function drawIso(ctx, g, v, target, clickDest) {
     });
     if (g.keeperLine && g.minute < g.keeperLine.until)
         say(kh.x, kh.y - HEAD_R * ts - ts * 0.05, `“${g.keeperLine.text}”`, "#ffe08a");
+    drawDeskHint(ctx, g, v);
     drawSpeech(ctx, ts);
     const busy = g.cleaning ?? g.pouring ?? g.winding;
     if (busy) {

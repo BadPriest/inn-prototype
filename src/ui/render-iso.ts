@@ -14,7 +14,7 @@ import { iconFor } from "../serving.js";
 import type { Furniture, Tile, Vec } from "../world.js";
 import { drawLight, windowColor } from "./light.js";
 import { ISO, P, Pt, floorPath, turn, turnedSize, unproject, unturn } from "./proj.js";
-import { badge, drawPatronWords, drawSpeech, say, type View } from "./render.js";
+import { badge, drawDeskHint, drawPatronWords, drawSpeech, say, type View } from "./render.js";
 
 /** Height of the back walls, in tiles; every other wall is a low stub so you can see past it. */
 const TALL = 1.5;
@@ -302,6 +302,7 @@ export function drawIso(ctx: CanvasRenderingContext2D, g: Game, v: View, target:
     tray.items.forEach((it, j) => ctx.fillText(iconFor(it.recipeId, it.garnish) || "🥣", tx + ts * 0.2 + j * ts * 0.32, ty + ts * 0.2));
   });
   if (g.keeperLine && g.minute < g.keeperLine.until) say(kh.x, kh.y - HEAD_R * ts - ts * 0.05, `“${g.keeperLine.text}”`, "#ffe08a");
+  drawDeskHint(ctx, g, v);
   drawSpeech(ctx, ts);
 
   const busy = g.cleaning ?? g.pouring ?? g.winding;

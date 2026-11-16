@@ -116,14 +116,30 @@ function finish(g, fid, job, recipe) {
         g.say(recipe.id === "water" ? `The kettle's boiled: hot water for ${n} cups.` : `${what} is ready: ${n} servings.`);
         return;
     }
+    const slot = g.world.slot(fid);
+    const who = job.item.ticketName ? ` (for ${job.item.ticketName})` : "";
+    // A tended dish: the keeper's standing over it, so it goes straight onto a tray if there's room.
+    if (recipe.tended && slot && keeperNear(g, slot.f)) {
+        const item = job.item;
+        item.from = fid;
+        item.fromPot = false;
+        if (addToTray(g, item)) {
+            g.bus.emit({ type: "ItemCrafted", itemId: item.id });
+            g.bus.emit({ type: "ItemPickedUp", itemId: item.id });
+            g.say(`${item.name}${who} is done: you take it onto your tray.`);
+            g.jobs.delete(fid);
+            return;
+        }
+        item.from = undefined;
+        item.fromPot = undefined;
+    }
     const shelf = g.shelves.get(fid) ?? [];
     if (shelf.length >= TUNING.shelfCapacity)
         return; // stays on the fire until there's room on the shelf
     shelf.push(job.item);
     g.shelves.set(fid, shelf);
     g.bus.emit({ type: "ItemCrafted", itemId: job.item.id });
-    const slot = g.world.slot(fid);
-    g.say(`${job.item.name}${job.item.ticketName ? ` (for ${job.item.ticketName})` : ""} is ready at the ${slot ? slotName(slot) : "station"}.`);
+    g.say(`${job.item.name}${who} is ready at the ${slot ? slotName(slot) : "station"}.`);
     g.jobs.delete(fid);
 }
 export function shelfItems(g) {

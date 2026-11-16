@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 16, 2026 · build 97 (94 deployed; 95–97 committed, not pushed) · https://inn-prototype.vercel.app
+Updated Nov 16, 2026 · build 98 (94 deployed; 95–98 committed, not pushed) · https://inn-prototype.vercel.app
 
 History by build: [../CHANGELOG.md](../CHANGELOG.md). What the prototype is and how to play: [../README.md](../README.md).
 
@@ -26,7 +26,9 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
 
-## Built, not yet deployed (builds 95–97)
+## Built, not yet deployed (builds 95–98)
+
+- Build 98 (Nov 16 playtest notes): one button puts things down (R/Q, D-pad ↓): back where a dish came from, or a tray on a counter; tended dishes go straight onto the tray; "range stove"; the desk glows with an arrow until the bill of fare is set, says "Manage your business" and warns while it isn't; bill of fare cards say where each dish is made; small tavern chair fixed
 
 - #7 a small tavern as an optional start (pick it after the location); the bill of fare greys out what the kitchen can't make
 

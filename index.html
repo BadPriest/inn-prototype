@@ -166,6 +166,10 @@
   .meter { height:6px; width:160px; background:#1a1410; border-radius:3px; margin-top:5px; overflow:hidden; }
   .meter span { display:block; height:100%; background:#e0b060; }
   .icard .note { font:11px system-ui; color:var(--muted); margin-top:3px; line-height:1.3; }
+  .icard .where { font:11px system-ui; color:#e8c98a; margin-top:3px; }
+  .icard.warn { border-color:#ffb347; animation:warnpulse 1.4s ease-in-out infinite; }
+  @keyframes warnpulse { 50% { box-shadow:0 0 0 3px rgba(255,179,71,.45), 0 0 14px rgba(255,179,71,.5); } }
+  .desk-warn { background:rgba(255,179,71,.12); border:1px solid rgba(255,179,71,.5); border-radius:8px; padding:8px 10px; margin:0 0 10px; font-size:13px; }
   .icard.on .note { color:#ffe08a; }
   .pips { letter-spacing:1px; color:#e0b060; font-size:10px; }
   .aside { font:italic 12.5px Georgia, serif; color:#cdbda4; margin:10px 0 0; }
@@ -276,8 +280,7 @@
       <button id="tb-slower" title="Slower">🐢</button>
       <button id="tb-faster" title="Faster">🐇</button>
       <button id="tb-card" title="Offer something unasked">🃏</button>
-      <button id="tb-setdown" title="Set a tray down">🫳</button>
-      <button id="tb-putback" title="Put a dish back where you picked it up">↩️</button>
+      <button id="tb-setdown" title="Put down: a dish back where you picked it up, or a tray">🫳</button>
       <button id="tb-empty" title="Empty a pot, urn or kettle">🗑️</button>
       <button id="tb-journal" title="Journal">📖</button>
       <button id="tb-sound" title="Sound">🔊</button>
@@ -319,7 +322,7 @@
     <section><h3>Pie safe</h3><div id="pies"></div></section>
     <section id="logsec"><h3>What's happening</h3><div id="log"></div></section>
     <section id="help">
-      <b>Space</b> use · <b>R</b> put back · <b>X</b> empty · <b>H</b> all keys
+      <b>Space</b> use · <b>R</b> put down · <b>X</b> empty · <b>H</b> all keys
     </section>
   </div>
 </div>

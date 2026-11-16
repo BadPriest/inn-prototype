@@ -16,11 +16,14 @@ export interface CardSpec {
   focus?: boolean; // keyboard focus
   title?: string; // hover text
   owned?: number; // how many you have: a gold border and a count in the corner
+  where?: string; // where it's made (the bill of fare)
+  warn?: boolean; // needs your attention: a pulsing amber border
 }
 
 export function card(c: CardSpec): string {
-  return `<div class="icard ${c.on ? "on" : ""} ${c.off ? "off" : ""} ${c.focus ? "focus" : ""} ${c.owned ? "owned" : ""}" data-pick="${c.pick}"${c.title ? ` title="${c.title}"` : ""}>
+  return `<div class="icard ${c.on ? "on" : ""} ${c.off ? "off" : ""} ${c.focus ? "focus" : ""} ${c.owned ? "owned" : ""} ${c.warn ? "warn" : ""}" data-pick="${c.pick}"${c.title ? ` title="${c.title}"` : ""}>
       ${c.owned ? `<span class="have">×${c.owned}</span>` : ""}<span class="ic">${c.icon}</span>${c.name}
+      ${c.where ? `<div class="where">${c.where}</div>` : ""}
       ${c.note ? `<div class="note">${c.note}</div>` : ""}
       ${c.tags?.length ? `<div class="chips">${c.tags.map((t) => chip(t)).join("")}</div>` : ""}
     </div>`;
