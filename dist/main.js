@@ -995,7 +995,7 @@ const KEYS = [
         ] },
     { group: "Using things", rows: [
             ["Click / tap a thing or person", "go and use it"], ["Space", "use what's in reach: serve, pick up, pour, cook"],
-            ["Tab", "pick between things in reach"], ["Hold Space / hold the mouse", "hurry cooking · clean a mess"],
+            ["Tab", "pick between things in reach · in menus: switch tabs (PageUp/PageDown: the tabs inside)"], ["Hold Space / hold the mouse", "hurry cooking · clean a mess"],
         ] },
     { group: "Serving", rows: [
             ["E", "garnish a drink (at the counter)"], ["C", "offer something unasked"], ["Q", "set a tray down"],
@@ -1013,6 +1013,7 @@ const KEYS = [
             ["L1 / R1", "pick between things in reach · menu tabs"], ["△", "set a tray down"],
             ["D-pad ← →, ↑", "choose a card, play it"], ["D-pad ↓ / hold ↓", "put a dish back / empty a pot"], ["Right stick", "zoom ↑↓ · turn the camera ←→"],
             ["In menus", "✕ pick · □ confirm (Cook, Put up…) · ○ back or close"],
+            ["L1 / R1 · L2 / R2", "in menus: tabs · the tabs inside them (the meals)"],
             ["R3 · Options · touchpad", "isometric · pause · this list"], ["Arranging", "stick moves the cursor · ✕ click · □ buy · △ another · L2 get rid of it"],
         ] },
     { group: "The day", rows: [

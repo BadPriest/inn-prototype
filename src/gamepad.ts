@@ -7,7 +7,7 @@
 //           isometric camera (←→) · R3 top-down or isometric · Options pause · touchpad the keys.
 //           ○ and □ are free while playing.
 // Menus:    D-pad or left stick move · ✕ pick (like Space: a card, an item) · □ confirm the screen (like
-//           Enter: Cook, Put up…, without going to the button) · ○ back or close · L1/R1 switch tabs
+//           Enter: Cook, Put up…, without going to the button) · ○ back or close · L1/R1 switch tabs, L2/R2 the tabs inside them
 // Kitchen:  left stick moves a cursor · ✕ pick up / place · ○ put back or finish · □ buy · △ another ·
 //           L2 get rid of the piece in hand
 
@@ -123,8 +123,11 @@ export function pollPad(dt: number): void {
     if (pressed(B.cross)) key(" ");
     if (pressed(B.square)) key("Enter");
     if (pressed(B.circle)) key(hooks.paused() ? "Escape" : "Backspace");
+    // Tabs: L1/R1 the outer level, L2/R2 the inner one (the meals on the bill of fare).
     if (pressed(B.l1)) key("Tab", { shift: true });
     if (pressed(B.r1)) key("Tab");
+    if (pressed(B.l2)) key("PageUp");
+    if (pressed(B.r2)) key("PageDown");
     if (pressed(B.options)) key("Escape");
   } else if (hooks.arranging()) {
     hooks.setWalk(null, false);

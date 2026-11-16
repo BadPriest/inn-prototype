@@ -6,6 +6,11 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 96 · Nov 16, 2026 · not deployed
+
+### Changed
+- **Two levels of tabs.** L1/R1 (Tab on the keyboard) switch the outer level; L2/R2 (PageUp/PageDown) switch the tabs inside it. On the bill of fare: L1/R1 switch between the all-day bill and meal times, L2/R2 between breakfast, lunch, dinner and between meals. This replaces build 95's single row. The pause screen and the equipment shop have one level, on L1/R1.
+
 ## Build 95 · Nov 16, 2026 · not deployed
 
 ### Changed

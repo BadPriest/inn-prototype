@@ -191,20 +191,17 @@ export function openBillOfFare(g) {
                         putUp();
                         return true;
                     }
-                    // Tab (L1/R1 on a controller) walks one row: the all-day bill, then each meal and between meals.
-                    // Stepping onto a meal switches to meal times; back onto the all-day bill switches back. Every bill keeps what's on it.
+                    // Two levels of tabs. Outer, Tab (L1/R1): all-day bill or meal times. Inner, PageUp/PageDown
+                    // (L2/R2): which meal. Every bill keeps what's on it when you switch.
                     if (e.key === "Tab") {
                         e.preventDefault();
-                        const row = ["all", ...TABS];
-                        const i = row.indexOf(g.mealMode ? st.tab : "all");
-                        const next = row[(i + (e.shiftKey ? -1 : 1) + row.length) % row.length];
-                        if (next === "all")
-                            setMode(false);
-                        else {
-                            if (!g.mealMode)
-                                setMode(true);
-                            setTab(next);
-                        }
+                        setMode(!g.mealMode);
+                        return true;
+                    }
+                    if ((e.key === "PageDown" || e.key === "PageUp") && g.mealMode) {
+                        e.preventDefault();
+                        const i = TABS.indexOf(st.tab);
+                        setTab(TABS[(i + (e.key === "PageUp" ? -1 : 1) + TABS.length) % TABS.length]);
                         return true;
                     }
                     return gridKeys(() => list.length, () => st.focus, (i) => { st.focus = i; redraw(); }, toggle)(e);

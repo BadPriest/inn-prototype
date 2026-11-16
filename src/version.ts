@@ -1,1 +1,1 @@
-export const BUILD = "build 95 · 2026-11-16";
+export const BUILD = "build 96 · 2026-11-16";

@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 16, 2026 · build 95 (94 deployed; 95 committed, not pushed) · https://inn-prototype.vercel.app
+Updated Nov 16, 2026 · build 96 (94 deployed; 95–96 committed, not pushed) · https://inn-prototype.vercel.app
 
 History by build: [../CHANGELOG.md](../CHANGELOG.md). What the prototype is and how to play: [../README.md](../README.md).
 
@@ -26,9 +26,9 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
 
-## Built, not yet deployed (build 95)
+## Built, not yet deployed (builds 95–96)
 
-- Bill of fare: Tab / L1-R1 walks All-day → each meal → between meals, switching mode as it goes
+- Two levels of tabs in menus: L1/R1 (Tab) the outer one, L2/R2 (PageUp/PageDown) the inner one. Bill of fare: all-day bill or meal times on L1/R1, which meal on L2/R2
 
 ## Built and deployed (Nov 16, builds 93–94)
 
