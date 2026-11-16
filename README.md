@@ -25,7 +25,7 @@ Design decisions live in [docs/design-session-journal.md](docs/design-session-jo
 7. **Keep the place nice.** Wipe tables, mop spills, keep the fire going and the lamps lit. Wind the gramophone for music.
 8. **Close and sleep.** Close the door when you're done, see out the last guests, and turn in. The next day starts with a new paper.
 
-Controls are listed in-game: press **H**. The basics:
+Controls are listed in-game: press **H** (or the touchpad on a controller). A PS5 controller works in Chrome and Edge: left stick walks, ✕ uses, ○ stops or goes back, △ sets a tray down (hold: empty a pot), D-pad ↓ puts a dish back. The keyboard and mouse basics:
 
 | | |
 | --- | --- |
@@ -70,7 +70,7 @@ Controls are listed in-game: press **H**. The basics:
 **Screen and settings.**
 - Top-down or isometric view, with zoom and a turnable camera.
 - Order tickets, readable speech plates, and a side panel with orders, trays and a log.
-- A UI size slider, touch controls with a toolbar, and a keys screen (H).
+- A UI size slider, touch controls with a toolbar, controller support (PS5 or similar), and a keys screen (H).
 - A debug view (`) for spawning guests and skipping time.
 
 ## Run it
@@ -120,6 +120,7 @@ The built `dist/` folder and `standalone.html` are committed, so a fresh clone r
 | `src/ui/render-iso.ts` | The isometric view (blocks sorted by depth, clicks that allow for height) |
 | `src/ui/proj.ts` | Tiles to screen and back for both views, camera turning |
 | `src/ui/` (others) | Light, tickets, side panel, menus and card screens (desk, bill of fare, shop, cooking, larder, trays), arranging the kitchen, calendar, newspaper, location picker |
+| `src/gamepad.ts` | The controller: read each frame and turned into the same keys and clicks as the keyboard and mouse |
 | `src/main.ts` | Input, settings, the pause and keys screens, the welcome screen and the main loop |
 | `tools/` | The build (`build.mjs`), the standalone packer (`standalone.mjs`), the deploy (`deploy.mjs`) |
 | `assets/sounds/` | Sound files, packed into `standalone.html` by the build |

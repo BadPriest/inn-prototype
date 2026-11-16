@@ -9,6 +9,7 @@ import type { Vec } from "../world.js";
 import type { View } from "./render.js";
 import { P, floorPath } from "./proj.js";
 import { openShop } from "./desk.js";
+import { padActive } from "../gamepad.js";
 
 let grab: Vec = { x: 0, y: 0 }; // where on the piece it was picked up
 let lastBought: string | null = null; // what you just bought and placed: "another" buys one more
@@ -138,10 +139,12 @@ function bar(g: Game): void {
   }
   const h = g.arranging?.holding;
   const what = h ? eqOf(h.type).name.toLowerCase() : "";
+  const pad = padActive(); // a controller: name its buttons
+  const k = pad ? { esc: "○", del: "L2", buy: "□", another: "△", click: "✕ on" } : { esc: "Esc", del: "Delete", buy: "B", another: "A", click: "click" };
   el.innerHTML = `<span>🛠 <b>Arranging the kitchen</b> · the clock's stopped · ${h
-    ? `click where the ${what} should go · Esc ${h.isNew ? "sends it back" : "puts it back"}${h.isNew ? "" : " · Delete gets rid of it"}`
-    : "click a stove, oven, kettle, barrel or pie safe to move it"}</span>${!h && lastBought
-    ? `<button class="ghost" data-act="another">＋ Another ${eqOf(lastBought).name.toLowerCase()} <small>A</small></button>` : ""}<button class="ghost" data-act="buy">🛒 Buy <small>B</small></button><button data-act="done">Done</button>`;
+    ? `${k.click === "click" ? "click" : "✕"} where the ${what} should go · ${k.esc} ${h.isNew ? "sends it back" : "puts it back"}${h.isNew ? "" : ` · ${k.del} gets rid of it`}`
+    : `${k.click} a stove, oven, kettle, barrel or pie safe to move it`}</span>${!h && lastBought
+    ? `<button class="ghost" data-act="another">＋ Another ${eqOf(lastBought).name.toLowerCase()} <small>${k.another}</small></button>` : ""}<button class="ghost" data-act="buy">🛒 Buy <small>${k.buy}</small></button><button data-act="done">Done${pad ? " <small>○</small>" : ""}</button>`;
   const act: Record<string, () => void> = { done: () => stopArranging(g), buy: () => arrangeBuy(g), another: () => arrangeAnother(g) };
   el.querySelectorAll<HTMLButtonElement>("button[data-act]").forEach((b) => { b.onclick = () => act[b.dataset.act!](); });
 }

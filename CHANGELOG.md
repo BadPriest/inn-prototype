@@ -6,6 +6,16 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 93 · Nov 16, 2026 · not deployed
+
+### Added
+- **Controller support** (PS5 DualSense, or any controller Chrome and Edge map to the standard layout).
+  - **Playing:** left stick walks (all the way over, or R2, runs) · ✕ uses, like Space (hold to hurry or clean; garnishes at the counter) · ○ stops · L1/R1 pick between things in reach · △ sets a tray down, held △ empties a pot · D-pad ←/→ choose a card, ↑ plays it, ↓ puts a dish back · right stick zooms (↑↓) and turns the isometric camera (←→) · R3 switches the view · Options pauses · the touchpad opens the keys screen.
+  - **Menus:** D-pad or left stick to move, ✕ confirms, ○ goes back or closes, L1/R1 switch tabs.
+  - **Arranging the kitchen:** the left stick drives a cursor · ✕ picks up and places · ○ puts back or finishes · □ buys · △ another · L2 gets rid of the piece in hand.
+- When a controller is in use, the prompts and the arrange banner show its buttons (✕, ○, △…) instead of keys.
+- The keys screen (H) has a controller section.
+
 ## Build 92 · Nov 16, 2026 · deployed
 
 ### Added

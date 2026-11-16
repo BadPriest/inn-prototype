@@ -21,7 +21,8 @@ import { watchObjectives } from "./objectives.js";
 import { askSetDown, emptyHere, offerUnasked, putBackHere, cleanable, cleanStep, findTargets, targetName, forcedTurnIn, interact, openGarnishMenu, openJournal, promptFor, targetId } from "./interact.js";
 import { draw, computeView } from "./ui/render.js";
 import { computeIsoView, drawIso, isoPick } from "./ui/render-iso.js";
-import { screenDir } from "./ui/proj.js";
+import { P, screenDir } from "./ui/proj.js";
+import { initPad, padActive, padGlyphs, pollPad } from "./gamepad.js";
 import { updateHud, initDebug, toggleDebug } from "./ui/hud.js";
 import { back, initMenus, menuKey, menuOpen } from "./ui/menu.js";
 import { initSound, isMuted, soundscape, toggleMute, unlockAudio } from "./sound.js";
@@ -429,6 +430,38 @@ bindButton("tb-faster", () => { g.speedIndex = Math.min(TUNING.speeds.length - 1
 bindButton("tb-objectives", () => { g.showObjectives = !g.showObjectives; document.body.classList.add("panel-open"); });
 bindButton("tb-card", () => { if (!menuOpen())
     offerUnasked(g, target); });
+// The controller: it presses the same keys and clicks as you would (gamepad.ts).
+const HAND = ["card"]; // the cards in hand, as their buttons' ids: just "offer unasked" for now
+let handIndex = 0;
+function showHandPick() {
+    HAND.forEach((id, i) => document.getElementById(id)?.classList.toggle("picked", i === handIndex && padActive()));
+}
+initPad({
+    menuOpen,
+    arranging: () => !!g.arranging,
+    paused: () => g.paused,
+    setWalk: (v, run) => { padWalk = v; padRun = run; },
+    stop: () => stopKeeper(),
+    zoomBy: (f) => setZoom(zoom() * f),
+    cardStep: (by) => {
+        handIndex = (handIndex + by + HAND.length) % HAND.length;
+        showHandPick();
+        const el = document.getElementById(HAND[handIndex]);
+        el?.classList.remove("nudge");
+        void el?.offsetWidth;
+        el?.classList.add("nudge");
+    },
+    playCard: () => { if (!menuOpen()) {
+        showHandPick();
+        offerUnasked(g, target);
+    } },
+    keeperOnScreen: () => {
+        const r = canvas.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+        const q = P(view, g.keeper.pos.x, g.keeper.pos.y);
+        return { x: r.left + q.x / dpr, y: r.top + q.y / dpr };
+    },
+    canvas,
+});
 bindButton("card", () => { if (!menuOpen())
     offerUnasked(g, target); });
 bindButton("tb-setdown", () => { if (!menuOpen())
@@ -602,6 +635,8 @@ function stopKeeper() {
 let blockedFor = 0;
 let replans = 0; // fresh routes tried since someone got in the way
 let walkGoal = null;
+let padWalk = null; // the controller's left stick, in screen directions
+let padRun = false;
 function moveKeeper(dt) {
     const k = g.keeper;
     if (menuOpen() || g.paused || g.modal)
@@ -615,7 +650,13 @@ function moveKeeper(dt) {
         dx -= 1;
     if (keys.has("d") || keys.has("arrowright"))
         dx += 1;
-    const run = keys.has("shift");
+    let pace = 1; // the stick can walk slowly; keys walk at full pace
+    if (!dx && !dy && padWalk) {
+        dx = padWalk.x;
+        dy = padWalk.y;
+        pace = Math.min(1, Math.hypot(dx, dy));
+    }
+    const run = keys.has("shift") || (padRun && !!padWalk);
     if ((dx || dy) && view.iso)
         ({ x: dx, y: dy } = screenDir(view, dx, dy)); // isometric: up on screen is up
     if (dx || dy) {
@@ -623,7 +664,7 @@ function moveKeeper(dt) {
         k.pendingInteract = null;
         clickDest = null;
         const len = Math.hypot(dx, dy);
-        const sp = (run ? TUNING.keeperRun : TUNING.keeperWalk) * dt;
+        const sp = (run ? TUNING.keeperRun : TUNING.keeperWalk) * dt * pace;
         const nx = k.pos.x + (dx / len) * sp, ny = k.pos.y + (dy / len) * sp;
         if (canStep(k.pos, nx, k.pos.y))
             k.pos.x = nx;
@@ -968,6 +1009,12 @@ const KEYS = [
     { group: "Looking", rows: [
             ["Wheel / pinch / [ ]", "zoom"], ["V", "top-down or isometric"], [", .", "turn the isometric camera"],
         ] },
+    { group: "Controller (PS5 or similar)", rows: [
+            ["Left stick", "walk (all the way, or R2: run)"], ["✕", "use, like Space (hold: hurry, clean)"], ["○", "stop · in menus: back"],
+            ["L1 / R1", "pick between things in reach · menu tabs"], ["△ / hold △", "set a tray down / empty a pot"],
+            ["D-pad ← →, ↑", "choose a card, play it"], ["D-pad ↓", "put a dish back"], ["Right stick", "zoom ↑↓ · turn the camera ←→"],
+            ["R3 · Options · touchpad", "isometric · pause · this list"], ["Arranging", "stick moves the cursor · ✕ click · □ buy · △ another · L2 get rid of it"],
+        ] },
     { group: "The day", rows: [
             ["J", "journal"], ["K", "calendar"], ["O", "objectives"], ["− / =", "slower / faster"],
             ["M", "sound on or off"], ["P / Esc", "pause and settings"], ["H", "this list"], ["` / F2", "debug"],
@@ -1027,6 +1074,7 @@ let hudTimer = 0;
 function frame(now) {
     const realDt = Math.min(0.1, (now - last) / 1000);
     last = now;
+    pollPad(realDt);
     moveKeeper(realDt);
     target = chooseTarget();
     // Cleaning is a hold (Space, mouse or finger) on something dirty; a quick tap does the other thing.
@@ -1059,7 +1107,7 @@ function frame(now) {
     hudTimer -= realDt;
     if (hudTimer <= 0) {
         hudTimer = 0.15;
-        updateHud(g, promptFor(g, target) + choiceHint());
+        updateHud(g, padGlyphs(promptFor(g, target) + choiceHint()));
     }
     requestAnimationFrame(frame);
 }

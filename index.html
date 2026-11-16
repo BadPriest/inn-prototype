@@ -25,6 +25,12 @@
   #card { position:absolute; right:12px; bottom:12px; width:74px; height:104px; border-radius:8px; border:2px solid #c9a24a; background:linear-gradient(#3a2c22,#2a1f18); color:var(--ink); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; cursor:pointer; z-index:2; box-shadow:0 4px 14px rgba(0,0,0,.5); font:12px/1.15 Georgia, serif; }
   #card:hover { transform:translateY(-3px); }
   #card .card-ic { font-size:26px; }
+  /* The controller: the card picked with the D-pad, and a nudge when you move along the hand. */
+  #card.picked { outline:3px solid #ffd34d; outline-offset:3px; }
+  #card.nudge { animation:nudge .25s; }
+  @keyframes nudge { 50% { transform:translateY(-6px); } }
+  /* The controller's cursor while arranging the kitchen. */
+  #padcursor { position:fixed; left:0; top:0; width:22px; height:22px; margin:-11px 0 0 -11px; border:3px solid #ffd34d; border-radius:50%; box-shadow:0 0 0 2px rgba(0,0,0,.6), 0 0 10px rgba(255,211,77,.6); pointer-events:none; z-index:20; display:none; }
   #card .card-k { font-size:10px; color:var(--muted); font-family:system-ui; }
   #side, #menu .menu, #debug, #miniclock, #card, #touchbar, #touchhint { zoom: var(--ui, 1); }
   #toast { position:absolute; left:50%; top:108px; transform:translateX(-50%); max-width:min(80%, 560px); background:rgba(42,33,27,.94); border:1px solid #c9a24a; color:var(--ink); padding:6px 12px; border-radius:8px; font-size:13px; opacity:0; transition:opacity .4s; pointer-events:none; z-index:3; zoom:var(--ui,1); }
