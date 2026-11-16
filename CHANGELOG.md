@@ -6,6 +6,11 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 95 · Nov 16, 2026 · not deployed
+
+### Changed
+- Bill of fare: **Tab** (L1/R1 on a controller) walks one row: All-day bill → Breakfast → Lunch → Dinner → Between meals → back. Stepping onto a meal switches to meal times; back onto the all-day bill switches back, and every bill keeps what's on it. Before, Tab did nothing on the all-day bill, and a controller couldn't change the mode at all.
+
 ## Build 94 · Nov 16, 2026 · deployed
 
 ### Changed
