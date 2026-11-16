@@ -57,6 +57,10 @@ const DAY_FROM = TUNING.dayStartHour, DAY_TO = TUNING.dayStartHour + TUNING.dayL
 
 const hourLabel = (h: number) => `${h % 24}:00`;
 
+/** What a dish needs that this kitchen hasn't got (buy it at the desk). */
+const NEEDS: Record<string, string> = { stove: "needs a hob", griddle: "needs a hob", oven: "needs an oven", kettle: "needs a kettle", coffee: "needs a coffee pot", prep: "needs a prep table" };
+const needs = (r: (typeof RECIPES)[number]) => (r.station === "tap" ? `needs a barrel of ${r.name.toLowerCase()}` : NEEDS[r.station] ?? "needs equipment");
+
 /** First time into meal times: every meal starts as a copy of the all-day bill; between meals, its drinks. */
 function seedMeals(g: Game): void {
   if (g.meals.some((m) => m.menu.size) || g.betweenMenu.size) return;
@@ -88,6 +92,7 @@ export function openBillOfFare(g: Game): void {
     const toggle = (i: number) => {
       const r = list[i];
       if (!r) return;
+      if (!set.has(r.id) && !g.canMake(r.id)) { g.say(`You can't make ${r.name.toLowerCase()} here: ${needs(r)}.`); return; }
       if (set.has(r.id)) set.delete(r.id); else set.add(r.id);
       g.menuChosen = true;
       g.bus.emit({ type: "Paper", what: "menu" });
@@ -130,9 +135,10 @@ export function openBillOfFare(g: Game): void {
       pick: String(i),
       icon: r.icon,
       name: r.name,
-      note: `${set.has(r.id) ? "on the board · " : ""}${r.storedIn === "piesafe" ? "whole pies, sliced" : r.servings ? "by the pot" : r.station === "tap" ? "on tap" : `about ${r.minutes[0]} min`}`,
+      note: !g.canMake(r.id) ? needs(r) : `${set.has(r.id) ? "on the board · " : ""}${r.storedIn === "piesafe" ? "whole pies, sliced" : r.servings ? "by the pot" : r.station === "tap" ? "on tap" : `about ${r.minutes[0]} min`}`,
       tags: r.baseTags,
       on: set.has(r.id),
+      off: !g.canMake(r.id),
       focus: i === st.focus,
     }));
 

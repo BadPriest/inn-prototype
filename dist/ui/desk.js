@@ -56,6 +56,9 @@ const DRINKS = MENU.filter((r) => r.kind === "drink");
 const TABS = [...MEALS.map((m) => m.id), "between"];
 const DAY_FROM = TUNING.dayStartHour, DAY_TO = TUNING.dayStartHour + TUNING.dayLengthMinutes / 60;
 const hourLabel = (h) => `${h % 24}:00`;
+/** What a dish needs that this kitchen hasn't got (buy it at the desk). */
+const NEEDS = { stove: "needs a hob", griddle: "needs a hob", oven: "needs an oven", kettle: "needs a kettle", coffee: "needs a coffee pot", prep: "needs a prep table" };
+const needs = (r) => (r.station === "tap" ? `needs a barrel of ${r.name.toLowerCase()}` : NEEDS[r.station] ?? "needs equipment");
 /** First time into meal times: every meal starts as a copy of the all-day bill; between meals, its drinks. */
 function seedMeals(g) {
     if (g.meals.some((m) => m.menu.size) || g.betweenMenu.size)
@@ -88,6 +91,10 @@ export function openBillOfFare(g) {
             const r = list[i];
             if (!r)
                 return;
+            if (!set.has(r.id) && !g.canMake(r.id)) {
+                g.say(`You can't make ${r.name.toLowerCase()} here: ${needs(r)}.`);
+                return;
+            }
             if (set.has(r.id))
                 set.delete(r.id);
             else
@@ -141,9 +148,10 @@ export function openBillOfFare(g) {
             pick: String(i),
             icon: r.icon,
             name: r.name,
-            note: `${set.has(r.id) ? "on the board · " : ""}${r.storedIn === "piesafe" ? "whole pies, sliced" : r.servings ? "by the pot" : r.station === "tap" ? "on tap" : `about ${r.minutes[0]} min`}`,
+            note: !g.canMake(r.id) ? needs(r) : `${set.has(r.id) ? "on the board · " : ""}${r.storedIn === "piesafe" ? "whole pies, sliced" : r.servings ? "by the pot" : r.station === "tap" ? "on tap" : `about ${r.minutes[0]} min`}`,
             tags: r.baseTags,
             on: set.has(r.id),
+            off: !g.canMake(r.id),
             focus: i === st.focus,
         }));
         const modes = `<div class="bf-modes">

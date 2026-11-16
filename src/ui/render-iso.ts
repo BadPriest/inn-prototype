@@ -7,7 +7,7 @@
 // behind them. What you need to read (labels, cooking,
 // bowls, orders, speech) is drawn over the blocks, so a guest standing in front never hides it.
 
-import { RECIPES, ROOM_LABELS, SNACKS, SOAKING, TUNING } from "../data.js";
+import { RECIPES, SNACKS, SOAKING, TUNING } from "../data.js";
 import type { Game } from "../game.js";
 import type { Target } from "../interact.js";
 import { iconFor } from "../serving.js";
@@ -247,7 +247,7 @@ export function drawIso(ctx: CanvasRenderingContext2D, g: Game, v: View, target:
   ctx.font = `${Math.floor(ts * 0.5)}px Georgia, serif`;
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   ctx.fillStyle = "rgba(255,240,220,0.18)";
-  for (const r of ROOM_LABELS) { const c = P(v, r.x, r.y); ctx.fillText(r.text, c.x, c.y); }
+  for (const r of g.innDef.rooms) { const c = P(v, r.x, r.y); ctx.fillText(r.text, c.x, c.y); }
   for (const sp of g.spills) {
     const c = P(v, sp.x + 0.5, sp.y + 0.5);
     ctx.fillStyle = "rgba(190,150,70,0.55)";

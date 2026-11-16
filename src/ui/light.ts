@@ -98,7 +98,7 @@ export function drawLight(ctx: CanvasRenderingContext2D, g: Game, P: (x: number,
   }
   // Lamps and table candles, when lit.
   if (g.lampsLit) {
-    for (const l of LIGHT.lamps) glows.push({ x: l.x, y: l.y, r: l.r, strength: LIGHT.lampStrength, warm: LIGHT.lampWarm });
+    for (const l of g.innDef.lamps) glows.push({ x: l.x, y: l.y, r: l.r, strength: LIGHT.lampStrength, warm: LIGHT.lampWarm });
     for (const tb of g.world.tables) {
       const flicker = 1 + 0.05 * Math.sin(t * 9 + tb.tile.x * 3.1);
       glows.push({ x: tb.tile.x + 0.5, y: tb.tile.y + 0.5, r: LIGHT.candle.reach * flicker, strength: LIGHT.candle.strength, warm: LIGHT.candle.warm });

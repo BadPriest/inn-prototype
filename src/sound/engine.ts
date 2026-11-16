@@ -3,7 +3,7 @@
 // beyond where the keeper stands and which tile is in which room. What plays when: sound.ts and sound/*.
 
 import type { Game } from "../game.js";
-import { GRAMOPHONE_TONE as GT, ROOM_LINKS, ROOM_OF_TILE, SOUNDS, SOUND_TUNING as T, type SoundDef } from "../data.js";
+import { GRAMOPHONE_TONE as GT, ROOM_OF_TILE, SOUNDS, SOUND_TUNING as T, type SoundDef } from "../data.js";
 import { dist, type Vec } from "../world.js";
 
 let ac: AudioContext | null = null;
@@ -204,7 +204,10 @@ export function output(): { ac: AudioContext; out: GainNode } | null {
 let roomGrid: (string | null)[][] = [];
 const roomSteps = new Map<string, number>(); // "a|b" -> rooms apart
 
-function buildRooms(g: Game): void {
+/** Which room each tile is in, and how rooms connect: again whenever the inn changes. */
+export function buildRooms(g: Game): void {
+  const ROOM_LINKS = g.innDef.roomLinks;
+  roomSteps.clear();
   const { w: W, h: H, tiles } = g.world;
   const base = tiles.map((row) => row.map((t) => ROOM_OF_TILE[t.ch] ?? null));
   // Furniture, doors and walls take the most common room around them.

@@ -1,7 +1,7 @@
 // The sound engine: loads the files, evens out their loudness, cuts footstep files into single steps,
 // and plays sounds from places (distance, pan, muffled through walls). It knows nothing about the game
 // beyond where the keeper stands and which tile is in which room. What plays when: sound.ts and sound/*.
-import { GRAMOPHONE_TONE as GT, ROOM_LINKS, ROOM_OF_TILE, SOUNDS, SOUND_TUNING as T } from "../data.js";
+import { GRAMOPHONE_TONE as GT, ROOM_OF_TILE, SOUNDS, SOUND_TUNING as T } from "../data.js";
 import { dist } from "../world.js";
 let ac = null;
 let master = null;
@@ -205,7 +205,10 @@ export function output() {
 // Where sounds carry: which room each tile is in, and how many rooms apart two rooms are.
 let roomGrid = [];
 const roomSteps = new Map(); // "a|b" -> rooms apart
-function buildRooms(g) {
+/** Which room each tile is in, and how rooms connect: again whenever the inn changes. */
+export function buildRooms(g) {
+    const ROOM_LINKS = g.innDef.roomLinks;
+    roomSteps.clear();
     const { w: W, h: H, tiles } = g.world;
     const base = tiles.map((row) => row.map((t) => ROOM_OF_TILE[t.ch] ?? null));
     // Furniture, doors and walls take the most common room around them.

@@ -1,6 +1,6 @@
 // The physical inn: tiles, furniture, seats, and pathfinding.
 
-import { EQUIPMENT, EQUIPMENT_OF_TILE, MAP, PLACEABLE_ON, TILE_LEGEND, TAP_OF_TILE, UNDER_EQUIPMENT, type Equipment, type TileDef, type StationKind } from "./data.js";
+import { EQUIPMENT, EQUIPMENT_OF_TILE, PLACEABLE_ON, innOf, type InnId, TILE_LEGEND, TAP_OF_TILE, UNDER_EQUIPMENT, type Equipment, type TileDef, type StationKind } from "./data.js";
 
 export interface Vec { x: number; y: number }
 
@@ -56,10 +56,15 @@ export class World {
   frontDoor: Vec = { x: 0, y: 0 };
   bedSide: Vec = { x: 2, y: 2 };
 
-  constructor(placed: Placed[] = defaultLayout()) {
-    this.h = MAP.length;
-    this.w = MAP[0].length;
-    this.tiles = BASE_MAP.map((row, y) =>
+  /** Which inn this is (its map). */
+  readonly inn: InnId;
+
+  constructor(placed: Placed[] = defaultLayout(), inn: InnId = "medium") {
+    this.inn = inn;
+    const map = innOf(inn).map;
+    this.h = map.length;
+    this.w = map[0].length;
+    this.tiles = baseMap(map).map((row, y) =>
       [...row].map((ch, x) => {
         const def = TILE_LEGEND[ch] ?? TILE_LEGEND["."];
         const k = def.kind;
@@ -135,7 +140,7 @@ export class World {
       if (t.x === kx && t.y === ky) return false;
     }
     // Try it, and check the keeper can still get to everything: every piece of furniture and every door.
-    const trial = new World([...layout.filter((p) => p.uid !== moving), { uid: moving ?? "new", type, x, y }]);
+    const trial = new World([...layout.filter((p) => p.uid !== moving), { uid: moving ?? "new", type, x, y }], this.inn);
     const seen = new Set<number>();
     const start = trial.tile(kx, ky);
     if (!start) return false;
@@ -316,13 +321,13 @@ export class World {
 }
 
 /** The map with the equipment lifted off it: equipment is placed separately (see Game.layout). */
-const BASE_MAP: string[] = MAP.map((row) => [...row].map((ch) => UNDER_EQUIPMENT[ch] ?? ch).join(""));
+const baseMap = (map: string[]): string[] => map.map((row) => [...row].map((ch) => UNDER_EQUIPMENT[ch] ?? ch).join(""));
 
-/** Where the equipment stands on a new game: wherever the map's letters put it. */
-export function defaultLayout(): Placed[] {
+/** Where the equipment stands on a new game: wherever the inn's map puts it. */
+export function defaultLayout(inn: InnId = "medium"): Placed[] {
   const out: Placed[] = [];
   const seen = new Set<string>();
-  MAP.forEach((row, y) => [...row].forEach((ch, x) => {
+  innOf(inn).map.forEach((row, y) => [...row].forEach((ch, x) => {
     const type = EQUIPMENT_OF_TILE[ch];
     if (!type || seen.has(`${x},${y}`)) return;
     const eq = EQUIPMENT.find((e) => e.id === type)!;

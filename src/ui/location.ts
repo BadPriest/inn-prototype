@@ -1,6 +1,6 @@
 // Where the inn stands: picked on cards when a save starts. Card screens: cards.ts.
 
-import { LOCATIONS, type LocationId } from "../data.js";
+import { INNS, LOCATIONS, type InnId, type LocationId } from "../data.js";
 import { confirmed, openMenu, replaceMenu, type MenuSpec } from "./menu.js";
 import { grid, gridKeys, type CardSpec } from "./cards.js";
 
@@ -38,4 +38,32 @@ export function openLocationPicker(onChosen: (id: LocationId) => void, replace =
     };
   };
   if (replace) replaceMenu(build()); else openMenu(build());
+}
+
+/** Then which inn: the big tavern (the default) or a small one, the real start. */
+export function openInnPicker(onChosen: (id: InnId) => void): void {
+  const st = { focus: 0, chosen: 0 };
+  const build = (): MenuSpec => {
+    const chosen = INNS[st.chosen];
+    const cards: CardSpec[] = INNS.map((inn, i) => ({
+      pick: String(i), icon: inn.icon, name: inn.name, tags: inn.traits, on: i === st.chosen, focus: i === st.focus,
+    }));
+    const choose = (i: number) => { st.chosen = i; st.focus = i; replaceMenu(build()); };
+    const settle = () => { confirmed(); onChosen(INNS[st.chosen].id); };
+    return {
+      title: "Which inn is yours?",
+      subtitle: "The small one is how the game is meant to start; the big one is busier",
+      modal: true,
+      view: {
+        html: `<div style="width:min(560px, 86vw)">${grid(cards)}<p class="explain" style="min-height:4.8em"><b>${chosen.icon} ${chosen.name}.</b> ${chosen.blurb}</p></div>`,
+        onPick: (v) => choose(Number(v)),
+        onKey: (e) => {
+          if (e.key === "Enter") { settle(); return true; }
+          return gridKeys(() => INNS.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, choose)(e);
+        },
+      },
+      items: [{ label: "Move in", sub: chosen.name, button: "primary", action: settle }],
+    };
+  };
+  replaceMenu(build());
 }

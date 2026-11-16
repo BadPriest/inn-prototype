@@ -127,7 +127,7 @@ export function save(g: Game): void {
     const regulars = [...g.regulars.values()].map(({ arriveAt, visitedToday, ...rest }) => { void arriveAt; void visitedToday; return rest; });
     // The needs log is big: keep it for the last two weeks of days only, so the save stays small.
     const history = g.history.map((d, i) => (i < g.history.length - 14 ? { ...d, unmet: undefined } : d));
-    localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, calendarStart: g.calendarStart, location: g.location, weather: g.weather, history, regulars, visitorNotes: g.visitorNotes,
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, calendarStart: g.calendarStart, location: g.location, inn: g.inn, weather: g.weather, history, regulars, visitorNotes: g.visitorNotes,
       menu: [...g.menu], menuChosen: g.menuChosen,
       layout: g.layout, mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives }));
   } catch { /* storage unavailable: carry on */ }
@@ -137,14 +137,16 @@ export function load(g: Game): void {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) { save(g); return; } // a new save: keep the calendar season it starts in, even before day 1 ends
-    const s = JSON.parse(raw) as { day: number; calendarStart?: number; location?: Game["location"]; weather?: WeatherState; history: DayStats[]; regulars?: RegularState[]; visitorNotes?: Game["visitorNotes"];
+    const s = JSON.parse(raw) as { day: number; calendarStart?: number; location?: Game["location"]; inn?: Game["inn"]; weather?: WeatherState; history: DayStats[]; regulars?: RegularState[]; visitorNotes?: Game["visitorNotes"];
       menu?: string[]; menuChosen?: boolean; layout?: Game["layout"]; mealMode?: boolean; meals?: unknown; betweenMenu?: string[]; upgrades?: string[]; totalServed?: number; showObjectives?: boolean };
     if (s.menu) g.menu = new Set(s.menu);
     g.menuChosen = !!s.menuChosen;
+    // Saves from before there was a choice of inn are the big tavern.
+    if (s.inn && s.inn !== g.inn) g.setInn(s.inn);
     if (Array.isArray(s.layout) && s.layout.length) {
       g.layout = s.layout;
       // Saved before barrels could be bought: they were part of the inn then, so they stand where they were.
-      if (!g.layout.some((p) => p.type === "alekeg" || p.type === "ciderkeg")) {
+      if (g.inn === "medium" && !g.layout.some((p) => p.type === "alekeg" || p.type === "ciderkeg")) {
         for (const p of defaultLayout()) if (p.type === "alekeg" || p.type === "ciderkeg") g.layout.push(p);
       }
       g.rebuildWorld();

@@ -6,6 +6,21 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 97 · Nov 16, 2026 · not deployed
+
+### Added
+- **A small tavern**, as an optional start. After picking where the inn stands, a new game asks which inn is yours: the big tavern (as before) or a small one. The small one has:
+  - two four-seat tables and three stools at a short bar
+  - a small fire and the gramophone
+  - a one-hob stove, a kettle, one barrel of ale and the pantry
+  - no oven and no prep table
+  - a spare room let to a tenant
+  
+  Everything else can be bought at the desk and placed.
+
+### Changed
+- The bill of fare greys out dishes your kitchen can't make and says why ("needs an oven", "needs a barrel of cider"). Guests never order them, even if they're on a bill, so selling the oven can't strand an order.
+
 ## Build 96 · Nov 16, 2026 · not deployed
 
 ### Changed

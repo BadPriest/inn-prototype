@@ -1,6 +1,7 @@
 // Wiring: input, the main loop, and the order systems run in.
 import { TUNING } from "./data.js";
-import { openLocationPicker } from "./ui/location.js";
+import { openInnPicker, openLocationPicker } from "./ui/location.js";
+import { buildRooms } from "./sound/engine.js";
 import { updateTickets } from "./ui/tickets.js";
 import { openBillOfFare, openDeskScreen } from "./ui/desk.js";
 import { arrangeAnother, arrangeBuy, arrangeCancel, arrangeClick, arrangeHover, arrangeRemove, drawArrange } from "./ui/arrange.js";
@@ -1054,14 +1055,19 @@ if (g.location) {
     });
 }
 else {
-    // A new save: the welcome, then where does the inn stand? It shapes the year, the weather and who comes in.
+    // A new save: the welcome, then where does the inn stand (it shapes the year, the weather and who comes
+    // in), then which inn: the big tavern or a small one.
     const settle = (id) => {
         g.location = id;
-        g.weather = newWeather(g.date.season, g.loc);
-        g.log.length = 0;
-        beginDay(g); // the morning again, at the chosen place
-        save(g);
-        closeAll();
+        openInnPicker((inn) => {
+            g.setInn(inn);
+            buildRooms(g); // sound carries through this inn's rooms
+            g.weather = newWeather(g.date.season, g.loc);
+            g.log.length = 0;
+            beginDay(g); // the morning again, at the chosen place
+            save(g);
+            closeAll();
+        });
     };
     openMenu({
         title: "Welcome to the Travelling Inn",

@@ -97,7 +97,7 @@ export function drawLight(ctx, g, P, unit, squash = 1, windows = true) {
     }
     // Lamps and table candles, when lit.
     if (g.lampsLit) {
-        for (const l of LIGHT.lamps)
+        for (const l of g.innDef.lamps)
             glows.push({ x: l.x, y: l.y, r: l.r, strength: LIGHT.lampStrength, warm: LIGHT.lampWarm });
         for (const tb of g.world.tables) {
             const flicker = 1 + 0.05 * Math.sin(t * 9 + tb.tile.x * 3.1);

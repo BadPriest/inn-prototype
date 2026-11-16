@@ -1,5 +1,5 @@
 // Canvas drawing. Basic shapes only: rectangles for furniture, circles for people.
-import { RECIPES, ROOM_LABELS, SNACKS, SOAKING, TUNING } from "../data.js";
+import { RECIPES, SNACKS, SOAKING, TUNING } from "../data.js";
 import { iconFor } from "../serving.js";
 import { drawLight } from "./light.js";
 import { RING_TRACK, ringColor } from "./tickets.js";
@@ -61,7 +61,7 @@ export function draw(ctx, g, v, target, clickDest) {
     ctx.font = `${Math.floor(ts * 0.5)}px Georgia, serif`;
     ctx.textAlign = "center";
     ctx.fillStyle = "rgba(255,240,220,0.18)";
-    for (const r of ROOM_LABELS)
+    for (const r of g.innDef.rooms)
         ctx.fillText(r.text, X(r.x), Y(r.y));
     // Simple fixed shapes per tile kind
     for (const row of g.world.tiles) {

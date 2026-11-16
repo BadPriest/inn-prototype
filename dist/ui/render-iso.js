@@ -6,7 +6,7 @@
 // (the two edges farthest from the camera, whichever corner it stands at), so nothing in the room hides
 // behind them. What you need to read (labels, cooking,
 // bowls, orders, speech) is drawn over the blocks, so a guest standing in front never hides it.
-import { RECIPES, ROOM_LABELS, SNACKS, SOAKING, TUNING } from "../data.js";
+import { RECIPES, SNACKS, SOAKING, TUNING } from "../data.js";
 import { iconFor } from "../serving.js";
 import { drawLight, windowColor } from "./light.js";
 import { ISO, P, Pt, floorPath, turn, turnedSize, unproject, unturn } from "./proj.js";
@@ -250,7 +250,7 @@ export function drawIso(ctx, g, v, target, clickDest) {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillStyle = "rgba(255,240,220,0.18)";
-    for (const r of ROOM_LABELS) {
+    for (const r of g.innDef.rooms) {
         const c = P(v, r.x, r.y);
         ctx.fillText(r.text, c.x, c.y);
     }

@@ -41,7 +41,7 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 
 ## What's in
 
-**Your day.** One time of day drives everything. The game has four calendar seasons of 28 days, weekdays and years. At the start you pick where the inn stands: town centre, dockside, mountainside, crossroads or hill country. The location reshapes the year, the weather and who passes by. A morning newspaper brings the forecast, market days and town news, and there's a calendar screen. The clock stops whenever you're at the desk or in a menu.
+**Your day.** One time of day drives everything. The game has four calendar seasons of 28 days, weekdays and years. At the start you pick where the inn stands (town centre, dockside, mountainside, crossroads or hill country), which reshapes the year, the weather and who passes by. Then you pick your inn: a small tavern (two tables, a short bar, one hob, one barrel; how the game is meant to start) or the big tavern (six tables, a long bar, an oven; busy enough to need staff). A morning newspaper brings the forecast, market days and town news, and there's a calendar screen. The clock stops whenever you're at the desk or in a menu.
 
 **Guests.** There are four kinds of passers-by (dockworkers, scholars, travellers, farmhands) and six named regulars with their own schedules and roles (ten are planned). Guests have hunger, thirst and warmth, and orders grow from those needs. Their tastes are hidden, follow one of four schemas, and shift with the calendar season. They chat, talk about the weather, and react to what you serve. They wait with growing impatience and leave if left too long. Soaked guests seek the fire. When the rain stops, each guest decides whether to stay. You learn their names over time, and a journal keeps notes on regulars and visitors.
 
@@ -50,7 +50,7 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 - Mains: stew, fried fish, salad, pie, roast, bread.
 - Drinks: ale and cider on tap, coffee by the pot, tea by the cup or the urn, with garnishes.
 - Snacks in bowls on the tables and the counter: peanuts, olives, pickled eggs, crostini, bread and butter, cheese, pretzels, chestnuts, pickled onions, apple rings.
-- The bill of fare can be one all-day bill, or a bill per meal time.
+- The bill of fare can be one all-day bill, or a bill per meal time. Dishes your kitchen can't make are greyed out, with what they need.
 
 **The kitchen.**
 - Equipment to buy at the desk: wood stoves with one or two hobs, a range (hob and oven), a bread oven that bakes two at once, a prep table, kettles, a copper kettle, an urn, coffee pots, ale and cider barrels, pie safes, wider trays, seasoned firewood.

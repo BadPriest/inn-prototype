@@ -5,7 +5,7 @@ import { World, defaultLayout, type Placed, type Vec } from "./world.js";
 import { dateOf, randomStartSeason, type GameDate } from "./calendar.js";
 import { newWeather, type CameIn, type WeatherState } from "./weather.js";
 import type { Paper } from "./newspaper.js";
-import { TIME_WORDS, TUNING, timeOfDayAt, type Archetype, type ItemKind, type Line, type NeedId, type Regular, type SchemaId, type TasteSet, type TimeOfDay, type WeatherTaste, type Location, type LocationId, type MealId, MEALS } from "./data.js";
+import { TIME_WORDS, TUNING, timeOfDayAt, type Archetype, type ItemKind, type Line, type NeedId, type Regular, type SchemaId, type TasteSet, type TimeOfDay, type WeatherTaste, type Location, type LocationId, type MealId, MEALS, RECIPES, innOf, type Inn, type InnId } from "./data.js";
 
 export interface Item {
   id: number;
@@ -220,9 +220,11 @@ export interface SetDownTray { id: number; x: number; y: number; tray: Tray }
 
 export class Game {
   bus = new EventBus();
+  /** Which inn: its map. Picked when a save starts (saves from before there was a choice are the big tavern). */
+  inn: InnId = "medium";
   /** Where the kitchen equipment stands (bought, placed and moved by the keeper). Saved. */
-  layout: Placed[] = defaultLayout();
-  world = new World(this.layout);
+  layout: Placed[] = defaultLayout(this.inn);
+  world = new World(this.layout, this.inn);
   /** Arranging the kitchen: the clock stops; `holding` is a piece being moved or just bought. */
   arranging: { holding?: { uid: string; type: string; isNew: boolean }; hover?: Vec } | null = null;
   day = 1; // days played, from 1. The date is worked out from this: see `date`.
@@ -319,15 +321,16 @@ export class Game {
   }
 
   /** The bill of fare that applies right now: the all-day bill, this meal's, or between meals (drinks). */
+  /** What guests can order right now: the bill that's up, less anything this kitchen can't make. */
   billNow(): Set<string> {
-    if (!this.mealMode) return this.menu;
-    return this.mealNow()?.menu ?? this.betweenMenu;
+    const bill = !this.mealMode ? this.menu : this.mealNow()?.menu ?? this.betweenMenu;
+    return new Set([...bill].filter((r) => this.canMake(r)));
   }
 
   /** Everything that's on any bill today (for what to prepare). */
   billAllDay(): Set<string> {
-    if (!this.mealMode) return this.menu;
-    return new Set([...this.meals.flatMap((m) => [...m.menu]), ...this.betweenMenu]);
+    const all = !this.mealMode ? this.menu : new Set([...this.meals.flatMap((m) => [...m.menu]), ...this.betweenMenu]);
+    return new Set([...all].filter((r) => this.canMake(r)));
   }
 
   /** How many whole pies fit: each pie safe holds its share. */
@@ -338,9 +341,33 @@ export class Game {
   /** The equipment moved: build the inn again around it. Seats keep who's sitting in them. */
   rebuildWorld(): void {
     const sitting = new Map(this.world.seats.map((s) => [s.id, s.occupant]));
-    this.world = new World(this.layout);
+    this.world = new World(this.layout, this.inn);
     for (const s of this.world.seats) s.occupant = sitting.get(s.id) ?? null;
     this.keeper.pendingInteract = null;
+  }
+
+  /** Move into another inn (a new save picks one): its map, its equipment where the map puts it, the keeper by the bed. */
+  setInn(id: InnId): void {
+    this.inn = id;
+    this.layout = defaultLayout(id);
+    this.world = new World(this.layout, id);
+    const b = this.world.bedSide;
+    this.keeper.pos = { x: b.x + 0.5, y: b.y + 0.5 };
+    this.keeper.path = [];
+    this.keeper.pendingInteract = null;
+    for (const r of [...this.menu]) if (!this.canMake(r)) this.menu.delete(r); // nothing on the bill you can't make here
+  }
+
+  get innDef(): Inn {
+    return innOf(this.inn);
+  }
+
+  /** Whether this kitchen can make a dish at all: a barrel that pours it, or somewhere to cook it. */
+  canMake(recipeId: string): boolean {
+    const r = RECIPES.find((x) => x.id === recipeId);
+    if (!r) return false;
+    if (r.station === "tap") return this.world.furniture.some((f) => f.tap === r.id);
+    return this.world.furniture.some((f) => (f.slots ?? []).some((sl) => sl.kinds.includes(r.station as never)));
   }
 
   say(text: string): void {

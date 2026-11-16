@@ -62,6 +62,7 @@ export const TILE_LEGEND: Record<string, TileDef> = {
   "#": { kind: "wall", floor: C.wall },
   n: { kind: "wall", floor: "#4a3a2e", name: "Nook" }, // a gap in the counter wall where a kettle or a coffee pot can stand
   f: { kind: "door", floor: C.staff, name: "Counter flap" }, // the service door through the counter: the keeper only
+  r: { kind: "wall", floor: "#3a302a", name: "Let to a tenant" }, // the small tavern's spare room: someone else's storage, locked
   o: { kind: "wall", floor: C.window, name: "Window" }, // rain is heard at the windows
   ".": { kind: "floor", floor: C.tap },
   ";": { kind: "floor", floor: C.entry },
@@ -188,6 +189,81 @@ export const ROOM_LABELS: { text: string; x: number; y: number }[] = [
   { text: "Taproom", x: 20, y: 11.6 },
   { text: "Coat hall", x: 4, y: 19.8 },
 ];
+
+// ---------------------------------------------------------------------------
+// The inns you can start in. Each has its own map, room names, hanging lamps and which rooms open onto
+// which (for how sound carries). The equipment drawn on a map is where it starts; it can be moved.
+
+export type InnId = "medium" | "small";
+export interface Inn {
+  id: InnId;
+  name: string;
+  icon: string;
+  blurb: string;
+  traits: string[];
+  map: string[];
+  rooms: { text: string; x: number; y: number }[];
+  lamps: { x: number; y: number; r: number }[];
+  roomLinks: [string, string][];
+}
+
+/**
+ * The small tavern: the real start. Two four-seat tables and three stools, a small fire, the gramophone,
+ * a one-hob stove, a kettle, one barrel of ale and the pantry. No oven, no prep table. The kitchen's spare
+ * room is let to a tenant as storage.
+ */
+export const SMALL_MAP: string[] = [
+  "####o#######o#########",
+  "#B~dw~#,,SS,PPP#rrrrr#",
+  "#B~~~~#,,,,,,,,#rrrrr#",
+  "#~~~~~#,,,,,,,,#rrrrr#",
+  "#~~~~~#W,,,,,,,#rrrrr#",
+  "###D###nDnHnAn##rrrrr#",
+  "#.....#_______#......#",
+  "#G....#==g=k=f#......#",
+  "#.......s.s.s........#",
+  "o...c...............F#",
+  "#..ctc.........c....F#",
+  "#...c.........ctc....#",
+  "#...............c....o",
+  "####o###E######o######",
+];
+
+export const INNS: Inn[] = [
+  {
+    id: "medium", name: "The big tavern", icon: "🏰", traits: ["busy", "needs staff"],
+    blurb: "Six tables, a long bar, an oven and pies, a coat hall. Lively, and a lot for one keeper: you'll lose some guests at the busy times.",
+    map: MAP, rooms: ROOM_LABELS,
+    lamps: [
+      { x: 4.5, y: 3.5, r: 4 }, // bedroom
+      { x: 10, y: 5, r: 2.5 }, // hall
+      { x: 17, y: 3.5, r: 5 }, { x: 27, y: 3.5, r: 5 }, // kitchen
+      { x: 5.5, y: 11, r: 5 }, // taproom, by the door side
+      { x: 16, y: 9.5, r: 5 }, { x: 26, y: 9.5, r: 5 }, // along the counter
+      { x: 3.5, y: 18.5, r: 3.5 }, // coat hall
+    ],
+    roomLinks: [["bedroom", "hall"], ["hall", "taproom"], ["kitchen", "taproom"], ["entry", "taproom"]],
+  },
+  {
+    id: "small", name: "A small tavern", icon: "🏠", traits: ["cosy", "one keeper"],
+    blurb: "Two tables, three stools at a short bar, a small fire. A one-hob stove, a kettle and a barrel of ale; no oven yet. The spare room is let to a tenant.",
+    map: SMALL_MAP,
+    rooms: [
+      { text: "Bedroom", x: 3.5, y: 3.6 },
+      { text: "Kitchen", x: 11, y: 3.4 },
+      { text: "Let out", x: 18.5, y: 3.2 },
+      { text: "Taproom", x: 10, y: 11.2 },
+    ],
+    lamps: [
+      { x: 3.5, y: 2.5, r: 3.5 }, // bedroom
+      { x: 11, y: 2.5, r: 4 }, // kitchen
+      { x: 10, y: 6.5, r: 3.5 }, // behind the bar
+      { x: 4.5, y: 10, r: 4.5 }, { x: 15.5, y: 10, r: 4.5 }, // over the tables
+    ],
+    roomLinks: [["bedroom", "taproom"], ["kitchen", "taproom"]],
+  },
+];
+export const innOf = (id: InnId | undefined): Inn => INNS.find((i) => i.id === id) ?? INNS[0];
 
 // ---------------------------------------------------------------------------
 // Tags, ingredients, recipes.
@@ -989,9 +1065,7 @@ export const ROOM_OF_TILE: Record<string, string> = {
   "~": "bedroom", ":": "hall", ",": "kitchen", ".": "taproom", "_": "taproom", "=": "taproom", g: "taproom",
   s: "taproom", c: "taproom", t: "taproom", ";": "entry", b: "entry", E: "entry",
 };
-export const ROOM_LINKS: [string, string][] = [
-  ["bedroom", "hall"], ["hall", "taproom"], ["kitchen", "taproom"], ["entry", "taproom"],
-];
+// Which rooms open onto which: each inn has its own (INNS[].roomLinks).
 
 // ---------------------------------------------------------------------------
 // The front door: it opens when someone is in the doorway and closes once the doorway is clear.
@@ -1141,15 +1215,7 @@ export const LIGHT = {
   candle: { reach: 2, strength: 0.75, warm: 0.1 },
   keeperCandle: { from: 0.12, reach: 2.6, strength: 0.8, warm: 0.13 }, // the candle the keeper carries, once it's this dark
   flash: { near: 0.55, far: 0.2, ms: 350 },
-  /** Hanging lamps: where they hang (tile coords) and how far their light reaches (tiles). */
-  lamps: [
-    { x: 4.5, y: 3.5, r: 4 }, // bedroom
-    { x: 10, y: 5, r: 2.5 }, // hall
-    { x: 17, y: 3.5, r: 5 }, { x: 27, y: 3.5, r: 5 }, // kitchen
-    { x: 5.5, y: 11, r: 5 }, // taproom, by the door side
-    { x: 16, y: 9.5, r: 5 }, { x: 26, y: 9.5, r: 5 }, // along the counter
-    { x: 3.5, y: 18.5, r: 3.5 }, // coat hall
-  ],
+  // Hanging lamps: each inn has its own (INNS[].lamps).
 };
 
 // ---------------------------------------------------------------------------
