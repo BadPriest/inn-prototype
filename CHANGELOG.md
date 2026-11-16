@@ -6,6 +6,13 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 94 · Nov 16, 2026 · not deployed
+
+### Changed
+- Controller: **□ confirms** a screen (Cook, Put up…) without going to its button; **✕ picks** (an ingredient, a card, a list item), like Space.
+- Controller: **D-pad ↓** puts a dish back, and **holding ↓** empties a pot. △ only sets a tray down.
+- Controller: ○ no longer stops the keeper (letting go of the stick does that). ○ and □ are free while playing; ○ still goes back in menus.
+
 ## Build 93 · Nov 16, 2026 · not deployed
 
 ### Added

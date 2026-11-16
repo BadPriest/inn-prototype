@@ -2,10 +2,12 @@
 // and turned into what the keyboard and mouse already do, so every screen works without knowing about it.
 //
 // Playing:  left stick walk (all the way, or R2, runs) · ✕ use (hold: hurry, clean; garnishes at the
-//           counter) · ○ stop · L1/R1 pick between things in reach · △ set a tray down (hold: empty a
-//           pot) · D-pad ←/→ choose a card, ↑ play it, ↓ put a dish back · right stick zoom (↑↓) and turn
-//           the isometric camera (←→) · R3 top-down or isometric · Options pause · touchpad the keys
-// Menus:    D-pad or left stick move · ✕ confirm · ○ back or close · L1/R1 switch tabs
+//           counter) · L1/R1 pick between things in reach · △ set a tray down · D-pad ←/→ choose a card,
+//           ↑ play it, ↓ put a dish back (hold ↓: empty a pot) · right stick zoom (↑↓) and turn the
+//           isometric camera (←→) · R3 top-down or isometric · Options pause · touchpad the keys.
+//           ○ and □ are free while playing.
+// Menus:    D-pad or left stick move · ✕ pick (like Space: a card, an item) · □ confirm the screen (like
+//           Enter: Cook, Put up…, without going to the button) · ○ back or close · L1/R1 switch tabs
 // Kitchen:  left stick moves a cursor · ✕ pick up / place · ○ put back or finish · □ buy · △ another ·
 //           L2 get rid of the piece in hand
 
@@ -18,7 +20,6 @@ export interface PadHooks {
   paused: () => boolean;
   /** The keeper's walk from the stick, in screen directions (x right, y down), 0..1 long; null when idle. */
   setWalk: (v: Vec | null, run: boolean) => void;
-  stop: () => void;
   zoomBy: (factor: number) => void;
   /** The cards in hand (just "offer unasked" for now): move the selection, play the selected one. */
   cardStep: (by: number) => void;
@@ -68,7 +69,7 @@ export function padGlyphs(text: string): string {
     .replace(/\bhold Space\b/gi, "hold ✕")
     .replace(/\bSpace\b/g, "✕")
     .replace(/\bR: /g, "↓: ")
-    .replace(/\bX: /g, "hold △: ")
+    .replace(/\bX: /g, "hold ↓: ")
     .replace(/\bC: /g, "↑: ")
     .replace(/\bTab\b/g, "L1/R1");
 }
@@ -119,7 +120,8 @@ export function pollPad(dt: number): void {
     const dir = left ? (Math.abs(left.x) > Math.abs(left.y) ? (left.x > 0 ? "ArrowRight" : "ArrowLeft") : left.y > 0 ? "ArrowDown" : "ArrowUp") : "";
     if (dir !== stickDir) { stickDir = dir; if (dir) { key(dir); stickNext = now + 0.35; } }
     else if (dir && now >= stickNext) { key(dir); stickNext = now + 0.12; }
-    if (pressed(B.cross)) key("Enter");
+    if (pressed(B.cross)) key(" ");
+    if (pressed(B.square)) key("Enter");
     if (pressed(B.circle)) key(hooks.paused() ? "Escape" : "Backspace");
     if (pressed(B.l1)) key("Tab", { shift: true });
     if (pressed(B.r1)) key("Tab");
@@ -152,17 +154,15 @@ export function pollPad(dt: number): void {
     // ✕ is Space: press and hold.
     if (pressed(B.cross)) key(" ", { up: false });
     if (released(B.cross)) key(" ", { down: false });
-    if (pressed(B.circle)) hooks.stop();
     if (pressed(B.l1)) key("Tab", { shift: true });
     if (pressed(B.r1)) key("Tab");
-    // △: set a tray down; held, empty a pot.
-    if (btn[B.triangle] && !longFired[B.triangle] && heldFor(B.triangle) >= HOLD) { longFired[B.triangle] = true; key("x"); }
-    if (released(B.triangle) && !longFired[B.triangle]) key("q");
-    // The cards: ←/→ choose, ↑ plays; ↓ puts a dish back.
+    if (pressed(B.triangle)) key("q"); // set a tray down
+    // The cards: ←/→ choose, ↑ plays. ↓ undoes: a tap puts a dish back, a hold empties a pot.
     if (pressed(B.left)) hooks.cardStep(-1);
     if (pressed(B.right)) hooks.cardStep(1);
     if (pressed(B.up)) hooks.playCard();
-    if (pressed(B.down)) key("r");
+    if (btn[B.down] && !longFired[B.down] && heldFor(B.down) >= HOLD) { longFired[B.down] = true; key("x"); }
+    if (released(B.down) && !longFired[B.down]) key("r");
     // Right stick: zoom up and down; a push left or right turns the camera.
     if (right && Math.abs(right.y) > Math.abs(right.x)) hooks.zoomBy(Math.pow(1.8, -right.y * dt));
     if (right && Math.abs(right.x) > 0.7 && Math.abs(right.x) > Math.abs(right.y)) { if (!turned) { turned = true; key(right.x > 0 ? "." : ","); } }

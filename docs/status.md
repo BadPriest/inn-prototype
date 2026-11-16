@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 16, 2026 · build 93 (92 deployed; 93 committed, not pushed) · https://inn-prototype.vercel.app
+Updated Nov 16, 2026 · build 94 (92 deployed; 93–94 committed, not pushed) · https://inn-prototype.vercel.app
 
 History by build: [../CHANGELOG.md](../CHANGELOG.md). What the prototype is and how to play: [../README.md](../README.md).
 
@@ -26,9 +26,9 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
 
-## Built, not yet deployed (build 93)
+## Built, not yet deployed (builds 93–94)
 
-- Controller support (PS5 or similar, in Chrome and Edge): playing, menus and arranging the kitchen with a cursor; prompts show the controller's buttons
+- Controller support (PS5 or similar, in Chrome and Edge): playing, menus and arranging the kitchen with a cursor; prompts show the controller's buttons. In menus ✕ picks and □ confirms; D-pad ↓ puts back, hold ↓ empties a pot
 
 ## Built and deployed (Nov 16, build 92)
 

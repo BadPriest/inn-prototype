@@ -25,7 +25,7 @@ Design decisions live in [docs/design-session-journal.md](docs/design-session-jo
 7. **Keep the place nice.** Wipe tables, mop spills, keep the fire going and the lamps lit. Wind the gramophone for music.
 8. **Close and sleep.** Close the door when you're done, see out the last guests, and turn in. The next day starts with a new paper.
 
-Controls are listed in-game: press **H** (or the touchpad on a controller). A PS5 controller works in Chrome and Edge: left stick walks, ✕ uses, ○ stops or goes back, △ sets a tray down (hold: empty a pot), D-pad ↓ puts a dish back. The keyboard and mouse basics:
+Controls are listed in-game: press **H** (or the touchpad on a controller). A PS5 controller works in Chrome and Edge: left stick walks, ✕ uses, △ sets a tray down, D-pad ↓ puts a dish back (hold: empty a pot); in menus ✕ picks, □ confirms, ○ goes back. The keyboard and mouse basics:
 
 | | |
 | --- | --- |

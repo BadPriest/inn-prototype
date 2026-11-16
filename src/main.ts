@@ -369,7 +369,6 @@ initPad({
   arranging: () => !!g.arranging,
   paused: () => g.paused,
   setWalk: (v, run) => { padWalk = v; padRun = run; },
-  stop: () => stopKeeper(),
   zoomBy: (f) => setZoom(zoom() * f),
   cardStep: (by) => {
     handIndex = (handIndex + by + HAND.length) % HAND.length;
@@ -844,9 +843,10 @@ const KEYS: { group: string; rows: [string, string][] }[] = [
     ["Wheel / pinch / [ ]", "zoom"], ["V", "top-down or isometric"], [", .", "turn the isometric camera"],
   ] },
   { group: "Controller (PS5 or similar)", rows: [
-    ["Left stick", "walk (all the way, or R2: run)"], ["✕", "use, like Space (hold: hurry, clean)"], ["○", "stop · in menus: back"],
-    ["L1 / R1", "pick between things in reach · menu tabs"], ["△ / hold △", "set a tray down / empty a pot"],
-    ["D-pad ← →, ↑", "choose a card, play it"], ["D-pad ↓", "put a dish back"], ["Right stick", "zoom ↑↓ · turn the camera ←→"],
+    ["Left stick", "walk (all the way, or R2: run)"], ["✕", "use, like Space (hold: hurry, clean)"],
+    ["L1 / R1", "pick between things in reach · menu tabs"], ["△", "set a tray down"],
+    ["D-pad ← →, ↑", "choose a card, play it"], ["D-pad ↓ / hold ↓", "put a dish back / empty a pot"], ["Right stick", "zoom ↑↓ · turn the camera ←→"],
+    ["In menus", "✕ pick · □ confirm (Cook, Put up…) · ○ back or close"],
     ["R3 · Options · touchpad", "isometric · pause · this list"], ["Arranging", "stick moves the cursor · ✕ click · □ buy · △ another · L2 get rid of it"],
   ] },
   { group: "The day", rows: [
