@@ -4,7 +4,7 @@ Updated Nov 18, 2026 · build 100 (99 deployed; 100 committed, not pushed) · ht
 
 History by build: [../CHANGELOG.md](../CHANGELOG.md). What the prototype is and how to play: [../README.md](../README.md).
 
-Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was done in each task's comments. Design decisions come from [design-session-journal.md](design-session-journal.md) and [design-session-journal_game-start_nov-15.md](design-session-journal_game-start_nov-15.md).
+Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was done in each task's comments. Design decisions come from [design-session-journal.md](design-session-journal.md), [design-session-journal_game-start_nov-15.md](design-session-journal_game-start_nov-15.md) and [design-session-journal_economy_nov-17.md](design-session-journal_economy_nov-17.md).
 
 ## Done
 
@@ -71,6 +71,17 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - #49 pause screen tabs with volume and UI size sliders; sound fades in as the keeper wakes
 - #43 guests show by role until they tell you their name; regulars by how open they are (Hedda takes a long while)
 - #38 order tickets: upright cards along the top, the number plaque on the bottom border; the same ringed plaque over the guest, both counting down together to a walkout (the plaque replaced the order bubble)
+
+## Next: the economy (from the Nov 17 session)
+
+In build order. Each waits on the one it builds on.
+
+1. #58 coin: guests pay, tips follow the reaction, purse in d/s/crowns, Cheap/Fair/Dear, unasked serves on the house
+2. #59 equipment costs coin, secondhand cheaper, pacing targets · #60 upkeep you can see (licence, fuel, light, sundries, wear)
+3. #61 supplies: stock that runs out, suppliers, the order slip on the desk
+4. #62 deliveries: the carter, crates by the kitchen door (feeds #41, day two) · #63 shelf life · #64 ready-made goods
+5. Any time: #65 hearth cooking (bake kettle) · #66 the tinker and breakdowns
+6. Later: #67 equipment character and cookware · #68 the catalogue · #69 ideas not yet tasks
 
 ## Waiting on Bruno
 
