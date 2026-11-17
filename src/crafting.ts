@@ -258,15 +258,22 @@ export function serveFromPot(g: Game, fid: string): void {
   if (pot.left <= 0) { g.pots.delete(fid); g.say("The pot is empty."); }
 }
 
+/** The same dish made the same way: same recipe, same ingredients, same garnish. */
+export function sameDish(a: Item, b: Item): boolean {
+  const opts = (i: Item) => [...(i.options ?? [])].sort().join(",");
+  return a.recipeId === b.recipeId && opts(a) === opts(b) && (a.garnish ?? "") === (b.garnish ?? "");
+}
+
 /**
- * Can this dish go back here? Only where it was picked up: a serving into the very pot it came out of
- * (not another pot of the same thing), or onto its hob if that's empty now; a dish onto its shelf.
+ * Can this dish go back here? A serving goes into any pot of the same dish made the same way, with room
+ * for it (fewer servings left than it started with), or onto the hob it came from if that's empty now.
+ * A single dish goes back onto the shelf it was picked up from.
  */
 export function canPutBack(g: Game, fid: string, item: Item): boolean {
-  if (item.from !== fid) return false;
-  if (!item.fromPot) return true;
+  if (!item.fromPot) return item.from === fid;
   const pot = g.pots.get(fid);
-  return pot ? pot.item.id === item.fromPotId : !g.jobs.has(fid);
+  if (pot) return sameDish(pot.item, item) && pot.left < pot.total;
+  return item.from === fid && !g.jobs.has(fid);
 }
 
 /** Put a dish picked up here back where it was: on the shelf, or into its pot. False if it can't go back. */
@@ -274,8 +281,13 @@ export function putBack(g: Game, fid: string, item: Item): boolean {
   if (!canPutBack(g, fid, item)) return false;
   const pot = g.pots.get(fid);
   if (item.fromPot) {
-    if (pot) { pot.left++; pot.total = Math.max(pot.total, pot.left); }
-    else g.pots.set(fid, { item: { ...item, from: undefined, fromPot: undefined, fromPotId: undefined }, left: 1, total: 1 });
+    if (pot) pot.left++;
+    else {
+      // Its own pot's gone: it starts a pot again, with room for as many as a pot of it holds.
+      const r = RECIPES.find((x) => x.id === item.recipeId);
+      const room = r?.servings ? Math.round(r.servings[0] + r.servings[1]) : 1;
+      g.pots.set(fid, { item: { ...item, id: uid(), from: undefined, fromPot: undefined, fromPotId: undefined }, left: 1, total: Math.max(1, room) });
+    }
   } else g.shelves.set(fid, [...(g.shelves.get(fid) ?? []), item]);
   removeFromTray(g, item); // accounted for: it left the trays on purpose
   item.from = undefined; item.fromPot = undefined; item.fromPotId = undefined;

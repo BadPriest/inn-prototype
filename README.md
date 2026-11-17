@@ -16,7 +16,7 @@ Design decisions live in [docs/design-session-journal.md](docs/design-session-jo
 
 ## How to play
 
-1. **Morning.** You wake in your room at 6:00. The newspaper on the desk has the forecast and the town's news. At the **desk** ("manage your business") you set the **bill of fare** (what's on the menu today), buy equipment, and arrange the kitchen. Until you've set the bill of fare once, the desk glows and an arrow points to it.
+1. **Morning.** You wake in your room at 6:00. The newspaper on the desk has the forecast and the town's news. At the **desk** ("manage your business") you set the **bill of fare** (what's on the menu today), buy equipment, and arrange the kitchen. Until you've put up a bill of fare once, the desk glows and an arrow points to it.
 2. **Open up.** Light the fire, set out snacks if you like, and open the **front door**. The "Today" checklist on the side shows where to start.
 3. **Take orders.** Guests sit at tables, on the benches, or at the counter, and order from your bill of fare. Each order becomes a **ticket** along the top of the screen. A matching numbered plaque floats over the guest. Its ring fills as their patience runs down.
 4. **Cook and pour.** Cook at the stoves, ovens and prep table, and choose ingredients as you go. Pour ale and cider at the barrels. Make coffee by the pot and tea by the kettle (or the urn). Some dishes are single servings made for one guest; stew, porridge, roasts and bread come by the pot or batch; pies go to the pie safe and are sliced to order. Finished dishes wait where they were made until you pick them up.
@@ -57,7 +57,7 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 - Equipment to buy at the desk: wood stoves with one or two hobs, a range stove (hob and oven), a bread oven that bakes two at once, a prep table, kettles, a copper kettle, an urn, coffee pots, ale and cider barrels, pie safes, wider trays, seasoned firewood.
 - Money is no object for now. The economy is the next design topic.
 - Arrange the kitchen any time. The clock stops, and what's cooking moves with the piece.
-- Hobs take a pot or a pan. Tended dishes (fish, eggs, toast, a fry-up) need you at the stove, and go straight onto your tray when they're done if there's room. Put back what you picked up by mistake, and empty a pot you don't need.
+- Hobs take a pot or a pan. Tended dishes (fish, eggs, toast, a fry-up) need you at the stove, and go straight onto your tray when they're done if there's room. Put back what you picked up by mistake: a serving into any pot of the same dish made the same way, if it has room; a dish onto the shelf it came from. Empty a pot you don't need.
 
 **The inn.** Light changes with the hour, the calendar season and the weather. The keeper lights the lamps when it gets gloomy and carries a candle at night. The other parts of the inn:
 - a fire to light and keep going

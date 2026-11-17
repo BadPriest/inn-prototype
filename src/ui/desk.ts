@@ -103,8 +103,7 @@ export function openBillOfFare(g: Game): void {
       const r = list[i];
       if (!r) return;
       if (!set.has(r.id) && !g.canMake(r.id)) { g.say(`You can't make ${r.name.toLowerCase()} here: ${needs(r)}.`); return; }
-      if (set.has(r.id)) set.delete(r.id); else set.add(r.id);
-      g.menuChosen = true;
+      if (set.has(r.id)) set.delete(r.id); else set.add(r.id); // menuChosen waits for "Put it up"
       g.bus.emit({ type: "Paper", what: "menu" });
       st.focus = i;
       redraw();

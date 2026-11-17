@@ -6,6 +6,12 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 99 · Nov 17, 2026 · not deployed
+
+### Changed
+- **A serving goes back into any pot of the same dish**, made with the same ingredients, if that pot has room (fewer servings than it started with). Before, only the pot it came out of would take it. If its own pot is gone and the hob is free, it still starts a pot there. A pot that won't take it says why: it's full, or it was made with other ingredients.
+- The desk's arrow and the "set the bill of fare" reminders stay until you press **Put it up**, even with the same bill. Picking dishes and closing the screen no longer counts.
+
 ## Build 98 · Nov 16, 2026 · not deployed
 
 ### Added

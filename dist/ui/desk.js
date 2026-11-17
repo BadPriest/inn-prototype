@@ -108,8 +108,7 @@ export function openBillOfFare(g) {
             if (set.has(r.id))
                 set.delete(r.id);
             else
-                set.add(r.id);
-            g.menuChosen = true;
+                set.add(r.id); // menuChosen waits for "Put it up"
             g.bus.emit({ type: "Paper", what: "menu" });
             st.focus = i;
             redraw();

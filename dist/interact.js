@@ -394,8 +394,8 @@ function slotActs(g, sl, many) {
     const job = g.jobs.get(sl.id);
     // Picked up from here by mistake: put it back (one of each dish).
     const back = trayItems(g).filter((i) => canPutBack(g, sl.id, i));
-    for (const it of back.filter((x, i) => back.findIndex((y) => y.recipeId === x.recipeId) === i)) {
-        acts.push({ label: `↩️ Put back the ${it.name.toLowerCase()}`, sub: `${where}it goes back ${it.fromPot ? "in the pot" : "where it was"}`, short: "put back", main: false,
+    for (const it of back.filter((x, i) => back.findIndex((y) => y.name === x.name) === i)) {
+        acts.push({ label: `↩️ Put back the ${it.name.toLowerCase()}`, sub: `${where}it goes back ${it.fromPot ? (g.pots.get(sl.id) ? "in the pot" : "on the hob, as a pot of one") : "where it was"}`, short: "put back", main: false,
             run: () => { if (putBack(g, sl.id, it))
                 g.say(`You put the ${it.name.toLowerCase()} back.`);
             else
@@ -463,8 +463,12 @@ export function putDownHere(g, t) {
         runSide(g, f, "put back", "Put back which?");
         return;
     }
-    if (f && trayItems(g).some((i) => (f.slots ?? []).some((sl) => sl.id === i.from)) && !trayItems(g).some((i) => !(f.slots ?? []).some((sl) => sl.id === i.from))) {
-        g.say("That came out of a different pot: it can't go into this one.");
+    // At a pot of the same dish that won't take it: say why rather than setting a tray down.
+    const pots = f ? (f.slots ?? []).map((sl) => g.pots.get(sl.id)).filter((p) => !!p) : [];
+    const near = trayItems(g).find((i) => i.fromPot && pots.some((p) => p.item.recipeId === i.recipeId));
+    if (near) {
+        const pot = pots.find((p) => p.item.recipeId === near.recipeId);
+        g.say(pot.left >= pot.total ? `That pot of ${pot.item.name.toLowerCase()} is full.` : `This pot of ${RECIPES.find((r) => r.id === pot.item.recipeId)?.name.toLowerCase() ?? "it"} was made with other ingredients: they don't mix.`);
         return;
     }
     askSetDown(g);
