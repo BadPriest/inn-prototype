@@ -8,6 +8,7 @@ import { drawLight } from "./light.js";
 import { RING_TRACK, ringColor } from "./tickets.js";
 import { walkoutProgress } from "../patrons.js";
 import { P } from "./proj.js";
+import { COINS, coinParts, type CoinId } from "../money.js";
 
 /** `iso`: drawn isometric (render-iso.ts); otherwise straight down, `ts` pixels a tile. */
 /** `rot`, `mw`, `mh` (isometric): which corner the camera stands at (quarter turns), and the map's size. */
@@ -494,27 +495,61 @@ export function drawSpeech(ctx: CanvasRenderingContext2D, ts: number): void {
   speech.length = 0;
 }
 
-/** Coin changing hands: "+6d" (gold) or a tip (brighter), rising and fading over the guest. */
+/** A small turned coin: an ellipse with its edge showing on one side, in the coin's metal. */
+export function drawCoin(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, coin: CoinId): void {
+  const c = COINS[coin];
+  const rx = r * 0.68, edge = r * 0.22;
+  ctx.fillStyle = c.edge; // the edge, seen because the coin is turned
+  ctx.beginPath(); ctx.ellipse(cx + edge, cy, rx, r, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillRect(cx, cy - r, edge, r * 2);
+  ctx.fillStyle = c.face;
+  ctx.beginPath(); ctx.ellipse(cx, cy, rx, r, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.lineWidth = Math.max(1, r * 0.16); ctx.strokeStyle = c.rim;
+  ctx.beginPath(); ctx.ellipse(cx, cy, rx * 0.72, r * 0.74, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.fillStyle = "rgba(255,255,255,0.55)"; // a glint
+  ctx.beginPath(); ctx.ellipse(cx - rx * 0.35, cy - r * 0.4, rx * 0.18, r * 0.22, -0.5, 0, Math.PI * 2); ctx.fill();
+}
+
+/** Money on the canvas, left-aligned at (x, baseline y): a coin, its count, the next coin… Returns the width. */
+export function drawMoney(ctx: CanvasRenderingContext2D, x: number, y: number, pence: number, size: number, prefix = ""): number {
+  const r = size * 0.5, gap = size * 0.2;
+  let at = x;
+  const text = (t: string) => {
+    ctx.strokeText(t, at, y); ctx.fillText(t, at, y);
+    at += ctx.measureText(t).width;
+  };
+  if (prefix) text(prefix);
+  for (const p of coinParts(pence)) {
+    drawCoin(ctx, at + r * 0.75, y - size * 0.38, r, p.coin);
+    at += r * 1.9 + gap * 0.5;
+    text(String(p.n));
+    at += gap;
+  }
+  return at - x;
+}
+
+/** Coin changing hands: "+ coins", and a tip after it, rising beside the guest and fading. */
 const POP_SECONDS = 1.8;
 export function drawCoinPops(ctx: CanvasRenderingContext2D, g: Game, v: View): void {
   const now = performance.now();
   g.coinPops = g.coinPops.filter((c) => now - c.at < POP_SECONDS * 1000);
   if (!g.coinPops.length) return;
-  const ts = v.ts;
+  const ts = v.ts, size = Math.max(12, Math.floor(ts * 0.38));
   ctx.save();
-  ctx.font = `bold ${Math.max(11, Math.floor(ts * 0.36))}px system-ui, sans-serif`;
-  ctx.textAlign = "left"; ctx.textBaseline = "bottom";
+  ctx.font = `bold ${size}px system-ui, sans-serif`;
+  ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+  ctx.lineJoin = "round";
   for (const c of g.coinPops) {
     const t = (now - c.at) / (POP_SECONDS * 1000);
-    // Beside the guest, not over them: the reaction and the speech go above.
+    // Beside the guest; drawn over the speech so it always reads.
     const at = P(v, c.x, c.y, v.iso ? 0.9 : 0);
-    const x = at.x + ts * 0.45;
-    const y = at.y + ts * 0.25 - t * ts * 0.6;
+    let x = at.x + ts * 0.45;
+    const y = at.y + ts * 0.3 - t * ts * 0.6;
     ctx.globalAlpha = t < 0.7 ? 1 : 1 - (t - 0.7) / 0.3;
-    ctx.lineWidth = Math.max(2, ts * 0.08); ctx.strokeStyle = "rgba(20,14,6,0.9)";
-    ctx.strokeText(c.text, x, y);
-    ctx.fillStyle = c.tip ? "#fff1a8" : "#ffd34d";
-    ctx.fillText(c.text, x, y);
+    ctx.lineWidth = Math.max(3, size * 0.22); ctx.strokeStyle = "rgba(20,14,6,0.9)";
+    ctx.fillStyle = "#fff4d6";
+    if (c.paid) x += drawMoney(ctx, x, y, c.paid, size, "+") + size * 0.2;
+    if (c.tip) { ctx.fillStyle = "#fff1a8"; drawMoney(ctx, x, y, c.tip, size, c.paid ? "tip " : "+tip "); }
   }
   ctx.restore();
 }

@@ -23,6 +23,32 @@ export function fmtMoney(pence: number): string {
   return `${neg ? "−" : ""}${parts.join(" ")}`;
 }
 
+/** The three coins, as drawn: a small turned coin in its metal, then the count. */
+export type CoinId = "cr" | "s" | "d";
+export const COINS: Record<CoinId, { name: string; face: string; rim: string; edge: string }> = {
+  cr: { name: "crown", face: "#f6d24a", rim: "#b8860b", edge: "#8a6208" },
+  s: { name: "shilling", face: "#e3e8ec", rim: "#9aa4ad", edge: "#6d767e" },
+  d: { name: "penny", face: "#d98a4e", rim: "#9a5527", edge: "#6e3a17" },
+};
+
+/** 193 → [1 crown, 9 shillings, 3 pence]. Zero coins are left out; nothing at all is 0 pence. */
+export function coinParts(pence: number): { coin: CoinId; n: number }[] {
+  let d = Math.abs(Math.round(pence));
+  const cr = Math.floor(d / PENCE_PER_CROWN); d -= cr * PENCE_PER_CROWN;
+  const s = Math.floor(d / PENCE_PER_SHILLING); d -= s * PENCE_PER_SHILLING;
+  const parts: { coin: CoinId; n: number }[] = [];
+  if (cr) parts.push({ coin: "cr", n: cr });
+  if (s) parts.push({ coin: "s", n: s });
+  if (d || !parts.length) parts.push({ coin: "d", n: d });
+  return parts;
+}
+
+/** Money for the screen (HTML): each coin drawn, then its count. The words are kept for screen readers and hover. */
+export function moneyHtml(pence: number): string {
+  const coins = coinParts(pence).map((p) => `<span class="cn"><i class="coin ${p.coin}"></i>${p.n}</span>`).join("");
+  return `<span class="money" title="${fmtMoney(pence)}" aria-label="${fmtMoney(pence)}">${pence < 0 ? "−" : ""}${coins}</span>`;
+}
+
 // ---------------------------------------------------------------------------
 // Prices. Placeholders from the session's baseline (ale 4d, tea 3d, stew 6d), to be tuned in play.
 
@@ -67,8 +93,7 @@ export function takeCoin(g: Game, p: Patron, paid: number, tip: number): void {
   g.purse += paid + tip;
   g.stats.taken = (g.stats.taken ?? 0) + paid;
   g.stats.tips = (g.stats.tips ?? 0) + tip;
-  const text = paid && tip ? `+${fmtMoney(paid)} +${fmtMoney(tip)} tip` : tip ? `+${fmtMoney(tip)} tip` : `+${fmtMoney(paid)}`;
-  g.coinPops.push({ x: p.pos.x, y: p.pos.y, text, at: performance.now(), tip: tip > 0 });
+  g.coinPops.push({ x: p.pos.x, y: p.pos.y, paid, tip, at: performance.now() });
 }
 
 /** Spend from the purse (equipment, upkeep, supplies: later tasks). False if there isn't enough. */

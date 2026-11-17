@@ -204,7 +204,15 @@
   #status .st-date { font:15px Georgia, serif; }
   #status .st-time b { font:600 17px system-ui; letter-spacing:.02em; }
   #status .st-wx { font-size:13px; color:#d9cbb4; margin-left:4px; }
-  #status .st-purse { font:600 13px system-ui; color:#ffd34d; margin-top:2px; }
+  #status .st-purse { font:600 14px system-ui; color:#f3e6cc; margin-top:3px; }
+  /* Money: a small turned coin in its metal (gold crown, silver shilling, copper penny), then the count. */
+  .money { display:inline-flex; align-items:center; gap:.45em; font-weight:600; white-space:nowrap; vertical-align:-0.12em; }
+  .money .cn { display:inline-flex; align-items:center; gap:.18em; }
+  .coin { display:inline-block; position:relative; width:.74em; height:1.05em; border-radius:50%; box-sizing:border-box; }
+  .coin::after { content:""; position:absolute; left:18%; top:14%; width:22%; height:24%; border-radius:50%; background:rgba(255,255,255,.55); transform:rotate(-25deg); }
+  .coin.cr { background:#f6d24a; border:.09em solid #b8860b; box-shadow:.13em 0 0 #8a6208; }
+  .coin.s { background:#e3e8ec; border:.09em solid #9aa4ad; box-shadow:.13em 0 0 #6d767e; }
+  .coin.d { background:#d98a4e; border:.09em solid #9a5527; box-shadow:.13em 0 0 #6e3a17; }
   /* Order tickets: a row along the top, oldest beside the status card; the snap point and stack at the right. */
   #tickets { position:absolute; top:8px; right:10px; height:92px; z-index:2; pointer-events:none; zoom:var(--ui,1); }
   #tickets:not([data-stack=""])::after { content:attr(data-stack); position:absolute; right:-6px; top:-6px; z-index:2000; background:#c9a24a; color:#1a1410; font:700 11px system-ui; border-radius:9px; padding:1px 6px; }

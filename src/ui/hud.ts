@@ -12,7 +12,7 @@ import { emptyTastes } from "../game.js";
 import { resetSave } from "../day.js";
 import { iconFor, itemLabel } from "../serving.js";
 import { objectives } from "../objectives.js";
-import { fmtMoney, PENCE_PER_CROWN } from "../money.js";
+import { moneyHtml, PENCE_PER_CROWN } from "../money.js";
 
 const $ = (id: string) => document.getElementById(id)!;
 
@@ -90,7 +90,9 @@ function updateStatus(g: Game): void {
   el.querySelector(".st-date")!.textContent = shortDate(d);
   el.querySelector(".st-time b")!.textContent = g.clockText();
   el.querySelector(".st-wx")!.textContent = weatherLabel(g);
-  el.querySelector(".st-purse")!.textContent = `🪙 ${fmtMoney(g.purse)}`;
+  // Redrawn only when the purse changes (it's HTML now: the coins).
+  const purse = el.querySelector(".st-purse") as HTMLElement;
+  if (purse.dataset.v !== String(g.purse)) { purse.dataset.v = String(g.purse); purse.innerHTML = moneyHtml(g.purse); }
 }
 
 /** The optional morning checklist, so new players know where to start. */

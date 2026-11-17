@@ -7,7 +7,7 @@ import { startArranging } from "./arrange.js";
 import { grid, gridKeys, type CardSpec } from "./cards.js";
 import { openNewspaper } from "./newspaper.js";
 import { openCalendar } from "./calendar.js";
-import { fmtMoney, priceLevel, priceOfRecipe, PRICE_LEVELS } from "../money.js";
+import { fmtMoney, moneyHtml, priceLevel, priceOfRecipe, PRICE_LEVELS } from "../money.js";
 
 export function openDeskScreen(g: Game, openJournal: () => void): void {
   const st = { focus: 0 };
@@ -42,7 +42,7 @@ export function openDeskScreen(g: Game, openJournal: () => void): void {
       holdsClock: true,
       subtitle: "Manage your business",
       view: {
-        html: `<p class="explain">What's on the menu and what it costs, what's in the kitchen and where it stands, the news and the season ahead, and the people you've met. In the purse: <b>🪙 ${fmtMoney(g.purse)}</b>.</p>`
+        html: `<p class="explain">What's on the menu and what it costs, what's in the kitchen and where it stands, the news and the season ahead, and the people you've met. In the purse: <b>${moneyHtml(g.purse)}</b>.</p>`
           + (!g.menuChosen ? `<p class="desk-warn">⚠️ <b>You haven't set the bill of fare.</b> Guests are ordering from a default one. Choose what you're ready to make.</p>` : "")
           + grid(cards),
         onPick: go,
@@ -153,7 +153,7 @@ export function openBillOfFare(g: Game): void {
       pick: String(i),
       icon: r.icon,
       name: r.name,
-      note: !g.canMake(r.id) ? needs(r) : `<b>${fmtMoney(priceOfRecipe(g, r.id))}</b>${r.storedIn === "piesafe" ? " a slice" : r.servings ? " a serving" : ""} · ${set.has(r.id) ? "on the board · " : ""}${r.storedIn === "piesafe" ? "whole pies, sliced" : r.servings ? "by the pot" : r.station === "tap" ? "on tap" : `about ${r.minutes[0]} min`}`,
+      note: !g.canMake(r.id) ? needs(r) : `${moneyHtml(priceOfRecipe(g, r.id))}${r.storedIn === "piesafe" ? " a slice" : r.servings ? " a serving" : ""} · ${set.has(r.id) ? "on the board · " : ""}${r.storedIn === "piesafe" ? "whole pies, sliced" : r.servings ? "by the pot" : r.station === "tap" ? "on tap" : `about ${r.minutes[0]} min`}`,
       where: whereShort(r),
       title: whereFull(r),
       tags: r.baseTags,

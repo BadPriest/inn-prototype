@@ -257,7 +257,7 @@ export class Game {
   /** The house-wide price knob: Cheap, Fair or Dear. */
   priceLevel: PriceLevel = "fair";
   /** "+6d" rising over a guest who's just paid (drawn, then dropped after a moment). */
-  coinPops: { x: number; y: number; text: string; at: number; tip: boolean }[] = [];
+  coinPops: { x: number; y: number; paid: number; tip: number; at: number }[] = [];
   nextArrivalAt = 0;
   keeper: Keeper;
   patrons: Patron[] = [];

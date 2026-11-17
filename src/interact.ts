@@ -1,7 +1,7 @@
 // What happens when the keeper interacts with something. Menus live here.
 
 import { organic } from "./core.js";
-import { fmtMoney } from "./money.js";
+import { moneyHtml } from "./money.js";
 import { GARNISHES, GRAMOPHONE, INGREDIENTS, RECIPES, REGULARS, SNACKS, TUNING, UPGRADES, type Recipe } from "./data.js";
 import type { Game, Patron, SetDownTray, Spill } from "./game.js";
 import { dist, type Furniture, type Slot } from "./world.js";
@@ -511,10 +511,10 @@ function goToSleep(g: Game): void {
       title: `End of ${compactDate(g.dateOfDay(s.day), g.date.year)}`,
       modal: true,
       body: `<table class="summary">
-        ${row("🪙 Takings", fmtMoney(s.taken ?? 0))}
-        ${row("Tips", fmtMoney(s.tips ?? 0))}
-        ${(s.spent ?? 0) ? row("Spent", fmtMoney(s.spent ?? 0)) : ""}
-        ${row("In the purse", fmtMoney(g.purse))}
+        ${row("Takings", moneyHtml(s.taken ?? 0))}
+        ${row("Tips", moneyHtml(s.tips ?? 0))}
+        ${(s.spent ?? 0) ? row("Spent", moneyHtml(s.spent ?? 0)) : ""}
+        ${row("In the purse", moneyHtml(g.purse))}
         ${row("Patrons", s.arrivals)}
         ${row("Orders taken", s.orders ?? 0)}
         ${row("Served", s.served)}
