@@ -7,6 +7,7 @@ import { startArranging } from "./arrange.js";
 import { grid, gridKeys, type CardSpec } from "./cards.js";
 import { openNewspaper } from "./newspaper.js";
 import { openCalendar } from "./calendar.js";
+import { fmtMoney, priceLevel, priceOfRecipe, PRICE_LEVELS } from "../money.js";
 
 export function openDeskScreen(g: Game, openJournal: () => void): void {
   const st = { focus: 0 };
@@ -14,6 +15,7 @@ export function openDeskScreen(g: Game, openJournal: () => void): void {
     const cards: CardSpec[] = [
       { pick: "fare", icon: "📜", name: "Bill of fare", warn: !g.menuChosen,
         note: !g.menuChosen ? `⚠️ not set yet<br>guests get the default` : g.mealMode ? `meal times<br>${g.mealNow() ? `${MEALS.find((m) => m.id === g.mealNow()!.id)!.name} now` : "between meals now"}` : `what's on the menu<br>${g.menu.size} on today` },
+      { pick: "prices", icon: "🪙", name: "House prices", note: `${priceLevel(g).name}<br>${priceLevel(g).blurb}` },
       { pick: "calendar", icon: "📅", name: "Calendar", note: `${g.date.seasonName} ${g.date.dayOfSeason}<br>the season ahead` },
       { pick: "paper", icon: "📰", name: "Newspaper", note: g.paper?.read ? "read" : "today's, unread", on: !!g.paper && !g.paper.read },
       { pick: "shop", icon: "🛒", name: "Equipment", note: "stoves, ovens, kettles<br>to buy" },
@@ -22,6 +24,13 @@ export function openDeskScreen(g: Game, openJournal: () => void): void {
     ].map((c, i) => ({ ...c, focus: i === st.focus })) as CardSpec[];
     const go = (v: string) => {
       if (v === "fare") openBillOfFare(g);
+      else if (v === "prices") {
+        // One house-wide knob: Cheap, Fair, Dear, round again.
+        const i = PRICE_LEVELS.findIndex((l) => l.id === g.priceLevel);
+        g.priceLevel = PRICE_LEVELS[(i + 1) % PRICE_LEVELS.length].id;
+        g.say(`House prices: ${priceLevel(g).name.toLowerCase()} (${priceLevel(g).blurb}). A pint of ale is ${fmtMoney(priceOfRecipe(g, "ale"))}.`);
+        replaceMenu(build());
+      }
       else if (v === "paper") openNewspaper(g);
       else if (v === "calendar") openCalendar(g);
       else if (v === "shop") openShop(g);
@@ -33,7 +42,7 @@ export function openDeskScreen(g: Game, openJournal: () => void): void {
       holdsClock: true,
       subtitle: "Manage your business",
       view: {
-        html: `<p class="explain">What's on the menu, what's in the kitchen and where it stands, the news and the season ahead, and the people you've met.</p>`
+        html: `<p class="explain">What's on the menu and what it costs, what's in the kitchen and where it stands, the news and the season ahead, and the people you've met. In the purse: <b>🪙 ${fmtMoney(g.purse)}</b>.</p>`
           + (!g.menuChosen ? `<p class="desk-warn">⚠️ <b>You haven't set the bill of fare.</b> Guests are ordering from a default one. Choose what you're ready to make.</p>` : "")
           + grid(cards),
         onPick: go,
@@ -144,7 +153,7 @@ export function openBillOfFare(g: Game): void {
       pick: String(i),
       icon: r.icon,
       name: r.name,
-      note: !g.canMake(r.id) ? needs(r) : `${set.has(r.id) ? "on the board · " : ""}${r.storedIn === "piesafe" ? "whole pies, sliced" : r.servings ? "by the pot" : r.station === "tap" ? "on tap" : `about ${r.minutes[0]} min`}`,
+      note: !g.canMake(r.id) ? needs(r) : `<b>${fmtMoney(priceOfRecipe(g, r.id))}</b>${r.storedIn === "piesafe" ? " a slice" : r.servings ? " a serving" : ""} · ${set.has(r.id) ? "on the board · " : ""}${r.storedIn === "piesafe" ? "whole pies, sliced" : r.servings ? "by the pot" : r.station === "tap" ? "on tap" : `about ${r.minutes[0]} min`}`,
       where: whereShort(r),
       title: whereFull(r),
       tags: r.baseTags,
@@ -159,7 +168,7 @@ export function openBillOfFare(g: Game): void {
     </div>`;
     let head: string;
     if (!g.mealMode) {
-      head = `<p class="explain"><b>Pick what goes up on the board.</b> Guests only order what's on it, and they'll still order it after it runs out. Put up what you're ready to make; leave off what you'd rather not.</p>`;
+      head = `<p class="explain"><b>Pick what goes up on the board.</b> Guests only order what's on it, and they'll still order it after it runs out. Put up what you're ready to make; leave off what you'd rather not. Prices are <b>${priceLevel(g).name.toLowerCase()}</b> (House prices, at the desk); dearer ingredients add a penny or two.</p>`;
     } else {
       const live = g.mealNow()?.id ?? "between";
       const tabs = `<div class="bf-tabs">${TABS.map((t) => {

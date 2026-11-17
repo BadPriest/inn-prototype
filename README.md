@@ -53,9 +53,14 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 - Snacks in bowls on the tables and the counter: peanuts, olives, pickled eggs, crostini, bread and butter, cheese, pretzels, chestnuts, pickled onions, apple rings.
 - The bill of fare can be one all-day bill, or a bill per meal time. Each dish says where it's made (a pot on a hob, a pan, an oven, the kettle…). Dishes your kitchen can't make are greyed out, with what they need.
 
+**Coin.**
+- A purse in crowns, shillings and pence (10d = 1s, 10s = 1 crown), on the status card. You start with 2 crowns.
+- Guests always pay for what they ordered; tips follow how it went (a Delight tips well, Pleased a little). Unasked serves are on the house, though a Delight still tips.
+- Prices come from the dish and its ingredients and never inflate. One house-wide knob at the desk: Cheap, Fair or Dear, which also nudges how many come in.
+- Nothing costs coin yet: equipment, upkeep and supplies are next.
+
 **The kitchen.**
 - Equipment to buy at the desk: wood stoves with one or two hobs, a range stove (hob and oven), a bread oven that bakes two at once, a prep table, kettles, a copper kettle, an urn, coffee pots, ale and cider barrels, pie safes, wider trays, seasoned firewood.
-- Money is no object for now. The economy is the next design topic.
 - Arrange the kitchen any time. The clock stops, and what's cooking moves with the piece.
 - Hobs take a pot or a pan. Tended dishes (fish, eggs, toast, a fry-up) need you at the stove, and go straight onto your tray when they're done if there's room. Put back what you picked up by mistake: a serving into any pot of the same dish made the same way, if it has room; a dish onto the shelf it came from. Empty a pot you don't need.
 

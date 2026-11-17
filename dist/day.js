@@ -133,7 +133,8 @@ export function save(g) {
         const history = g.history.map((d, i) => (i < g.history.length - 14 ? { ...d, unmet: undefined } : d));
         localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, calendarStart: g.calendarStart, location: g.location, inn: g.inn, weather: g.weather, history, regulars, visitorNotes: g.visitorNotes,
             menu: [...g.menu], menuChosen: g.menuChosen,
-            layout: g.layout, mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives }));
+            layout: g.layout, mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives,
+            purse: g.purse, priceLevel: g.priceLevel }));
     }
     catch { /* storage unavailable: carry on */ }
 }
@@ -176,6 +177,11 @@ export function load(g) {
         g.upgrades = new Set(s.upgrades ?? []);
         g.totalServed = s.totalServed ?? 0;
         g.showObjectives = s.showObjectives ?? true;
+        // Saves from before coin start with the new keeper's purse.
+        if (typeof s.purse === "number")
+            g.purse = s.purse;
+        if (s.priceLevel)
+            g.priceLevel = s.priceLevel;
         g.day = s.day ?? 1;
         g.calendarStart = s.calendarStart ?? 0;
         // Saves played before locations existed stand in the town centre; a brand-new save still has to pick.

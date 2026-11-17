@@ -204,6 +204,7 @@
   #status .st-date { font:15px Georgia, serif; }
   #status .st-time b { font:600 17px system-ui; letter-spacing:.02em; }
   #status .st-wx { font-size:13px; color:#d9cbb4; margin-left:4px; }
+  #status .st-purse { font:600 13px system-ui; color:#ffd34d; margin-top:2px; }
   /* Order tickets: a row along the top, oldest beside the status card; the snap point and stack at the right. */
   #tickets { position:absolute; top:8px; right:10px; height:92px; z-index:2; pointer-events:none; zoom:var(--ui,1); }
   #tickets:not([data-stack=""])::after { content:attr(data-stack); position:absolute; right:-6px; top:-6px; z-index:2000; background:#c9a24a; color:#1a1410; font:700 11px system-ui; border-radius:9px; padding:1px 6px; }
@@ -265,7 +266,7 @@
     <canvas id="view"></canvas>
     <div id="status">
       <div class="st-face" title="The keeper. Their mood will show here.">🙂</div>
-      <div class="st-main"><div class="st-day"></div><div class="st-date"></div><div class="st-time"><b></b> <span class="st-wx"></span></div></div>
+      <div class="st-main"><div class="st-day"></div><div class="st-date"></div><div class="st-time"><b></b> <span class="st-wx"></span></div><div class="st-purse" title="Your purse: crowns, shillings and pence (10d = 1s, 10s = 1 crown)"></div></div>
     </div>
     <div id="fade"></div>
     <div id="miniclock"></div>
@@ -291,6 +292,7 @@
     <div id="debug" style="display:none">
       <h4>Debug (` or F2)</h4>
       <div id="dbg-next" class="muted"></div>
+      <div style="margin:4px 0">Purse <button id="dbg-coin-add">+1 crown</button> <button id="dbg-coin-sub">−1 crown</button></div>
       <div style="margin:4px 0">Flow <input id="dbg-flow" type="range" min="0" max="3" step="0.25" value="1"> <span id="dbg-flow-v">×1</span></div>
       <div style="margin:4px 0"><select id="dbg-arch"></select> <button id="dbg-spawn">Spawn patron</button> <button id="dbg-skip">Skip to 17:00</button></div>
       <h4>Sounds playing</h4>

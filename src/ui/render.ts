@@ -312,6 +312,7 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
   }
   drawDeskHint(ctx, g, v);
   drawSpeech(ctx, ts);
+  drawCoinPops(ctx, g, v); // over the speech, so the coin always reads
 
   const busy = g.cleaning ?? g.pouring ?? g.winding;
   if (busy) {
@@ -491,6 +492,31 @@ export function drawSpeech(ctx: CanvasRenderingContext2D, ts: number): void {
     b.lines.forEach((l, i) => ctx.fillText(l, b.x + b.w / 2, b.y + padY + lh * (i + 0.5) + 1));
   }
   speech.length = 0;
+}
+
+/** Coin changing hands: "+6d" (gold) or a tip (brighter), rising and fading over the guest. */
+const POP_SECONDS = 1.8;
+export function drawCoinPops(ctx: CanvasRenderingContext2D, g: Game, v: View): void {
+  const now = performance.now();
+  g.coinPops = g.coinPops.filter((c) => now - c.at < POP_SECONDS * 1000);
+  if (!g.coinPops.length) return;
+  const ts = v.ts;
+  ctx.save();
+  ctx.font = `bold ${Math.max(11, Math.floor(ts * 0.36))}px system-ui, sans-serif`;
+  ctx.textAlign = "left"; ctx.textBaseline = "bottom";
+  for (const c of g.coinPops) {
+    const t = (now - c.at) / (POP_SECONDS * 1000);
+    // Beside the guest, not over them: the reaction and the speech go above.
+    const at = P(v, c.x, c.y, v.iso ? 0.9 : 0);
+    const x = at.x + ts * 0.45;
+    const y = at.y + ts * 0.25 - t * ts * 0.6;
+    ctx.globalAlpha = t < 0.7 ? 1 : 1 - (t - 0.7) / 0.3;
+    ctx.lineWidth = Math.max(2, ts * 0.08); ctx.strokeStyle = "rgba(20,14,6,0.9)";
+    ctx.strokeText(c.text, x, y);
+    ctx.fillStyle = c.tip ? "#fff1a8" : "#ffd34d";
+    ctx.fillText(c.text, x, y);
+  }
+  ctx.restore();
 }
 
 /**

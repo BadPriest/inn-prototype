@@ -12,6 +12,7 @@ import { emptyTastes } from "../game.js";
 import { resetSave } from "../day.js";
 import { iconFor, itemLabel } from "../serving.js";
 import { objectives } from "../objectives.js";
+import { fmtMoney, PENCE_PER_CROWN } from "../money.js";
 
 const $ = (id: string) => document.getElementById(id)!;
 
@@ -89,6 +90,7 @@ function updateStatus(g: Game): void {
   el.querySelector(".st-date")!.textContent = shortDate(d);
   el.querySelector(".st-time b")!.textContent = g.clockText();
   el.querySelector(".st-wx")!.textContent = weatherLabel(g);
+  el.querySelector(".st-purse")!.textContent = `🪙 ${fmtMoney(g.purse)}`;
 }
 
 /** The optional morning checklist, so new players know where to start. */
@@ -122,6 +124,8 @@ export function initDebug(g: Game): void {
     const a = ARCHETYPES.find((x) => x.id === sel.value);
     if (!spawnVisitors(g, a)) g.say("No room, not even on the bench.");
   };
+  ($("dbg-coin-add") as HTMLButtonElement).onclick = () => { g.purse += PENCE_PER_CROWN; };
+  ($("dbg-coin-sub") as HTMLButtonElement).onclick = () => { g.purse = Math.max(0, g.purse - PENCE_PER_CROWN); };
   const flow = $("dbg-flow") as HTMLInputElement;
   flow.oninput = () => { g.flowMultiplier = Number(flow.value); $("dbg-flow-v").textContent = `×${flow.value}`; };
   ($("dbg-skip") as HTMLButtonElement).onclick = () => {

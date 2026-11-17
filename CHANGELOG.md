@@ -6,6 +6,17 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 101 · Nov 18, 2026 · not deployed
+
+### Added
+- **Coin.** A purse in crowns, shillings and pence (10d = 1s, 10s = 1 crown), shown on the status card. A new keeper starts with 2 crowns; older saves get the same.
+- **Guests pay** for what they ordered, always, however it went. **Tips follow the reaction:** a Delight tips about half the price again, Pleased a penny or so, anything else nothing. A "+4d" rises beside the guest.
+- **Unasked serves are on the house:** no charge, but a Delight or Pleased still tips.
+- **Prices** come from the dish and what's in it: ale 4d, tea and coffee 3d, a serving of stew 6d, fried fish 7d, a fry-up 8d, a roast 9d (placeholders). Dearer ingredients (beef, bacon, cheese, lamb…) add a penny or two; a garnish adds a penny. They never inflate. The bill of fare shows each price.
+- **House prices** on the desk: Cheap (a quarter off; a few more come in), Fair, or Dear (about a third more; a few fewer come in). Pick the card to switch.
+- The end-of-day screen opens with takings, tips and what's in the purse.
+- Debug: +1 / −1 crown.
+
 ## Build 100 · Nov 18, 2026 · not deployed
 
 ### Changed

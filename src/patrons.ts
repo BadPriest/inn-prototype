@@ -8,6 +8,7 @@ import { appeal, prepareVisit, tagScore } from "./tastes.js";
 import { arrivalNeeds, closeAllStretches } from "./needs.js";
 import { cameIn, weatherTags } from "./weather.js";
 import { marketDay } from "./newspaper.js";
+import { priceLevel } from "./money.js";
 import { dist, type Seat, type Table, type Vec } from "./world.js";
 
 
@@ -795,7 +796,7 @@ export function updatePatrons(g: Game, simDt: number): void {
   // Visitors arrive at the flow rate.
   if (g.open && !g.lastCall && g.minute >= g.nextArrivalAt) {
     const market = marketDay(g) && g.hour >= MARKET.from && g.hour < MARKET.to ? MARKET.flow : 1;
-    const rate = TUNING.flowByHour[g.hour] * g.loc.traffic * shelterFactor(g) * market * g.flowMultiplier; // per hour
+    const rate = TUNING.flowByHour[g.hour] * g.loc.traffic * shelterFactor(g) * market * g.flowMultiplier * priceLevel(g).flow; // per hour
     if (rate > 0.01) {
       spawnVisitors(g);
       g.nextArrivalAt = g.minute + Math.max(3, organic([60 / rate, 30 / rate]));

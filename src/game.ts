@@ -1,6 +1,7 @@
 // The shared game state. Systems read and change it; the UI only reads it.
 
 import { EventBus, type Outcome } from "./core.js";
+import { STARTING_PURSE, type PriceLevel } from "./money.js";
 import { World, defaultLayout, type Placed, type Vec } from "./world.js";
 import { dateOf, randomStartSeason, type GameDate } from "./calendar.js";
 import { newWeather, type CameIn, type WeatherState } from "./weather.js";
@@ -175,13 +176,17 @@ export interface DayStats {
   cleaned: number;
   moments: string[]; // locks, breakthroughs, opening up
   unmet?: UnmetStretch[]; // missing in saves from before needs
+  /** Coin: paid for orders, tips, spent. Missing in saves from before coin. */
+  taken?: number;
+  tips?: number;
+  spent?: number;
   /** The day's weather, while the keeper was up: minutes of rain, a storm or not, minutes per sky. */
   weather?: { rainMinutes: number; storm: boolean; sky: Record<string, number> };
 }
 
 export function emptyStats(day: number): DayStats {
   return {
-    day, arrivals: 0, orders: 0, served: 0, leftEarly: 0, leftUnserved: 0, crafted: 0, garnished: 0, cleaned: 0,
+    day, arrivals: 0, orders: 0, served: 0, taken: 0, tips: 0, spent: 0, leftEarly: 0, leftUnserved: 0, crafted: 0, garnished: 0, cleaned: 0,
     outcomes: { DELIGHT: 0, PLEASED: 0, FULFILLED: 0, UNFINISHED: 0, COMPLAINS: 0 },
     moments: [], unmet: [], weather: { rainMinutes: 0, storm: false, sky: {} },
   };
@@ -247,6 +252,12 @@ export class Game {
   /** This morning's paper (newspaper.ts). */
   paper?: Paper; // the keeper lights the lamps when it gets gloomy (ui/light.ts)
   flowMultiplier = 1;
+  /** Coin, in pennies (money.ts). */
+  purse = STARTING_PURSE;
+  /** The house-wide price knob: Cheap, Fair or Dear. */
+  priceLevel: PriceLevel = "fair";
+  /** "+6d" rising over a guest who's just paid (drawn, then dropped after a moment). */
+  coinPops: { x: number; y: number; text: string; at: number; tip: boolean }[] = [];
   nextArrivalAt = 0;
   keeper: Keeper;
   patrons: Patron[] = [];
