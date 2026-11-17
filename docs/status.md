@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 16, 2026 · build 99 (94 deployed; 95–99 committed, not pushed) · https://inn-prototype.vercel.app
+Updated Nov 17, 2026 · build 99 (deployed) · https://inn-prototype.vercel.app
 
 History by build: [../CHANGELOG.md](../CHANGELOG.md). What the prototype is and how to play: [../README.md](../README.md).
 
@@ -26,7 +26,7 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
 
-## Built, not yet deployed (builds 95–99)
+## Built and deployed (Nov 16–17, builds 95–99)
 
 - Build 99: servings go back into any pot of the same dish and ingredients with room; the desk reminder stays until "Put it up"
 

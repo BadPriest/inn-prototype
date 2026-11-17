@@ -6,13 +6,13 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
-## Build 99 · Nov 17, 2026 · not deployed
+## Build 99 · Nov 17, 2026 · deployed
 
 ### Changed
 - **A serving goes back into any pot of the same dish**, made with the same ingredients, if that pot has room (fewer servings than it started with). Before, only the pot it came out of would take it. If its own pot is gone and the hob is free, it still starts a pot there. A pot that won't take it says why: it's full, or it was made with other ingredients.
 - The desk's arrow and the "set the bill of fare" reminders stay until you press **Put it up**, even with the same bill. Picking dishes and closing the screen no longer counts.
 
-## Build 98 · Nov 16, 2026 · not deployed
+## Build 98 · Nov 16, 2026 · deployed
 
 ### Added
 - **The desk teaches itself.** Until you've set the bill of fare once, the desk glows and an arrow points to it ("Set the bill of fare"), in both views.
@@ -27,7 +27,7 @@ From build 92 on, every build that changes the game gets an entry here, with the
 ### Fixed
 - Small tavern: a chair at the right-hand table stood off the table's corner.
 
-## Build 97 · Nov 16, 2026 · not deployed
+## Build 97 · Nov 16, 2026 · deployed
 
 ### Added
 - **A small tavern**, as an optional start. After picking where the inn stands, a new game asks which inn is yours: the big tavern (as before) or a small one. The small one has:
@@ -42,12 +42,12 @@ From build 92 on, every build that changes the game gets an entry here, with the
 ### Changed
 - The bill of fare greys out dishes your kitchen can't make and says why ("needs an oven", "needs a barrel of cider"). Guests never order them, even if they're on a bill, so selling the oven can't strand an order.
 
-## Build 96 · Nov 16, 2026 · not deployed
+## Build 96 · Nov 16, 2026 · deployed
 
 ### Changed
 - **Two levels of tabs.** L1/R1 (Tab on the keyboard) switch the outer level; L2/R2 (PageUp/PageDown) switch the tabs inside it. On the bill of fare: L1/R1 switch between the all-day bill and meal times, L2/R2 between breakfast, lunch, dinner and between meals. This replaces build 95's single row. The pause screen and the equipment shop have one level, on L1/R1.
 
-## Build 95 · Nov 16, 2026 · not deployed
+## Build 95 · Nov 16, 2026 · deployed
 
 ### Changed
 - Bill of fare: **Tab** (L1/R1 on a controller) walks one row: All-day bill → Breakfast → Lunch → Dinner → Between meals → back. Stepping onto a meal switches to meal times; back onto the all-day bill switches back, and every bill keeps what's on it. Before, Tab did nothing on the all-day bill, and a controller couldn't change the mode at all.
