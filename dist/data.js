@@ -154,21 +154,7 @@ export const SMALL_MAP = [
 ];
 export const INNS = [
     {
-        id: "medium", name: "The big tavern", icon: "🏰", traits: ["busy", "needs staff"],
-        blurb: "Six tables, a long bar, an oven and pies, a coat hall. Lively, and a lot for one keeper: you'll lose some guests at the busy times.",
-        map: MAP, rooms: ROOM_LABELS,
-        lamps: [
-            { x: 4.5, y: 3.5, r: 4 }, // bedroom
-            { x: 10, y: 5, r: 2.5 }, // hall
-            { x: 17, y: 3.5, r: 5 }, { x: 27, y: 3.5, r: 5 }, // kitchen
-            { x: 5.5, y: 11, r: 5 }, // taproom, by the door side
-            { x: 16, y: 9.5, r: 5 }, { x: 26, y: 9.5, r: 5 }, // along the counter
-            { x: 3.5, y: 18.5, r: 3.5 }, // coat hall
-        ],
-        roomLinks: [["bedroom", "hall"], ["hall", "taproom"], ["kitchen", "taproom"], ["entry", "taproom"]],
-    },
-    {
-        id: "small", name: "A small tavern", icon: "🏠", traits: ["cosy", "one keeper"],
+        id: "small", name: "A small tavern", icon: "🏠", traits: ["easiest start", "cosy", "one keeper"],
         blurb: "Two tables, three stools at a short bar, a small fire. A one-hob stove, a kettle and a barrel of ale; no oven yet. The spare room is let to a tenant.",
         map: SMALL_MAP,
         rooms: [
@@ -185,8 +171,23 @@ export const INNS = [
         ],
         roomLinks: [["bedroom", "taproom"], ["kitchen", "taproom"]],
     },
+    {
+        id: "medium", name: "The big tavern", icon: "🏰", traits: ["harder", "busy", "needs staff"],
+        blurb: "Six tables, a long bar, an oven and pies, a coat hall. Lively, and a lot for one keeper: you'll lose some guests at the busy times.",
+        map: MAP, rooms: ROOM_LABELS,
+        lamps: [
+            { x: 4.5, y: 3.5, r: 4 }, // bedroom
+            { x: 10, y: 5, r: 2.5 }, // hall
+            { x: 17, y: 3.5, r: 5 }, { x: 27, y: 3.5, r: 5 }, // kitchen
+            { x: 5.5, y: 11, r: 5 }, // taproom, by the door side
+            { x: 16, y: 9.5, r: 5 }, { x: 26, y: 9.5, r: 5 }, // along the counter
+            { x: 3.5, y: 18.5, r: 3.5 }, // coat hall
+        ],
+        roomLinks: [["bedroom", "hall"], ["hall", "taproom"], ["kitchen", "taproom"], ["entry", "taproom"]],
+    },
 ];
-export const innOf = (id) => INNS.find((i) => i.id === id) ?? INNS[0];
+/** An inn by id. Saves from before there was a choice are in the big tavern. */
+export const innOf = (id) => INNS.find((i) => i.id === (id ?? "medium")) ?? INNS[0];
 export const INGREDIENTS = [
     { id: "beef", icon: "🥩", name: "Beef", tags: ["rich"] },
     { id: "mushroom", icon: "🍄", name: "Mushroom", tags: ["earthy"] },

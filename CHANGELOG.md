@@ -6,6 +6,11 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 100 · Nov 18, 2026 · not deployed
+
+### Changed
+- **The small tavern is the first choice** when a new game asks which inn is yours, and it's picked unless you choose otherwise. It's tagged "easiest start"; the big tavern is tagged "harder". Saves from before there was a choice stay in the big tavern.
+
 ## Build 99 · Nov 17, 2026 · deployed
 
 ### Changed

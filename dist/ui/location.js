@@ -55,7 +55,7 @@ export function openInnPicker(onChosen) {
         const settle = () => { confirmed(); onChosen(INNS[st.chosen].id); };
         return {
             title: "Which inn is yours?",
-            subtitle: "The small one is how the game is meant to start; the big one is busier",
+            subtitle: "The small one is the easiest start; the big one is busy enough to need staff",
             modal: true,
             view: {
                 html: `<div style="width:min(560px, 86vw)">${grid(cards)}<p class="explain" style="min-height:4.8em"><b>${chosen.icon} ${chosen.name}.</b> ${chosen.blurb}</p></div>`,

@@ -8,6 +8,8 @@ Voice design session on Kanzo #36 (game start and progression). Feeds #7, #11 an
 
 The medium tavern stays only as a test bench for systems a small start can't reach (oven, pies, bigger rooms). Players never see it.
 
+> **Changed, Nov 16–18 (builds 97 and 100).** For the prototype, players do see it. A new game asks which inn is yours: the small tavern comes first, tagged "easiest start", and is picked unless you choose otherwise. The big tavern is the second choice, tagged "harder" (busy enough to need staff).
+
 ### Permits are how the inn grows
 
 Modifying the floor plan through permits is the main growth path. Permits are horizontal: the player gathers resources and applies for whichever one they like, in any order.
