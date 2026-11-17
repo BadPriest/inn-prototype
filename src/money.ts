@@ -88,12 +88,13 @@ export function tipFor(outcome: Outcome, price: number): number {
 }
 
 /** Coin changes hands: into the purse, onto the day's tally, and a little "+6d" over the guest. */
-export function takeCoin(g: Game, p: Patron, paid: number, tip: number): void {
+export function takeCoin(g: Game, p: Patron, paid: number, tip: number, delight = false): void {
   if (paid <= 0 && tip <= 0) return;
   g.purse += paid + tip;
   g.stats.taken = (g.stats.taken ?? 0) + paid;
   g.stats.tips = (g.stats.tips ?? 0) + tip;
   g.coinPops.push({ x: p.pos.x, y: p.pos.y, paid, tip, at: performance.now() });
+  g.bus.emit({ type: "CoinPaid", patronId: p.id, paid, tip, delight });
 }
 
 /** Spend from the purse (equipment, upkeep, supplies: later tasks). False if there isn't enough. */

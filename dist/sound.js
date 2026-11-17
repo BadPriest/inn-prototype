@@ -63,6 +63,28 @@ function nextReaction() {
     const breath = T.outcomeBreathMs + (Math.random() * 2 - 1) * T.outcomeBreathJitterMs;
     setTimeout(nextReaction, ringsOut(v) * 1000 + breath);
 }
+// A guest paying us. A Delight has its own sound, a tip its own; otherwise the biggest coin in it decides:
+// a few pennies, a handful (the purse), silver, or crowns. A table paying at once clinks one after another.
+function coinSound(paid, tip, delight) {
+    if (tip && delight)
+        return "coinsDelight";
+    if (tip)
+        return "coinsTip";
+    if (paid >= 100)
+        return "coinsCrowns";
+    if (paid >= 10)
+        return "coinsSilver";
+    return paid <= 3 ? "coinsPennies" : "coinsPayment";
+}
+let nextCoinAt = 0;
+function coin(paid, tip, delight) {
+    const now = performance.now();
+    const at = Math.max(now + T.coinDelayMs, nextCoinAt);
+    nextCoinAt = at + T.coinGapMs;
+    const key = coinSound(paid, tip, delight);
+    setTimeout(() => { if (ready())
+        play(key, null); }, at - now);
+}
 // Paper: ticking the checklist, the bill of fare, a new journal note. Two at once sound as one.
 let lastPaper = 0;
 function paper() {
@@ -128,6 +150,9 @@ export function initSound(g) {
             }
             case "Paper":
                 paper();
+                break;
+            case "CoinPaid":
+                coin(e.paid, e.tip, e.delight);
                 break;
             case "DayStarted":
                 wakeUp();

@@ -14,6 +14,7 @@ From build 92 on, every build that changes the game gets an entry here, with the
 - **Unasked serves are on the house:** no charge, but a Delight or Pleased still tips.
 - **Prices** come from the dish and what's in it: ale 4d, tea and coffee 3d, a serving of stew 6d, fried fish 7d, a fry-up 8d, a roast 9d (placeholders). Dearer ingredients (beef, bacon, cheese, lamb…) add a penny or two; a garnish adds a penny. They never inflate. The bill of fare shows each price.
 - **House prices** on the desk: Cheap (a quarter off; a few more come in), Fair, or Dear (about a third more; a few fewer come in). Pick the card to switch.
+- **Coin sounds** when a guest pays, a moment after their reaction. A Delight that tips has its own sound, and so does a tip. Otherwise it goes by the biggest coin: a few pennies, a handful from the purse, silver, crowns. A table paying at once clinks one after another.
 - The end-of-day screen opens with takings, tips and what's in the purse.
 - Debug: +1 / −1 crown.
 

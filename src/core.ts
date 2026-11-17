@@ -46,6 +46,7 @@ export type GameEvent =
   | { type: "ItemPickedUp"; itemId: number }
   | { type: "ItemGarnished"; itemId: number }
   | { type: "ServeOutcome"; patronId: number; outcome: Outcome; score: number }
+  | { type: "CoinPaid"; patronId: number; paid: number; tip: number; delight: boolean } // a guest pays us (pennies)
   | { type: "InnOpened" }
   | { type: "LastCall" }
   | { type: "InnClosed" }

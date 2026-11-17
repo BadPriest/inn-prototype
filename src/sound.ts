@@ -61,6 +61,24 @@ function nextReaction(): void {
   setTimeout(nextReaction, ringsOut(v) * 1000 + breath);
 }
 
+// A guest paying us. A Delight has its own sound, a tip its own; otherwise the biggest coin in it decides:
+// a few pennies, a handful (the purse), silver, or crowns. A table paying at once clinks one after another.
+function coinSound(paid: number, tip: number, delight: boolean): string {
+  if (tip && delight) return "coinsDelight";
+  if (tip) return "coinsTip";
+  if (paid >= 100) return "coinsCrowns";
+  if (paid >= 10) return "coinsSilver";
+  return paid <= 3 ? "coinsPennies" : "coinsPayment";
+}
+let nextCoinAt = 0;
+function coin(paid: number, tip: number, delight: boolean): void {
+  const now = performance.now();
+  const at = Math.max(now + T.coinDelayMs, nextCoinAt);
+  nextCoinAt = at + T.coinGapMs;
+  const key = coinSound(paid, tip, delight);
+  setTimeout(() => { if (ready()) play(key, null); }, at - now);
+}
+
 // Paper: ticking the checklist, the bill of fare, a new journal note. Two at once sound as one.
 let lastPaper = 0;
 function paper(): void {
@@ -116,6 +134,7 @@ export function initSound(g: Game): void {
       }
       case "ServeOutcome": { const s = OUTCOME_SOUND[e.outcome]; if (s) reaction(s); break; }
       case "Paper": paper(); break;
+      case "CoinPaid": coin(e.paid, e.tip, e.delight); break;
       case "DayStarted": wakeUp(); break;
       case "Thunder": thunder(e.near); break;
       case "Confirmed": if (T.confirmSound) play("confirm", null); break;

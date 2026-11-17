@@ -942,6 +942,13 @@ export const SOUNDS: Record<string, SoundDef> = {
   serveNeutral: { bus: "cue", files: [SND + "serving-outcome-neutral-1-chord.opus", SND + "serving-outcome-neutral-2-chord.opus"], volume: 0.45, pitch: 0.01, trim: true },
   serveNegative: { bus: "cue", files: [SND + "serving-outcome-negative-1-chord.opus", SND + "serving-outcome-negative-2-chord.opus"], volume: 0.45, pitch: 0.01, trim: true },
   delight: { bus: "cue", files: [SND + "delight-1.opus", SND + "delight-2.opus"], volume: 0.6, pitch: 0.01, trim: true },
+  // A guest paying us (assets/sounds/sfx). Which one: by how it went, then by the biggest coin (COIN_SOUND).
+  coinsPennies: { bus: "cue", files: [SND + "sfx/sfx-coins-pennies.opus"], volume: 0.5, pitch: 0.06, trim: true },
+  coinsPayment: { bus: "cue", files: [SND + "sfx/sfx-coins-payment.opus", SND + "sfx/sfx-coins-payment-coin-purse.opus"], volume: 0.5, pitch: 0.05, trim: true },
+  coinsSilver: { bus: "cue", files: [SND + "sfx/sfx-coins-silver.opus"], volume: 0.5, pitch: 0.05, trim: true },
+  coinsCrowns: { bus: "cue", files: [SND + "sfx/sfx-coins-crowns-1.opus", SND + "sfx/sfx-coins-crowns-2.opus"], volume: 0.55, pitch: 0.04, trim: true },
+  coinsTip: { bus: "cue", files: [SND + "sfx/sfx-coins-payment-tip.opus"], volume: 0.55, pitch: 0.04, trim: true },
+  coinsDelight: { bus: "cue", files: [SND + "sfx/sfx-coins-payment-delight.opus"], volume: 0.6, pitch: 0.03, trim: true },
   // The fire, heard from the fireplace. Which plays when: FIRE below.
   fireSmall: { files: [SND + "fireplace-small-loop.opus"], volume: 0.21, pitch: 0.03, loop: true },
   fireMedium: { files: [SND + "fireplace-med-loop.opus"], volume: 0.3, pitch: 0.03, loop: true },
@@ -1026,6 +1033,8 @@ export const SOUND_TUNING = {
   patronStride: 1.1,
   patronStepsAtOnce: 3, // at most this many guest footsteps sounding together
   // Cues
+  coinDelayMs: 450, // a guest pays a moment after the reaction, not on top of it
+  coinGapMs: 220, // a table paying at once: one clink after another, not a pile
   outcomeBreathMs: 300, // serving a whole table: each reaction rings out, then this pause, then the next
   outcomeBreathJitterMs: 70, // ...give or take, so it feels played rather than sequenced
   paperGapMs: 300, // two paper ticks closer than this sound as one
