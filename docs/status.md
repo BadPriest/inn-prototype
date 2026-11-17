@@ -87,17 +87,14 @@ In build order. Each waits on the one it builds on.
 
 ### Design sessions (an agenda)
 
-**#46 Economy and suppliers** (next, per the Nov 15 journal; before progression)
-- Starting money; prices that challenge, never gouge.
-- How many bundles, and what's in them (kitchen-only up to kitchen and taproom).
-- Reseller start: ready-made goods are mediocre and get tiresome, which pushes you to make your own.
-- Suppliers as a network of small businesses, and as patrons; delivery dates.
-- Cut the draft equipment table: which column the small start takes per row, what sits behind a permit.
-- Bought or inherited.
-- Unblocks #41 (day two delivery), the pantry side of #39, #44 (permit fees).
+**#46 Economy and suppliers**: held Nov 17 ([journal](design-session-journal_economy_nov-17.md)), filed as #58–#69 (see "Next" above). Open from it:
+- How progression is gated ("earn the chance, then buy it" isn't agreed; alternatives to come).
+- Leftovers and reuse (its own session); room feel and reputation (its own spec); how Perks are structured.
+- When exactly the tinker first visits; drink brands per category; fuel, light and sundries costs by weather and season.
+- Still open from Nov 15: how many starter bundles and what's in them; which column of the equipment table the small start takes; bought or inherited.
 
 **From the Nov 15 game start session** (#36 done in the journal; open questions left)
-- #7 small start: not ready yet (waits on #11, the starter set). #39 bill of fare marks waits on it.
+- #7 small start: built (builds 97, 100), in review. #11 starter set still open (kettle or coffee pot). #39 bill of fare marks: greyed with what's missing since build 97; filters not done.
 - #40 day one prologue: card tutorial at turn-in or on waking, or after a long stretch of plain service?
 - #44 permits and the inspector; #45 reputation and crowds.
 - #47 holds the smaller seeds (keeper eats, pipes, board games, skills found, bathrooms…).
