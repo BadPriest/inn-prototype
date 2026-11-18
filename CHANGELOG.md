@@ -6,6 +6,15 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 106 · Nov 18, 2026 · deployed
+
+### Changed
+- Tip sounds: the **Delight coins** if anything that visit delighted the guest; otherwise by size, **the coin purse** for 3d or more and the **small tip** sound below that.
+
+## Build 105 · Nov 18, 2026 · deployed
+
+No change: meant to bring back the Delight coins for tips, but the edit didn't make it in. Done in 106.
+
 ## Build 104 · Nov 18, 2026 · deployed
 
 ### Changed

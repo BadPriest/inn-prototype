@@ -63,11 +63,13 @@ function nextReaction() {
     const breath = T.outcomeBreathMs + (Math.random() * 2 - 1) * T.outcomeBreathJitterMs;
     setTimeout(nextReaction, ringsOut(v) * 1000 + breath);
 }
-// A guest paying us. A tip (paid on the way out) is the coin purse; an order goes by the biggest coin in
-// it: a few pennies, a handful, silver, or crowns. A table paying at once clinks one after another.
-function coinSound(paid, tip, _delight) {
+// A guest paying us. A tip (paid on the way out) is the Delight coins if anything that visit delighted
+// them, else the coin purse for a bigger one and the small tip sound for a few pennies. An order goes by
+// the biggest coin in it: a few pennies, a handful, silver, or crowns. A table paying at once clinks one
+// after another.
+function coinSound(paid, tip, delight) {
     if (tip)
-        return "coinsTip";
+        return delight ? "coinsDelight" : tip >= T.bigTipPence ? "coinsTip" : "coinsTipSmall";
     if (paid >= 100)
         return "coinsCrowns";
     if (paid >= 10)

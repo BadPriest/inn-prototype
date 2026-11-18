@@ -947,8 +947,11 @@ export const SOUNDS: Record<string, SoundDef> = {
   coinsPayment: { bus: "cue", files: [SND + "sfx/sfx-coins-payment.opus"], volume: 0.5, pitch: 0.05, trim: true },
   coinsSilver: { bus: "cue", files: [SND + "sfx/sfx-coins-silver.opus"], volume: 0.5, pitch: 0.05, trim: true },
   coinsCrowns: { bus: "cue", files: [SND + "sfx/sfx-coins-crowns-1.opus", SND + "sfx/sfx-coins-crowns-2.opus"], volume: 0.55, pitch: 0.04, trim: true },
-  // The tip, paid on the way out: the coin purse. (sfx-coins-payment-tip and -delight are in the folder, unused for now.)
+  // The tip, paid on the way out: the Delight coins if anything that visit delighted them; else the coin
+  // purse for a bigger one (SOUND_TUNING.bigTipPence and up), the small tip sound for a few pennies.
+  coinsDelight: { bus: "cue", files: [SND + "sfx/sfx-coins-payment-delight.opus"], volume: 0.6, pitch: 0.03, trim: true },
   coinsTip: { bus: "cue", files: [SND + "sfx/sfx-coins-payment-coin-purse.opus"], volume: 0.55, pitch: 0.04, trim: true },
+  coinsTipSmall: { bus: "cue", files: [SND + "sfx/sfx-coins-payment-tip.opus"], volume: 0.5, pitch: 0.04, trim: true },
   // The fire, heard from the fireplace. Which plays when: FIRE below.
   fireSmall: { files: [SND + "fireplace-small-loop.opus"], volume: 0.21, pitch: 0.03, loop: true },
   fireMedium: { files: [SND + "fireplace-med-loop.opus"], volume: 0.3, pitch: 0.03, loop: true },
@@ -1033,6 +1036,7 @@ export const SOUND_TUNING = {
   patronStride: 1.1,
   patronStepsAtOnce: 3, // at most this many guest footsteps sounding together
   // Cues
+  bigTipPence: 3, // a tip this big or more (not after a Delight) plays the coin purse; smaller, the small tip sound
   coinDelayMs: 450, // a guest pays a moment after the reaction, not on top of it
   coinGapMs: 220, // a table paying at once: one clink after another, not a pile
   outcomeBreathMs: 300, // serving a whole table: each reaction rings out, then this pause, then the next

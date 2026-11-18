@@ -39,7 +39,7 @@ A second check: **would a playtester notice it on a top-down map of circles?** I
 | Door and bell | Opens and closes with whoever is in the doorway; the bell rings as it swings. Quicker for one person | `sound.ts`, `DOOR_TUNING` |
 | Orders | Two or three taps, heard anywhere, panned toward who ordered | `sound.ts` |
 | Serve outcomes | Delight, positive, neutral, negative chords. A whole table plays one after another, like chords being played | `sound.ts`, `OUTCOME_SOUND` |
-| Coins (build 101) | A guest paying us, a moment after their reaction: an order by its biggest coin (a few pennies, a handful, silver, crowns); the tip, paid on the way out, is the coin purse. A table pays one clink after another | `sound.ts` `coinSound`, `assets/sounds/sfx` |
+| Coins (build 101) | A guest paying us, a moment after their reaction: an order by its biggest coin (a few pennies, a handful, silver, crowns); the tip, paid on the way out, is the Delight coins if anything that visit delighted them, else the coin purse for 3d or more and the small tip sound below that. A table pays one clink after another | `sound.ts` `coinSound`, `assets/sounds/sfx` |
 | Paper and confirm | Checklist ticks, journal notes; a piano note on confirming a decision | `sound.ts` |
 | Pouring | Taps and the tea urn; stops when the pour stops | `sound.ts` |
 | Cooking | Kettle while brewing; stew cooking, then simmering while the pot has servings | `sound/loops.ts` |
