@@ -549,7 +549,7 @@ export function drawCoinPops(ctx: CanvasRenderingContext2D, g: Game, v: View): v
     ctx.lineWidth = Math.max(3, size * 0.22); ctx.strokeStyle = "rgba(20,14,6,0.9)";
     ctx.fillStyle = "#fff4d6";
     if (c.paid) x += drawMoney(ctx, x, y, c.paid, size, "+") + size * 0.2;
-    if (c.tip) { ctx.fillStyle = "#fff1a8"; drawMoney(ctx, x, y, c.tip, size, c.paid ? "tip " : "+tip "); }
+    if (c.tip) { ctx.fillStyle = "#fff1a8"; drawMoney(ctx, x, y, c.tip, c.paid ? size : Math.round(size * 1.2), c.paid ? "tip " : "tip +"); }
   }
   ctx.restore();
 }

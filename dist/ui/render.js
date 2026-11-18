@@ -634,7 +634,7 @@ export function drawCoinPops(ctx, g, v) {
             x += drawMoney(ctx, x, y, c.paid, size, "+") + size * 0.2;
         if (c.tip) {
             ctx.fillStyle = "#fff1a8";
-            drawMoney(ctx, x, y, c.tip, size, c.paid ? "tip " : "+tip ");
+            drawMoney(ctx, x, y, c.tip, c.paid ? size : Math.round(size * 1.2), c.paid ? "tip " : "tip +");
         }
     }
     ctx.restore();

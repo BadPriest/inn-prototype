@@ -78,15 +78,39 @@ export function tipFor(outcome, price) {
         return Math.max(1, Math.round(price * 0.15));
     return 0;
 }
-/** Coin changes hands: into the purse, onto the day's tally, and a little "+6d" over the guest. */
+/**
+ * A guest pays for what they ordered, now. A tip isn't handed over yet: it builds up over the visit and
+ * is paid in one go when they get up to leave (payTips), so a good visit ends on a bigger moment.
+ */
 export function takeCoin(g, p, paid, tip, delight = false) {
-    if (paid <= 0 && tip <= 0)
+    if (tip > 0) {
+        p.tipOwed = (p.tipOwed ?? 0) + tip;
+        if (delight)
+            p.tipDelight = true;
+    }
+    if (paid <= 0)
         return;
-    g.purse += paid + tip;
+    g.purse += paid;
     g.stats.taken = (g.stats.taken ?? 0) + paid;
+    g.coinPops.push({ x: p.pos.x, y: p.pos.y, paid, tip: 0, at: performance.now() });
+    g.bus.emit({ type: "CoinPaid", patronId: p.id, paid, tip: 0, delight: false });
+}
+/** Leaving: everything they meant to tip this visit, all at once. Quietly at closing time (shown = false). */
+export function payTips(g, p, shown = true) {
+    const tip = p.tipOwed ?? 0;
+    if (tip <= 0)
+        return;
+    g.purse += tip;
     g.stats.tips = (g.stats.tips ?? 0) + tip;
-    g.coinPops.push({ x: p.pos.x, y: p.pos.y, paid, tip, at: performance.now() });
-    g.bus.emit({ type: "CoinPaid", patronId: p.id, paid, tip, delight });
+    p.tipOwed = 0;
+    if (!shown)
+        return;
+    g.coinPops.push({ x: p.pos.x, y: p.pos.y, paid: 0, tip, at: performance.now() });
+    g.bus.emit({ type: "CoinPaid", patronId: p.id, paid: 0, tip, delight: !!p.tipDelight });
+}
+/** Walking out on an order: the tip they'd built up goes with them. */
+export function forfeitTips(p) {
+    p.tipOwed = 0;
 }
 /** Spend from the purse (equipment, upkeep, supplies: later tasks). False if there isn't enough. */
 export function spend(g, pence) {

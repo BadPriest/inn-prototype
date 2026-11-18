@@ -98,6 +98,9 @@ export interface Patron {
   nextChatAt?: number;
   consuming?: { icon: string; kind: ItemKind; from: number; tags?: string[] }; // what's in front of them
   marker?: { text: Outcome | string; until: number };
+  /** Tips earned this visit, paid all at once when they get up to leave (pennies); whether any came from a Delight. */
+  tipOwed?: number;
+  tipDelight?: boolean;
   /** What they're saying: shown until `until`; cut short at `minUntil` if someone at the table is waiting to talk. */
   line?: { text: string; until: number; minUntil?: number };
   /** Lines waiting their turn: one voice per table at a time (see Game.speak). */

@@ -6,7 +6,13 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
-## Build 102 · Nov 18, 2026 · not deployed
+## Build 103 · Nov 18, 2026 · deployed
+
+### Changed
+- **Tips are paid when a guest leaves**, all at once, not with each serve. Everything they meant to tip over the visit builds up, so a good visit ends on one bigger moment (and the tip sound, or the Delight one if any serve delighted them). Walking out on an order, they keep it. At closing time everyone still in settles up.
+- Orders are still paid for at the table, when they're served.
+
+## Build 102 · Nov 18, 2026 · deployed
 
 ### Changed
 - **Equipment and goods cost coin.** Each card in the shop shows its price in coins, and greys out with how much you're short when you can't afford it. Prices (placeholders, tuned to the pacing targets): tea kettle 5s, coffee pot 8s, ale or cider barrel 6s, copper kettle 15s, pie safe 1 crown, prep table 1 cr 5s, tea urn 2 cr, wood stove 3 cr, two-hob stove 6 cr, range stove 12 cr, bread oven 15 cr; wider trays 1 cr, seasoned oak 5s.
@@ -16,7 +22,7 @@ From build 92 on, every build that changes the game gets an entry here, with the
 - What you start with is yours already, as before. No secondhand pieces yet: they come with the tinker.
 - Debug: "Carter now" delivers today's orders straight away.
 
-## Build 101 · Nov 18, 2026 · not deployed
+## Build 101 · Nov 18, 2026 · deployed
 
 ### Added
 - **Coin.** A purse in crowns, shillings and pence (10d = 1s, 10s = 1 crown), shown on the status card. Money is drawn as small turned coins in their metal (gold crown, silver shilling, copper penny), each with its count: on the status card, the bill of fare, the desk, the end-of-day screen and the pops over guests. A new keeper starts with 2 crowns; older saves get the same.
@@ -28,7 +34,7 @@ From build 92 on, every build that changes the game gets an entry here, with the
 - The end-of-day screen opens with takings, tips and what's in the purse.
 - Debug: +1 / −1 crown.
 
-## Build 100 · Nov 18, 2026 · not deployed
+## Build 100 · Nov 18, 2026 · deployed
 
 ### Changed
 - **The small tavern is the first choice** when a new game asks which inn is yours, and it's picked unless you choose otherwise. It's tagged "easiest start"; the big tavern is tagged "harder". Saves from before there was a choice stay in the big tavern.

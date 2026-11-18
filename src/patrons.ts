@@ -8,7 +8,7 @@ import { appeal, prepareVisit, tagScore } from "./tastes.js";
 import { arrivalNeeds, closeAllStretches } from "./needs.js";
 import { cameIn, weatherTags } from "./weather.js";
 import { marketDay } from "./newspaper.js";
-import { priceLevel } from "./money.js";
+import { forfeitTips, payTips, priceLevel } from "./money.js";
 import { dist, type Seat, type Table, type Vec } from "./world.js";
 
 
@@ -485,6 +485,9 @@ export function startLeaving(g: Game, p: Patron, early = false): void {
     o.open = false;
     g.stats.leftUnserved++;
   }
+  // Tips are paid on the way out; walking out on an order, they keep them.
+  if (early) forfeitTips(p);
+  else payTips(g, p);
   if (early) {
     p.leftEarly = true;
     g.stats.leftEarly++;
@@ -911,6 +914,7 @@ export function callLastOrders(g: Game): void {
 
 export function clearPatrons(g: Game): void {
   for (const p of g.patrons) {
+    if (p.state !== "leaving") payTips(g, p, false); // closing time: everyone still in settles up
     const o = g.order(p.orderId);
     if (o?.open) g.stats.leftUnserved++;
   }
