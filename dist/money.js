@@ -108,9 +108,9 @@ export function payTips(g, p, shown = true) {
     g.coinPops.push({ x: p.pos.x, y: p.pos.y, paid: 0, tip, at: performance.now() });
     g.bus.emit({ type: "CoinPaid", patronId: p.id, paid: 0, tip, delight: !!p.tipDelight });
 }
-/** Walking out on an order: the tip they'd built up goes with them. */
-export function forfeitTips(p) {
-    p.tipOwed = 0;
+/** Walking out on an order: they still leave half the tip they'd built up (well served all evening, one thing went wrong). */
+export function halveTips(p) {
+    p.tipOwed = Math.floor((p.tipOwed ?? 0) / 2);
 }
 /** Spend from the purse (equipment, upkeep, supplies: later tasks). False if there isn't enough. */
 export function spend(g, pence) {

@@ -112,9 +112,9 @@ export function payTips(g: Game, p: Patron, shown = true): void {
   g.bus.emit({ type: "CoinPaid", patronId: p.id, paid: 0, tip, delight: !!p.tipDelight });
 }
 
-/** Walking out on an order: the tip they'd built up goes with them. */
-export function forfeitTips(p: Patron): void {
-  p.tipOwed = 0;
+/** Walking out on an order: they still leave half the tip they'd built up (well served all evening, one thing went wrong). */
+export function halveTips(p: Patron): void {
+  p.tipOwed = Math.floor((p.tipOwed ?? 0) / 2);
 }
 
 /** Spend from the purse (equipment, upkeep, supplies: later tasks). False if there isn't enough. */

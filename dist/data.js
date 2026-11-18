@@ -676,11 +676,11 @@ export const SOUNDS = {
     delight: { bus: "cue", files: [SND + "delight-1.opus", SND + "delight-2.opus"], volume: 0.6, pitch: 0.01, trim: true },
     // A guest paying us (assets/sounds/sfx). Which one: by how it went, then by the biggest coin (COIN_SOUND).
     coinsPennies: { bus: "cue", files: [SND + "sfx/sfx-coins-pennies.opus"], volume: 0.5, pitch: 0.06, trim: true },
-    coinsPayment: { bus: "cue", files: [SND + "sfx/sfx-coins-payment.opus", SND + "sfx/sfx-coins-payment-coin-purse.opus"], volume: 0.5, pitch: 0.05, trim: true },
+    coinsPayment: { bus: "cue", files: [SND + "sfx/sfx-coins-payment.opus"], volume: 0.5, pitch: 0.05, trim: true },
     coinsSilver: { bus: "cue", files: [SND + "sfx/sfx-coins-silver.opus"], volume: 0.5, pitch: 0.05, trim: true },
     coinsCrowns: { bus: "cue", files: [SND + "sfx/sfx-coins-crowns-1.opus", SND + "sfx/sfx-coins-crowns-2.opus"], volume: 0.55, pitch: 0.04, trim: true },
-    coinsTip: { bus: "cue", files: [SND + "sfx/sfx-coins-payment-tip.opus"], volume: 0.55, pitch: 0.04, trim: true },
-    coinsDelight: { bus: "cue", files: [SND + "sfx/sfx-coins-payment-delight.opus"], volume: 0.6, pitch: 0.03, trim: true },
+    // The tip, paid on the way out: the coin purse. (sfx-coins-payment-tip and -delight are in the folder, unused for now.)
+    coinsTip: { bus: "cue", files: [SND + "sfx/sfx-coins-payment-coin-purse.opus"], volume: 0.55, pitch: 0.04, trim: true },
     // The fire, heard from the fireplace. Which plays when: FIRE below.
     fireSmall: { files: [SND + "fireplace-small-loop.opus"], volume: 0.21, pitch: 0.03, loop: true },
     fireMedium: { files: [SND + "fireplace-med-loop.opus"], volume: 0.3, pitch: 0.03, loop: true },

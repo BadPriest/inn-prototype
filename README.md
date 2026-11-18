@@ -55,7 +55,7 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 
 **Coin.**
 - A purse in crowns, shillings and pence (10d = 1s, 10s = 1 crown), on the status card. You start with 2 crowns.
-- Guests always pay for what they ordered, when it's served. Tips follow how it went (a Delight tips well, Pleased a little) and build up over the visit; they're paid all at once when the guest leaves, unless they walk out. Unasked serves are on the house, though a Delight still tips.
+- Guests always pay for what they ordered, when it's served. Tips follow how it went (a Delight tips well, Pleased a little) and build up over the visit; they're paid all at once when the guest leaves (half, if they walk out on an order). Unasked serves are on the house, though a Delight still tips.
 - Prices come from the dish and its ingredients and never inflate. One house-wide knob at the desk: Cheap, Fair or Dear, which also nudges how many come in.
 - Equipment and goods cost coin. Upkeep and supplies are next.
 

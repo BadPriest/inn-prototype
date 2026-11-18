@@ -6,6 +6,12 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 104 · Nov 18, 2026 · deployed
+
+### Changed
+- The tip, paid on the way out, plays the **coin purse** sound (not the Delight one). Orders keep their coin sounds by size; the coin purse is no longer one of them.
+- **Walking out** on an order, a guest still leaves **half** the tip they'd built up: they may have been well served all evening.
+
 ## Build 103 · Nov 18, 2026 · deployed
 
 ### Changed
