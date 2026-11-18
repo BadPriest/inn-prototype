@@ -7,6 +7,7 @@ import { startArranging } from "./arrange.js";
 import { grid, gridKeys, type CardSpec } from "./cards.js";
 import { openNewspaper } from "./newspaper.js";
 import { openCalendar } from "./calendar.js";
+import { canFetch, fetchThing, FETCH_MINUTES, onOrderCount, orderThing, priceOfThing, toPlaceCount } from "../shop.js";
 import { fmtMoney, moneyHtml, priceLevel, priceOfRecipe, PRICE_LEVELS } from "../money.js";
 
 export function openDeskScreen(g: Game, openJournal: () => void): void {
@@ -18,8 +19,9 @@ export function openDeskScreen(g: Game, openJournal: () => void): void {
       { pick: "prices", icon: "🪙", name: "House prices", note: `${priceLevel(g).name}<br>${priceLevel(g).blurb}` },
       { pick: "calendar", icon: "📅", name: "Calendar", note: `${g.date.seasonName} ${g.date.dayOfSeason}<br>the season ahead` },
       { pick: "paper", icon: "📰", name: "Newspaper", note: g.paper?.read ? "read" : "today's, unread", on: !!g.paper && !g.paper.read },
-      { pick: "shop", icon: "🛒", name: "Equipment", note: "stoves, ovens, kettles<br>to buy" },
-      { pick: "arrange", icon: "🛠", name: "Arrange the kitchen", note: "move your stoves,<br>kettles and pots" },
+      { pick: "shop", icon: "🛒", name: "Equipment", note: g.onOrder.length ? `${g.onOrder.length} on order<br>for tomorrow morning` : "stoves, ovens, kettles<br>to buy" },
+      { pick: "arrange", icon: "🛠", name: "Arrange the kitchen", warn: g.toPlace.length > 0,
+        note: g.toPlace.length ? `📦 ${g.toPlace.length} delivered,<br>waiting to be placed` : "move your stoves,<br>kettles and pots" },
       { pick: "journal", icon: "📖", name: "Journal", note: g.journalUnread ? `${g.journalUnread} new` : "the people you've met", on: g.journalUnread > 0 },
     ].map((c, i) => ({ ...c, focus: i === st.focus })) as CardSpec[];
     const go = (v: string) => {
@@ -228,24 +230,37 @@ export function openShop(g: Game): void {
     ...EQUIPMENT.map((e) => ({ id: e.id, icon: e.icon, name: e.name, blurb: e.blurb, goods: false, group: e.group as EquipGroup | "goods", fuel: e.fuel })),
     ...GOODS.map((x) => ({ id: x.id, icon: x.icon, name: x.name, blurb: x.blurb, goods: true, group: "goods" as const, fuel: x.fuel })),
   ];
-  const ownedOf = (it: (typeof all)[0]) => (it.goods ? (g.upgrades.has(it.id) ? 1 : 0) : g.layout.filter((p) => p.type === it.id).length);
+  const ownedOf = (it: (typeof all)[0]) => (it.goods ? (g.upgrades.has(it.id) ? 1 : 0) : g.layout.filter((p) => p.type === it.id).length + toPlaceCount(g, it.id));
   const build = (): MenuSpec => {
     // What you have comes first, so you can see your kitchen at a glance.
     const items = all.filter((it) => it.group === shopTab).sort((a, b) => Number(ownedOf(b) > 0) - Number(ownedOf(a) > 0));
     const buy = (i: number) => {
       const it = items[i];
       if (!it) return;
-      if (it.goods) {
-        if (g.upgrades.has(it.id)) return;
-        g.upgrades.add(it.id);
-        confirmed();
-        g.say(`${it.icon} ${it.name}: delivered.`);
-        st.focus = i;
-        replaceMenu(build());
-        return;
-      }
-      closeAll();
-      startArranging(g, it.id); // straight to placing it
+      st.focus = i;
+      if (it.goods && (g.upgrades.has(it.id) || onOrderCount(g, it.id))) return; // one of each
+      const price = priceOfThing(it.id);
+      if (g.purse < price) { g.say(`The ${it.name.toLowerCase()} costs ${fmtMoney(price)}; you have ${fmtMoney(g.purse)}.`); return; }
+      // Ordered: the carter brings it tomorrow. Or fetch it yourself now, if there's nobody to look after.
+      const away = `${Math.floor(FETCH_MINUTES / 60)}${FETCH_MINUTES % 60 ? "½" : ""} hours`;
+      openMenu({
+        title: `${it.icon} ${it.name}`,
+        subtitle: `${fmtMoney(price)} · you have ${fmtMoney(g.purse)}`,
+        holdsClock: true,
+        items: [
+          { label: "🛻 Order it", sub: "the carter brings it tomorrow morning", confirmSound: true,
+            action: () => { if (orderThing(g, it.id)) { back(); replaceMenu(build()); } } },
+          { label: "🚶 Fetch it yourself, now", sub: canFetch(g) ? `you're out about ${away}${it.goods ? "" : "; place it when you're back"}` : "not while the inn is open or anyone's inside",
+            disabled: !canFetch(g), confirmSound: true,
+            action: () => {
+              if (!fetchThing(g, it.id)) return;
+              if (it.goods) { back(); replaceMenu(build()); return; }
+              closeAll();
+              startArranging(g, it.id); // straight to placing it
+            } },
+          { label: "Not now", button: "secondary", action: () => back() },
+        ],
+      });
     };
     const switchTab = (by: number) => {
       const i = EQUIP_GROUPS.findIndex((t) => t.id === shopTab);
@@ -256,10 +271,18 @@ export function openShop(g: Game): void {
     const cards: CardSpec[] = items.map((it, i) => {
       const owned = ownedOf(it);
       const fuel = it.fuel ? FUELS[it.fuel] : null;
+      const price = priceOfThing(it.id);
+      const coming = onOrderCount(g, it.id);
+      const short = price - g.purse;
+      const have = it.goods && (owned > 0 || coming > 0);
+      const status = it.goods
+        ? owned ? "yours" : coming ? "🛻 coming tomorrow" : short > 0 ? `short ${moneyHtml(short)}` : "buy"
+        : `${coming ? `🛻 ${coming} coming tomorrow · ` : ""}${short > 0 ? `short ${moneyHtml(short)}` : owned ? "buy another" : "buy"}`;
       return {
-        pick: String(i), icon: it.icon, name: it.name, focus: i === st.focus, owned: it.goods ? 0 : owned, on: it.goods && owned > 0,
+        pick: String(i), icon: it.icon, name: it.name, focus: i === st.focus, owned: it.goods ? 0 : owned, on: !!have,
+        off: !have && short > 0,
         tags: fuel ? [`${fuel.icon} ${fuel.name}`] : undefined,
-        note: `${it.goods ? (owned ? "yours" : "buy") : owned ? "buy another" : "buy and place"}<br><span class="muted">${it.blurb}</span>`,
+        note: `${moneyHtml(price)}<br>${status}<br><span class="muted">${it.blurb}</span>`,
       };
     });
     const tabs = `<div class="bf-tabs">${EQUIP_GROUPS.map((t) => {
@@ -268,10 +291,10 @@ export function openShop(g: Game): void {
     }).join("")}</div>`;
     return {
       title: "🛒 Equipment",
-      subtitle: "Money's no object, for now",
+      subtitle: `In the purse: ${fmtMoney(g.purse)}`,
       holdsClock: true,
       view: {
-        html: `${tabs}<p class="explain"><b>Pick something to buy.</b> It goes straight to the kitchen for you to place; you can move things any time (desk → Arrange the kitchen). While you arrange, <b>B</b> brings you back here. <b>Tab</b> switches lists.</p>${grid(cards)}`,
+        html: `${tabs}<p class="explain"><b>Pick something to buy.</b> In the purse: ${moneyHtml(g.purse)}. Order it and the carter brings it tomorrow morning, or fetch it yourself now while the inn's shut. Then place it (desk → Arrange the kitchen); you can move things any time, and sell them back for half. <b>Tab</b> switches lists.</p>${grid(cards)}`,
         onPick: (v) => {
           if (v.startsWith("tab:")) { shopTab = v.slice(4) as typeof shopTab; st.focus = 0; replaceMenu(build()); return; }
           buy(Number(v));

@@ -57,10 +57,10 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 - A purse in crowns, shillings and pence (10d = 1s, 10s = 1 crown), on the status card. You start with 2 crowns.
 - Guests always pay for what they ordered; tips follow how it went (a Delight tips well, Pleased a little). Unasked serves are on the house, though a Delight still tips.
 - Prices come from the dish and its ingredients and never inflate. One house-wide knob at the desk: Cheap, Fair or Dear, which also nudges how many come in.
-- Nothing costs coin yet: equipment, upkeep and supplies are next.
+- Equipment and goods cost coin. Upkeep and supplies are next.
 
 **The kitchen.**
-- Equipment to buy at the desk: wood stoves with one or two hobs, a range stove (hob and oven), a bread oven that bakes two at once, a prep table, kettles, a copper kettle, an urn, coffee pots, ale and cider barrels, pie safes, wider trays, seasoned firewood.
+- Equipment to buy at the desk, for coin: order it and the carter brings it the next morning, or fetch it yourself while the inn's shut (you're out about an hour and a half). Delivered pieces wait to be placed; anything sells back for half. On offer: wood stoves with one or two hobs, a range stove (hob and oven), a bread oven that bakes two at once, a prep table, kettles, a copper kettle, an urn, coffee pots, ale and cider barrels, pie safes, wider trays, seasoned firewood.
 - Arrange the kitchen any time. The clock stops, and what's cooking moves with the piece.
 - Hobs take a pot or a pan. Tended dishes (fish, eggs, toast, a fry-up) need you at the stove, and go straight onto your tray when they're done if there's room. Put back what you picked up by mistake: a serving into any pot of the same dish made the same way, if it has room; a dish onto the shelf it came from. Empty a pot you don't need.
 

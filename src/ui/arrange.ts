@@ -1,5 +1,5 @@
 // Arranging the kitchen: pick up a stove, an oven, a kettle… and put it somewhere else, or place one
-// you've just bought. The clock stops while you do. What's cooking on it moves with it (its slots keep
+// the carter brought (g.toPlace). Delete sells the piece in hand back for half its price. The clock stops while you do. What's cooking on it moves with it (its slots keep
 // their ids). A spot is allowed when it's kitchen floor, behind the bar or a nook in the counter wall,
 // nothing else stands there, and the keeper can still reach everything.
 
@@ -10,17 +10,19 @@ import type { View } from "./render.js";
 import { P, floorPath } from "./proj.js";
 import { openShop } from "./desk.js";
 import { padActive } from "../gamepad.js";
+import { fmtMoney, moneyHtml } from "../money.js";
+import { sellBack, sellBackPrice } from "../shop.js";
 
 let grab: Vec = { x: 0, y: 0 }; // where on the piece it was picked up
-let lastBought: string | null = null; // what you just bought and placed: "another" buys one more
 const verdicts = new Map<string, boolean>();
 
 const newUid = () => `eq-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 const eqOf = (type: string) => EQUIPMENT.find((e) => e.id === type)!;
 
-export function startArranging(g: Game, buyType?: string): void {
-  if (!g.arranging) lastBought = null;
-  g.arranging = buyType ? { holding: { uid: newUid(), type: buyType, isNew: true } } : {};
+/** Start arranging. With something the carter brought waiting, it's in your hand to place first. */
+export function startArranging(g: Game, deliveredType?: string): void {
+  const type = deliveredType ?? (g.arranging?.holding ? undefined : g.toPlace[0]);
+  g.arranging = type ? { holding: { uid: newUid(), type, isNew: true } } : {};
   grab = { x: 0, y: 0 };
   g.keeper.path = [];
   g.keeper.pendingInteract = null;
@@ -29,9 +31,8 @@ export function startArranging(g: Game, buyType?: string): void {
 }
 
 export function stopArranging(g: Game): void {
-  if (g.arranging?.holding?.isNew) g.say(`You send the ${eqOf(g.arranging.holding.type).name.toLowerCase()} back.`);
+  if (g.arranging?.holding?.isNew) g.say(`The ${eqOf(g.arranging.holding.type).name.toLowerCase()} waits by the door to be placed.`);
   g.arranging = null;
-  lastBought = null;
   document.getElementById("arrange-bar")?.remove();
 }
 
@@ -77,7 +78,12 @@ export function arrangeClick(g: Game, p: Vec): void {
   if (placed && placed.x === at.x && placed.y === at.y) { a.holding = undefined; bar(g); return; } // put back where it was
   if (!allowed(g, h.type, at, h.isNew ? null : h.uid)) { g.say("It won't go there: it needs kitchen floor, and room to get at everything."); return; }
   const name = eqOf(h.type).name.toLowerCase();
-  if (h.isNew) { g.layout.push({ uid: h.uid, type: h.type, x: at.x, y: at.y }); g.say(`The ${name} is in.`); lastBought = h.type; }
+  if (h.isNew) {
+    g.layout.push({ uid: h.uid, type: h.type, x: at.x, y: at.y });
+    const i = g.toPlace.indexOf(h.type);
+    if (i >= 0) g.toPlace.splice(i, 1);
+    g.say(`The ${name} is in.`);
+  }
   else if (placed) { placed.x = at.x; placed.y = at.y; g.say(`You move the ${name}.`); }
   a.holding = undefined;
   grab = { x: 0, y: 0 };
@@ -92,7 +98,7 @@ export function arrangeCancel(g: Game): void {
   const a = g.arranging;
   if (!a) return;
   if (a.holding) {
-    if (a.holding.isNew) g.say(`You send the ${eqOf(a.holding.type).name.toLowerCase()} back.`);
+    if (a.holding.isNew) g.say(`The ${eqOf(a.holding.type).name.toLowerCase()} waits by the door to be placed.`);
     a.holding = undefined;
     grab = { x: 0, y: 0 };
     bar(g);
@@ -101,17 +107,27 @@ export function arrangeCancel(g: Game): void {
   stopArranging(g);
 }
 
-/** Delete: get rid of the piece you're holding, if nothing's cooking on it. */
+/** Delete: sell the piece you're holding back for half its price, if nothing's cooking on it. */
 export function arrangeRemove(g: Game): void {
   const h = g.arranging?.holding;
   if (!h) return;
-  if (h.isNew) { arrangeCancel(g); return; }
+  if (h.isNew) {
+    // Delivered and never placed: it goes back on the carter's cart, for half.
+    const i = g.toPlace.indexOf(h.type);
+    if (i >= 0) g.toPlace.splice(i, 1);
+    const got = sellBack(g, h.type);
+    g.say(`You sell the ${eqOf(h.type).name.toLowerCase()} back for ${fmtMoney(got)}.`);
+    g.arranging!.holding = undefined;
+    bar(g);
+    return;
+  }
   const f = g.world.furniture.find((x) => x.id === h.uid);
   const busy = (f?.slots ?? []).some((sl) => g.jobs.has(sl.id) || g.pots.has(sl.id) || g.shelves.get(sl.id)?.length);
   if (busy) { g.say("Something's still on it. Finish with that first."); return; }
   if (h.type === "piesafe" && g.pieSafe.length > g.pieSafeCapacity - TUNING.pieSafeCapacity) { g.say("There are pies in it with nowhere else to go."); return; }
   g.layout = g.layout.filter((x) => x.uid !== h.uid);
-  g.say(`The ${eqOf(h.type).name.toLowerCase()} goes out to the shed.`);
+  const got = sellBack(g, h.type);
+  g.say(`You sell the ${eqOf(h.type).name.toLowerCase()} for ${fmtMoney(got)}.`);
   g.arranging!.holding = undefined;
   verdicts.clear();
   g.rebuildWorld();
@@ -124,10 +140,11 @@ export function arrangeBuy(g: Game): void {
   openShop(g);
 }
 
-/** Another of what you just placed (A). */
+/** The next thing the carter brought (A). */
 export function arrangeAnother(g: Game): void {
-  if (lastBought && !g.arranging?.holding) startArranging(g, lastBought);
+  if (g.toPlace.length && !g.arranging?.holding) startArranging(g, g.toPlace[0]);
 }
+
 
 /** The banner along the bottom: what to do now, buying more, and Done. */
 function bar(g: Game): void {
@@ -141,10 +158,11 @@ function bar(g: Game): void {
   const what = h ? eqOf(h.type).name.toLowerCase() : "";
   const pad = padActive(); // a controller: name its buttons
   const k = pad ? { esc: "○", del: "L2", buy: "□", another: "△", click: "✕ on" } : { esc: "Esc", del: "Delete", buy: "B", another: "A", click: "click" };
+  const waiting = g.toPlace.length;
   el.innerHTML = `<span>🛠 <b>Arranging the kitchen</b> · the clock's stopped · ${h
-    ? `${k.click === "click" ? "click" : "✕"} where the ${what} should go · ${k.esc} ${h.isNew ? "sends it back" : "puts it back"}${h.isNew ? "" : ` · ${k.del} gets rid of it`}`
-    : `${k.click} a stove, oven, kettle, barrel or pie safe to move it`}</span>${!h && lastBought
-    ? `<button class="ghost" data-act="another">＋ Another ${eqOf(lastBought).name.toLowerCase()} <small>${k.another}</small></button>` : ""}<button class="ghost" data-act="buy">🛒 Buy <small>${k.buy}</small></button><button data-act="done">Done${pad ? " <small>○</small>" : ""}</button>`;
+    ? `${k.click === "click" ? "click" : "✕"} where the ${what} should go · ${k.esc} ${h.isNew ? "sets it aside for now" : "puts it back"} · ${k.del} sells it for ${moneyHtml(sellBackPrice(h.type))}`
+    : `${k.click} a stove, oven, kettle, barrel or pie safe to move it`}</span>${!h && waiting
+    ? `<button class="ghost" data-act="another">📦 Place what the carter brought (${waiting}) <small>${k.another}</small></button>` : ""}<button class="ghost" data-act="buy">🛒 Buy <small>${k.buy}</small></button><button data-act="done">Done${pad ? " <small>○</small>" : ""}</button>`;
   const act: Record<string, () => void> = { done: () => stopArranging(g), buy: () => arrangeBuy(g), another: () => arrangeAnother(g) };
   el.querySelectorAll<HTMLButtonElement>("button[data-act]").forEach((b) => { b.onclick = () => act[b.dataset.act!](); });
 }

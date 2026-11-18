@@ -514,6 +514,7 @@ function goToSleep(g: Game): void {
         ${row("Takings", moneyHtml(s.taken ?? 0))}
         ${row("Tips", moneyHtml(s.tips ?? 0))}
         ${(s.spent ?? 0) ? row("Spent", moneyHtml(s.spent ?? 0)) : ""}
+        ${(s.sold ?? 0) ? row("Sold back", moneyHtml(s.sold ?? 0)) : ""}
         ${row("In the purse", moneyHtml(g.purse))}
         ${row("Patrons", s.arrivals)}
         ${row("Orders taken", s.orders ?? 0)}

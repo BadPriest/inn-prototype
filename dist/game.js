@@ -50,6 +50,10 @@ export class Game {
     priceLevel = "fair";
     /** "+6d" rising over a guest who's just paid (drawn, then dropped after a moment). */
     coinPops = [];
+    /** Bought, coming with the carter tomorrow morning (equipment and goods ids). */
+    onOrder = [];
+    /** Delivered pieces waiting to be placed in the kitchen (equipment ids). */
+    toPlace = [];
     nextArrivalAt = 0;
     keeper;
     patrons = [];

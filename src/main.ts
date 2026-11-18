@@ -834,7 +834,7 @@ const KEYS: { group: string; rows: [string, string][] }[] = [
   ] },
   { group: "Arranging the kitchen", rows: [
     ["Click", "pick up a piece, then click where it goes"], ["B", "buy something else"], ["A", "another of what you just placed"],
-    ["Delete", "get rid of the piece in hand"], ["Esc", "put it back · finish"],
+    ["Delete", "sell the piece in hand (half its price)"], ["Esc", "put it back · finish"],
   ] },
   { group: "Looking", rows: [
     ["Wheel / pinch / [ ]", "zoom"], ["V", "top-down or isometric"], [", .", "turn the isometric camera"],
@@ -845,7 +845,7 @@ const KEYS: { group: string; rows: [string, string][] }[] = [
     ["D-pad ← →, ↑", "choose a card, play it"], ["D-pad ↓ / hold ↓", "put down (a dish back, or a tray) / empty a pot"], ["Right stick", "zoom ↑↓ · turn the camera ←→"],
     ["In menus", "✕ pick · □ confirm (Cook, Put up…) · ○ back or close"],
     ["L1 / R1 · L2 / R2", "in menus: tabs · the tabs inside them (the meals)"],
-    ["R3 · Options · touchpad", "isometric · pause · this list"], ["Arranging", "stick moves the cursor · ✕ click · □ buy · △ another · L2 get rid of it"],
+    ["R3 · Options · touchpad", "isometric · pause · this list"], ["Arranging", "stick moves the cursor · ✕ click · □ buy · △ next delivered · L2 sell it"],
   ] },
   { group: "The day", rows: [
     ["J", "journal"], ["K", "calendar"], ["O", "objectives"], ["− / =", "slower / faster"],

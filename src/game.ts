@@ -180,6 +180,7 @@ export interface DayStats {
   taken?: number;
   tips?: number;
   spent?: number;
+  sold?: number;
   /** The day's weather, while the keeper was up: minutes of rain, a storm or not, minutes per sky. */
   weather?: { rainMinutes: number; storm: boolean; sky: Record<string, number> };
 }
@@ -258,6 +259,10 @@ export class Game {
   priceLevel: PriceLevel = "fair";
   /** "+6d" rising over a guest who's just paid (drawn, then dropped after a moment). */
   coinPops: { x: number; y: number; paid: number; tip: number; at: number }[] = [];
+  /** Bought, coming with the carter tomorrow morning (equipment and goods ids). */
+  onOrder: string[] = [];
+  /** Delivered pieces waiting to be placed in the kitchen (equipment ids). */
+  toPlace: string[] = [];
   nextArrivalAt = 0;
   keeper: Keeper;
   patrons: Patron[] = [];

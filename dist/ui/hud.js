@@ -10,6 +10,7 @@ import { resetSave } from "../day.js";
 import { iconFor, itemLabel } from "../serving.js";
 import { objectives } from "../objectives.js";
 import { moneyHtml, PENCE_PER_CROWN } from "../money.js";
+import { carterArrives } from "../shop.js";
 const $ = (id) => document.getElementById(id);
 export function updateHud(g, prompt) {
     const status = g.open ? (g.lastCall ? "LAST CALL" : "OPEN") : "CLOSED";
@@ -131,6 +132,10 @@ export function initDebug(g) {
     };
     $("dbg-coin-add").onclick = () => { g.purse += PENCE_PER_CROWN; };
     $("dbg-coin-sub").onclick = () => { g.purse = Math.max(0, g.purse - PENCE_PER_CROWN); };
+    $("dbg-carter").onclick = () => { if (g.onOrder.length)
+        carterArrives(g);
+    else
+        g.say("Nothing on order."); };
     const flow = $("dbg-flow");
     flow.oninput = () => { g.flowMultiplier = Number(flow.value); $("dbg-flow-v").textContent = `×${flow.value}`; };
     $("dbg-skip").onclick = () => {

@@ -6,6 +6,16 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 102 · Nov 18, 2026 · not deployed
+
+### Changed
+- **Equipment and goods cost coin.** Each card in the shop shows its price in coins, and greys out with how much you're short when you can't afford it. Prices (placeholders, tuned to the pacing targets): tea kettle 5s, coffee pot 8s, ale or cider barrel 6s, copper kettle 15s, pie safe 1 crown, prep table 1 cr 5s, tea urn 2 cr, wood stove 3 cr, two-hob stove 6 cr, range stove 12 cr, bread oven 15 cr; wider trays 1 cr, seasoned oak 5s.
+- **Buying asks how:** order it and **the carter brings it tomorrow morning**, or **fetch it yourself now**, which takes about an hour and a half and only while the inn is shut and empty.
+- What the carter brings **waits to be placed**: the desk's Arrange the kitchen card says how many, the morning checklist has a line for it, and arranging starts with the first one in hand ("Place what the carter brought", A or △, for the next). Esc sets it aside for later.
+- **Delete sells** the piece in hand back for half its price (it used to just go to the shed). The end-of-day screen shows what was spent and sold back.
+- What you start with is yours already, as before. No secondhand pieces yet: they come with the tinker.
+- Debug: "Carter now" delivers today's orders straight away.
+
 ## Build 101 · Nov 18, 2026 · not deployed
 
 ### Added

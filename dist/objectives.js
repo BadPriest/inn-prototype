@@ -12,6 +12,8 @@ export function objectives(g) {
         { text: bigText, done: big.every((r) => stockOf(g, r.id) > 0) },
         { text: `Set out snacks on the tables ${SNACKS.map((x) => x.icon).join("")}`, done: [...g.bowls.values()].some((b) => b.left > 0), optional: true },
         { text: "Open the inn at the front door", done: g.open },
+        // Only while something the carter brought is waiting: it drops off the list once it's placed.
+        ...(g.toPlace.length ? [{ text: `Place what the carter brought (${g.toPlace.length}): desk → Arrange the kitchen`, done: false, optional: true }] : []),
     ];
 }
 // Only an item that becomes done while you play is announced: not what's already done when a day starts.

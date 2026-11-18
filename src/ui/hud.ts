@@ -13,6 +13,7 @@ import { resetSave } from "../day.js";
 import { iconFor, itemLabel } from "../serving.js";
 import { objectives } from "../objectives.js";
 import { moneyHtml, PENCE_PER_CROWN } from "../money.js";
+import { carterArrives } from "../shop.js";
 
 const $ = (id: string) => document.getElementById(id)!;
 
@@ -128,6 +129,7 @@ export function initDebug(g: Game): void {
   };
   ($("dbg-coin-add") as HTMLButtonElement).onclick = () => { g.purse += PENCE_PER_CROWN; };
   ($("dbg-coin-sub") as HTMLButtonElement).onclick = () => { g.purse = Math.max(0, g.purse - PENCE_PER_CROWN); };
+  ($("dbg-carter") as HTMLButtonElement).onclick = () => { if (g.onOrder.length) carterArrives(g); else g.say("Nothing on order."); };
   const flow = $("dbg-flow") as HTMLInputElement;
   flow.oninput = () => { g.flowMultiplier = Number(flow.value); $("dbg-flow-v").textContent = `×${flow.value}`; };
   ($("dbg-skip") as HTMLButtonElement).onclick = () => {
