@@ -76,6 +76,7 @@ export class Game {
     dirt = new Map(); // table key "x,y" -> dirt units
     spills = [];
     crates = [];
+    coat = "linen"; // the keeper's coat, chosen at the wardrobe
     setDown = [];
     groups = [];
     reservations = new Map(); // table key -> group id waiting for it

@@ -292,6 +292,7 @@ export class Game {
   dirt = new Map<string, number>(); // table key "x,y" -> dirt units
   spills: Spill[] = [];
   crates: Crate[] = [];
+  coat = "linen"; // the keeper's coat, chosen at the wardrobe
   setDown: SetDownTray[] = [];
   groups: Group[] = [];
   reservations = new Map<string, number>(); // table key -> group id waiting for it

@@ -15,6 +15,7 @@ import { iconFor, TRAY_COLOUR, trayLook } from "../serving.js";
 import type { Furniture, Tile, Vec } from "../world.js";
 import { drawLight, windowColor } from "./light.js";
 import { drawLevelUp } from "./levelup.js";
+import { coatColor, eyeColor } from "./wardrobe.js";
 import { ISO, P, Pt, floorPath, turn, turnedSize, unproject, unturn } from "./proj.js";
 import { badge, barLabel, drawEyes, busyWord, jobWord, drawCoinPops, drawGuide, drawPatronWords, drawSpeech, say, type View } from "./render.js";
 
@@ -274,13 +275,13 @@ export function drawIso(ctx: CanvasRenderingContext2D, g: Game, v: View, target:
   const k = g.keeper;
   items.push({
     d: depth(v, k.pos), pri: 1, draw: () => {
-      personBody(ctx, v, k.pos, "#f2e2c2", 1, 0, 0);
+      personBody(ctx, v, k.pos, coatColor(g), 1, 0, 0);
       // Two eyes on the side of the head that faces where they're looking; none when that's away from us.
       const f = k.facing, side = { x: -f.y * 0.085, y: f.x * 0.085 };
       const toward = depth(v, { x: k.pos.x + f.x, y: k.pos.y + f.y }) - depth(v, k.pos);
       if (toward > -0.35) {
         const at = (s: number) => P(v, k.pos.x + f.x * 0.17 + side.x * s, k.pos.y + f.y * 0.17 + side.y * s, HEAD_Z);
-        drawEyes(ctx, at(-1), at(1), ts);
+        drawEyes(ctx, at(-1), at(1), ts, eyeColor(coatColor(g)));
       }
     },
   });

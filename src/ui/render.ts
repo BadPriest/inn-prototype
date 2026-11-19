@@ -11,6 +11,7 @@ import { walkoutProgress } from "../patrons.js";
 import { worldGuide } from "../walkthrough.js";
 import { P } from "./proj.js";
 import { drawLevelUp } from "./levelup.js";
+import { coatColor, eyeColor } from "./wardrobe.js";
 import { COINS, coinParts, type CoinId } from "../money.js";
 
 /** `iso`: drawn isometric (render-iso.ts); otherwise straight down, `ts` pixels a tile. */
@@ -306,7 +307,7 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
 
   // Keeper
   const k = g.keeper;
-  ctx.fillStyle = "#f2e2c2";
+  ctx.fillStyle = coatColor(g);
   ctx.strokeStyle = "#2a1d14";
   ctx.lineWidth = 2;
   ctx.beginPath(); ctx.arc(X(k.pos.x), Y(k.pos.y), ts * 0.36, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
@@ -315,7 +316,7 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
   {
     const f = k.facing, side = { x: -f.y * 0.11, y: f.x * 0.11 };
     const at = (s: number) => ({ x: X(k.pos.x + f.x * 0.2 + side.x * s), y: Y(k.pos.y + f.y * 0.2 + side.y * s) });
-    drawEyes(ctx, at(-1), at(1), ts);
+    drawEyes(ctx, at(-1), at(1), ts, eyeColor(coatColor(g)));
   }
 
   drawLight(ctx, g, (x, y) => ({ x: X(x), y: Y(y) }), ts);
@@ -647,9 +648,9 @@ export function eyeOpen(now = performance.now()): number {
 }
 
 /** The keeper's eyes: two upright ovals, side by side where they're looking. */
-export function drawEyes(ctx: CanvasRenderingContext2D, a: { x: number; y: number }, b: { x: number; y: number }, ts: number): void {
+export function drawEyes(ctx: CanvasRenderingContext2D, a: { x: number; y: number }, b: { x: number; y: number }, ts: number, color = "#2a1d14"): void {
   const open = eyeOpen();
-  ctx.fillStyle = "#2a1d14";
+  ctx.fillStyle = color;
   for (const e of [a, b]) { ctx.beginPath(); ctx.ellipse(e.x, e.y, ts * 0.032, Math.max(ts * 0.008, ts * 0.062 * open), 0, 0, Math.PI * 2); ctx.fill(); }
 }
 

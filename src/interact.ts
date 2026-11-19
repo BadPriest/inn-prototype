@@ -6,6 +6,7 @@ import { moneyHtml } from "./money.js";
 import { GARNISHES, GRAMOPHONE, INGREDIENTS, RECIPES, REGULARS, SNACKS, TUNING, UPGRADES, type Recipe } from "./data.js";
 import type { Crate, Game, Patron, SetDownTray, Spill } from "./game.js";
 import { unpackCrate } from "./supplies.js";
+import { openWardrobe } from "./ui/wardrobe.js";
 import { dist, type Furniture, type Slot } from "./world.js";
 import { canPutBack, collectShelf, emptyPot, putBack, recipesFor, returnSlice, startJob, makeItem, serveFromPot, takeSlice, ticketFor, fillUrn, breadCaseKeys, breadCaseWithRoom, storeBread, takeBatch } from "./crafting.js";
 import { tableKey } from "./patrons.js";
@@ -197,6 +198,7 @@ export function promptFor(g: Game, t: Target | null): string {
     case "frontdoor": return g.open ? (g.lastCall ? "Space: bolt the door" : "Space: call last orders") : "Space: open the inn";
     case "fireplace": return g.fireLit ? "Space: put out the fire" : "Space: light the fire";
     case "bed": return "Space: turn in";
+    case "wardrobe": return "Space: the wardrobe (change your coat)";
     case "desk": return g.paper && !g.paper.read ? "Space: the desk (today's paper is here)" : "Space: bill of fare, paper, equipment, journal";
     default: return `Space: ${f.name.toLowerCase()}`;
   }
@@ -269,7 +271,7 @@ export function interact(g: Game, t: Target | null): void {
       return;
     case "bed": askTurnIn(g); return;
     case "desk": openDesk(g); return;
-    case "wardrobe": g.say("Your good coat, your other coat."); return;
+    case "wardrobe": openWardrobe(g); return;
     case "pantry": openPantryScreen(g); return;
     case "coats": g.say("Pegs, waiting for coats."); return;
   }

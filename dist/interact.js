@@ -4,6 +4,7 @@ import { knack } from "./skills.js";
 import { moneyHtml } from "./money.js";
 import { GRAMOPHONE, RECIPES, REGULARS, TUNING } from "./data.js";
 import { unpackCrate } from "./supplies.js";
+import { openWardrobe } from "./ui/wardrobe.js";
 import { dist } from "./world.js";
 import { canPutBack, collectShelf, emptyPot, putBack, recipesFor, serveFromPot, fillUrn, breadCaseKeys, breadCaseWithRoom, storeBread, takeBatch } from "./crafting.js";
 import { tableKey } from "./patrons.js";
@@ -212,6 +213,7 @@ export function promptFor(g, t) {
         case "frontdoor": return g.open ? (g.lastCall ? "Space: bolt the door" : "Space: call last orders") : "Space: open the inn";
         case "fireplace": return g.fireLit ? "Space: put out the fire" : "Space: light the fire";
         case "bed": return "Space: turn in";
+        case "wardrobe": return "Space: the wardrobe (change your coat)";
         case "desk": return g.paper && !g.paper.read ? "Space: the desk (today's paper is here)" : "Space: bill of fare, paper, equipment, journal";
         default: return `Space: ${f.name.toLowerCase()}`;
     }
@@ -350,7 +352,7 @@ export function interact(g, t) {
             openDesk(g);
             return;
         case "wardrobe":
-            g.say("Your good coat, your other coat.");
+            openWardrobe(g);
             return;
         case "pantry":
             openPantryScreen(g);

@@ -9,6 +9,7 @@ import { walkoutProgress } from "../patrons.js";
 import { worldGuide } from "../walkthrough.js";
 import { P } from "./proj.js";
 import { drawLevelUp } from "./levelup.js";
+import { coatColor, eyeColor } from "./wardrobe.js";
 import { COINS, coinParts } from "../money.js";
 /** Fit the whole inn if it's big enough to read; otherwise zoom in and follow the keeper. */
 /** `top`: canvas pixels kept clear at the top (the status card sits there). */
@@ -369,7 +370,7 @@ export function draw(ctx, g, v, target, clickDest) {
         drawPatron(ctx, g, p, X, Y, ts, "body");
     // Keeper
     const k = g.keeper;
-    ctx.fillStyle = "#f2e2c2";
+    ctx.fillStyle = coatColor(g);
     ctx.strokeStyle = "#2a1d14";
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -381,7 +382,7 @@ export function draw(ctx, g, v, target, clickDest) {
     {
         const f = k.facing, side = { x: -f.y * 0.11, y: f.x * 0.11 };
         const at = (s) => ({ x: X(k.pos.x + f.x * 0.2 + side.x * s), y: Y(k.pos.y + f.y * 0.2 + side.y * s) });
-        drawEyes(ctx, at(-1), at(1), ts);
+        drawEyes(ctx, at(-1), at(1), ts, eyeColor(coatColor(g)));
     }
     drawLight(ctx, g, (x, y) => ({ x: X(x), y: Y(y) }), ts);
     for (const p of g.patrons)
@@ -769,9 +770,9 @@ export function eyeOpen(now = performance.now()) {
     return 1 - Math.max(shut(0.08), t > 2.6 && Math.floor(now / 5300) % 3 === 0 ? shut(2.75) : 0);
 }
 /** The keeper's eyes: two upright ovals, side by side where they're looking. */
-export function drawEyes(ctx, a, b, ts) {
+export function drawEyes(ctx, a, b, ts, color = "#2a1d14") {
     const open = eyeOpen();
-    ctx.fillStyle = "#2a1d14";
+    ctx.fillStyle = color;
     for (const e of [a, b]) {
         ctx.beginPath();
         ctx.ellipse(e.x, e.y, ts * 0.032, Math.max(ts * 0.008, ts * 0.062 * open), 0, 0, Math.PI * 2);
