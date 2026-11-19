@@ -2,12 +2,12 @@
 // Same template as cooking (docs/specs/ui.md): what's there now pinned on top, then cards to pick.
 
 import { setOut } from "../readymade.js";
-import { amount, clearSpoiled, condition, describeUses, have, lotsOf, spoiledNow, stageName, takeStock } from "../stock.js";
+import { amount, clearSpoiled, condition, describeUses, have, lotsOf, spoiledNow, stageName, takeStock, throwOutPastFresh } from "../stock.js";
 import { SNACKS, type Snack, INGREDIENTS } from "../data.js";
 import type { Game } from "../game.js";
 import { returnSlice, storePie, takeSlice } from "../crafting.js";
 import { trayItems, trayRoomFor } from "../serving.js";
-import { closeAll, openMenu, replaceMenu, type MenuSpec } from "./menu.js";
+import { askChoice, back, closeAll, openMenu, replaceMenu, type MenuSpec } from "./menu.js";
 import { grid, gridKeys, type CardSpec } from "./cards.js";
 import { resultPanel } from "./cook.js";
 
@@ -199,9 +199,23 @@ export function openPantryScreen(g: Game): void {
         fact: amount(x.id, have(g, x.id)),
         status: c.spoiled > 0 ? `${amount(x.id, c.spoiled)} spoiled` : c.turning > 0 ? `${amount(x.id, c.turning)} ${stageName(c.turningStage ?? "onTheTurn")}` : soon ? `turns ${untilWords(c.nextTurn!)}` : "",
         tone: c.spoiled > 0 ? "warn" : c.turning > 0 || soon ? "warn" : undefined,
-        detail: `On the shelves: ${parts.join(", ")}.${c.fresh > 0 && c.nextTurn !== undefined && c.nextTurn < 60 ? ` The fresh turns ${untilWords(c.nextTurn)}.` : ""}${c.turning > 0 ? " Past fresh, a dish made with it shows it." : ""}${c.spoiled > 0 ? " Spoiled can't be used: clear it out." : ""}`,
+        detail: `On the shelves: ${parts.join(", ")}.${c.fresh > 0 && c.nextTurn !== undefined && c.nextTurn < 60 ? ` The fresh turns ${untilWords(c.nextTurn)}.` : ""}${c.turning > 0 ? ` Cooking takes the fresh first; once it's gone, a dish made with the ${stageName(c.turningStage ?? "onTheTurn")} shows it.` : ""}${c.spoiled > 0 ? " Spoiled can't be used." : ""}`,
+        does: c.turning > 0 || c.spoiled > 0 ? `Throw out the ${[c.turning > 0 ? stageName(c.turningStage ?? "onTheTurn") : "", c.spoiled > 0 ? "spoiled" : ""].filter(Boolean).join(" and ")} ${x.name.toLowerCase()}` : undefined,
       };
     });
+    /** Pick an ingredient that's past fresh: throw that out (asked first). */
+    const throwOut = (id: string) => {
+      const c = condition(g, id);
+      if (c.turning <= 0 && c.spoiled <= 0) return;
+      const name = INGREDIENTS.find((x) => x.id === id)?.name.toLowerCase() ?? id;
+      askChoice({
+        title: `Throw out the old ${name}?`,
+        body: `<p>${describeUses([{ id, units: c.turning + c.spoiled }])} that's past fresh goes to the hens. The fresh stays.</p>`,
+        confirm: "Throw it out", cancel: "Keep it",
+        onConfirm: () => { const n = throwOutPastFresh(g, id); back(); g.bus.emit({ type: "MenuSound", sound: "tick" }); g.say(`You throw out ${describeUses([{ id, units: n }])}.`); replaceMenu(build()); },
+        onCancel: () => back(),
+      });
+    };
     const clear = () => {
       const gone = clearSpoiled(g);
       if (!gone.length) return;
@@ -214,8 +228,8 @@ export function openPantryScreen(g: Game): void {
       subtitle: shelves.length ? "What's on the shelves, and how it's keeping · order more at the desk (Supplies)" : "The shelves are bare · order supplies at the desk",
       view: {
         html: cards.length ? grid(cards) : `<div class="muted">Nothing left. Water from the pump is always there.</div>`,
-        onPick: () => undefined,
-        onKey: gridKeys(() => cards.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, () => undefined),
+        onPick: (v) => throwOut(v),
+        onKey: gridKeys(() => cards.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, (i) => throwOut(cards[i]?.pick ?? "")),
       },
       items: spoiled.length ? [{ label: "🗑️ Clear out the spoiled", sub: describeUses(spoiled), button: "primary" as const, action: clear }] : [],
     };

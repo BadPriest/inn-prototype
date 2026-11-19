@@ -1,12 +1,12 @@
 // The pantry: what the inn has of each ingredient, in its units, as batches by the day they came in.
-// Cooking, pouring, steeping, garnishing and setting out snack bowls use it up, oldest batch first;
+// Cooking, pouring, steeping, garnishing and setting out snack bowls use it up, fresh first;
 // supplies fill it. Free things (water) never run out.
 //
 // Shelf life (inn#63): a batch ages from the morning after it arrives, through its ingredient's
-// spoilage profile (data/spoilage.json): fresh, then on the turn, stale, spoiled. A dish made with
-// something past fresh takes that stage's tags (day-old, sour…). Spoiled batches can't be used, and
+// spoilage profile (data/spoilage.json): fresh, then on the turn, stale, spoiled. Older batches are
+// used only once the fresh runs out, and a dish made with them takes that stage's tags (day-old, sour…). Spoiled batches can't be used, and
 // stay on the shelves until they're cleared.
-import { INGREDIENTS, TUNING, URN_CAPACITY } from "./data.js";
+import { INGREDIENTS, TUNING, URN_CAPACITY, dishData } from "./data.js";
 import { ECONOMY_DATA, INGREDIENTS_DATA, SPOILAGE_DATA } from "./gamedata.gen.js";
 const ingredient = (id) => INGREDIENTS.find((x) => x.id === id);
 export const isFree = (id) => (ingredient(id)?.worth ?? 0) === 0;
@@ -48,10 +48,16 @@ export function stageName(stageId) {
 // What's there
 export const lotsOf = (g, id) => g.lots[id] ?? [];
 /** Usable stock: everything but spoiled batches. */
-export function have(g, id) {
+/** Can a batch be used: not spoiled, and at a stage the dish takes (when it says). */
+function allowed(g, id, lot, stages) {
+    const s = stageOf(g, id, lot);
+    return !s.effect.unservable && (!stages || stages.includes(s.id));
+}
+/** Usable stock: everything but spoiled batches, and (with `stages`) only batches at those stages. */
+export function have(g, id, stages) {
     if (isFree(id))
         return Infinity;
-    return lotsOf(g, id).reduce((n, l) => n + (usable(g, id, l) ? l.units : 0), 0);
+    return lotsOf(g, id).reduce((n, l) => n + (allowed(g, id, l, stages) ? l.units : 0), 0);
 }
 /** Everything on the shelves, by how it's keeping: fresh, past fresh (still usable), spoiled. */
 export function condition(g, id) {
@@ -88,14 +94,18 @@ export function addStock(g, id, units, day = g.day) {
 export function usesOf(g, r, chosen) {
     const times = r.storedIn === "urn" ? URN_CAPACITY : 1;
     const uses = [];
-    for (const u of r.fundamental) {
+    // The stages each ingredient is taken at, from the dish's data (bread pudding wants yesterday's bread).
+    const dish = dishData(r.id)?.ingredients;
+    r.fundamental.forEach((u, i) => {
+        const stages = dish?.fundamental[i]?.stages;
         const candidates = u.role ? INGREDIENTS.filter((x) => x.roles.includes(u.role)).sort((a, b) => a.worth - b.worth).map((x) => x.id) : [u.id];
-        const id = candidates.find((c) => have(g, c) >= u.units * times) ?? u.id;
-        uses.push({ id, units: u.units * times });
-    }
+        const id = candidates.find((c) => have(g, c, stages) >= u.units * times) ?? u.id;
+        uses.push({ id, units: u.units * times, stages });
+    });
     for (const id of chosen) {
         const units = [...r.base.options, ...r.optional.options].find((o) => o.id === id)?.units ?? 1;
-        uses.push({ id, units: units * times });
+        const stages = [...(dish?.base.options ?? []), ...(dish?.optional.options ?? [])].find((o) => o.id === id)?.stages;
+        uses.push({ id, units: units * times, stages });
     }
     if (r.boughtAs)
         uses.push({ id: r.boughtAs, units: 1 });
@@ -104,11 +114,18 @@ export function usesOf(g, r, chosen) {
 /** What's missing for these uses, if anything. */
 export function shortOf(g, uses) {
     const need = new Map();
-    for (const u of uses)
-        need.set(u.id, (need.get(u.id) ?? 0) + u.units);
-    return [...need].filter(([id, n]) => have(g, id) < n).map(([id, n]) => ({ id, units: n - have(g, id) }));
+    for (const u of uses) {
+        const k = `${u.id}|${u.stages?.join(",") ?? ""}`;
+        const n = need.get(k);
+        need.set(k, { id: u.id, units: (n?.units ?? 0) + u.units, stages: u.stages });
+    }
+    return [...need.values()].filter((u) => have(g, u.id, u.stages) < u.units).map((u) => ({ id: u.id, units: u.units - have(g, u.id, u.stages), stages: u.stages }));
 }
-/** Take these from the pantry, oldest usable batch first, all or nothing. Null (and nothing taken) if anything is short. */
+/**
+ * Take these from the pantry, all or nothing; null (and nothing taken) if anything is short. Fresh
+ * first, the oldest of the fresh first, and older batches only when the fresh runs out; a dish that
+ * wants it past fresh (bread pudding) takes the oldest first.
+ */
 export function takeStockFrom(g, uses) {
     if (shortOf(g, uses).length)
         return null;
@@ -117,12 +134,13 @@ export function takeStockFrom(g, uses) {
         if (isFree(u.id))
             continue;
         let left = u.units;
-        for (const l of lotsOf(g, u.id)) {
+        const wantsOld = !!u.stages && !u.stages.includes("fresh");
+        const order = lotsOf(g, u.id).filter((l) => allowed(g, u.id, l, u.stages))
+            .sort((a, b) => (wantsOld ? 0 : stageOf(g, u.id, a).index - stageOf(g, u.id, b).index) || a.day - b.day);
+        for (const l of order) {
             if (left <= 1e-9)
                 break;
             const s = stageOf(g, u.id, l);
-            if (s.effect.unservable)
-                continue;
             const n = Math.min(left, l.units);
             l.units -= n;
             left -= n;
@@ -146,6 +164,13 @@ export function applyTaken(tags, taken) {
         return tags;
     return [...new Set([...tags.filter((t) => !taken.removeTags.includes(t)), ...taken.addTags])];
 }
+/** Throw out everything of one ingredient that's past fresh (on the turn, stale or spoiled). How much went. */
+export function throwOutPastFresh(g, id) {
+    let n = 0;
+    g.lots[id] = lotsOf(g, id).filter((l) => { if (stageOf(g, id, l).index === 0)
+        return true; n += l.units; return false; });
+    return n;
+}
 /** Clear out every spoiled batch. What went, by ingredient. */
 export function clearSpoiled(g) {
     const gone = [];
@@ -162,15 +187,17 @@ export function clearSpoiled(g) {
 export function spoiledNow(g) {
     return Object.keys(g.lots).map((id) => ({ id, units: condition(g, id).spoiled })).filter((u) => u.units > 0);
 }
-/** The stage of the batch the next use takes (the oldest usable), if it's past fresh. */
+/** Past fresh is all that's left (no fresh batch): its stage. Null while there's fresh. */
 export function nextPastFresh(g, id) {
+    let best = null;
     for (const l of lotsOf(g, id)) {
         const s = stageOf(g, id, l);
         if (s.effect.unservable || l.units <= 1e-9)
             continue;
-        return s.index > 0 ? s.id : null;
+        if (!best || s.index < best.index)
+            best = s;
     }
-    return null;
+    return best && best.index > 0 ? best.id : null;
 }
 /** Waking: what's turned or spoiled on the shelves, in a line (or nothing, if it's all fresh). */
 export function pantryNews(g) {
