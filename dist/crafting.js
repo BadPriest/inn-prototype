@@ -3,7 +3,7 @@
 // order they were made for), pots on the station, whole pies in the pie safe. You pick them up there.
 // The hatch is for a hired cook, later.
 import { organic, uid } from "./core.js";
-import { INGREDIENTS, RECIPES, TUNING, URN_CAPACITY, utensilFor } from "./data.js";
+import { BREAD_CASE_BATCHES, INGREDIENTS, RECIPES, TUNING, URN_CAPACITY, utensilFor } from "./data.js";
 import { dist } from "./world.js";
 import { addToTray, removeFromTray, trayItems } from "./serving.js";
 export function recipesFor(g, slot) {
@@ -63,7 +63,7 @@ export function startJob(g, slot, recipeIn, ingredients, ticket) {
     let total = Math.max(1, organic(recipe.minutes));
     total /= slot.speed ?? slot.f.equip?.craftingSpeed ?? 1;
     g.jobs.set(slot.id, { recipeId: recipe.id, ingredients, total, progress: 0, done: false, ticket: ticket?.id, ticketName: ticket?.name, batch });
-    const forWho = ticket ? ` for ${ticket.name}` : recipe.storedIn === "piesafe" ? " (a whole pie)" : recipe.storedIn === "urn" ? "" : recipe.servings ? " (a whole pot)" : "";
+    const forWho = ticket ? ` for ${ticket.name}` : recipe.storedIn === "piesafe" ? " (a whole pie)" : recipe.storedIn === "urn" ? "" : recipe.batch ? ` (${recipe.batch})` : recipe.servings ? " (a whole pot)" : "";
     if (recipe.id === "water") {
         g.say("You put the kettle on.");
         return;
@@ -419,5 +419,37 @@ export function fillUrn(g, urnId, item) {
     else
         g.pots.set(urnId, { item: tea, left: Math.min(URN_CAPACITY, cups), total: URN_CAPACITY });
     g.say(`The ${item.name.toLowerCase()} goes into the urn: ${g.pots.get(urnId).left} cups.`);
+    return true;
+}
+/** The batches in a bread case: each kept like a pot, under the case's id and its place in it. */
+export const breadCaseKeys = (caseId) => Array.from({ length: BREAD_CASE_BATCHES }, (_, i) => `${caseId}#${i}`);
+/** A bread case in the kitchen with room for another batch. */
+export function breadCaseWithRoom(g) {
+    return g.world.furniture.find((f) => f.kind === "breadcase" && breadCaseKeys(f.id).some((k) => !g.pots.has(k)))?.id;
+}
+/** Lift a whole batch out of the oven onto a tray, to carry to the bread case. Frees the oven. */
+export function takeBatch(g, fid) {
+    const pot = g.pots.get(fid);
+    if (!pot)
+        return;
+    const batch = { ...pot.item, id: uid(), tags: [...pot.item.tags], whole: pot.left };
+    if (!addToTray(g, batch)) {
+        g.say("No room on your trays.");
+        return;
+    }
+    g.pots.delete(fid);
+    g.say(`You take the ${pot.item.name.toLowerCase()} out of the oven (${pot.left} slices).`);
+}
+/** Put a batch of bread, carried from the oven, into the bread case. */
+export function storeBread(g, caseId, batch) {
+    const key = breadCaseKeys(caseId).find((k) => !g.pots.has(k));
+    if (!key) {
+        g.say("The bread case is full.");
+        return false;
+    }
+    removeFromTray(g, batch);
+    const n = batch.whole ?? 1;
+    g.pots.set(key, { item: { ...batch, whole: undefined }, left: n, total: n });
+    g.say(`The ${batch.name.toLowerCase()} goes into the bread case: ${n} slices.`);
     return true;
 }

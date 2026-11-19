@@ -1,3 +1,4 @@
+import { breadCaseKeys } from "../crafting.js";
 // The isometric view: the same inn as render.ts, drawn as blocks seen from above and to the front.
 // Picked on the pause screen (Display); the game underneath doesn't change, only drawing and clicking.
 //
@@ -446,6 +447,7 @@ function drawReadables(ctx: CanvasRenderingContext2D, g: Game, v: View, byTile: 
         shelf.forEach((it, i) => ctx.fillText(iconFor(it.recipeId, it.garnish) || "🍽", sp.x - w / 2 + i * ts * 0.42, sp.y - ts * 0.55));
       }
     });
+    if (f.kind === "breadcase") { const n = breadCaseKeys(f.id).reduce((a, k) => a + (g.pots.get(k)?.left ?? 0), 0); if (n) badge(ctx, top.x + ts * 0.35, top.y - ts * 0.3, String(n), ts); }
     if (f.kind === "urn") { const pot = g.pots.get(f.id); if (pot) badge(ctx, top.x + ts * 0.35, top.y - ts * 0.3, String(pot.left), ts); }
     if (f.kind === "piesafe" && g.pieSafe.length) {
       const safes = g.layout.filter((p) => p.type === "pieSafe").map((p) => p.uid);

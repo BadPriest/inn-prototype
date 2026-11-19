@@ -3,7 +3,7 @@ import { organic } from "./core.js";
 import { moneyHtml } from "./money.js";
 import { GRAMOPHONE, RECIPES, REGULARS, TUNING } from "./data.js";
 import { dist } from "./world.js";
-import { canPutBack, collectShelf, emptyPot, putBack, serveFromPot, fillUrn } from "./crafting.js";
+import { canPutBack, collectShelf, emptyPot, putBack, serveFromPot, fillUrn, breadCaseKeys, breadCaseWithRoom, storeBread, takeBatch } from "./crafting.js";
 import { tableKey } from "./patrons.js";
 import { servePatron, serveTable, iconFor, trayItems, pickUpTray, startPour, setTrayDown } from "./serving.js";
 import { endDay, startNextDay, toggleInn } from "./day.js";
@@ -176,6 +176,12 @@ export function promptFor(g, t) {
             const pot = g.pots.get(f.id);
             return pot ? `Space: pour a cup of ${pot.item.name.toLowerCase()} (${pot.left} left)` : "The urn is empty: brew a pot for it at a kettle";
         }
+        case "breadcase": {
+            if (trayItems(g).some((i) => i.whole && i.recipeId === "bread"))
+                return "Space: put the bread in the case";
+            const n = breadCaseKeys(f.id).reduce((a, k) => a + (g.pots.get(k)?.left ?? 0), 0);
+            return n ? `Space: take a slice of bread (${n} left)` : "The bread case is empty: take a batch out of the oven for it";
+        }
         case "hatch": return g.hatch.length ? `Space: choose from the hatch (${g.hatch.length})` : "The hatch is empty";
         case "tap":
             if (g.pouring)
@@ -256,6 +262,30 @@ export function interact(g, t) {
         case "piesafe":
             openPieSafe(g);
             return;
+        case "breadcase": {
+            const batch = trayItems(g).find((i) => i.whole && i.recipeId === "bread");
+            if (batch) {
+                storeBread(g, f.id, batch);
+                return;
+            }
+            const kept = breadCaseKeys(f.id).filter((k) => g.pots.has(k));
+            if (!kept.length) {
+                g.say("The bread case is empty. Take a batch out of the oven for it.");
+                return;
+            }
+            if (kept.length === 1) {
+                serveFromPot(g, kept[0]);
+                return;
+            }
+            openMenu({
+                title: "🥖 Bread case",
+                items: [
+                    ...kept.map((k) => ({ label: `${g.pots.get(k).item.name}`, sub: `${g.pots.get(k).left} slices`, action: () => { closeAll(); serveFromPot(g, k); } })),
+                    { label: "Not now", button: "secondary", action: () => closeAll() },
+                ],
+            });
+            return;
+        }
         case "urn": {
             const pot = trayItems(g).find((i) => i.whole && i.recipeId === "tea");
             if (pot) {
@@ -426,6 +456,9 @@ function slotActs(g, sl, many) {
                 short: pot.item.kind === "drink" ? "pour" : "take a serving", main: true,
                 run: () => (pot.item.kind === "drink" ? startPour(g, sl.id) : serveFromPot(g, sl.id)),
             });
+        if (pot.item.recipeId === "bread" && breadCaseWithRoom(g))
+            acts.push({ label: "🧺 Take the batch for the bread case", sub: `${where}${pot.left} slices · frees the oven`, short: "take the batch", main: false,
+                run: () => takeBatch(g, sl.id) });
         acts.push({ label: `🗑️ Empty the ${pot.item.recipeId === "water" ? "kettle" : sl.kinds.includes("kettle") ? "urn" : "pot"}`, sub: `${where}${pot.left} ${pot.item.recipeId === "water" ? "cups of hot water" : `servings of ${name}`} · frees it to cook`, short: "empty it", main: false,
             run: () => emptyPot(g, sl.id) });
     }

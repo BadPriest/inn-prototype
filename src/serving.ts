@@ -22,6 +22,7 @@ export function iconFor(recipeId: string, garnish?: string): string {
 
 export function itemLabel(i: Item): string {
   if (i.whole && i.recipeId === "tea") return `${iconFor(i.recipeId)} A pot of ${i.name.toLowerCase()} for the urn (${i.whole} cups)`;
+  if (i.whole && i.recipeId === "bread") return `${iconFor(i.recipeId)} A batch of ${i.name.toLowerCase()} for the bread case (${i.whole} slices)`;
   const base = i.whole ? `${iconFor(i.recipeId, i.garnish)} Whole ${i.name.charAt(0).toLowerCase()}${i.name.slice(1)} (${i.whole} slices)` : `${iconFor(i.recipeId, i.garnish)} ${i.name}`;
   return i.ticketName ? `${base} → ${i.ticketName}` : base;
 }

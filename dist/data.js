@@ -86,7 +86,7 @@ export const EQUIP_GROUPS = [
 export const FUELS = { wood: { icon: "🪵", name: "wood" } };
 const HOT_DRINK_KINDS = ["kettle", "coffee"];
 const isHotDrinkSlot = (s) => s.kinds.every((k) => HOT_DRINK_KINDS.includes(k));
-const STORAGE_KIND = { pie: "piesafe", ale: "tap", cider: "tap", tea: "urn" };
+const STORAGE_KIND = { pie: "piesafe", ale: "tap", cider: "tap", tea: "urn", bread: "breadcase" };
 function placedPiece(e) {
     const shape = e.shape ?? ["#"];
     const holds = e.holds ?? [];
@@ -105,9 +105,8 @@ function placedPiece(e) {
     };
 }
 export const EQUIPMENT_PIECES = EQUIPMENT_DATA.equipment;
-const STORAGE_NOT_YET_WORKING = new Set(["breadCase"]);
 export const EQUIPMENT = EQUIPMENT_PIECES
-    .filter((e) => (e.type === "crafting" || e.type === "storage" || e.type === "gear") && !STORAGE_NOT_YET_WORKING.has(e.id))
+    .filter((e) => e.type === "crafting" || e.type === "storage" || e.type === "gear")
     .map(placedPiece);
 /** Owned and used, never placed: utensils and trays. */
 export const CARRIED = EQUIPMENT_PIECES.filter((e) => e.type === "utensil" || e.type === "tray");
@@ -124,6 +123,7 @@ export function utensilFor(owned, kind) {
 }
 export const PIE_SAFE_CAPACITY = pieceById("pieSafe")?.capacity?.batches ?? 4;
 export const URN_CAPACITY = pieceById("teaUrn")?.capacity?.servings ?? 8;
+export const BREAD_CASE_BATCHES = pieceById("breadCase")?.capacity?.batches ?? 3;
 const LEGACY_DISH_ID = { fish: "friedFish" };
 export const dishData = (recipeId) => DISHES_DATA.dishes.find((d) => d.id === (LEGACY_DISH_ID[recipeId] ?? recipeId));
 /** Tray slots one serving of this takes. */

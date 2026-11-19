@@ -47,7 +47,7 @@ export interface TileDef {
 
 export type InteractKind =
   | "bed" | "desk" | "wardrobe" | "station" | "hatch" | "tap" | "garnish"
-  | "frontdoor" | "fireplace" | "pantry" | "coats" | "table" | "piesafe" | "urn" | "bin" | "snacks" | "gramophone";
+  | "frontdoor" | "fireplace" | "pantry" | "coats" | "table" | "piesafe" | "urn" | "breadcase" | "bin" | "snacks" | "gramophone";
 
 const C = {
   wall: "#2a211d",
@@ -121,7 +121,7 @@ export interface Equipment {
   gear?: boolean;
   /** Hot-drink slots a stove has for gear. */
   hotSlots?: number;
-  kind?: "piesafe" | "tap" | "urn";
+  kind?: "piesafe" | "tap" | "urn" | "breadcase";
   tap?: string;
   group: EquipGroup;
   fuel?: Fuel;
@@ -139,7 +139,7 @@ export const FUELS: Record<Fuel, { icon: string; name: string }> = { wood: { ico
 
 const HOT_DRINK_KINDS: StationKind[] = ["kettle", "coffee"];
 const isHotDrinkSlot = (s: EquipSlot) => s.kinds.every((k) => HOT_DRINK_KINDS.includes(k));
-const STORAGE_KIND: Record<string, Equipment["kind"]> = { pie: "piesafe", ale: "tap", cider: "tap", tea: "urn" };
+const STORAGE_KIND: Record<string, Equipment["kind"]> = { pie: "piesafe", ale: "tap", cider: "tap", tea: "urn", bread: "breadcase" };
 
 function placedPiece(e: EquipmentPiece): Equipment {
   const shape = e.shape ?? ["#"];
@@ -161,9 +161,8 @@ function placedPiece(e: EquipmentPiece): Equipment {
 }
 
 export const EQUIPMENT_PIECES: EquipmentPiece[] = EQUIPMENT_DATA.equipment;
-const STORAGE_NOT_YET_WORKING = new Set(["breadCase"]);
 export const EQUIPMENT: Equipment[] = EQUIPMENT_PIECES
-  .filter((e) => (e.type === "crafting" || e.type === "storage" || e.type === "gear") && !STORAGE_NOT_YET_WORKING.has(e.id))
+  .filter((e) => e.type === "crafting" || e.type === "storage" || e.type === "gear")
   .map(placedPiece);
 /** Owned and used, never placed: utensils and trays. */
 export const CARRIED: EquipmentPiece[] = EQUIPMENT_PIECES.filter((e) => e.type === "utensil" || e.type === "tray");
@@ -181,6 +180,7 @@ export function utensilFor(owned: Set<string>, kind: string): EquipmentPiece | u
 }
 export const PIE_SAFE_CAPACITY = pieceById("pieSafe")?.capacity?.batches ?? 4;
 export const URN_CAPACITY = pieceById("teaUrn")?.capacity?.servings ?? 8;
+export const BREAD_CASE_BATCHES = pieceById("breadCase")?.capacity?.batches ?? 3;
 
 const LEGACY_DISH_ID: Record<string, string> = { fish: "friedFish" };
 export const dishData = (recipeId: string) => DISHES_DATA.dishes.find((d) => d.id === (LEGACY_DISH_ID[recipeId] ?? recipeId));

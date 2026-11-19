@@ -1,3 +1,4 @@
+import { breadCaseKeys } from "../crafting.js";
 // Canvas drawing. Basic shapes only: rectangles for furniture, circles for people.
 
 import { RECIPES, SNACKS, SOAKING, TUNING, PIE_SAFE_CAPACITY } from "../data.js";
@@ -154,6 +155,7 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
     if (f.kind === "hatch") fill = "#6a5a3a";
     if (f.kind === "tap") fill = "#7a5530";
     if (f.kind === "urn") fill = "#5e6470";
+    if (f.kind === "breadcase") fill = "#8a6a3e";
     if (f.kind === "piesafe") fill = "#7a5a46";
     if (f.kind === "bin") fill = "#3f4a3a";
     if (f.kind === "garnish") fill = "#6e7a3a";
@@ -222,6 +224,7 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
         shelf.forEach((it, i) => ctx.fillText(iconFor(it.recipeId, it.garnish) || "🍽", sx + ts * 0.3 + i * ts * 0.42, py - ts * 0.18));
       }
     });
+    if (f.kind === "breadcase") { const n = breadCaseKeys(f.id).reduce((a, k) => a + (g.pots.get(k)?.left ?? 0), 0); if (n) badge(ctx, px + pw - 2, py + 2, String(n), ts); }
     if (f.kind === "urn") { const pot = g.pots.get(f.id); if (pot) badge(ctx, px + pw - 2, py + 2, String(pot.left), ts); }
     if (f.kind === "piesafe" && g.pieSafe.length) {
       // Pie safes share the pies, filling in order: each shows the slices in its own share.
