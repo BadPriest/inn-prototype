@@ -1,0 +1,93 @@
+{
+  "_about": "Every starting location.",
+  "_fields": {
+    "seasonDays": "Days in spring, summer, autumn, winter; they sum to 112.",
+    "rainWeight": "Above 1: more rain, and it lingers. Below 1: less.",
+    "stormWeight": "How often a storm breaks, against the season's own odds.",
+    "cold.seasons": "Seasons that are cold all day.",
+    "cold.nights": "Seasons with cold nights.",
+    "traffic": "Passing traffic, times the hour's flow.",
+    "shelter": "How much rain drives passers-by indoors.",
+    "visitorWeights": "Archetype id: times its usual weight.",
+    "marketDay": "Weekday of the market, busier at midday. Absent: no market.",
+    "streetSound": "Sound id heard through the open door.",
+    "suppliers": "Suppliers at this location. Any supplier field given here overrides the one in suppliers.json, here only.",
+    "text.cardChips": "Short chips on its card.",
+    "text.card": "Line on its card."
+  },
+
+  "locations": [
+    { "id": "town", "name": "Town centre", "icon": "🏘️",
+      "seasonDays": [28, 28, 28, 28], "rainWeight": 1, "stormWeight": 1,
+      "traffic": 1.3, "shelter": 1.5, "visitorWeights": {},
+      "marketDay": "Saturday", "streetSound": "streetTown",
+      "suppliers": [
+        { "id": "farm" },
+        { "id": "baker", "distanceInMinutes": 20 },
+        { "id": "butcher", "deliveryDays": ["mon", "wed", "fri"] },
+        { "id": "drinksMerchant" },
+        { "id": "generalStore", "priceFactor": 1.0, "distanceInMinutes": 30, "deliveryDays": ["mon", "thu"] },
+        { "id": "carter" }, { "id": "tinker" }, { "id": "catalogue" }
+      ],
+      "text": { "cardChips": ["busy", "rain rush"], "card": "On the market square. Busy all year; when it rains, half the street comes in." } },
+
+    { "id": "dockside", "name": "Dockside", "icon": "⚓",
+      "seasonDays": [28, 28, 28, 28], "rainWeight": 1.3, "stormWeight": 1.6,
+      "traffic": 1.1, "shelter": 1.1, "visitorWeights": { "dock": 2.5, "scholar": 0.6 },
+      "marketDay": "Friday", "streetSound": "streetTown",
+      "suppliers": [
+        { "id": "farm", "distanceInMinutes": 120 },
+        { "id": "baker" },
+        { "id": "butcher" },
+        { "id": "fishmonger", "priceFactor": 0.85, "distanceInMinutes": 20 },
+        { "id": "drinksMerchant", "priceFactor": 0.9, "deliveryDays": ["tue", "fri"] },
+        { "id": "generalStore" },
+        { "id": "carter" }, { "id": "tinker" }, { "id": "catalogue" }
+      ],
+      "text": { "cardChips": ["dockworkers", "wet", "stormy"], "card": "By the harbour, where the boats come in. Thirsty dockworkers, wet weather, the odd storm off the sea." } },
+
+    { "id": "mountainside", "name": "Mountainside", "icon": "🏔️",
+      "seasonDays": [21, 21, 28, 42], "rainWeight": 1.2, "stormWeight": 1.2,
+      "cold": { "seasons": ["autumn", "winter"], "nights": ["spring", "summer"] },
+      "traffic": 0.6, "shelter": 0.6, "visitorWeights": { "traveller": 2, "farmer": 1.5, "dock": 0.3, "scholar": 0.6 },
+      "streetSound": "streetCountry",
+      "suppliers": [
+        { "id": "farm", "priceFactor": 0.85, "distanceInMinutes": 40 },
+        { "id": "baker", "distanceInMinutes": 120 },
+        { "id": "butcher", "priceFactor": 0.95 },
+        { "id": "drinksMerchant", "distanceInMinutes": 180 },
+        { "id": "generalStore", "distanceInMinutes": 150 },
+        { "id": "carter" }, { "id": "tinker" }, { "id": "catalogue" }
+      ],
+      "text": { "cardChips": ["long winter", "quiet", "cold"], "card": "On the pass road, high up. Long winters, few passers-by, and everyone who comes in is glad of the fire." } },
+
+    { "id": "crossroads", "name": "Crossroads", "icon": "🪧",
+      "seasonDays": [28, 28, 28, 28], "rainWeight": 1, "stormWeight": 1,
+      "traffic": 0.85, "shelter": 0.4, "visitorWeights": { "traveller": 2.5, "dock": 0.4 },
+      "marketDay": "Wednesday", "streetSound": "streetCountry",
+      "suppliers": [
+        { "id": "farm" },
+        { "id": "baker" },
+        { "id": "butcher" },
+        { "id": "drinksMerchant" },
+        { "id": "generalStore" },
+        { "id": "carter" }, { "id": "tinker" }, { "id": "catalogue", "priceFactor": 0.95 }
+      ],
+      "text": { "cardChips": ["travellers", "quiet"], "card": "Where the roads meet, out among the fields. Travellers passing through; rain or shine, much the same." } },
+
+    { "id": "hills", "name": "Hill country", "icon": "🌳",
+      "seasonDays": [35, 35, 21, 21], "rainWeight": 0.8, "stormWeight": 0.4,
+      "cold": { "seasons": ["winter"], "nights": ["autumn"] },
+      "traffic": 0.8, "shelter": 0.7, "visitorWeights": { "farmer": 2.5, "traveller": 1.2, "dock": 0.3 },
+      "marketDay": "Thursday", "streetSound": "streetCountry",
+      "suppliers": [
+        { "id": "farm", "priceFactor": 0.85, "distanceInMinutes": 45 },
+        { "id": "baker" },
+        { "id": "butcher" },
+        { "id": "drinksMerchant", "distanceInMinutes": 120 },
+        { "id": "generalStore" },
+        { "id": "carter" }, { "id": "tinker" }, { "id": "catalogue" }
+      ],
+      "text": { "cardChips": ["long summer", "gentle", "farmers"], "card": "Among green hills and smallholdings. Long, gentle springs and summers; soft rain, hardly ever a storm." } }
+  ]
+}

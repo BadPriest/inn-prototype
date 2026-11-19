@@ -1,0 +1,383 @@
+{
+  "_about": "Every dish and drink. Ingredient units are per batch.",
+  "_fields": {
+    "container": "What one serving is served in: cup, glass, bowl, plate; table for a table snack.",
+    "boughtAs": "Ingredient id it can be bought as, ready to serve straight from stock.",
+    "garnish": "Takes a garnish at the garnish spot once made; pick is [min, max]. The garnishes offered are the ingredients whose garnishFor includes its container.",
+    "traySlots": "Tray slots one serving takes.",
+    "pickUp": "How it is taken from the station: ladle, pour, slice, take.",
+    "meals": "Meal times it is served at.",
+    "madeAt.kinds": "Station kinds it is made at. No madeAt: not made in anywhere.",
+    "tended": "Cooks only while the keeper stays at the station.",
+    "minutes": "Cooking time in game minutes: [centre, spread].",
+    "batch.servings": "Servings in one batch: [centre, spread].",
+    "batch.calledWhenReady": "Name of the finished batch.",
+    "batch.storedIn": "Equipment the finished batch is kept in.",
+    "tableSnack": "Set in a bowl on a table, on the house. Guests don't ask for it; it doesn't spoil. A bowl is refilled only once it's empty. Each guest's tastes are scored against its tags: those who like it eat from it, those who don't leave it alone. Its onConsuming effects reach guests eating from it while the bowl isn't empty.",
+    "tags": "Tags the dish has before ingredients.",
+    "ingredient use": "{ id or role, units per batch, stages }. A role takes any ingredient with that role. stages: spoilage stages accepted; absent: any but spoiled.",
+    "ingredients": "What it is made from. Absent: only bought ready.",
+    "ingredients.fundamental": "Ingredient uses, all required.",
+    "ingredients.base": "{ pick: [min, max], options: ingredient uses }.",
+    "ingredients.optional": "{ pick: [min, max], options: ingredient uses }.",
+    "spoilage": "Profile id in spoilage.json. Absent: doesn't spoil.",
+    "price.fixed": "Price in pence at Fair, before markup. Absent: worked out from economy.json.",
+    "seasons.craved": "Seasons when guests want it more.",
+    "effects.needs": "How much one serving eases each need.",
+    "effects.minutesToEat": "Game minutes to eat or drink: [centre, spread].",
+    "effects.mess": "Mess left on the table.",
+    "effects.onConsuming": "Effects on whoever has it, for the rest of the visit. shown: the line on the dish's card; absent: hidden.",
+    "effects.onConsuming.openness": "Added to the guest's openness.",
+    "effects.onConsuming.patience": "Added to how long the guest waits before giving up, as a share (0.2 = a fifth longer).",
+    "effects.onConsuming.hunger": "Added to how fast the guest's hunger rises, per game hour.",
+    "effects.onConsuming.thirst": "Added to how fast the guest's thirst rises, per game hour.",
+    "effects.onConsuming.flipTag": "{ from, to }: on dishes served to the guest, tag 'from' counts as 'to'."
+  },
+
+  "dishes": [
+    {
+      "id": "stew", "name": "Stew", "icon": "🍲",
+      "container": "bowl", "garnish": { "pick": [0, 1] }, "traySlots": 2, "pickUp": "ladle", "meals": ["lunch", "supper"],
+      "madeAt": { "kinds": ["stove"] }, "tended": false, "minutes": [14, 3],
+      "batch": { "servings": [7, 1], "calledWhenReady": "a pot of stew" },
+      "tags": ["warm", "hearty"],
+      "ingredients": {
+        "fundamental": [ { "role": "liquid", "units": 4 }, { "id": "salt", "units": 2 } ],
+        "base": { "pick": [1, 1], "options": [
+          { "id": "beef", "units": 3 }, { "id": "fowl", "units": 1 }, { "id": "sausage", "units": 6 }, { "id": "mushroom", "units": 5 }, { "id": "roots", "units": 4 } ] },
+        "optional": { "pick": [0, 2], "options": [
+          { "id": "onion", "units": 2 }, { "id": "herbs", "units": 1 }, { "id": "pepper", "units": 2 }, { "id": "roots", "units": 2 }, { "id": "mushroom", "units": 2 } ] }
+      },
+      "spoilage": "cookedPot",
+      "price": {},
+      "seasons": { "craved": ["autumn", "winter"] },
+      "effects": { "needs": { "hunger": 0.55, "thirst": 0, "warmth": 0.2 }, "minutesToEat": [25, 5], "mess": 1 },
+      "text": {
+        "craftingStation": "A pot that keeps the whole room warm. Slow to make and generous once it's done: it feeds whoever asks, a ladle at a time, until the pot scrapes bottom.",
+        "journal": "Stew: anything that will sit in a pot for an afternoon and come out kinder.",
+        "patronOrders": ["A bowl of the stew, if there's any.", "Whatever's in the pot."],
+        "patronPraises": ["That's a proper stew.", "Sticks to your ribs, that."],
+        "patronComplaints": ["Thin, this.", "Bit tired, the stew."]
+      }
+    },
+    {
+      "id": "porridge", "name": "Porridge", "icon": "🥣",
+      "container": "bowl", "traySlots": 2, "pickUp": "ladle", "meals": ["breakfast"],
+      "madeAt": { "kinds": ["stove"] }, "tended": false, "minutes": [10, 2],
+      "batch": { "servings": [7, 1], "calledWhenReady": "a pot of porridge" },
+      "tags": ["warm", "homely", "mild"],
+      "ingredients": {
+        "fundamental": [ { "id": "oats", "units": 2 }, { "role": "milk", "units": 3 }, { "id": "salt", "units": 1 } ],
+        "base": { "pick": [0, 0], "options": [] },
+        "optional": { "pick": [0, 1], "options": [
+          { "id": "honey", "units": 3 }, { "id": "apple", "units": 3 }, { "id": "berry", "units": 1 }, { "id": "walnut", "units": 1 }, { "id": "butter", "units": 2 } ] }
+      },
+      "spoilage": "cookedPot",
+      "price": {},
+      "seasons": { "craved": ["winter"] },
+      "effects": { "needs": { "hunger": 0.45, "thirst": 0, "warmth": 0.15 }, "minutesToEat": [15, 4], "mess": 0 },
+      "text": {
+        "craftingStation": "Oats, milk and a long slow stir. A pot of it carries the morning crowd, a bowl at a time.",
+        "patronOrders": ["Porridge, please.", "Something warm to start the day."],
+        "patronPraises": ["Just like my gran's."],
+        "patronComplaints": ["Gluey."]
+      }
+    },
+    {
+      "id": "pie", "name": "Pie", "icon": "🥧",
+      "container": "plate", "traySlots": 2, "pickUp": "slice", "meals": ["lunch", "supper"],
+      "madeAt": { "kinds": ["oven"] }, "tended": false, "minutes": [20, 4],
+      "batch": { "servings": [6, 1], "calledWhenReady": "a pie", "storedIn": "piesafe" },
+      "tags": ["warm", "homely"],
+      "ingredients": {
+        "fundamental": [ { "role": "flour", "units": 2 }, { "role": "cookingFat", "units": 2 } ],
+        "base": { "pick": [1, 1], "options": [
+          { "id": "apple", "units": 6 }, { "id": "berry", "units": 3 }, { "id": "beef", "units": 2 }, { "id": "cheese", "units": 2 } ] },
+        "optional": { "pick": [0, 1], "options": [
+          { "id": "sugar", "units": 3 }, { "id": "onion", "units": 2 }, { "id": "nutmeg", "units": 1 }, { "id": "herbs", "units": 1 } ] }
+      },
+      "spoilage": "baked",
+      "price": {},
+      "seasons": { "craved": ["autumn"] },
+      "effects": { "needs": { "hunger": 0.5, "thirst": 0.05, "warmth": 0.1 }, "minutesToEat": [20, 5], "mess": 1 },
+      "text": {
+        "craftingStation": "Golden and lidded, cut into slices that keep in the pie safe. Tomorrow it's day-old, and still somebody's favourite.",
+        "patronOrders": ["A slice of pie."],
+        "patronPraises": ["Good short pastry, that."],
+        "patronComplaints": ["Soggy bottom."]
+      }
+    },
+    {
+      "id": "friedFish", "name": "Fried fish", "icon": "🐟",
+      "container": "plate", "garnish": { "pick": [0, 1] }, "traySlots": 2, "pickUp": "take", "meals": ["lunch", "supper"],
+      "madeAt": { "kinds": ["griddle"] }, "tended": true, "minutes": [6, 1.5],
+      "tags": ["warm", "briny"],
+      "ingredients": {
+        "fundamental": [ { "role": "cookingFat", "units": 2 } ],
+        "base": { "pick": [1, 1], "options": [ { "id": "fish", "units": 1, "stages": ["fresh", "onTheTurn"] } ] },
+        "optional": { "pick": [1, 1], "options": [
+          { "id": "crumb", "units": 1 }, { "id": "herbs", "units": 1 }, { "id": "zest", "units": 1 } ] }
+      },
+      "spoilage": "cookedPlate",
+      "price": {},
+      "seasons": { "craved": ["summer"] },
+      "effects": { "needs": { "hunger": 0.45, "thirst": 0.1, "warmth": 0.1 }, "minutesToEat": [15, 4], "mess": 1 },
+      "text": {
+        "craftingStation": "Fresh from the morning boats, into a hot pan. It needs you standing over it the whole time, and it's worth it.",
+        "patronOrders": ["The fish, if it's fresh."],
+        "patronPraises": ["Crisp as you like."],
+        "patronComplaints": ["That fish has seen better days."]
+      }
+    },
+    {
+      "id": "bread", "name": "Bread", "icon": "🍞",
+      "container": "plate", "traySlots": 1, "pickUp": "slice", "meals": ["breakfast", "lunch", "supper"],
+      "madeAt": { "kinds": ["oven"] }, "tended": false, "minutes": [18, 3],
+      "batch": { "servings": [8, 1], "calledWhenReady": "a batch of bread" },
+      "tags": ["warm", "homely"],
+      "ingredients": {
+        "fundamental": [ { "role": "flour", "units": 3 }, { "id": "water", "units": 1 }, { "id": "salt", "units": 1 } ],
+        "base": { "pick": [0, 0], "options": [] },
+        "optional": { "pick": [0, 1], "options": [
+          { "id": "butter", "units": 2 }, { "id": "herbs", "units": 1 }, { "id": "walnut", "units": 1 }, { "id": "cheese", "units": 1 }, { "id": "honey", "units": 2 } ] }
+      },
+      "spoilage": "bread",
+      "price": {},
+      "seasons": { "craved": [] },
+      "effects": { "needs": { "hunger": 0.25, "thirst": 0.05, "warmth": 0 }, "minutesToEat": [8, 2], "mess": 0 },
+      "text": {
+        "craftingStation": "A batch of loaves from the oven, crusty outside and soft in the middle, sliced to order. Good alongside a stew.",
+        "patronOrders": ["Bit of bread with that."],
+        "patronPraises": ["Still warm!"],
+        "patronComplaints": ["Yesterday's, this."]
+      }
+    },
+    {
+      "id": "breadPudding", "name": "Bread pudding", "icon": "🍮",
+      "container": "bowl", "traySlots": 2, "pickUp": "slice", "meals": ["supper"],
+      "madeAt": { "kinds": ["oven"] }, "tended": false, "minutes": [16, 3],
+      "batch": { "servings": [6, 1], "calledWhenReady": "a bread pudding" },
+      "tags": ["warm", "sweet", "homely"],
+      "ingredients": {
+        "fundamental": [
+          { "role": "bread", "units": 3, "stages": ["onTheTurn", "stale"] },
+          { "role": "milk", "units": 2, "stages": ["fresh", "sour"] },
+          { "role": "egg", "units": 2 } ],
+        "base": { "pick": [0, 0], "options": [] },
+        "optional": { "pick": [0, 2], "options": [
+          { "id": "sugar", "units": 2 }, { "id": "nutmeg", "units": 1 }, { "id": "berry", "units": 1 }, { "id": "honey", "units": 2 }, { "id": "apple", "units": 2 } ] }
+      },
+      "spoilage": "baked",
+      "price": {},
+      "seasons": { "craved": ["winter"] },
+      "effects": { "needs": { "hunger": 0.35, "thirst": 0, "warmth": 0.1 }, "minutesToEat": [12, 3], "mess": 0 },
+      "text": {
+        "craftingStation": "Yesterday's loaves soaked in milk and egg and baked till the top crackles. Nothing wasted, and nobody minds.",
+        "patronOrders": ["Is there pudding?"],
+        "patronPraises": ["Now that's a pudding."],
+        "patronComplaints": ["Bit heavy."]
+      }
+    },
+    {
+      "id": "tea", "name": "Tea", "icon": "🍵",
+      "container": "cup", "garnish": { "pick": [0, 1] }, "traySlots": 1, "pickUp": "pour", "meals": ["breakfast", "lunch", "supper", "between"],
+      "madeAt": { "kinds": ["kettle"] }, "tended": false, "minutes": [3, 1],
+      "tags": ["warm", "mild"],
+      "ingredients": {
+        "fundamental": [ { "id": "water", "units": 1 } ],
+        "base": { "pick": [1, 1], "options": [ { "id": "mint", "units": 1 }, { "id": "black", "units": 1 } ] },
+        "optional": { "pick": [0, 1], "options": [ { "id": "milk", "units": 0.2 }, { "id": "honey", "units": 1 }, { "id": "sugar", "units": 1 } ] }
+      },
+      "spoilage": "brewed",
+      "price": {},
+      "seasons": { "craved": ["winter"] },
+      "effects": { "needs": { "hunger": 0, "thirst": 0.4, "warmth": 0.2 }, "minutesToEat": [15, 4], "mess": 0 },
+      "text": {
+        "craftingStation": "A cup for one, steeped behind the counter. What goes in the pot decides who it comforts.",
+        "patronOrders": ["A cup of tea, love."],
+        "patronPraises": ["Lovely brew."],
+        "patronComplaints": ["Stewed."]
+      }
+    },
+    {
+      "id": "ale", "name": "Ale", "icon": "🍺",
+      "container": "glass", "garnish": { "pick": [0, 1] }, "traySlots": 1, "pickUp": "pour", "meals": ["lunch", "supper", "between"],
+      "tags": ["cold", "bitter", "hearty"],
+      "ingredients": {
+        "fundamental": [ { "id": "ale", "units": 1 } ],
+        "base": { "pick": [0, 0], "options": [] },
+        "optional": { "pick": [0, 0], "options": [] }
+      },
+      "spoilage": "openedKeg",
+      "price": {},
+      "seasons": { "craved": ["summer"] },
+      "effects": { "needs": { "hunger": 0.05, "thirst": 0.45, "warmth": 0 }, "minutesToEat": [20, 5], "mess": 1, "onConsuming": [ { "openness": 0.1, "shown": "Loosens tongues" } ] },
+      "text": {
+        "patronOrders": ["A pint.", "Ale, if you would."],
+        "patronPraises": ["Good pint, that."],
+        "patronComplaints": ["Flat as a millpond."]
+      }
+    },
+    {
+      "id": "cider", "name": "Cider", "icon": "🍏",
+      "container": "glass", "garnish": { "pick": [0, 1] }, "traySlots": 1, "pickUp": "pour", "meals": ["lunch", "supper", "between"],
+      "tags": ["cold", "crisp", "sweet"],
+      "ingredients": {
+        "fundamental": [ { "id": "cider", "units": 1 } ],
+        "base": { "pick": [0, 0], "options": [] },
+        "optional": { "pick": [0, 0], "options": [] }
+      },
+      "spoilage": "openedKeg",
+      "price": {},
+      "seasons": { "craved": ["summer", "autumn"] },
+      "effects": { "needs": { "hunger": 0.05, "thirst": 0.45, "warmth": 0 }, "minutesToEat": [20, 5], "mess": 1, "onConsuming": [ { "openness": 0.1, "shown": "Loosens tongues" } ] },
+      "text": {
+        "patronOrders": ["A cider.", "Something with apples in it."],
+        "patronPraises": ["Sharp and sweet, lovely."],
+        "patronComplaints": ["Gone flat, this."]
+      }
+    },
+    {
+      "id": "saltedPeanuts", "name": "Salted peanuts", "icon": "🥜", "tableSnack": true,
+      "container": "table", "boughtAs": "saltedPeanuts", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "supper", "between"],
+      "tags": ["salty", "crisp"],
+      "seasons": { "craved": [] },
+      "effects": { "onConsuming": [ { "thirst": 0.12, "shown": "Makes them thirsty" } ] },
+      "text": {
+        "patronPraises": ["These peanuts are lovely.", "You spoil us."],
+        "patronComplaints": ["Not one for peanuts, me."]
+      }
+    },
+    {
+      "id": "crostini", "name": "Crostini", "icon": "🥖", "tableSnack": true,
+      "container": "table", "boughtAs": "bakedCrostini", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "supper", "between"],
+      "madeAt": { "kinds": ["griddle"] }, "tended": false, "minutes": [3, 0.5],
+      "batch": { "servings": [6, 0], "calledWhenReady": "a batch of crostini" },
+      "tags": ["crisp", "savoury"],
+      "ingredients": {
+        "fundamental": [ { "role": "bread", "units": 1, "stages": ["fresh", "onTheTurn", "stale"] }, { "role": "cookingFat", "units": 1 } ],
+        "base": { "pick": [0, 0], "options": [] },
+        "optional": { "pick": [0, 1], "options": [ { "id": "garlic", "units": 2 }, { "id": "herbs", "units": 1 }, { "id": "cheese", "units": 1 } ] }
+      },
+      "seasons": { "craved": [] },
+      "effects": { "onConsuming": [ { "hunger": 0.05, "shown": "Whets the appetite" } ] },
+      "text": {
+        "craftingStation": "Little toasts rubbed with garlic and a slick of oil. Gone before you've turned round.",
+        "patronPraises": ["Gone before you've turned round, these."],
+        "patronComplaints": ["Bit hard on the teeth."]
+      }
+    },
+    {
+      "id": "roastChestnuts", "name": "Roast chestnuts", "icon": "🌰", "tableSnack": true,
+      "container": "table", "boughtAs": "roastedChestnuts", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "supper", "between"],
+      "madeAt": { "kinds": ["griddle"] }, "tended": false, "minutes": [4, 1],
+      "batch": { "servings": [6, 0], "calledWhenReady": "a batch of roast chestnuts" },
+      "tags": ["earthy", "sweet", "warm"],
+      "ingredients": {
+        "fundamental": [ { "id": "chestnuts", "units": 6 } ],
+        "base": { "pick": [0, 0], "options": [] },
+        "optional": { "pick": [0, 1], "options": [ { "id": "salt", "units": 2 }, { "id": "honey", "units": 2 } ] }
+      },
+      "seasons": { "craved": [] },
+      "effects": { "onConsuming": [ { "patience": 0.2, "shown": "Keeps them happy while they wait" } ] },
+      "text": {
+        "craftingStation": "Split and roasted, still warm in the paper.",
+        "patronPraises": ["Smells like winter, these."],
+        "patronComplaints": ["Burnt my fingers."]
+      }
+    },
+    {
+      "id": "pickledOnionBowl", "name": "Pickled onions", "icon": "🧅", "tableSnack": true,
+      "container": "table", "boughtAs": "pickledOnions", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "supper", "between"],
+      "tags": ["tart", "fiery"],
+      "seasons": { "craved": [] },
+      "effects": { "onConsuming": [ { "flipTag": { "from": "sweet", "to": "bright" }, "shown": "Sweet tastes bright" } ] },
+      "text": {
+        "patronPraises": ["Sharp! Just how I like them."],
+        "patronComplaints": ["Could do without the onions."]
+      }
+    },
+    {
+      "id": "olives", "name": "Olives", "icon": "🫒", "tableSnack": true,
+      "container": "table", "boughtAs": "olives", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "supper", "between"],
+      "tags": ["briny", "salty"],
+      "seasons": { "craved": [] },
+      "effects": { "onConsuming": [ { "thirst": 0.1, "shown": "Makes them thirsty" } ] },
+      "text": {
+        "patronPraises": ["Brined just right, these."],
+        "patronComplaints": ["Too sharp for me, olives."]
+      }
+    },
+    {
+      "id": "pickledEggs", "name": "Pickled eggs", "icon": "🥚", "tableSnack": true,
+      "container": "table", "boughtAs": "pickledEggs", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "supper", "between"],
+      "tags": ["tart", "savoury"],
+      "seasons": { "craved": [] },
+      "effects": { "onConsuming": [ { "hunger": 0.04, "shown": "Whets the appetite" } ] },
+      "text": {
+        "patronPraises": ["Fondly acquired, this taste."],
+        "patronComplaints": ["Can't abide a pickled egg."]
+      }
+    },
+    {
+      "id": "pretzels", "name": "Pretzels", "icon": "🥨", "tableSnack": true,
+      "container": "table", "boughtAs": "pretzels", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "supper", "between"],
+      "tags": ["salty", "crisp"],
+      "seasons": { "craved": [] },
+      "effects": { "onConsuming": [ { "thirst": 0.12, "shown": "Makes them thirsty" } ] },
+      "text": {
+        "patronPraises": ["Thirsty work, these."],
+        "patronComplaints": ["Too salty by half."]
+      }
+    },
+    {
+      "id": "appleRings", "name": "Dried apple rings", "icon": "🍎", "tableSnack": true,
+      "container": "table", "boughtAs": "appleRings", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "supper", "between"],
+      "tags": ["sweet", "crisp"],
+      "seasons": { "craved": [] },
+      "effects": { "onConsuming": [ { "patience": 0.1, "shown": "Keeps them happy while they wait" } ] },
+      "text": {
+        "patronPraises": ["Chewy and sweet, lovely."],
+        "patronComplaints": ["Bit dry, these."]
+      }
+    },
+    {
+      "id": "breadAndButter", "name": "Bread and butter", "icon": "🍞", "tableSnack": true,
+      "container": "table", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "supper", "between"],
+      "madeAt": { "kinds": ["prep"] }, "tended": false, "minutes": [1, 0.3],
+      "batch": { "servings": [6, 0], "calledWhenReady": "a batch of bread and butter" },
+      "tags": ["homely", "rich"],
+      "ingredients": {
+        "fundamental": [ { "role": "bread", "units": 1, "stages": ["fresh", "onTheTurn"] }, { "id": "butter", "units": 3 } ],
+        "base": { "pick": [0, 0], "options": [] },
+        "optional": { "pick": [0, 0], "options": [] }
+      },
+      "seasons": { "craved": [] },
+      "effects": { "onConsuming": [ { "openness": 0.05, "shown": "Puts them at ease" } ] },
+      "text": {
+        "craftingStation": "Thick slices and a pat of butter. Nobody says no to it.",
+        "patronPraises": ["Nobody says no to bread and butter."],
+        "patronComplaints": ["Stale, this bread."]
+      }
+    },
+    {
+      "id": "cheeseBoard", "name": "Cheese board", "icon": "🧀", "tableSnack": true,
+      "container": "table", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "supper", "between"],
+      "madeAt": { "kinds": ["prep"] }, "tended": false, "minutes": [2, 0.5],
+      "batch": { "servings": [6, 0], "calledWhenReady": "a batch of cheese board" },
+      "tags": ["rich", "savoury"],
+      "ingredients": {
+        "fundamental": [ { "id": "cheese", "units": 2 } ],
+        "base": { "pick": [0, 0], "options": [] },
+        "optional": { "pick": [0, 1], "options": [ { "id": "walnut", "units": 1 }, { "id": "apple", "units": 2 }, { "id": "honey", "units": 1 } ] }
+      },
+      "seasons": { "craved": [] },
+      "effects": { "onConsuming": [ { "flipTag": { "from": "bitter", "to": "rich" }, "shown": "Bitter tastes rich" } ] },
+      "text": {
+        "craftingStation": "A hard cheese, a soft one and something blue, cut into cubes.",
+        "patronPraises": ["Now that's a cheese board."],
+        "patronComplaints": ["Too strong, that blue."]
+      }
+    }
+  ]
+}

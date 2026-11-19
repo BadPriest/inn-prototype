@@ -1,0 +1,124 @@
+{
+  "_about": "Every supplier. Money is in pence.",
+  "_fields": {
+    "people": "Who you meet when you fetch an order yourself; the first signs the slip.",
+    "inventory": "What can go on their order slip.",
+    "inventory.item": "Ingredient or equipment id.",
+    "inventory.pack.units": "Units of the item in one pack.",
+    "inventory.pack.name": "What one pack is called on the slip.",
+    "priceFactor": "Multiplier on an item's worth. Pack price: worth x units x priceFactor x economy.json suppliers.priceFactor. Equipment: its price x priceFactor.",
+    "deliveryDays": "Days the carter brings their orders, or daily. Absent: they don't deliver.",
+    "orderBy": "Hour a slip must go in by to make the next delivery day.",
+    "distanceInMinutes": "Game minutes away from the tavern to fetch an order yourself, there and back. Absent: can't be fetched.",
+    "openHours": "Hours they can be fetched from: [from, to]."
+  },
+
+  "suppliers": [
+    { "id": "farm", "name": "Hollin's Farm", "icon": "🐄",
+      "people": ["Mrs Hollin", "Tam Hollin", "Bess Hollin"],
+      "priceFactor": 1.0, "deliveryDays": "daily", "orderBy": 18,
+      "distanceInMinutes": 90, "openHours": [6, 18],
+      "inventory": [
+        { "item": "milk",     "pack": { "units": 8,  "name": "a churn" } },
+        { "item": "butter",   "pack": { "units": 10, "name": "a crock" } },
+        { "item": "egg",      "pack": { "units": 12, "name": "a dozen" } },
+        { "item": "fowl",     "pack": { "units": 1,  "name": "a bird" } },
+        { "item": "roots",    "pack": { "units": 10, "name": "a sack" } },
+        { "item": "onion",    "pack": { "units": 12, "name": "a string" } },
+        { "item": "herbs",    "pack": { "units": 4,  "name": "a bundle" } },
+        { "item": "apple",    "pack": { "units": 20, "name": "a basket" } },
+        { "item": "berry",    "pack": { "units": 4,  "name": "a tray" } },
+        { "item": "cheese",   "pack": { "units": 8,  "name": "a round" } },
+        { "item": "honey",    "pack": { "units": 20, "name": "a jar" } },
+        { "item": "chestnuts", "pack": { "units": 8, "name": "a sack" } },
+        { "item": "garlic",   "pack": { "units": 30, "name": "a string" } },
+        { "item": "cider",    "pack": { "units": 72, "name": "a barrel" } }
+      ] },
+
+    { "id": "baker", "name": "Pell the Baker", "icon": "🥖",
+      "people": ["Ada Pell"],
+      "priceFactor": 1.0, "deliveryDays": "daily", "orderBy": 20,
+      "distanceInMinutes": 40, "openHours": [5, 14],
+      "inventory": [
+        { "item": "loaf",  "pack": { "units": 6,  "name": "a half-dozen" } },
+        { "item": "flour", "pack": { "units": 14, "name": "a stone" } },
+        { "item": "crumb", "pack": { "units": 10, "name": "a bag" } },
+        { "item": "bakedCrostini", "pack": { "units": 6, "name": "a tray" } }
+      ] },
+
+    { "id": "butcher", "name": "Garrow's", "icon": "🔪",
+      "people": ["Old Garrow"],
+      "priceFactor": 1.05, "deliveryDays": ["mon", "thu"], "orderBy": 17,
+      "distanceInMinutes": 60, "openHours": [7, 16],
+      "inventory": [
+        { "item": "beef",    "pack": { "units": 6,  "name": "a joint" } },
+        { "item": "sausage", "pack": { "units": 12, "name": "a string" } },
+        { "item": "lard",    "pack": { "units": 20, "name": "a tub" } }
+      ] },
+
+    { "id": "fishmonger", "name": "The fish quay", "icon": "🐟",
+      "people": ["Nell Sorrow"],
+      "priceFactor": 1.0, "deliveryDays": "daily", "orderBy": 19,
+      "distanceInMinutes": 40, "openHours": [5, 12],
+      "inventory": [
+        { "item": "fish", "pack": { "units": 6, "name": "a box" } }
+      ] },
+
+    { "id": "drinksMerchant", "name": "Thackery & Sons", "icon": "🍺",
+      "people": ["Mr Thackery"],
+      "priceFactor": 1.0, "deliveryDays": ["fri"], "orderBy": 17,
+      "distanceInMinutes": 90, "openHours": [9, 17],
+      "inventory": [
+        { "item": "ale",        "pack": { "units": 72, "name": "a barrel" } },
+        { "item": "cookingAle", "pack": { "units": 8,  "name": "a jug" } }
+      ] },
+
+    { "id": "generalStore", "name": "Mabb's Stores", "icon": "🏪",
+      "people": ["Mrs Mabb"],
+      "priceFactor": 1.1, "deliveryDays": ["mon"], "orderBy": 17,
+      "distanceInMinutes": 60, "openHours": [8, 18],
+      "inventory": [
+        { "item": "oats",      "pack": { "units": 7,   "name": "a sack" } },
+        { "item": "salt",      "pack": { "units": 200, "name": "a box" } },
+        { "item": "sugar",     "pack": { "units": 50,  "name": "a bag" } },
+        { "item": "pepper",    "pack": { "units": 50,  "name": "a tin" } },
+        { "item": "nutmeg",    "pack": { "units": 30,  "name": "a tin" } },
+        { "item": "walnut",    "pack": { "units": 10,  "name": "a bag" } },
+        { "item": "zest",      "pack": { "units": 6,   "name": "a net of lemons" } },
+        { "item": "black",     "pack": { "units": 40,  "name": "a caddy" } },
+        { "item": "mint",      "pack": { "units": 20,  "name": "a bundle" } },
+        { "item": "darkRoast", "pack": { "units": 6,   "name": "a bag" } },
+        { "item": "peanuts",   "pack": { "units": 10,  "name": "a sack" } },
+        { "item": "saltedPeanuts", "pack": { "units": 10, "name": "a jar" } },
+        { "item": "olives",    "pack": { "units": 8,   "name": "a jar" } },
+        { "item": "pickledEggs", "pack": { "units": 8, "name": "a jar" } },
+        { "item": "pretzels",  "pack": { "units": 10,  "name": "a tin" } },
+        { "item": "appleRings", "pack": { "units": 10, "name": "a bag" } },
+        { "item": "roastedChestnuts", "pack": { "units": 6, "name": "a paper twist" } },
+        { "item": "pickledOnions", "pack": { "units": 8, "name": "a crock" } },
+        { "item": "spice",     "pack": { "units": 50,  "name": "a tin" } },
+        { "item": "lemon",     "pack": { "units": 24,  "name": "a net" } }
+      ] },
+
+    { "id": "carter", "name": "The carter", "icon": "🛻",
+      "people": ["Joss the carter"],
+      "inventory": [] },
+
+    { "id": "tinker", "name": "The tinker", "icon": "🔧",
+      "people": ["The tinker"],
+      "priceFactor": 0.5,
+      "inventory": [
+        { "item": "woodStove" }, { "item": "teaKettle" }, { "item": "coffeePot" }, { "item": "pieSafe" }
+      ] },
+
+    { "id": "catalogue", "name": "The catalogue", "icon": "📖",
+      "people": [],
+      "priceFactor": 1.0, "deliveryDays": "daily", "orderBy": 22,
+      "distanceInMinutes": 90, "openHours": [8, 18],
+      "inventory": [
+        { "item": "woodStove" }, { "item": "twoHobStove" }, { "item": "rangeStove" }, { "item": "breadOven" }, { "item": "prepTable" },
+        { "item": "teaKettle" }, { "item": "copperKettle" }, { "item": "coffeePot" }, { "item": "percolator" },
+        { "item": "teaUrn" }, { "item": "aleBarrel" }, { "item": "ciderBarrel" }, { "item": "pieSafe" }, { "item": "breadCase" }
+      ] }
+  ]
+}

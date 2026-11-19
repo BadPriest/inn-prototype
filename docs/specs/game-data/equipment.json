@@ -1,0 +1,137 @@
+{
+  "_about": "Every piece of kitchen and bar equipment. Money is in pence.",
+  "_fields": {
+    "type": "crafting: things are made at it. storage: finished things are kept and served from it. gear: set on a crafting slot of a listed kind, where it shows. utensil: never placed; a crafting slot of a listed kind uses the best one owned. tray: carried by the keeper, one in each hand; the best one owned counts.",
+    "label": "Drawn on the piece in the kitchen.",
+    "shape": "Crafting and storage: tiles it covers, as rows: # covered, . empty.",
+    "shopTab": "Shop tab it is listed in.",
+    "price": "Shop price.",
+    "text.shopCard": "Line on the shop card.",
+    "slots": "Crafting: places to cook, each taking dishes of the listed station kinds.",
+    "line": "Gear, utensils, trays: the upgrade line it belongs to.",
+    "tier": "Its place in the line; higher is better.",
+    "craftingSpeed": "Crafting, gear, utensils: speed multiplier; 1 is normal.",
+    "usedIn": "Gear, utensils: slot kinds it is used in.",
+    "servingsBonus": "Utensil: servings added to each batch made with it.",
+    "traySlots": "Tray: slots on one tray.",
+    "fuel": "Crafting: what it burns.",
+    "holds": "Storage: dish ids it keeps.",
+    "capacity.batches": "Storage: whole batches it keeps.",
+    "capacity.servings": "Storage: servings it keeps. No capacity: no limit.",
+    "serveSeconds": "Storage: real seconds to take out one serving: [centre, spread]. Absent: instant."
+  },
+
+  "equipment": [
+    { "id": "woodStove", "name": "Wood stove", "icon": "🔥", "type": "crafting", "label": "Stove",
+      "shape": ["##"], "shopTab": "cooking", "price": 300,
+      "slots": [ { "name": "Hob", "kinds": ["stove", "griddle"] }, { "name": "Hot drinks", "kinds": ["kettle", "coffee"] }, { "name": "Hot drinks", "kinds": ["kettle", "coffee"] } ], "craftingSpeed": 1, "fuel": "wood",
+      "text": { "shopCard": "A small stove with one hob: a pot of stew or porridge, or a pan for eggs, toast or fish. Room at the back for a kettle and a coffee pot." } },
+
+    { "id": "twoHobStove", "name": "Two-hob stove", "icon": "🍳", "type": "crafting", "label": "Stove ⚬⚬",
+      "shape": ["##"], "shopTab": "cooking", "price": 600,
+      "slots": [ { "name": "Hob", "kinds": ["stove", "griddle"] }, { "name": "Hob", "kinds": ["stove", "griddle"] }, { "name": "Hot drinks", "kinds": ["kettle", "coffee"] }, { "name": "Hot drinks", "kinds": ["kettle", "coffee"] } ], "craftingSpeed": 1, "fuel": "wood",
+      "text": { "shopCard": "Two hobs: a pot and a pan, two pots, two pans, whatever the day needs. Room at the back for a kettle and a coffee pot." } },
+
+    { "id": "rangeStove", "name": "Range stove", "icon": "🥧", "type": "crafting", "label": "Range stove",
+      "shape": ["##"], "shopTab": "cooking", "price": 1200,
+      "slots": [ { "name": "Hob", "kinds": ["stove", "griddle"] }, { "name": "Oven", "kinds": ["oven"] }, { "name": "Hot drinks", "kinds": ["kettle", "coffee"] }, { "name": "Hot drinks", "kinds": ["kettle", "coffee"] } ], "craftingSpeed": 1, "fuel": "wood",
+      "text": { "shopCard": "A range stove: one hob on top and an oven below, for pies and roasts. Room at the back for a kettle and a coffee pot." } },
+
+    { "id": "breadOven", "name": "Bread oven", "icon": "🍞", "type": "crafting", "label": "Oven",
+      "shape": ["##"], "shopTab": "cooking", "price": 1500,
+      "slots": [ { "name": "Oven", "kinds": ["oven"] }, { "name": "Oven", "kinds": ["oven"] } ], "craftingSpeed": 1, "fuel": "wood",
+      "text": { "shopCard": "A big brick oven with room for two bakes at once: bread, pies, a roast, in any pair." } },
+
+    { "id": "prepTable", "name": "Prep table", "icon": "🔪", "type": "crafting", "label": "Prep",
+      "shape": ["##"], "shopTab": "cooking", "price": 150,
+      "slots": [ { "name": "Table", "kinds": ["prep"] } ], "craftingSpeed": 1,
+      "text": { "shopCard": "A scrubbed table and a good knife, for cold dishes put together by hand." } },
+
+    { "id": "teaKettle", "name": "Tea kettle", "icon": "🫖", "type": "gear", "line": "kettle", "tier": 1,
+      "shopTab": "drinks", "price": 50,
+      "usedIn": ["kettle"], "craftingSpeed": 1,
+      "text": { "shopCard": "Set it on a stove. Boil it once, then steep a cup at a time, each with its own leaf." } },
+
+    { "id": "copperKettle", "name": "Copper kettle", "icon": "🫖", "type": "gear", "line": "kettle", "tier": 2,
+      "shopTab": "drinks", "price": 150,
+      "usedIn": ["kettle"], "craftingSpeed": 2,
+      "text": { "shopCard": "Set it on a stove. Boils twice as fast as the plain one." } },
+
+    { "id": "coffeePot", "name": "Coffee pot", "icon": "☕", "type": "gear", "line": "coffeePot", "tier": 1,
+      "shopTab": "drinks", "price": 80,
+      "usedIn": ["coffee"], "craftingSpeed": 1,
+      "text": { "shopCard": "Set it on a stove. A whole pot at a time, poured by the cup until it's gone." } },
+
+    { "id": "percolator", "name": "Percolator", "icon": "☕", "type": "gear", "line": "coffeePot", "tier": 2,
+      "shopTab": "drinks", "price": 240,
+      "usedIn": ["coffee"], "craftingSpeed": 2,
+      "text": { "shopCard": "Set it on a stove. Brews twice as fast as the plain pot." } },
+
+    { "id": "stewPot", "name": "Stew pot", "icon": "🍲", "type": "utensil", "line": "pot", "tier": 1,
+      "shopTab": "cooking", "price": 40,
+      "usedIn": ["stove"], "servingsBonus": 0,
+      "text": { "shopCard": "A plain iron pot for stew, porridge or soup." } },
+
+    { "id": "bigStewPot", "name": "Big stew pot", "icon": "🍲", "type": "utensil", "line": "pot", "tier": 2,
+      "shopTab": "cooking", "price": 250,
+      "usedIn": ["stove"], "servingsBonus": 2,
+      "text": { "shopCard": "Room for two more bowls in every pot." } },
+
+    { "id": "pan", "name": "Frying pan", "icon": "🍳", "type": "utensil", "line": "pan", "tier": 1,
+      "shopTab": "cooking", "price": 40,
+      "usedIn": ["griddle"], "craftingSpeed": 1,
+      "text": { "shopCard": "A plain pan for eggs, toast or fish." } },
+
+    { "id": "skillet", "name": "Cast-iron skillet", "icon": "🍳", "type": "utensil", "line": "pan", "tier": 2,
+      "shopTab": "cooking", "price": 200,
+      "usedIn": ["griddle"], "craftingSpeed": 1.25,
+      "text": { "shopCard": "Holds its heat: everything in the pan cooks a quarter faster." } },
+
+    { "id": "kitchenKnife", "name": "Kitchen knife", "icon": "🔪", "type": "utensil", "line": "knife", "tier": 1,
+      "shopTab": "cooking", "price": 20,
+      "usedIn": ["prep"], "craftingSpeed": 1,
+      "text": { "shopCard": "Does the job." } },
+
+    { "id": "chefsKnife", "name": "Chef's knife", "icon": "🔪", "type": "utensil", "line": "knife", "tier": 2,
+      "shopTab": "cooking", "price": 150,
+      "usedIn": ["prep"], "craftingSpeed": 1.25,
+      "text": { "shopCard": "Balanced and sharp: prep goes a quarter faster." } },
+
+    { "id": "teaUrn", "name": "Tea urn", "icon": "⚱️", "type": "storage", "label": "Urn",
+      "shape": ["#"], "shopTab": "drinks", "price": 200,
+      "holds": ["tea"], "capacity": { "servings": 8 }, "serveSeconds": [2, 0.2],
+      "text": { "shopCard": "Keeps about 8 cups of tea hot, poured straight from it." } },
+
+    { "id": "aleBarrel", "name": "Ale barrel", "icon": "🍺", "type": "storage", "label": "Ale",
+      "shape": ["#"], "shopTab": "drinks", "price": 60,
+      "holds": ["ale"], "serveSeconds": [3, 0.3],
+      "text": { "shopCard": "A barrel of ale on a tap. Another one means a second place to pour from." } },
+
+    { "id": "ciderBarrel", "name": "Cider barrel", "icon": "🍏", "type": "storage", "label": "Cid",
+      "shape": ["#"], "shopTab": "drinks", "price": 60,
+      "holds": ["cider"], "serveSeconds": [3, 0.3],
+      "text": { "shopCard": "A barrel of cider on a tap. Another one means a second place to pour from." } },
+
+    { "id": "pieSafe", "name": "Pie safe", "icon": "🥧", "type": "storage", "label": "Pies",
+      "shape": ["#"], "shopTab": "storage", "price": 100,
+      "holds": ["pie"], "capacity": { "batches": 4 },
+      "text": { "shopCard": "A screened cupboard that keeps whole pies, sliced as they're asked for. Each holds 4 pies; your pie safes share them." } },
+
+    { "id": "breadCase", "name": "Bread and pastry case", "icon": "🥖", "type": "storage", "label": "Bread",
+      "shape": ["#"], "shopTab": "storage", "price": 100,
+      "holds": ["bread"], "capacity": { "batches": 3 },
+      "text": { "shopCard": "A glass-fronted case that keeps the day's bread and pastries, cut as they're asked for." } },
+
+    { "id": "plainTray", "name": "Plain tray", "icon": "🍽️", "type": "tray", "line": "tray", "tier": 1,
+      "shopTab": "serving", "price": 0, "traySlots": 4,
+      "text": { "shopCard": "A plain wooden tray: four slots." } },
+
+    { "id": "widerTray", "name": "Wider tray", "icon": "🍽️", "type": "tray", "line": "tray", "tier": 2,
+      "shopTab": "serving", "price": 100, "traySlots": 6,
+      "text": { "shopCard": "Six slots to a tray." } },
+
+    { "id": "largeTray", "name": "Large tray", "icon": "🍽️", "type": "tray", "line": "tray", "tier": 3,
+      "shopTab": "serving", "price": 300, "traySlots": 8,
+      "text": { "shopCard": "Eight slots to a tray." } }
+  ]
+}

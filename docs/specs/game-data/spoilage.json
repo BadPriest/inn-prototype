@@ -1,0 +1,37 @@
+{
+  "_about": "Spoilage stages and profiles. A profile's stages are game days until each starts. Default stage names: fresh, onTheTurn, stale, spoiled. A profile may name its own stages and give their effects in its stageEffects, which also override the defaults.",
+
+  "stageEffects": {
+    "fresh":       { "addTags": ["fresh"],   "removeTags": [],        "priceFactor": 1.0, "tastePenalty": 0 },
+    "onTheTurn":   { "addTags": [],          "removeTags": ["fresh"], "priceFactor": 1.0, "tastePenalty": 0 },
+    "stale":       { "addTags": ["day-old"], "removeTags": ["fresh"], "priceFactor": 0.8, "tastePenalty": -1 },
+    "spoiled":     { "addTags": ["spoiled"], "removeTags": ["fresh"], "priceFactor": 0,   "tastePenalty": -3, "unservable": true }
+  },
+
+  "profiles": {
+    "daily":      { "stages": { "fresh": 0, "onTheTurn": 0.75, "stale": 1,   "spoiled": 2 } },
+    "bread":      { "stages": { "fresh": 0, "onTheTurn": 1,    "stale": 2,   "spoiled": 4 } },
+    "meat":       { "stages": { "fresh": 0, "onTheTurn": 2,    "stale": 3,   "spoiled": 4 } },
+    "greens":     { "stages": { "fresh": 0, "onTheTurn": 2,    "stale": 3,   "spoiled": 5 } },
+    "week":       { "stages": { "fresh": 0, "onTheTurn": 5,    "stale": 7,   "spoiled": 10 } },
+    "weeks":      { "stages": { "fresh": 0, "onTheTurn": 14,   "stale": 21,  "spoiled": 30 } },
+    "keeps":      { "stages": { "fresh": 0, "onTheTurn": 120,  "stale": 240, "spoiled": 365 } },
+    "cookedPot":  { "stages": { "fresh": 0, "onTheTurn": 0.5,  "stale": 1,   "spoiled": 2 } },
+    "baked":      { "stages": { "fresh": 0, "onTheTurn": 1,    "stale": 2,   "spoiled": 3 } },
+
+    "milk":       { "stages": { "fresh": 0, "sour": 0.75, "curdled": 2 },
+                    "stageEffects": {
+                      "sour":    { "addTags": ["sour"],    "removeTags": ["fresh", "mild"], "priceFactor": 1.0, "tastePenalty": 0 },
+                      "curdled": { "addTags": ["curdled"], "removeTags": ["fresh"],         "priceFactor": 0,   "tastePenalty": -3, "unservable": true } } },
+    "openedKeg":  { "stages": { "fresh": 0, "flat": 3, "spoiled": 8 },
+                    "stageEffects": {
+                      "flat":    { "addTags": ["flat"],    "removeTags": ["fresh", "crisp"], "priceFactor": 0.6, "tastePenalty": -1 } } },
+    "cookedPlate":{ "stages": { "fresh": 0, "cold": 0.1, "stale": 0.5, "spoiled": 1 },
+                    "stageEffects": {
+                      "cold":    { "addTags": ["cold"],    "removeTags": ["warm", "fresh"], "priceFactor": 1.0, "tastePenalty": 0 } } },
+    "brewed":     { "stages": { "fresh": 0, "stewed": 0.05, "cold": 0.15, "spoiled": 0.5 },
+                    "stageEffects": {
+                      "stewed":  { "addTags": ["stewed"],  "removeTags": ["fresh", "bright"], "priceFactor": 0.9, "tastePenalty": -1 },
+                      "cold":    { "addTags": ["cold"],    "removeTags": ["warm", "fresh"],   "priceFactor": 0.7, "tastePenalty": -1 } } }
+  }
+}
