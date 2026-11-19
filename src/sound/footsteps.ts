@@ -24,15 +24,23 @@ function stride(id: number | "keeper", pos: Vec, length: number): { moved: numbe
   return { moved, step: true };
 }
 
+/** The keeper's step, for drawing: where in the stride (0 at a footfall), how much they're walking (0 to 1), and running. */
+const gait = { phase: 0, amount: 0, running: false };
+export const keeperGait = (): Readonly<typeof gait> => gait;
+
 export function footsteps(g: Game, realDt: number): void {
   // The keeper. Speed decides walking or running (and the stride that goes with it).
   const k = g.keeper.pos;
   const prev = walkers.get("keeper");
   const speed = prev && realDt > 0 ? Math.hypot(k.x - prev.x, k.y - prev.y) / realDt : 0;
   const running = speed > RUN_ABOVE;
-  if (stride("keeper", k, running ? T.keeperRunStride : T.keeperStride).step) {
+  const length = running ? T.keeperRunStride : T.keeperStride;
+  if (stride("keeper", k, length).step) {
     play(running ? "keeperRun" : "keeperWalk", { ...k });
   }
+  gait.phase = (walkers.get("keeper")!.travelled % length) / length;
+  gait.amount += ((speed > 0.3 ? 1 : 0) - gait.amount) * Math.min(1, realDt * 10);
+  gait.running = running;
 
   // Guests: quieter, and capped so a busy room doesn't turn into a clatter.
   const here = new Set<number>();

@@ -292,7 +292,8 @@ export class Game {
   dirt = new Map<string, number>(); // table key "x,y" -> dirt units
   spills: Spill[] = [];
   crates: Crate[] = [];
-  coat = "linen"; // the keeper's coat, chosen at the wardrobe
+  coat = "slate"; // the keeper's coat, chosen at the wardrobe
+  under = "linen"; // what shows under it: the head
   newGear: string[] = []; // kettles, coffee pots, Dutch ovens the carter brought, not yet set on a stove
   setDown: SetDownTray[] = [];
   groups: Group[] = [];

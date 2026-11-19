@@ -9,7 +9,8 @@ import { walkoutProgress } from "../patrons.js";
 import { worldGuide } from "../walkthrough.js";
 import { P } from "./proj.js";
 import { drawLevelUp } from "./levelup.js";
-import { coatColor, eyeColor } from "./wardrobe.js";
+import { coatColor, eyeColor, underColor } from "./wardrobe.js";
+import { keeperGait } from "../sound/footsteps.js";
 import { COINS, coinParts } from "../money.js";
 /** Fit the whole inn if it's big enough to read; otherwise zoom in and follow the keeper. */
 /** `top`: canvas pixels kept clear at the top (the status card sits there). */
@@ -370,6 +371,10 @@ export function draw(ctx, g, v, target, clickDest) {
         drawPatron(ctx, g, p, X, Y, ts, "body");
     // Keeper
     const k = g.keeper;
+    // Seen from above: the coat's shoulders, the head on top, nudged ahead and a touch bigger mid-stride.
+    const gait = keeperGait();
+    const swell = 1 + Math.sin(gait.phase * Math.PI) * 0.07 * gait.amount;
+    const lean = 0.06 * gait.amount;
     ctx.fillStyle = coatColor(g);
     ctx.strokeStyle = "#2a1d14";
     ctx.lineWidth = 2;
@@ -378,11 +383,15 @@ export function draw(ctx, g, v, target, clickDest) {
     ctx.fill();
     ctx.stroke();
     ctx.lineWidth = 1;
+    ctx.fillStyle = underColor(g);
+    ctx.beginPath();
+    ctx.arc(X(k.pos.x + k.facing.x * lean), Y(k.pos.y + k.facing.y * lean), ts * 0.24 * swell, 0, Math.PI * 2);
+    ctx.fill();
     ctx.fillStyle = "#2a1d14";
     {
         const f = k.facing, side = { x: -f.y * 0.11, y: f.x * 0.11 };
-        const at = (s) => ({ x: X(k.pos.x + f.x * 0.2 + side.x * s), y: Y(k.pos.y + f.y * 0.2 + side.y * s) });
-        drawEyes(ctx, at(-1), at(1), ts, eyeColor(coatColor(g)));
+        const at = (s) => ({ x: X(k.pos.x + f.x * (0.14 + lean) + side.x * s), y: Y(k.pos.y + f.y * (0.14 + lean) + side.y * s) });
+        drawEyes(ctx, at(-1), at(1), ts, eyeColor(underColor(g)));
     }
     drawLight(ctx, g, (x, y) => ({ x: X(x), y: Y(y) }), ts);
     for (const p of g.patrons)

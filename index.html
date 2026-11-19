@@ -126,7 +126,8 @@
   .set-val { font:600 12px system-ui; text-align:right; color:#e9dfc9; }
   .set-btn { text-align:left; background:#2a1f18; color:var(--ink); border:1px solid #6b5338; border-radius:7px; padding:7px 10px; font:13px Georgia, serif; cursor:pointer; }
   .set-btn:hover { border-color:#c9a24a; }
-  .coat-swatch { display:inline-block; width:34px; height:34px; border-radius:50%; border:2px solid rgba(0,0,0,.5); box-shadow:inset 0 -5px 0 rgba(0,0,0,.18), 0 1px 3px rgba(0,0,0,.4); vertical-align:middle; }
+  .coat-swatch i { position:absolute; left:50%; top:3px; width:14px; height:14px; margin-left:-7px; border-radius:50%; box-shadow:0 0 0 1.5px rgba(0,0,0,.35); }
+  .coat-swatch { position:relative; display:inline-block; width:34px; height:34px; border-radius:50%; border:2px solid rgba(0,0,0,.5); box-shadow:inset 0 -5px 0 rgba(0,0,0,.18), 0 1px 3px rgba(0,0,0,.4); vertical-align:middle; }
   .levelup { position:fixed; left:50%; top:24%; transform:translateX(-50%); z-index:60; pointer-events:none; animation:lu-in .7s cubic-bezier(.2,1.6,.4,1) both; }
   .levelup.out { animation:lu-out .7s ease-in forwards; }
   .lu-ribbon { position:relative; padding:12px 54px 14px; text-align:center; color:#3a2504; background:linear-gradient(#ffe9a3,#f2c14e 45%,#c98f22); border-top:2px solid #fff3c4; border-bottom:2px solid #8a5a10; box-shadow:0 6px 24px rgba(0,0,0,.5), 0 0 40px rgba(255,200,80,.45); overflow:hidden; }

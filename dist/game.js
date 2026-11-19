@@ -76,7 +76,8 @@ export class Game {
     dirt = new Map(); // table key "x,y" -> dirt units
     spills = [];
     crates = [];
-    coat = "linen"; // the keeper's coat, chosen at the wardrobe
+    coat = "slate"; // the keeper's coat, chosen at the wardrobe
+    under = "linen"; // what shows under it: the head
     newGear = []; // kettles, coffee pots, Dutch ovens the carter brought, not yet set on a stove
     setDown = [];
     groups = [];

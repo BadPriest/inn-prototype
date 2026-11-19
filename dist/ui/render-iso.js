@@ -12,7 +12,8 @@ import { spotOf } from "../interact.js";
 import { iconFor, TRAY_COLOUR, trayLook } from "../serving.js";
 import { drawLight, windowColor } from "./light.js";
 import { drawLevelUp } from "./levelup.js";
-import { coatColor, eyeColor } from "./wardrobe.js";
+import { coatColor, eyeColor, underColor } from "./wardrobe.js";
+import { keeperGait } from "../sound/footsteps.js";
 import { ISO, P, Pt, floorPath, turn, turnedSize, unproject, unturn } from "./proj.js";
 import { badge, barLabel, drawEyes, busyWord, jobWord, drawCoinPops, drawGuide, drawPatronWords, drawSpeech, say } from "./render.js";
 /** Height of the back walls, in tiles; every other wall is a low stub so you can see past it. */
@@ -183,15 +184,17 @@ function boxFor(g, v, s, all) {
 }
 // ---------------------------------------------------------------------------
 // People
-function personBody(ctx, v, pos, color, alpha, wet, seed) {
+/** `headColor`: the head, if not the body's colour. `bob`: how far the head is moved (a step's bounce, a lean). */
+function personBody(ctx, v, pos, color, alpha, wet, seed, headColor, bob) {
     const ts = v.ts;
     const t = performance.now() / 1000;
     const shiver = wet > 0.08 ? Math.sin(t * 38 + seed) * ts * 0.035 * Math.min(1, wet * 1.5) : 0;
     const foot = P(v, pos.x, pos.y), head = P(v, pos.x, pos.y, HEAD_Z);
     foot.x += shiver;
-    head.x += shiver;
+    head.x += shiver + (bob?.x ?? 0);
+    head.y += bob?.y ?? 0;
     const r = HEAD_R * ts, bw = r * 0.85;
-    const paint = () => {
+    const paint = (headFill) => {
         // A body tapering up from the floor to the head: a pawn, readable from any side.
         ctx.beginPath();
         ctx.moveTo(foot.x - bw, foot.y);
@@ -200,13 +203,15 @@ function personBody(ctx, v, pos, color, alpha, wet, seed) {
         ctx.lineTo(foot.x + bw, foot.y);
         ctx.ellipse(foot.x, foot.y, bw, bw * 0.5, 0, 0, Math.PI);
         ctx.fill();
+        if (headFill)
+            ctx.fillStyle = headFill;
         ctx.beginPath();
         ctx.arc(head.x, head.y, r, 0, Math.PI * 2);
         ctx.fill();
     };
     ctx.globalAlpha = alpha;
     ctx.fillStyle = color;
-    paint();
+    paint(headColor);
     if (wet > 0.05) {
         ctx.fillStyle = SOAKING.tint;
         ctx.globalAlpha = alpha * Math.min(0.6, wet * 0.7);
@@ -285,13 +290,20 @@ export function drawIso(ctx, g, v, target, clickDest) {
     const k = g.keeper;
     items.push({
         d: depth(v, k.pos), pri: 1, draw: () => {
-            personBody(ctx, v, k.pos, coatColor(g), 1, 0, 0);
+            // Walking: a bounce in time with the footsteps, and a slight lean the way they're going.
+            const gait = keeperGait();
+            const lift = Math.sin(gait.phase * Math.PI) * ts * (gait.running ? 0.07 : 0.05) * gait.amount;
+            const reach = (gait.running ? 0.12 : 0.07) * gait.amount;
+            const ahead = P(v, k.pos.x + k.facing.x * reach, k.pos.y + k.facing.y * reach, HEAD_Z);
+            const base = P(v, k.pos.x, k.pos.y, HEAD_Z);
+            const bob = { x: ahead.x - base.x, y: ahead.y - base.y - lift };
+            personBody(ctx, v, k.pos, coatColor(g), 1, 0, 0, underColor(g), bob);
             // Two eyes on the side of the head that faces where they're looking; none when that's away from us.
             const f = k.facing, side = { x: -f.y * 0.085, y: f.x * 0.085 };
             const toward = depth(v, { x: k.pos.x + f.x, y: k.pos.y + f.y }) - depth(v, k.pos);
             if (toward > -0.35) {
-                const at = (s) => P(v, k.pos.x + f.x * 0.17 + side.x * s, k.pos.y + f.y * 0.17 + side.y * s, HEAD_Z);
-                drawEyes(ctx, at(-1), at(1), ts, eyeColor(coatColor(g)));
+                const at = (s) => { const e = P(v, k.pos.x + f.x * 0.17 + side.x * s, k.pos.y + f.y * 0.17 + side.y * s, HEAD_Z); return { x: e.x + bob.x, y: e.y + bob.y }; };
+                drawEyes(ctx, at(-1), at(1), ts, eyeColor(underColor(g)));
             }
         },
     });
