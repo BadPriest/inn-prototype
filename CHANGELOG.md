@@ -6,6 +6,11 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 115 · Nov 19, 2026 · deployed
+
+### Added
+- **Guests bob as they walk**, like the keeper: in time with their footsteps, leaning a little the way they're going (in top-down, a slight swell mid-stride).
+
 ## Build 114 · Nov 19, 2026 · deployed
 
 ### Added
