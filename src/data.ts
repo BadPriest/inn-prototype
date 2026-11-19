@@ -962,6 +962,7 @@ export const SOUNDS: Record<string, SoundDef> = {
   kettle: { files: [SND + "cooking/kettle-water-boiling-looping.opus"], volume: 0.45, pitch: 0.04, loop: true },
   stewCooking: { files: [SND + "cooking/stew-cooking-loop.opus"], volume: 0.5, pitch: 0.04, loop: true },
   stewSimmering: { files: [SND + "cooking/stew-simmering-loop.opus"], volume: 0.4, pitch: 0.04, loop: true },
+  frying: { files: [SND + "cooking/frying-loop.opus"], volume: 0.45, pitch: 0.05, loop: true }, // a pan on the hob: while anything made at a griddle cooks
   // Footsteps: one step per stride (see SOUND_TUNING), so the pace always matches the walking.
   keeperWalk: { files: [SND + "foley/indoors-walk-step-loop.opus", SND + "foley/indoors-walk-cycle-4-step-loop.opus"], volume: 0.4, pitch: 0.06, slice: true },
   keeperRun: { files: [SND + "foley/indoors-run-cycle-loop.opus"], volume: 0.45, pitch: 0.06, slice: true },

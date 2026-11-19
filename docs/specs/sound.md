@@ -43,7 +43,7 @@ A second check: **would a playtester notice it on a top-down map of circles?** I
 | Coins (build 101) | A guest paying us, a moment after their reaction: an order by its biggest coin (a few pennies, a handful, silver, crowns); the tip, paid on the way out, is the Delight coins if anything that visit delighted them, else the coin purse for 3d or more and the small tip sound below that. A table pays one clink after another | `sound.ts` `coinSound`, `assets/sounds/cues` |
 | Paper and confirm | Checklist ticks, journal notes; a piano note on confirming a decision | `sound.ts` |
 | Pouring | Taps and the tea urn; stops when the pour stops | `sound.ts` |
-| Cooking | Kettle while brewing; stew cooking, then simmering while the pot has servings | `sound/loops.ts` |
+| Cooking | Kettle while brewing; stew cooking, then simmering while the pot has servings; a pan frying while anything made at a griddle cooks (`frying`, quiet when a wood stove has no firewood) | `sound/loops.ts` |
 | Footsteps | One step per stride for the keeper and guests, at most 3 guest steps at once | `sound/footsteps.ts` |
 | Crowd | Taproom murmur in four levels by headcount (1, 6, 15, 27), crossfading once the count holds | `sound/crowd.ts`, `CROWD` |
 | Fire | Catches small, roars, settles; dies to embers when put out | `sound/fire.ts`, `FIRE` |
