@@ -54,13 +54,16 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 - Snacks in bowls on the tables and the counter: peanuts, olives, pickled eggs, crostini, bread and butter, cheese, pretzels, chestnuts, pickled onions, apple rings.
 - The bill of fare can be one all-day bill, or a bill per meal time. Each dish says where it's made (a pot on a hob, a pan, an oven, the kettle…). Dishes your kitchen can't make are greyed out, with what they need. Every card lists what a dish takes and how much of each is in the pantry.
 - **Levels and Skills.** A new keeper knows porridge, tea, coffee, stew, and bread and butter. Guests served earn experience (more for a delighted guest); each level up is a point to spend in Skills at the desk, on a new recipe or a knack (Quick hands wipes faster, Charm adds to tips). Levels get further apart.
-- **The pantry.** Cooking and pouring use stock. Order more at the desk in Supplies: a slip per supplier (what your bill uses first), sent for the carter (who leaves it in a crate by the pantry, to unpack) or fetched yourself. You start with about four busy days' worth.
+- **The pantry.** Cooking and pouring use stock, oldest first. Order more at the desk in Supplies: a slip per supplier (what your bill uses first), sent for the carter (who leaves a crate at the kitchen door; crates pile up until you carry them in) or fetched yourself. You start with about four busy days' worth.
+- **Shelf life.** Everything ages from the morning after it arrives: fish in a day or two, milk sours, meat and greens in a few days, dry goods keep. A dish made with something stale is day-old (cheaper, and guests notice). Spoiled food can't be used and stays on the shelves until you clear it at the pantry.
+- **The baker's goods.** Pies and bread bought from the baker go in the pie safe and bread case and serve anyone who orders pie or bread: no recipe or oven needed, pleasant but plain.
 
 **Coin.**
 - A purse in crowns, shillings and pence (10d = 1s, 10s = 1 crown), on the status card. You start with 2 crowns.
 - Guests always pay for what they ordered, when it's served. Tips follow how it went (a Delight tips well, Pleased a little) and build up over the visit; they're paid all at once when the guest leaves (half, if they walk out on an order). Unasked serves are on the house, though a Delight still tips.
 - Prices are worked out from what goes in (ingredients, the cook's time, a margin) and never inflate. One house-wide knob at the desk: Cheap, Fair or Dear, which also nudges how many come in.
-- Equipment, goods and supplies cost coin. Upkeep is next.
+- Equipment, goods and supplies cost coin. **Upkeep** you can see: firewood for the hearth and stoves (the hearth shows the logs left), lamp oil, sundries for each guest (without them, tips halve), and a weekly licence.
+- **Table snacks do things**: some make guests wait longer, some make them hungry or thirsty, some put them at ease. Pickled onions and the cheese board change how a taste lands (sweet tastes bright, bitter tastes rich), shown over the guest's head.
 
 **The kitchen.**
 - Equipment to buy at the desk, for coin: order it and the carter brings it the next morning, or fetch it yourself while the inn's shut (you're out about an hour and a half). Delivered pieces wait to be placed; kettles, coffee pots and a Dutch oven go on a stove's back spots from its Manage stove tab, and swap there; anything sells back for half. On offer: wood stoves with one or two hobs, a range stove (hob and oven), a bread oven that bakes two at once, a Dutch oven (bakes on a stove, slower), a prep table, kettles, a copper kettle, an urn, coffee pots, ale and cider barrels, pie safes, wider trays, seasoned firewood.

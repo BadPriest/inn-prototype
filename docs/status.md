@@ -26,7 +26,11 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
 
-## Built and deployed (Nov 19, builds 107–115)
+## Built, not deployed (Nov 19)
+
+- #63 shelf life (batches by delivery day, stages from data/spoilage.json, clear the spoiled); #62 crates pile at the kitchen door and keep their date; #64 the baker's pies and bread; #60 upkeep (firewood, lamp oil, sundries, weekly licence; wear still to design); #74 table snack effects with the tag-flip badge
+
+## Built and deployed (Nov 19, builds 107–116)
 
 - Builds 115–116: guests bob as they walk, like the keeper; a garnish board in the kitchen for dishes (the bar's spot for drinks); the objective ✓ slides out beside the card
 
@@ -97,9 +101,9 @@ In build order. Each waits on the one it builds on.
 0. **#71 game data in files** (in progress): costs, prices, dishes, equipment, suppliers and locations in [data/](../data/), checked by every build ([spec](specs/game-data.md)). The game reads economy, locations, equipment (kettles on the stove, the urn kept from the kettle, the bread case, utensils, trays with slots), dishes with worked-out prices, table snacks and garnishes from it. New dishes: soup, fish cakes, fish stew and fish pie. Deployed in build 113.
 
 1. ~~#58 coin~~ (built, build 101)
-2. ~~#59 equipment costs coin~~ (built, build 102; secondhand moved to #66) · #60 upkeep you can see (licence, fuel, light, sundries, wear)
+2. ~~#59 equipment costs coin~~ (built, build 102; secondhand moved to #66) · ~~#60 upkeep~~ (built; wear still to design)
 3. ~~#61 supplies~~ (built, build 113): the pantry runs out; a Supplies card at the desk with a slip per supplier, sent for the carter or fetched yourself
-4. #62 deliveries: the carter, crates by the kitchen door (feeds #41, day two) · #63 shelf life · #64 ready-made goods
+4. ~~#62 deliveries~~ (crates pile at the kitchen door; the carter in the world still waits on sounds) · ~~#63 shelf life~~ · ~~#64 ready-made goods~~ · ~~#74 snack effects~~
 5. Any time: #65 hearth cooking (bake kettle) · #66 the tinker and breakdowns
 6. Later: #67 equipment character and cookware · #68 the catalogue · #69 ideas not yet tasks
 

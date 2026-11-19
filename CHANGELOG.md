@@ -6,6 +6,18 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 117 · Nov 19, 2026 · not deployed
+
+### Added
+- **Shelf life.** The pantry keeps each delivery as its own batch, and batches age from the morning after they arrive, by their ingredient's profile in `data/spoilage.json`: fish turns stale in a day and spoils in two, milk sours then curdles, meat and greens last a few days, butter and bacon a week, dry goods keep. Cooking uses the oldest first. A dish made with something stale is day-old (cheaper, and guests notice); sour milk makes it sour. Spoiled batches can't be used and stay on the shelves until you **clear out the spoiled** at the pantry, which now shows how each ingredient is keeping. Waking says what's turned; ingredient cards say when the oldest is past fresh.
+- **The baker's goods.** Pell the Baker sells a baker's pie (5d, six slices) and a batch of baker's bread (3d, eight slices). Carried in, they go into the pie safe or bread case and serve anyone who orders pie or bread, with one tag (homely): pleasant for most, a Delight for almost nobody. No recipe or oven needed; pie goes on the bill marked "the baker's". A slice sells for about a penny (what it cost x 1.4, `price.readyMade`).
+- **Upkeep you can see.** Firewood (from the farm, 20 logs a cartload): the hearth burns 1.2 logs an hour while lit (more in winter or rain), each wood stove 0.6 while cooking; without wood the fire goes out and wood stoves stop, and the hearth shows the logs left. Lamp oil (0.15 pints an hour while the lamps are lit; without it they stay dark). Sundries (a little per guest; without them, tips halve). A licence of 140d every Monday. The end of the day shows what upkeep cost. A new keeper starts with 60 logs, 6 pints of oil and 2 boxes of sundries. Rates in `economy.json` `upkeep`; placeholders.
+- **Table snacks do things** while the bowl isn't empty and its tags suit the guest: roast chestnuts and apple rings make them wait longer; crostini and pickled eggs whet the appetite; salty bowls make them thirsty; bread and butter puts them at ease. Ale and cider loosen tongues too. **Pickled onions** (sweet tastes bright) and the **cheese board** (bitter tastes rich) change how a dish is judged; when that happens, a pill beside the guest's head shows the old tag and turns over to the new one, then floats off. Each snack's card says what it does.
+
+### Changed
+- **Deliveries pile up at the kitchen door**, one crate a morning, until you carry them in (one press takes the lot). Each crate's goods are dated the day it came, so a crate left waiting ages like anything else. The checklist says "Put away the delivery"; the desk says when one's due tomorrow.
+- **A new keeper starts with 32 fish and 32 pints of milk** (was 84 and 80), so less rots on day 4.
+
 ## Build 116 · Nov 19, 2026 · deployed
 
 ### Added
