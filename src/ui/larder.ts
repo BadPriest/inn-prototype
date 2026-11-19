@@ -28,6 +28,7 @@ function snackSpec(g: Game, key: string, st: { focus: number }): MenuSpec {
     const topUp = bowl?.snack === sn.id;
     g.bowls.set(key, { snack: sn.id, left: 1 });
     g.say(topUp ? `You top up the ${sn.name.toLowerCase()}.` : `You set out a bowl of ${sn.name.toLowerCase()}.`);
+    g.bus.emit({ type: "MenuSound", sound: "tick" });
     closeAll();
   };
   const cards: CardSpec[] = SNACKS.map((sn, i) => ({
@@ -94,6 +95,7 @@ function pieSpec(g: Game, st: { focus: number }): MenuSpec {
     if (what === "take") takeSlice(g, Number(id));
     else if (what === "store") { if (it) storePie(g, it); }
     else if (it) returnSlice(g, it);
+    g.bus.emit({ type: "MenuSound", sound: "tick" });
     refresh();
   };
   const store: CardSpec[] = wholes.map((w, i) => ({

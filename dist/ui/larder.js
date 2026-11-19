@@ -23,6 +23,7 @@ function snackSpec(g, key, st) {
         const topUp = bowl?.snack === sn.id;
         g.bowls.set(key, { snack: sn.id, left: 1 });
         g.say(topUp ? `You top up the ${sn.name.toLowerCase()}.` : `You set out a bowl of ${sn.name.toLowerCase()}.`);
+        g.bus.emit({ type: "MenuSound", sound: "tick" });
         closeAll();
     };
     const cards = SNACKS.map((sn, i) => ({
@@ -96,6 +97,7 @@ function pieSpec(g, st) {
         }
         else if (it)
             returnSlice(g, it);
+        g.bus.emit({ type: "MenuSound", sound: "tick" });
         refresh();
     };
     const store = wholes.map((w, i) => ({

@@ -94,6 +94,7 @@ function cookSpec(g, f, r, st) {
         if (!ready)
             return;
         startJob(g, f, r, [...st.chosen], forTicket ? ticket : null);
+        g.bus.emit({ type: "MenuSound", sound: "tick" });
         closeAll();
     };
     return {

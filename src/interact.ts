@@ -199,7 +199,7 @@ export function interact(g: Game, t: Target | null): void {
       if (g.winding) return; // already winding
       if (!gr.on) { gr.on = true; gr.spring = GRAMOPHONE.springSeconds; gramophoneWound(g); g.say("You wind the gramophone. Stay with it while the crank turns."); }
       else if (springLeft(g) === "winding down") g.say("It's winding down; give it a moment, then wind it again.");
-      else { gr.record = (gr.record + 1) % GRAMOPHONE.records.length; gramophoneChanged(); g.say("You change the record."); }
+      else { gr.record = (gr.record + 1) % GRAMOPHONE.records.length; gramophoneChanged(g); g.say("You change the record."); }
       return;
     }
     case "snacks": openSnackMenu(g, `${f.tiles[0].x},${f.tiles[0].y}`); return;
@@ -379,7 +379,7 @@ function sideActs(g: Game, f: Furniture, short: "put back" | "empty it"): Statio
 function runSide(g: Game, f: Furniture, short: "put back" | "empty it", title: string): void {
   const acts = sideActs(g, f, short);
   if (acts.length === 1) { acts[0].run(); return; }
-  openMenu({ title: f.name, subtitle: title, items: acts.map((a) => ({ label: a.label, sub: a.sub, action: () => { closeAll(); a.run(); } })) });
+  openMenu({ title: f.name, subtitle: title, items: acts.map((a) => ({ label: a.label, sub: a.sub, action: () => { closeAll(); g.bus.emit({ type: "MenuSound", sound: "tick" }); a.run(); } })) });
 }
 
 /**
@@ -424,7 +424,7 @@ function useStation(g: Game, f: Furniture): void {
   openMenu({
     title: f.name,
     subtitle: "What now?",
-    items: plan.choices.map((a) => ({ label: a.label, sub: a.sub, action: () => { closeAll(); a.run(); } })),
+    items: plan.choices.map((a) => ({ label: a.label, sub: a.sub, action: () => { closeAll(); g.bus.emit({ type: "MenuSound", sound: "tick" }); a.run(); } })),
   });
 }
 
@@ -433,6 +433,7 @@ function useStation(g: Game, f: Furniture): void {
 
 export function openJournal(g: Game): void {
   g.journalUnread = 0;
+  g.bus.emit({ type: "MenuSound", sound: "journal" });
   const known = REGULARS.filter((d) => (g.regulars.get(d.id)?.visits ?? 0) > 0);
   openMenu({
     title: "Journal",
@@ -452,19 +453,23 @@ function journalPage(g: Game, id: string): void {
   const d = REGULARS.find((x) => x.id === id)!;
   const st = g.regulars.get(id)!;
   const entries = st.journal.slice(-40).reverse();
+  g.bus.emit({ type: "MenuSound", sound: "pageTurn" });
   openMenu({
     title: st.nameKnown || !d.role ? d.name : `${d.role} (name not known yet)`,
     body: `<div class="journal"><i>${d.blurb}</i>${entries.map((e) => `<div class="je ${e.kind ?? ""}"><span class="t">${compactDate(g.dateOfDay(e.day), g.date.year)} ${e.time}</span> ${e.text}</div>`).join("") || `<div class="muted">No notes yet. Serve them something.</div>`}</div>`,
     items: [{ label: "Back", action: () => back() }],
+    onLeave: () => g.bus.emit({ type: "MenuSound", sound: "pageTurn" }), // back to the list
   });
 }
 
 function visitorPage(g: Game): void {
   const entries = g.visitorNotes.slice(-30).reverse();
+  g.bus.emit({ type: "MenuSound", sound: "pageTurn" });
   openMenu({
     title: "Passing visitors",
     body: `<div class="journal">${entries.map((e) => `<div class="je ${e.kind ?? ""}"><span class="t">${compactDate(g.dateOfDay(e.day), g.date.year)} ${e.time}</span> ${e.text}</div>`).join("") || "Nothing yet."}</div>`,
     items: [{ label: "Back", action: () => back() }],
+    onLeave: () => g.bus.emit({ type: "MenuSound", sound: "pageTurn" }), // back to the list
   });
 }
 
@@ -503,6 +508,7 @@ function goToSleep(g: Game): void {
   const fade = document.getElementById("fade")!;
   g.modal = true;
   fade.classList.add("on");
+  g.bus.emit({ type: "TurnedIn" });
   setTimeout(() => {
     const s = endDay(g);
     const o = s.outcomes;

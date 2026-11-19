@@ -3,7 +3,8 @@ node_modules/
 .vercel
 .env*
 
-# Original songs (the game plays the smaller copies in assets/sounds/gramophone)
+# Original songs: in-game-tracks/ (the gramophone's records) and bgm/ (background music).
+# The game plays the smaller copies in assets/sounds/gramophone and assets/sounds/bgm
 assets/sounds/music/
 
 # Never commit or deploy account recovery codes

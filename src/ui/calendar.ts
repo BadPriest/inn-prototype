@@ -18,6 +18,7 @@ function dayWeather(s: DayStats | undefined): string {
 }
 
 export function openCalendar(g: Game): void {
+  g.bus.emit({ type: "MenuSound", sound: "calendar" });
   const today = g.date;
   const seasonIndex = CALENDAR.seasons.findIndex((s) => s.id === today.season);
   const length = g.loc.days[seasonIndex];

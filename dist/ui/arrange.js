@@ -20,6 +20,7 @@ export function startArranging(g, deliveredType) {
     g.keeper.path = [];
     g.keeper.pendingInteract = null;
     verdicts.clear();
+    g.bus.emit({ type: "MenuSound", sound: "tableTap" });
     bar(g);
 }
 export function stopArranging(g) {
@@ -27,6 +28,7 @@ export function stopArranging(g) {
         g.say(`The ${eqOf(g.arranging.holding.type).name.toLowerCase()} waits by the door to be placed.`);
     g.arranging = null;
     document.getElementById("arrange-bar")?.remove();
+    g.bus.emit({ type: "Confirmed" }); // the piano: the kitchen's arranged
 }
 /** Where the held piece would go, from the tile under the mouse. */
 function anchor(g) {
@@ -94,7 +96,7 @@ export function arrangeClick(g, p) {
     grab = { x: 0, y: 0 };
     verdicts.clear();
     g.rebuildWorld();
-    g.bus.emit({ type: "Confirmed" });
+    g.bus.emit({ type: "MenuSound", sound: "tableTap" }); // set down
     bar(g);
 }
 /** Esc or right-click: put back what you're holding; with nothing held, finish arranging. */
@@ -123,6 +125,7 @@ export function arrangeRemove(g) {
         if (i >= 0)
             g.toPlace.splice(i, 1);
         const got = sellBack(g, h.type);
+        g.bus.emit({ type: "MenuSound", sound: "coins" });
         g.say(`You sell the ${eqOf(h.type).name.toLowerCase()} back for ${fmtMoney(got)}.`);
         g.arranging.holding = undefined;
         bar(g);
@@ -140,6 +143,7 @@ export function arrangeRemove(g) {
     }
     g.layout = g.layout.filter((x) => x.uid !== h.uid);
     const got = sellBack(g, h.type);
+    g.bus.emit({ type: "MenuSound", sound: "coins" });
     g.say(`You sell the ${eqOf(h.type).name.toLowerCase()} for ${fmtMoney(got)}.`);
     g.arranging.holding = undefined;
     verdicts.clear();

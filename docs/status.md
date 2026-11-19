@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 18, 2026 · build 106 (deployed) · https://inn-prototype.vercel.app
+Updated Nov 19, 2026 · build 107 (deployed) · https://inn-prototype.vercel.app
 
 History by build: [../CHANGELOG.md](../CHANGELOG.md). What the prototype is and how to play: [../README.md](../README.md).
 
@@ -25,6 +25,10 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - #9 gramophone: horn and turntable tone; winding has a progress bar; the spring runs ~4 min (short for testing) and sags the record when it gives out (per [specs/sound.md](specs/sound.md))
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
+
+## Built and deployed (Nov 19, build 107)
+
+- Build 107: gramophone carries on where it stopped when wound again; background music after 90 s without music (six tracks); sounds for the desk and in-world menus (sitting down, papers, pen ticks, page turns, coins, the pause latch); The Last Candle jingle when turning in
 
 ## Built and deployed (Nov 18, builds 100–103)
 

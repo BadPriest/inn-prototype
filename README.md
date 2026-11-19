@@ -66,12 +66,13 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 
 **The inn.** Light changes with the hour, the calendar season and the weather. The keeper lights the lamps when it gets gloomy and carries a candle at night. The other parts of the inn:
 - a fire to light and keep going
-- a gramophone with records and a spring that runs down
+- a gramophone with records and a spring that runs down (wound again, it carries on where it stopped)
+- background music when the gramophone has been quiet a while
 - crumbs and spills to clean
 - a counter flap behind the bar
 - a coat hall
 
-**Sound.** Every action and event has a cue. Rain, wind, thunder, the street, the fire, the kettle and the stew all have their own sounds. The crowd's murmur follows the headcount, and records play on the gramophone. Volume sliders cover effects, music and background, and the sound fades in as the keeper wakes.
+**Sound.** Every action and event has a cue. Rain, wind, thunder, the street, the fire, the kettle and the stew all have their own sounds. The crowd's murmur follows the headcount, records play on the gramophone, and background music fills long silences. Volume sliders cover effects, music and background, and the sound fades in as the keeper wakes.
 
 **Screen and settings.**
 - Top-down or isometric view, with zoom and a turnable camera.
@@ -121,7 +122,7 @@ The built `dist/` folder and `standalone.html` are committed, so a fresh clone r
 | `src/door.ts` | The front door |
 | `src/day.ts` | Clock, meal times, open and close, turning in, saving |
 | `src/interact.ts` | What Space (and R, X) do on each thing; crafting and journal menus |
-| `src/sound.ts`, `src/sound/` | What plays when; the engine (loudness, placement, walls), loops, footsteps, crowd, fire, weather, gramophone |
+| `src/sound.ts`, `src/sound/` | What plays when; the engine (loudness, placement, walls), loops, footsteps, crowd, fire, weather, gramophone, background music |
 | `src/ui/render.ts` | The top-down view |
 | `src/ui/render-iso.ts` | The isometric view (blocks sorted by depth, clicks that allow for height) |
 | `src/ui/proj.ts` | Tiles to screen and back for both views, camera turning |

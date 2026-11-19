@@ -6,8 +6,8 @@ export interface MenuItem {
   disabled?: boolean;
   /** Shown as a button at the bottom instead of a list row. "primary" is the main thing to do. */
   button?: "primary" | "secondary";
-  /** Play the confirm sound (piano) when pressed. Only for decisions like the bill of fare or an
-   *  upgrade, not routine work (cooking, garnishing). */
+  /** Play the confirm sound (piano) when pressed: decisions outside the world (where to start, settings).
+   *  In-world menus tick a box instead (the MenuSound "tick"). */
   confirmSound?: boolean;
   action: () => void;
 }
@@ -35,6 +35,8 @@ export interface MenuSpec {
    *  screens (bill of fare, calendar, newspaper, upgrades, journal), wherever they're opened from. */
   holdsClock?: boolean;
   onClose?: () => void;
+  /** This screen is left: Back, or the menus closing (not when it's redrawn with replaceMenu). */
+  onLeave?: () => void;
 }
 
 interface Open { spec: MenuSpec; index: number }
@@ -79,6 +81,7 @@ export function replaceMenu(spec: MenuSpec): void {
 
 export function back(): void {
   const top = stack.pop();
+  top?.spec.onLeave?.();
   if (top && stack.length === 0) top.spec.onClose?.();
   render();
 }
@@ -86,7 +89,7 @@ export function back(): void {
 export function closeAll(): void {
   const had = stack.length > 0;
   const bottom = stack[0];
-  stack.length = 0;
+  for (const o of stack.splice(0).reverse()) o.spec.onLeave?.();
   if (had) bottom.spec.onClose?.();
   render();
 }

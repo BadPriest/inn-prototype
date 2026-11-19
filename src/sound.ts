@@ -6,9 +6,11 @@
 //   sound/fire.ts       the fire: catches, roars, settles; embers when put out
 //   sound/weather.ts    rain indoors, through the open door, and at the windows, mixed by intensity
 //   sound/gramophone.ts records from the gramophone, a few per winding
+//   sound/bgm.ts        background music when the gramophone has been quiet a while
 // This file listens to game events and calls soundscape() every frame. M mutes; pause silences everything.
 
 import type { Game } from "./game.js";
+import type { MenuSound } from "./core.js";
 import { DOOR_TUNING, OUTCOME_SOUND, SOUND_TUNING as T } from "./data.js";
 import { attach, output, play, ready, resume, ringsOut, stop, suspend, updateVoices, vary, wakeUp, type Voice } from "./sound/engine.js";
 import { cookingLoops } from "./sound/loops.js";
@@ -17,6 +19,7 @@ import { crowd } from "./sound/crowd.js";
 import { fire } from "./sound/fire.js";
 import { thunder, weatherSound } from "./sound/weather.js";
 import { gramophoneSound } from "./sound/gramophone.js";
+import { bgmSound, hushBgm } from "./sound/bgm.js";
 
 export { isMuted, toggleMute, unlockAudio } from "./sound/engine.js";
 
@@ -29,6 +32,7 @@ export function soundscape(g: Game, realDt: number): void {
   fire(g, realDt);
   weatherSound(g, realDt);
   gramophoneSound(g, realDt);
+  bgmSound(g, realDt);
   updateVoices();
 }
 
@@ -117,6 +121,19 @@ const synth = {
   snap: () => { tone(1800, 0, 0.035, 0.035, "triangle"); tone(900, 0.012, 0.05, 0.03, "triangle"); },
 };
 
+// The in-world menus. Opening the desk is two sounds: you sit, then shuffle the papers.
+const MENU_KEY: Record<Exclude<MenuSound, "desk">, string> = {
+  tick: "menuTick", pageTurn: "menuPageTurn", journal: "menuJournal", paperOpen: "menuPaperOpen", paperClose: "menuPaperClose",
+  calendar: "menuCalendar", billOfFare: "menuBillOfFare", prices: "menuPrices", coins: "menuCoins", penClick: "menuPenClick", tableTap: "menuTableTap",
+};
+let paperOpening: Voice | null = null;
+function menuSound(s: MenuSound): void {
+  if (s === "desk") { play("menuSit", null); setTimeout(() => play("menuShuffle", null), T.deskShuffleAfterMs); return; }
+  if (s === "paperClose") { stop(paperOpening, 150); paperOpening = null; } // folded up before it finished opening
+  const v = play(MENU_KEY[s], null);
+  if (s === "paperOpen") paperOpening = v;
+}
+
 export function initSound(g: Game): void {
   attach(g);
   g.bus.on((e) => {
@@ -139,9 +156,11 @@ export function initSound(g: Game): void {
       case "DayStarted": wakeUp(); break;
       case "Thunder": thunder(e.near); break;
       case "Confirmed": if (T.confirmSound) play("confirm", null); break;
+      case "MenuSound": menuSound(e.sound); break;
+      case "TurnedIn": hushBgm(); play("turnIn", null); break; // The Last Candle
       case "PatronLeft": if (e.early) synth.leave(); break;
       case "Log": if (e.text.startsWith("✦")) setTimeout(() => synth.moment(), 350); break;
-      case "Paused": suspend(); break;
+      case "Paused": { const v = play("menuPause", null); suspend(v ? ringsOut(v) * 1000 + 50 : 0); break; } // the latch, then quiet
       case "Resumed": resume(); break;
     }
   });

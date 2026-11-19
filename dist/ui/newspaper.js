@@ -6,7 +6,7 @@ export function openNewspaper(g) {
     if (!p)
         return;
     p.read = true;
-    g.bus.emit({ type: "Paper", what: "journal" });
+    g.bus.emit({ type: "MenuSound", sound: "paperOpen" });
     const title = `The ${g.loc.name === "Town centre" ? "Town" : g.loc.name} Courier`;
     openMenu({
         title: `📰 ${title}`,
@@ -17,5 +17,6 @@ export function openNewspaper(g) {
       <h4>Around town</h4>${p.news.map((n) => `<p>${n}</p>`).join("")}
     </div>`,
         items: [{ label: "Fold it up", button: "secondary", action: () => back() }],
+        onLeave: () => g.bus.emit({ type: "MenuSound", sound: "paperClose" }),
     });
 }

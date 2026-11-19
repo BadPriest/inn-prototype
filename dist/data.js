@@ -518,6 +518,22 @@ export const GRAMOPHONE = {
     springSeconds: 240,
     // Giving out mid-record: the last seconds sag to this speed and level (pitch drags down with it).
     sag: { seconds: 5, toRate: 0.45, toLevel: 0.35 },
+    // Wound again after it gave out mid-record: the record carries on from where it stopped, coming back up
+    // from the sag's speed to full over this many seconds.
+    resume: { spinUpSeconds: 0.8 },
+};
+/**
+ * Background music (sound/bgm.ts): when the gramophone has been silent a while, a track plays softly,
+ * then quiet again before the next. Winding the gramophone fades it out. Counted in real seconds, not
+ * while paused. To add a track: a SOUNDS entry (like bgmDawn) and its key here.
+ */
+export const BGM = {
+    tracks: ["bgmDawn", "bgmRain", "bgmMorning", "bgmHills", "bgmRoad", "bgmRiver"],
+    quietSeconds: 90, // silence (no gramophone, no background track) before a track starts
+    fadeInMs: 6000, // from silence as a track starts
+    endFadeMs: 8000, // a track fades away over its last seconds, rather than stopping where the file ends
+    fadeOutMs: 4000, // when the gramophone starts
+    hushMs: 1500, // when the turning-in jingle plays
 };
 /** Market day: busier around the middle of the day. */
 export const MARKET = { from: 9, to: 15, flow: 1.5 };
@@ -650,81 +666,106 @@ export const GRAMOPHONE_TONE = {
 };
 const SND = "assets/sounds/";
 export const SOUNDS = {
-    doorOpens: { files: [SND + "door-opens-1.opus"], volume: 0.8, pitch: 0.05 },
-    doorCloses: { files: [SND + "door-closes.opus"], volume: 0.8, pitch: 0.05 },
-    bell: { bus: "cue", files: [SND + "shopkeeper-bell-1.opus", SND + "shopkeeper-bell-2.opus"], volume: 0.55, pitch: 0.05, heardEverywhere: true },
-    pour: { files: [SND + "drink-pouring-1.opus", SND + "drink-pouring-2.opus", SND + "drink-pouring-3.opus"], volume: 0.7, pitch: 0.07 },
+    doorOpens: { files: [SND + "foley/door-opens-1.opus"], volume: 0.8, pitch: 0.05 },
+    doorCloses: { files: [SND + "foley/door-closes.opus"], volume: 0.8, pitch: 0.05 },
+    bell: { bus: "cue", files: [SND + "foley/shopkeeper-bell-1.opus", SND + "foley/shopkeeper-bell-2.opus"], volume: 0.55, pitch: 0.05, heardEverywhere: true },
+    pour: { files: [SND + "foley/drink-pouring-1.opus", SND + "foley/drink-pouring-2.opus", SND + "foley/drink-pouring-3.opus"], volume: 0.7, pitch: 0.07 },
     // A cup from the urn (TUNING.urnPourSeconds long, about 2 s).
-    urnPour: { files: [SND + "tea-pouring.opus"], volume: 0.6, pitch: 0.06 },
-    kettle: { files: [SND + "kettle-water-boiling-looping.opus"], volume: 0.45, pitch: 0.04, loop: true },
-    stewCooking: { files: [SND + "stew-cooking-loop.opus"], volume: 0.5, pitch: 0.04, loop: true },
-    stewSimmering: { files: [SND + "stew-simmering-loop.opus"], volume: 0.4, pitch: 0.04, loop: true },
+    urnPour: { files: [SND + "foley/tea-pouring.opus"], volume: 0.6, pitch: 0.06 },
+    kettle: { files: [SND + "cooking/kettle-water-boiling-looping.opus"], volume: 0.45, pitch: 0.04, loop: true },
+    stewCooking: { files: [SND + "cooking/stew-cooking-loop.opus"], volume: 0.5, pitch: 0.04, loop: true },
+    stewSimmering: { files: [SND + "cooking/stew-simmering-loop.opus"], volume: 0.4, pitch: 0.04, loop: true },
     // Footsteps: one step per stride (see SOUND_TUNING), so the pace always matches the walking.
-    keeperWalk: { files: [SND + "indoors-walk-step-loop.opus", SND + "indoors-walk-cycle-4-step-loop.opus"], volume: 0.4, pitch: 0.06, slice: true },
-    keeperRun: { files: [SND + "indoors-run-cycle-loop.opus"], volume: 0.45, pitch: 0.06, slice: true },
-    patronStep: { files: [SND + "indoors-walk-step-loop.opus", SND + "indoors-walk-cycle-4-step-loop.opus"], volume: 0.16, pitch: 0.1, slice: true },
+    keeperWalk: { files: [SND + "foley/indoors-walk-step-loop.opus", SND + "foley/indoors-walk-cycle-4-step-loop.opus"], volume: 0.4, pitch: 0.06, slice: true },
+    keeperRun: { files: [SND + "foley/indoors-run-cycle-loop.opus"], volume: 0.45, pitch: 0.06, slice: true },
+    patronStep: { files: [SND + "foley/indoors-walk-step-loop.opus", SND + "foley/indoors-walk-cycle-4-step-loop.opus"], volume: 0.16, pitch: 0.1, slice: true },
     // Cues: the game telling you something. Chords barely vary in pitch, so they stay in tune.
-    order: { bus: "cue", files: [SND + "order-two-taps.opus", SND + "order-three-taps.opus"], volume: 0.5, pitch: 0.05, trim: true, heardEverywhere: true },
-    paper: { bus: "cue", files: [SND + "check-sound.opus"], volume: 0.45, pitch: 0.04, trim: true },
+    order: { bus: "cue", files: [SND + "cues/order-two-taps.opus", SND + "cues/order-three-taps.opus"], volume: 0.5, pitch: 0.05, trim: true, heardEverywhere: true },
+    paper: { bus: "cue", files: [SND + "cues/check-sound.opus"], volume: 0.45, pitch: 0.04, trim: true },
     // Confirming a decision: putting up the bill of fare, taking an upgrade. Not routine work (cooking,
     // garnishing). Which buttons play it: confirmSound on a MenuItem, or confirmed() in menu.ts.
     // Switch off with SOUND_TUNING.confirmSound.
-    confirm: { bus: "cue", files: [SND + "piano-confirm.opus"], volume: 0.45, pitch: 0.01, trim: true },
-    servePositive: { bus: "cue", files: [SND + "serving-outcome-positive-1-chord.opus", SND + "serving-outcome-positive-2-chord.opus"], volume: 0.5, pitch: 0.01, trim: true },
-    serveNeutral: { bus: "cue", files: [SND + "serving-outcome-neutral-1-chord.opus", SND + "serving-outcome-neutral-2-chord.opus"], volume: 0.45, pitch: 0.01, trim: true },
-    serveNegative: { bus: "cue", files: [SND + "serving-outcome-negative-1-chord.opus", SND + "serving-outcome-negative-2-chord.opus"], volume: 0.45, pitch: 0.01, trim: true },
-    delight: { bus: "cue", files: [SND + "delight-1.opus", SND + "delight-2.opus"], volume: 0.6, pitch: 0.01, trim: true },
+    confirm: { bus: "cue", files: [SND + "cues/piano-confirm.opus"], volume: 0.45, pitch: 0.01, trim: true },
+    // The in-world menus (sound.ts menuSound, on MenuSound events): the desk, its papers and books.
+    menuSit: { bus: "cue", files: [SND + "menus/sfx-sitting-down.opus"], volume: 0.45, pitch: 0.03, trim: true }, // opening the desk...
+    menuShuffle: { bus: "cue", files: [SND + "menus/sfx-paper-shuffling.opus"], volume: 0.4, pitch: 0.04, trim: true }, // ...then its papers
+    menuPause: { bus: "cue", files: [SND + "menus/sfx-wooden-latch-open.opus"], volume: 0.45, pitch: 0.03, trim: true }, // the pause screen
+    menuTick: { bus: "cue", files: [SND + "menus/sfx-pen-checkbox-1.opus", SND + "menus/sfx-pen-checkbox-2.opus"], volume: 0.45, pitch: 0.04 }, // confirming in an in-world menu
+    menuPageTurn: { bus: "cue", files: [SND + "menus/sfx-page-turn-1.opus", SND + "menus/sfx-page-turn-2.opus"], volume: 0.4, pitch: 0.05 }, // journal pages, menu tabs
+    menuJournal: { bus: "cue", files: [SND + "menus/sfx-journal-opening.opus"], volume: 0.45, pitch: 0.03, trim: true },
+    menuPaperOpen: { bus: "cue", files: [SND + "menus/sfx-newspaper-opening.opus"], volume: 0.4, pitch: 0.03 },
+    menuPaperClose: { bus: "cue", files: [SND + "menus/sfx-newspaper-closing.opus"], volume: 0.4, pitch: 0.03, trim: true },
+    menuCalendar: { bus: "cue", files: [SND + "menus/sfx-calendar-flipbook.opus"], volume: 0.45, pitch: 0.03 },
+    menuBillOfFare: { bus: "cue", files: [SND + "menus/sfx-pickup-paper.opus"], volume: 0.4, pitch: 0.03, trim: true },
+    menuPrices: { bus: "cue", files: [SND + "menus/sfx-house-prices.opus"], volume: 0.45, pitch: 0.03, trim: true },
+    menuCoins: { bus: "cue", files: [SND + "menus/sfx-coins-clinking.opus"], volume: 0.45, pitch: 0.04 }, // buying equipment, selling it back
+    menuPenClick: { bus: "cue", files: [SND + "menus/sfx-pen-clicking.opus"], volume: 0.4, pitch: 0.04, trim: true }, // a desk card with no sound of its own
+    menuTableTap: { bus: "cue", files: [SND + "menus/sfx-wooden-table-tap.opus"], volume: 0.45, pitch: 0.05 }, // arranging: starting, setting a piece down
+    servePositive: { bus: "cue", files: [SND + "cues/serving-outcome-positive-1-chord.opus", SND + "cues/serving-outcome-positive-2-chord.opus"], volume: 0.5, pitch: 0.01, trim: true },
+    serveNeutral: { bus: "cue", files: [SND + "cues/serving-outcome-neutral-1-chord.opus", SND + "cues/serving-outcome-neutral-2-chord.opus"], volume: 0.45, pitch: 0.01, trim: true },
+    serveNegative: { bus: "cue", files: [SND + "cues/serving-outcome-negative-1-chord.opus", SND + "cues/serving-outcome-negative-2-chord.opus"], volume: 0.45, pitch: 0.01, trim: true },
+    delight: { bus: "cue", files: [SND + "cues/delight-1.opus", SND + "cues/delight-2.opus"], volume: 0.6, pitch: 0.01, trim: true },
     // A guest paying us (assets/sounds/sfx). Which one: by how it went, then by the biggest coin (COIN_SOUND).
-    coinsPennies: { bus: "cue", files: [SND + "sfx/sfx-coins-pennies.opus"], volume: 0.5, pitch: 0.06, trim: true },
-    coinsPayment: { bus: "cue", files: [SND + "sfx/sfx-coins-payment.opus"], volume: 0.5, pitch: 0.05, trim: true },
-    coinsSilver: { bus: "cue", files: [SND + "sfx/sfx-coins-silver.opus"], volume: 0.5, pitch: 0.05, trim: true },
-    coinsCrowns: { bus: "cue", files: [SND + "sfx/sfx-coins-crowns-1.opus", SND + "sfx/sfx-coins-crowns-2.opus"], volume: 0.55, pitch: 0.04, trim: true },
+    coinsPennies: { bus: "cue", files: [SND + "cues/sfx-coins-pennies.opus"], volume: 0.5, pitch: 0.06, trim: true },
+    coinsPayment: { bus: "cue", files: [SND + "cues/sfx-coins-payment.opus"], volume: 0.5, pitch: 0.05, trim: true },
+    coinsSilver: { bus: "cue", files: [SND + "cues/sfx-coins-silver.opus"], volume: 0.5, pitch: 0.05, trim: true },
+    coinsCrowns: { bus: "cue", files: [SND + "cues/sfx-coins-crowns-1.opus", SND + "cues/sfx-coins-crowns-2.opus"], volume: 0.55, pitch: 0.04, trim: true },
     // The tip, paid on the way out: the Delight coins if anything that visit delighted them; else the coin
     // purse for a bigger one (SOUND_TUNING.bigTipPence and up), the small tip sound for a few pennies.
-    coinsDelight: { bus: "cue", files: [SND + "sfx/sfx-coins-payment-delight.opus"], volume: 0.6, pitch: 0.03, trim: true },
-    coinsTip: { bus: "cue", files: [SND + "sfx/sfx-coins-payment-coin-purse.opus"], volume: 0.55, pitch: 0.04, trim: true },
-    coinsTipSmall: { bus: "cue", files: [SND + "sfx/sfx-coins-payment-tip.opus"], volume: 0.5, pitch: 0.04, trim: true },
+    coinsDelight: { bus: "cue", files: [SND + "cues/sfx-coins-payment-delight.opus"], volume: 0.6, pitch: 0.03, trim: true },
+    coinsTip: { bus: "cue", files: [SND + "cues/sfx-coins-payment-coin-purse.opus"], volume: 0.55, pitch: 0.04, trim: true },
+    coinsTipSmall: { bus: "cue", files: [SND + "cues/sfx-coins-payment-tip.opus"], volume: 0.5, pitch: 0.04, trim: true },
     // The fire, heard from the fireplace. Which plays when: FIRE below.
-    fireSmall: { files: [SND + "fireplace-small-loop.opus"], volume: 0.21, pitch: 0.03, loop: true },
-    fireMedium: { files: [SND + "fireplace-med-loop.opus"], volume: 0.3, pitch: 0.03, loop: true },
-    fireLarge: { files: [SND + "fireplace-large-loop.opus"], volume: 0.36, pitch: 0.03, loop: true },
+    fireSmall: { files: [SND + "fire/fireplace-small-loop.opus"], volume: 0.21, pitch: 0.03, loop: true },
+    fireMedium: { files: [SND + "fire/fireplace-med-loop.opus"], volume: 0.3, pitch: 0.03, loop: true },
+    fireLarge: { files: [SND + "fire/fireplace-large-loop.opus"], volume: 0.36, pitch: 0.03, loop: true },
     // The murmur of the taproom, by how many people are in it (CROWD below).
-    crowdLow: { files: [SND + "occupancy-bg-low-1-loop.opus", SND + "occupancy-bg-low-2-loop.opus"], volume: 0.28, pitch: 0.02, loop: true, room: "taproom" },
-    crowdComfortable: { files: [SND + "occupancy-bg-comfortable-1-loop.opus"], volume: 0.36, pitch: 0.02, loop: true, room: "taproom" },
-    crowdBusy: { files: [SND + "occupancy-bg-busy-1-loop.opus"], volume: 0.44, pitch: 0.02, loop: true, room: "taproom" },
-    crowdPacked: { files: [SND + "occupancy-bg-packed-1-loop.opus"], volume: 0.5, pitch: 0.02, loop: true, room: "taproom" },
+    crowdLow: { files: [SND + "ambience/occupancy-bg-low-1-loop.opus", SND + "ambience/occupancy-bg-low-2-loop.opus"], volume: 0.28, pitch: 0.02, loop: true, room: "taproom" },
+    crowdComfortable: { files: [SND + "ambience/occupancy-bg-comfortable-1-loop.opus"], volume: 0.36, pitch: 0.02, loop: true, room: "taproom" },
+    crowdBusy: { files: [SND + "ambience/occupancy-bg-busy-1-loop.opus"], volume: 0.44, pitch: 0.02, loop: true, room: "taproom" },
+    crowdPacked: { files: [SND + "ambience/occupancy-bg-packed-1-loop.opus"], volume: 0.5, pitch: 0.02, loop: true, room: "taproom" },
     // Weather (sound/weather.ts mixes these by rain intensity; WEATHER_SOUND below).
     // Indoors: the rain on the building, heard everywhere inside.
-    rainSoftIn: { files: [SND + "rain-soft-ambience-loop.opus"], volume: 0.22, pitch: 0.01, loop: true },
-    rainMediumIn: { files: [SND + "rain-medium-ambience-loop.opus"], volume: 0.3, pitch: 0.01, loop: true },
-    rainStormIn: { files: [SND + "rain-storm-ambience-loop.opus"], volume: 0.4, pitch: 0.01, loop: true },
+    rainSoftIn: { files: [SND + "weather/rain-soft-ambience-loop.opus"], volume: 0.22, pitch: 0.01, loop: true },
+    rainMediumIn: { files: [SND + "weather/rain-medium-ambience-loop.opus"], volume: 0.3, pitch: 0.01, loop: true },
+    rainStormIn: { files: [SND + "weather/rain-storm-ambience-loop.opus"], volume: 0.4, pitch: 0.01, loop: true },
     // Outdoors: heard from the front door while it's open.
-    rainSoftOut: { files: [SND + "rain-soft-outside-ambience-loop.opus"], volume: 0.55, pitch: 0.01, loop: true },
-    rainMediumOut: { files: [SND + "rain-medium-outside-ambience-loop.opus"], volume: 0.65, pitch: 0.01, loop: true },
+    rainSoftOut: { files: [SND + "weather/rain-soft-outside-ambience-loop.opus"], volume: 0.55, pitch: 0.01, loop: true },
+    rainMediumOut: { files: [SND + "weather/rain-medium-outside-ambience-loop.opus"], volume: 0.65, pitch: 0.01, loop: true },
     // At the windows: louder as the keeper walks near one.
-    rainWindow: { files: [SND + "sfx-rain-window-loop.opus"], volume: 0.4, pitch: 0.02, loop: true },
+    rainWindow: { files: [SND + "weather/sfx-rain-window-loop.opus"], volume: 0.4, pitch: 0.02, loop: true },
     // Wind outside: heard faintly around the building, fully through the open door.
-    windSoft: { files: [SND + "wind-soft-outside-ambience-loop.opus"], volume: 0.35, pitch: 0.02, loop: true },
-    windMedium: { files: [SND + "wind-medium-outside-ambience-loop.opus"], volume: 0.45, pitch: 0.02, loop: true },
-    windStrong: { files: [SND + "wind-strong-outside-ambience-loop.opus"], volume: 0.55, pitch: 0.02, loop: true },
-    // The gramophone's records (assets/sounds/gramophone: smaller copies of the originals in music/).
+    windSoft: { files: [SND + "weather/wind-soft-outside-ambience-loop.opus"], volume: 0.35, pitch: 0.02, loop: true },
+    windMedium: { files: [SND + "weather/wind-medium-outside-ambience-loop.opus"], volume: 0.45, pitch: 0.02, loop: true },
+    windStrong: { files: [SND + "weather/wind-strong-outside-ambience-loop.opus"], volume: 0.55, pitch: 0.02, loop: true },
+    // The gramophone's records (assets/sounds/gramophone: smaller copies of the originals in music/in-game-tracks/).
     recordBoat: { tone: "gramophone", bus: "music", files: [SND + "gramophone/go-little-boat.opus"], volume: 0.2, pitch: 0 },
     recordBlow: { tone: "gramophone", bus: "music", files: [SND + "gramophone/let-it-blow.opus"], volume: 0.2, pitch: 0 },
     recordRound: { tone: "gramophone", bus: "music", files: [SND + "gramophone/round-we-go.opus"], volume: 0.2, pitch: 0 },
     recordApple: { tone: "gramophone", bus: "music", files: [SND + "gramophone/the-apple-tree.opus"], volume: 0.2, pitch: 0 },
     recordRoad: { tone: "gramophone", bus: "music", files: [SND + "gramophone/the-road-can-wait.opus"], volume: 0.2, pitch: 0 },
     // The gramophone's own sounds: winding it, the needle, the surface noise, the end of a record, the spring giving out.
-    gramoCrank: { bus: "music", files: [SND + "sfx-gramophone-winding-crank.opus"], volume: 0.5, pitch: 0.03 },
-    gramoNeedle: { bus: "music", files: [SND + "sfx-gramophone-needle-drop.opus"], volume: 0.45, pitch: 0.04, trim: true },
-    gramoCrackle: { bus: "music", files: [SND + "sfx-gramophone-surface-crackle-loop.opus", SND + "sfx-gramophone-surface-crackle-loop-2.opus"], volume: 0.12, pitch: 0.02, loop: true },
-    gramoRunout: { bus: "music", files: [SND + "sfx-gramophone-record-finished.opus"], volume: 0.4, pitch: 0.02 },
-    gramoWindDown: { bus: "music", files: [SND + "sfx-gramophone-winding-down.opus"], volume: 0.5, pitch: 0.02 },
+    gramoCrank: { bus: "music", files: [SND + "gramophone/sfx-gramophone-winding-crank.opus"], volume: 0.5, pitch: 0.03 },
+    gramoNeedle: { bus: "music", files: [SND + "gramophone/sfx-gramophone-needle-drop.opus"], volume: 0.45, pitch: 0.04, trim: true },
+    gramoCrackle: { bus: "music", files: [SND + "gramophone/sfx-gramophone-surface-crackle-loop.opus", SND + "gramophone/sfx-gramophone-surface-crackle-loop-2.opus"], volume: 0.12, pitch: 0.02, loop: true },
+    gramoRunout: { bus: "music", files: [SND + "gramophone/sfx-gramophone-record-finished.opus"], volume: 0.4, pitch: 0.02 },
+    gramoWindDown: { bus: "music", files: [SND + "gramophone/sfx-gramophone-winding-down.opus"], volume: 0.5, pitch: 0.02 },
+    // Background music (sound/bgm.ts): plays when the gramophone has been quiet a while. Clean, not through
+    // the horn, heard the same everywhere. Originals are in assets/sounds/music/bgm/.
+    // A jingle as the keeper turns in (sound.ts, on TurnedIn): a short piece of its own, not in the rotation.
+    turnIn: { bus: "music", heardEverywhere: true, files: [SND + "jingles/the-last-candle.opus"], volume: 0.25, pitch: 0 }, // The Last Candle
+    bgmDawn: { bus: "music", heardEverywhere: true, files: [SND + "bgm/dawn-in-the-vale.opus"], volume: 0.15, pitch: 0 }, // Dawn in the Vale
+    bgmRain: { bus: "music", heardEverywhere: true, files: [SND + "bgm/a-day-of-gentle-rain.opus"], volume: 0.15, pitch: 0 }, // A Day of Gentle Rain
+    bgmMorning: { bus: "music", heardEverywhere: true, files: [SND + "bgm/a-rather-busy-morning.opus"], volume: 0.15, pitch: 0 }, // A Rather Busy Morning
+    bgmHills: { bus: "music", heardEverywhere: true, files: [SND + "bgm/beyond-the-green-hills.opus"], volume: 0.15, pitch: 0 }, // Beyond the Green Hills
+    bgmRoad: { bus: "music", heardEverywhere: true, files: [SND + "bgm/the-long-road-ahead.opus"], volume: 0.15, pitch: 0 }, // The Long Road Ahead
+    bgmRiver: { bus: "music", heardEverywhere: true, files: [SND + "bgm/where-the-river-bends.opus"], volume: 0.15, pitch: 0 }, // Where the River Bends
     // Thunder in the storm band: a close crack now and then, otherwise a rumble nearby.
-    thunderClose: { files: [SND + "sfx-thunder-close-1.opus", SND + "sfx-thunder-close-2.opus"], volume: 0.7, pitch: 0.06, heardEverywhere: true },
-    thunderNearby: { files: [SND + "sfx-thunder-nearby-1.opus", SND + "sfx-thunder-nearby-2.opus"], volume: 0.5, pitch: 0.06, heardEverywhere: true },
+    thunderClose: { files: [SND + "weather/sfx-thunder-close-1.opus", SND + "weather/sfx-thunder-close-2.opus"], volume: 0.7, pitch: 0.06, heardEverywhere: true },
+    thunderNearby: { files: [SND + "weather/sfx-thunder-nearby-1.opus", SND + "weather/sfx-thunder-nearby-2.opus"], volume: 0.5, pitch: 0.06, heardEverywhere: true },
     // The street outside, heard through the open front door. Which one: WEATHER_SOUND.street.
-    streetTown: { files: [SND + "street-loop-towncenter.opus"], volume: 0.5, pitch: 0.01, loop: true },
-    streetCountry: { files: [SND + "street-loop-countryside.opus"], volume: 0.5, pitch: 0.01, loop: true },
+    streetTown: { files: [SND + "ambience/street-loop-towncenter.opus"], volume: 0.5, pitch: 0.01, loop: true },
+    streetCountry: { files: [SND + "ambience/street-loop-countryside.opus"], volume: 0.5, pitch: 0.01, loop: true },
 };
 /**
  * How the weather layers mix. Each layer's share by rain intensity (0..1): [from, full, fadesFrom, gone]
@@ -772,7 +813,8 @@ export const SOUND_TUNING = {
     outcomeBreathMs: 300, // serving a whole table: each reaction rings out, then this pause, then the next
     outcomeBreathJitterMs: 70, // ...give or take, so it feels played rather than sequenced
     paperGapMs: 300, // two paper ticks closer than this sound as one
-    confirmSound: true, // a piano note when you confirm a decision (bill of fare, upgrades): the "confirm" sound
+    confirmSound: true, // a piano note when you confirm a decision (picking the location and inn, finishing arranging): the "confirm" sound
+    deskShuffleAfterMs: 1100, // opening the desk: the papers shuffle this long after you sit (the chair settles by then)
     // The crowd
     crowdFadeMs: 3000,
     crowdSettleMs: 2500, // the headcount must hold this long before the murmur changes

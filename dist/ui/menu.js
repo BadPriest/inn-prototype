@@ -34,6 +34,7 @@ export function replaceMenu(spec) {
 }
 export function back() {
     const top = stack.pop();
+    top?.spec.onLeave?.();
     if (top && stack.length === 0)
         top.spec.onClose?.();
     render();
@@ -41,7 +42,8 @@ export function back() {
 export function closeAll() {
     const had = stack.length > 0;
     const bottom = stack[0];
-    stack.length = 0;
+    for (const o of stack.splice(0).reverse())
+        o.spec.onLeave?.();
     if (had)
         bottom.spec.onClose?.();
     render();

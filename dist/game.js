@@ -38,7 +38,9 @@ export class Game {
     fireLit = false;
     lampsLit = false;
     /** The gramophone: playing or not, which record, and how many records the spring has left. */
-    gramophone = { on: false, record: 0, spring: 0 }; // spring: seconds of music left in it
+    // spring: seconds of music left in it. resumeAt: where in the record it stopped when the spring gave out
+    // mid-record (seconds), so winding it again picks up there; null: start the record from the top.
+    gramophone = { on: false, record: 0, spring: 0, resumeAt: null };
     /** The keeper winding the gramophone (real seconds; walking away stops it). */
     winding = null;
     /** This morning's paper (newspaper.ts). */

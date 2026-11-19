@@ -52,6 +52,7 @@ function garnishSpec(g: Game, st: GarnishState): MenuSpec {
   const go = () => {
     if (!gar) return;
     applyGarnish(g, drink, gar.id);
+    g.bus.emit({ type: "MenuSound", sound: "tick" });
     closeAll();
   };
   const drinkCards = drinks.map((d, i) => itemCard(d, `d:${i}`, picks[st.focus] === `d:${i}`, { on: i === st.drink }));
@@ -92,7 +93,7 @@ export function openOfferScreen(g: Game, p: Patron): void {
   const st = { focus: 0 };
   const build = (): MenuSpec => {
     const items = trayItems(g).filter((i) => !i.whole); // a whole pie goes to the pie safe, not to a guest
-    const give = (i: number) => { const it = items[i]; if (!it) return; closeAll(); serveUnasked(g, p, it); };
+    const give = (i: number) => { const it = items[i]; if (!it) return; closeAll(); g.bus.emit({ type: "MenuSound", sound: "tick" }); serveUnasked(g, p, it); };
     return {
       title: `🃏 Something for ${p.name}?`,
       subtitle: "Unasked",
@@ -121,6 +122,7 @@ export function openBinScreen(g: Game): void {
       const it = items[i];
       if (!it) return;
       removeFromTray(g, it);
+      g.bus.emit({ type: "MenuSound", sound: "tick" });
       g.say(`${it.name} goes in the bin.`);
       if (trayItems(g).length) replaceMenu(build()); else closeAll();
     };
@@ -135,7 +137,7 @@ export function openBinScreen(g: Game): void {
       },
       items: [{
         label: "Everything on your trays", sub: `${items.length} item${items.length === 1 ? "" : "s"}`, button: "secondary",
-        action: () => { for (const it of trayItems(g)) removeFromTray(g, it); g.say("You scrape your trays clean."); closeAll(); },
+        action: () => { for (const it of trayItems(g)) removeFromTray(g, it); g.say("You scrape your trays clean."); g.bus.emit({ type: "MenuSound", sound: "tick" }); closeAll(); },
       }],
     };
   };
@@ -154,6 +156,7 @@ export function openHatchScreen(g: Game): void {
       const it = g.hatch[i];
       if (!it) return;
       takeFromHatch(g, it);
+      g.bus.emit({ type: "MenuSound", sound: "tick" });
       if (g.hatch.length) replaceMenu(build()); else closeAll();
     };
     return {
@@ -163,7 +166,7 @@ export function openHatchScreen(g: Game): void {
         onPick: (v) => take(Number(v)),
         onKey: gridKeys(() => g.hatch.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, take),
       },
-      items: [{ label: "Take everything that fits", sub: "oldest first", button: "primary", action: () => { pickupFromHatch(g); closeAll(); } }],
+      items: [{ label: "Take everything that fits", sub: "oldest first", button: "primary", action: () => { pickupFromHatch(g); g.bus.emit({ type: "MenuSound", sound: "tick" }); closeAll(); } }],
     };
   };
   openMenu(build());
@@ -175,7 +178,7 @@ export function openHatchScreen(g: Game): void {
 export function openSetDownScreen(g: Game): void {
   const st = { focus: 0 };
   const build = (): MenuSpec => {
-    const put = (i: number) => { closeAll(); setTrayDown(g, i as 0 | 1); };
+    const put = (i: number) => { closeAll(); g.bus.emit({ type: "MenuSound", sound: "tick" }); setTrayDown(g, i as 0 | 1); };
     const cards: CardSpec[] = g.keeper.trays.map((t, i) => ({
       pick: String(i),
       icon: t.items.map((x) => iconFor(x.recipeId, x.garnish) || "🍽").join(""),

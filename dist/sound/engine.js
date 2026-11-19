@@ -183,8 +183,29 @@ export function wakeUp() {
     wake.gain.setValueAtTime(0.001, t);
     wake.gain.exponentialRampToValueAtTime(1, t + T.wakeSeconds);
 }
-export function suspend() { void ac?.suspend(); }
-export function resume() { void ac?.resume(); }
+let pauseTimer;
+/** Pause all sound. With `afterMs`, let a sound play out first (the pause latch): the atmosphere and music
+ *  drop away at once, and everything stops after that long. */
+export function suspend(afterMs = 0) {
+    if (!ac)
+        return;
+    clearTimeout(pauseTimer);
+    if (afterMs <= 0) {
+        void ac.suspend();
+        return;
+    }
+    for (const b of ["ambience", "music"])
+        buses[b]?.gain.setTargetAtTime(0, ac.currentTime, 0.03);
+    pauseTimer = setTimeout(() => void ac?.suspend(), afterMs);
+}
+export function resume() {
+    if (!ac)
+        return;
+    clearTimeout(pauseTimer);
+    for (const b of ["ambience", "music"])
+        buses[b]?.gain.setTargetAtTime(busLevel[b], ac.currentTime, 0.03);
+    void ac.resume();
+}
 export function isMuted() {
     return muted;
 }
@@ -265,7 +286,8 @@ export function placement(at, def) {
 }
 const voices = new Set();
 const TURN_FADE = 0.25; // seconds of crossfade when a looping sound moves on to its next file
-function startSource(v, when, offsetRandom, fadeIn) {
+/** `offset`: seconds into the file to start from, or "random" (loops, so two pots never sound in step). */
+function startSource(v, when, from, fadeIn) {
     const list = choices(v.def);
     if (!list.length || !ac)
         return null;
@@ -304,11 +326,10 @@ function startSource(v, when, offsetRandom, fadeIn) {
         }
         catch { /* done */ } }));
     }
-    // Loops start somewhere in the middle, so two pots never sound in step.
-    const offset = offsetRandom ? Math.random() * buf.duration * 0.9 : 0;
+    const offset = from === "random" ? Math.random() * buf.duration * 0.9 : Math.max(0, Math.min(from, buf.duration - 0.05));
     src.start(when, offset);
     const rate = src.playbackRate.value;
-    const s = { src, gain, endsAt: when + (buf.duration - offset) / rate, rings: (ringsFor.get(keyPick) ?? buf.duration) / rate, wobble };
+    const s = { src, gain, endsAt: when + (buf.duration - offset) / rate, rings: (ringsFor.get(keyPick) ?? buf.duration) / rate, wobble, startedAt: when, offset };
     src.onended = () => { if (!src.loop && (v.stopped || !v.turns) && v.current === s)
         voices.delete(v); };
     return s;
@@ -348,7 +369,12 @@ export function play(key, at, opts = {}) {
         spatial.connect(out);
     const v = { key, def, at, rate: opts.rate ?? 1, level, input: def.tone === "gramophone" ? gramophoneChain(level) : level, spatial, panner, current: null,
         turns: def.loop === true && choices(def).length > 1, stopped: false };
-    v.current = startSource(v, t, def.loop === true, 0);
+    v.current = startSource(v, t, def.loop === true ? "random" : opts.offset ?? 0, 0);
+    if (v.current && opts.spinUpFrom !== undefined && opts.spinUpSeconds) {
+        const pr = v.current.src.playbackRate, full = pr.value;
+        pr.setValueAtTime(full * opts.spinUpFrom, t);
+        pr.linearRampToValueAtTime(full, t + opts.spinUpSeconds);
+    }
     voices.add(v);
     return v;
 }
@@ -438,6 +464,18 @@ export function rampRate(v, toRate, seconds) {
     src.playbackRate.setValueAtTime(src.playbackRate.value, t);
     src.playbackRate.linearRampToValueAtTime(toRate * v.rate, t + seconds);
 }
+/** Seconds into its file a voice has played, taking its speed as steady (`rampRate` changes it: allow for that). */
+export function position(v) {
+    const s = v?.current;
+    if (!s || !ac)
+        return 0;
+    return s.offset + Math.max(0, ac.currentTime - s.startedAt) * v.rate;
+}
+/** Seconds until a voice's current file ends (at its current speed). */
+export function remaining(v) {
+    const s = v?.current;
+    return s && ac ? Math.max(0, s.endsAt - ac.currentTime) : 0;
+}
 /** Is this voice still sounding (not finished, not stopped)? */
 export function isPlaying(v) {
     return !!v && voices.has(v) && !v.stopped;
@@ -469,7 +507,7 @@ export function updateVoices() {
             const when = Math.max(t, old.endsAt - TURN_FADE);
             old.gain.gain.setValueAtTime(old.gain.gain.value, when);
             old.gain.gain.linearRampToValueAtTime(0, when + TURN_FADE);
-            v.current = startSource(v, when, false, TURN_FADE) ?? old;
+            v.current = startSource(v, when, 0, TURN_FADE) ?? old;
         }
     }
 }

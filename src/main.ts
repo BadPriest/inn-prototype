@@ -756,7 +756,7 @@ function openPause(): void {
       panel = `<div class="set-list">
         <button class="set-btn" data-pick="mute">${isMuted() ? "🔇 Sound is off" : "🔊 Sound is on"} <small>${isMuted() ? "turn it on" : "mute everything (M)"}</small></button>
         ${slider("cues", "🔔", "Sound effects", "orders, outcomes, the bell, pouring", Math.round(volume("cues") * 100), 0, 100, 5, pct(volume("cues")))}
-        ${slider("music", "🎵", "Music", "the gramophone", Math.round(volume("music") * 100), 0, 100, 5, pct(volume("music")))}
+        ${slider("music", "🎵", "Music", "the gramophone and background music", Math.round(volume("music") * 100), 0, 100, 5, pct(volume("music")))}
         ${slider("atmosphere", "🌧", "Background", "crowd, rain, wind, fire, cooking, the street", Math.round(volume("atmosphere") * 100), 0, 100, 5, pct(volume("atmosphere")))}
       </div>`;
     } else {

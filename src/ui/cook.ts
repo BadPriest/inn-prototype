@@ -102,6 +102,7 @@ function cookSpec(g: Game, f: Slot, r: Recipe, st: CookState): MenuSpec {
   const cook = (forTicket: boolean) => {
     if (!ready) return;
     startJob(g, f, r, [...st.chosen], forTicket ? ticket : null);
+    g.bus.emit({ type: "MenuSound", sound: "tick" });
     closeAll();
   };
 

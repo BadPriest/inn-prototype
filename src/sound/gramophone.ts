@@ -6,12 +6,14 @@
 //   the spring gives out mid-record: the record sags (pitch and speed drag down) with the
 //            winding-down sound layered over it, then silence
 //   the spring is spent as a record ends: the run-out, then the winding-down sound, then silence
+//   wound again after it gave out mid-record: the record picks up where it stopped, coming up to speed
+//            (after it was spent at a record's end: the next record)
 // A soft surface crackle runs underneath while it plays. Sound effects go to the music bus, so
 // "music off" silences all of it.
 
 import type { Game } from "../game.js";
 import { GRAMOPHONE } from "../data.js";
-import { hasSound, isPlaying, play, rampRate, ringsOut, setLevel, stop, type Voice } from "./engine.js";
+import { hasSound, isPlaying, play, position, rampRate, ringsOut, setLevel, stop, type Voice } from "./engine.js";
 
 let song: Voice | null = null;
 let crackle: Voice | null = null;
@@ -63,7 +65,8 @@ export function updateWinding(g: Game, realDt: number): void {
 }
 
 /** A different record: lift the needle, drop it on the next. */
-export function gramophoneChanged(): void {
+export function gramophoneChanged(g: Game): void {
+  g.gramophone.resumeAt = null;
   if (song) { stop(song, 200); song = null; }
   startAt = performance.now() + 250;
 }
@@ -95,6 +98,8 @@ export function gramophoneSound(g: Game, realDt: number): void {
     if (gr.spring <= GRAMOPHONE.sag.seconds) {
       ending = true;
       const secs = Math.max(0.5, gr.spring);
+      // Where the needle will stop: the speed falls steadily to toRate, then 0.3 s more at that speed.
+      gr.resumeAt = position(song) + secs * (1 + GRAMOPHONE.sag.toRate) / 2 + 0.3 * GRAMOPHONE.sag.toRate;
       rampRate(song, GRAMOPHONE.sag.toRate, secs);
       setLevel(song, GRAMOPHONE.sag.toLevel, secs);
       play("gramoWindDown", at);
@@ -112,10 +117,18 @@ export function gramophoneSound(g: Game, realDt: number): void {
     let tries = 0;
     while (!hasSound(GRAMOPHONE.records[gr.record].sound) && tries++ < n) gr.record = (gr.record + 1) % n;
     if (tries >= n) { startAt = performance.now() + 1000; return; }
+    if (tries > 0) gr.resumeAt = null; // that one wasn't ready: a different record, from its start
     startAt = null;
-    play("gramoNeedle", at);
     const rec = GRAMOPHONE.records[gr.record];
-    song = play(rec.sound, at, { fadeInMs: 150 });
+    if (gr.resumeAt !== null) {
+      // The needle never left the record: it comes back up to speed from where it stopped.
+      const { spinUpSeconds } = GRAMOPHONE.resume;
+      song = play(rec.sound, at, { offset: gr.resumeAt, fadeInMs: 200, spinUpFrom: GRAMOPHONE.sag.toRate, spinUpSeconds });
+      gr.resumeAt = null;
+    } else {
+      play("gramoNeedle", at);
+      song = play(rec.sound, at, { fadeInMs: 150 });
+    }
     playing = gr.record;
     if (song) g.say(`♪ ${rec.title}`);
     return;
@@ -128,6 +141,8 @@ export function gramophoneSound(g: Game, realDt: number): void {
     const after = length(runout, 1.5) * 1000;
     if (gr.spring <= GRAMOPHONE.sag.seconds * 2) {
       ending = true;
+      gr.record = (gr.record + 1) % GRAMOPHONE.records.length; // wound again, it plays the next one
+      gr.resumeAt = null;
       setTimeout(() => {
         if (crackle) { stop(crackle, 600); crackle = null; }
         const down = play("gramoWindDown", at);

@@ -6,6 +6,18 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 107 · Nov 18, 2026 · deployed
+
+### Added
+- **Background music.** After 90 seconds with no music, a background track fades in softly (over 6 s) and fades away over its last 8 s (clean, not through the horn, heard the same in every room), then quiet again before the next one, never the same track twice running. Winding the gramophone fades it out. It's on the Music volume. Six tracks: *Dawn in the Vale*, *A Day of Gentle Rain*, *A Rather Busy Morning*, *Beyond the Green Hills*, *The Long Road Ahead*, *Where the River Bends*.
+- **The Last Candle**, a short jingle, plays as the keeper turns in and the screen fades to the day's summary. Any background track playing makes way for it.
+- **The desk and the menus have sounds.** Opening the desk: you sit down, then shuffle the papers. The journal opens and its pages turn; tabs turn a page too (bill of fare, Equipment). The newspaper rustles open and folds up; the calendar flips; the bill of fare is picked up off the desk. House prices and buying or selling equipment clink coins. Arranging the kitchen taps the table as you start and as each piece goes down, and finishing plays the piano. Confirming in the in-world menus ticks a box with a pen (the bill of fare, cooking, snack bowls, the pie safe, garnishing, the bin, the hatch, setting a tray down, an unasked gift). Pausing opens a wooden latch, then everything goes quiet.
+
+### Changed
+- **The gramophone picks up where it stopped.** If the spring gives out mid-record, winding it again carries on from that point in the record, coming back up to speed over a moment (no needle drop: the needle never left). If the spring was spent as a record ended, winding it again plays the next record, not the same one over.
+- The piano confirm now plays only for choices outside the world (where to start, which inn) and for finishing arranging the kitchen; putting up the bill of fare ticks a box, buying clinks coins.
+- Behind the scenes: sound files are sorted into folders by what plays them (cues, menus, weather, ambience, fire, cooking, foley, gramophone, bgm, jingles). The unused finger snap is parked.
+
 ## Build 106 · Nov 18, 2026 · deployed
 
 ### Changed

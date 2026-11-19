@@ -1,6 +1,6 @@
 // The desk in your room: the bill of fare, equipment to buy and arrange, and the way to the journal. Card screens (cards.ts).
 import { EQUIP_GROUPS, EQUIPMENT, FUELS, GOODS, MEALS, RECIPES, TUNING } from "../data.js";
-import { back, closeAll, confirmed, openMenu, replaceMenu } from "./menu.js";
+import { back, closeAll, openMenu, replaceMenu } from "./menu.js";
 import { startArranging } from "./arrange.js";
 import { grid, gridKeys } from "./cards.js";
 import { openNewspaper } from "./newspaper.js";
@@ -9,6 +9,7 @@ import { canFetch, fetchThing, FETCH_MINUTES, onOrderCount, orderThing, priceOfT
 import { fmtMoney, moneyHtml, priceLevel, priceOfRecipe, PRICE_LEVELS } from "../money.js";
 export function openDeskScreen(g, openJournal) {
     const st = { focus: 0 };
+    g.bus.emit({ type: "MenuSound", sound: "desk" }); // you sit down at the desk
     const build = () => {
         const cards = [
             { pick: "fare", icon: "📜", name: "Bill of fare", warn: !g.menuChosen,
@@ -28,6 +29,7 @@ export function openDeskScreen(g, openJournal) {
                 // One house-wide knob: Cheap, Fair, Dear, round again.
                 const i = PRICE_LEVELS.findIndex((l) => l.id === g.priceLevel);
                 g.priceLevel = PRICE_LEVELS[(i + 1) % PRICE_LEVELS.length].id;
+                g.bus.emit({ type: "MenuSound", sound: "prices" });
                 g.say(`House prices: ${priceLevel(g).name.toLowerCase()} (${priceLevel(g).blurb}). A pint of ale is ${fmtMoney(priceOfRecipe(g, "ale"))}.`);
                 replaceMenu(build());
             }
@@ -35,8 +37,10 @@ export function openDeskScreen(g, openJournal) {
                 openNewspaper(g);
             else if (v === "calendar")
                 openCalendar(g);
-            else if (v === "shop")
+            else if (v === "shop") {
+                g.bus.emit({ type: "MenuSound", sound: "penClick" });
                 openShop(g);
+            }
             else if (v === "arrange") {
                 closeAll();
                 startArranging(g);
@@ -100,6 +104,7 @@ function dayStrip(g, tab) {
     return `<div class="bf-strip">${segs}<div class="bf-now" style="left:${pct(now)}%" title="Now"></div>${ticks}</div>`;
 }
 export function openBillOfFare(g) {
+    g.bus.emit({ type: "MenuSound", sound: "billOfFare" }); // picked up off the desk
     const st = { focus: 0, tab: g.mealNow()?.id ?? "breakfast" };
     const meal = () => g.meals.find((m) => m.id === st.tab);
     const bill = () => !g.mealMode ? g.menu : meal()?.menu ?? g.betweenMenu;
@@ -124,7 +129,8 @@ export function openBillOfFare(g) {
             st.focus = i;
             redraw();
         };
-        const setTab = (t) => { st.tab = t; st.focus = 0; redraw(); };
+        const setTab = (t) => { if (t !== st.tab)
+            g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); st.tab = t; st.focus = 0; redraw(); };
         const setMode = (meals) => {
             if (g.mealMode === meals)
                 return;
@@ -133,7 +139,7 @@ export function openBillOfFare(g) {
                 seedMeals(g);
                 st.tab = g.mealNow()?.id ?? "breakfast";
             }
-            g.bus.emit({ type: "Paper", what: "menu" });
+            g.bus.emit({ type: "MenuSound", sound: "pageTurn" });
             st.focus = 0;
             redraw();
         };
@@ -154,7 +160,7 @@ export function openBillOfFare(g) {
         };
         const putUp = () => {
             g.menuChosen = true;
-            confirmed(); // the piano, not the paper tick: putting it up is the decision
+            g.bus.emit({ type: "MenuSound", sound: "tick" }); // ticked off and put up
             if (!g.mealMode)
                 g.say(`The bill of fare is up: ${MENU.filter((r) => g.menu.has(r.id)).map((r) => r.icon).join(" ") || "nothing yet"}.`);
             else {
@@ -274,16 +280,18 @@ export function openShop(g) {
                 subtitle: `${fmtMoney(price)} · you have ${fmtMoney(g.purse)}`,
                 holdsClock: true,
                 items: [
-                    { label: "🛻 Order it", sub: "the carter brings it tomorrow morning", confirmSound: true,
+                    { label: "🛻 Order it", sub: "the carter brings it tomorrow morning",
                         action: () => { if (orderThing(g, it.id)) {
+                            g.bus.emit({ type: "MenuSound", sound: "coins" });
                             back();
                             replaceMenu(build());
                         } } },
                     { label: "🚶 Fetch it yourself, now", sub: canFetch(g) ? `you're out about ${away}${it.goods ? "" : "; place it when you're back"}` : "not while the inn is open or anyone's inside",
-                        disabled: !canFetch(g), confirmSound: true,
+                        disabled: !canFetch(g),
                         action: () => {
                             if (!fetchThing(g, it.id))
                                 return;
+                            g.bus.emit({ type: "MenuSound", sound: "coins" });
                             if (it.goods) {
                                 back();
                                 replaceMenu(build());
@@ -299,6 +307,7 @@ export function openShop(g) {
         const switchTab = (by) => {
             const i = EQUIP_GROUPS.findIndex((t) => t.id === shopTab);
             shopTab = EQUIP_GROUPS[(i + by + EQUIP_GROUPS.length) % EQUIP_GROUPS.length].id;
+            g.bus.emit({ type: "MenuSound", sound: "pageTurn" });
             st.focus = 0;
             replaceMenu(build());
         };
@@ -331,6 +340,8 @@ export function openShop(g) {
                 html: `${tabs}<p class="explain"><b>Pick something to buy.</b> In the purse: ${moneyHtml(g.purse)}. Order it and the carter brings it tomorrow morning, or fetch it yourself now while the inn's shut. Then place it (desk → Arrange the kitchen); you can move things any time, and sell them back for half. <b>Tab</b> switches lists.</p>${grid(cards)}`,
                 onPick: (v) => {
                     if (v.startsWith("tab:")) {
+                        if (v.slice(4) !== shopTab)
+                            g.bus.emit({ type: "MenuSound", sound: "pageTurn" });
                         shopTab = v.slice(4);
                         st.focus = 0;
                         replaceMenu(build());

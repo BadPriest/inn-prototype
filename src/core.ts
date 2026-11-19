@@ -37,6 +37,17 @@ export function uid(): number {
 // ---------------------------------------------------------------------------
 // Event bus. Systems emit and subscribe; they never call each other directly.
 
+/** Sounds of the in-world menus: the desk, its papers and books, ticking a choice off. */
+export type MenuSound =
+  | "desk" // sitting down at the desk, then shuffling its papers
+  | "tick" // a pen ticking a box: confirming in an in-world menu
+  | "pageTurn" // a page or a tab: the journal's pages, a menu's tabs
+  | "journal" | "paperOpen" | "paperClose" | "calendar" | "billOfFare"
+  | "prices" // House prices changed
+  | "coins" // buying equipment, or selling it back
+  | "penClick" // picking a desk card that has no sound of its own
+  | "tableTap"; // starting to arrange the kitchen, and setting a piece down
+
 export type GameEvent =
   | { type: "PatronArrived"; patronId: number }
   | { type: "PatronLeft"; patronId: number; early: boolean }
@@ -53,9 +64,11 @@ export type GameEvent =
   | { type: "FrontDoor"; state: "opening" | "closing"; quick: boolean }
   | { type: "Paper"; what: "objective" | "menu" | "journal" } // something written down or ticked off
   | { type: "Confirmed" } // a menu's main button was pressed
+  | { type: "MenuSound"; sound: MenuSound } // the desk and its papers, in-world menus (sound.ts menuSound)
   | { type: "PourStarted"; id: number; from: "tap" | "urn" }
   | { type: "PourEnded"; id: number; done: boolean }
   | { type: "TurnInPrompted" }
+  | { type: "TurnedIn" } // the keeper goes to bed: the screen fades, the day's summary follows
   | { type: "DayEnded"; day: number }
   | { type: "DayStarted"; day: number }
   | { type: "TimeOfDayChanged"; from: string; to: string }
