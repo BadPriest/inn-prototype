@@ -358,7 +358,7 @@ canvas.addEventListener("pointermove", (e) => {
   fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (fingers.size === 2 && pinchFrom > 0) {
     const now = spread();
-    setZoom(zoom() * (now / pinchFrom));
+    setZoom(zoom() * (now / pinchFrom), false);
     pinchFrom = now;
   }
 });
@@ -391,7 +391,7 @@ initPad({
   arranging: () => !!g.arranging,
   paused: () => g.paused,
   setWalk: (v, run) => { padWalk = v; padRun = run; },
-  zoomBy: (f) => setZoom(zoom() * f),
+  zoomBy: (f) => setZoom(zoom() * f, false),
   cardStep: (by) => {
     handIndex = (handIndex + by + HAND.length) % HAND.length;
     showHandPick();
@@ -700,9 +700,10 @@ function toggleIso(): void {
 const ZOOM_STEP = 1.15;
 const ZOOM_MIN = 0.5, ZOOM_MAX = 3;
 function zoom(): number { return (settings.iso ? settings.zoomIso : settings.zoomFlat) ?? 1; }
-function setZoom(z: number): void {
+/** `snap`: a step (wheel, keys) lands on "fits the inn" when it passes close; the stick's smooth zoom doesn't. */
+function setZoom(z: number, snap = true): void {
   z = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
-  if (Math.abs(z - 1) < 0.03) z = 1; // snaps to "fits the inn" on the way past
+  if (snap && Math.abs(z - 1) < 0.03) z = 1;
   if (settings.iso) settings.zoomIso = z; else settings.zoomFlat = z;
   saveSettings();
   showView(`Zoom ${Math.round(z * 100)}%`);
@@ -986,7 +987,9 @@ function frame(now: number): void {
   moveKeeper(realDt);
   target = chooseTarget();
   // Cleaning is a hold (Space, mouse or finger) on something dirty; a quick tap does the other thing.
-  const cleaningWhat = !holding() ? null : (mouseHeld ? messAt(mouseAt) : null) ?? (g.holdingSpace ? target : null);
+  // A wipe under way keeps going on the same thing, even if a guest there starts wanting something.
+  const wiping = g.cleaning && holding() ? findTargets(g).find((t) => targetId(t) === g.cleaning!.targetId) : undefined;
+  const cleaningWhat = !holding() ? null : wiping ?? (mouseHeld ? messAt(mouseAt) : null) ?? (g.holdingSpace ? target : null);
   if (cleaningWhat && !g.paused && !g.modal && !menuOpen() && cleanable(g, cleaningWhat)) cleanStep(g, cleaningWhat, realDt);
   else if (g.cleaning && (!cleaningWhat || targetId(cleaningWhat) !== g.cleaning.targetId)) g.cleaning = null;
   if (!g.paused) updatePour(g, realDt);

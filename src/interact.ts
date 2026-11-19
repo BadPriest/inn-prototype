@@ -53,7 +53,8 @@ export function tableDirt(g: Game, f: Furniture): number {
 export function cleanable(g: Game, t: Target | null): boolean {
   if (!t) return false;
   if (t.type === "spill") return true;
-  return t.type === "furniture" && t.f.kind === "table" && tableDirt(g, t.f) > 0.3 && !waitingAt(g, `${t.f.tiles[0].x},${t.f.tiles[0].y}`);
+  if (t.type !== "furniture" || t.f.kind !== "table" || tableDirt(g, t.f) <= 0.3) return false;
+  return g.cleaning?.targetId === targetId(t) || !waitingAt(g, `${t.f.tiles[0].x},${t.f.tiles[0].y}`);
 }
 
 /** Called every frame while Space is held on something cleanable. Real seconds. */

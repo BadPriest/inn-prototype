@@ -184,7 +184,7 @@ function cookSpec(g: Game, f: Slot, r: Recipe, st: CookState): MenuSpec {
     if (at < 0 && have(g, p.id) < units) { g.say(`Not enough ${ingName(p.id)} in the pantry.`); return; }
     if (at >= 0) list.splice(at, 1);
     else if (list.length < max) list.push(p.id);
-    else if (max === 1) list.splice(0, 1, p.id); // one to choose: picking another swaps it
+    else if (max === 1 && p.grp.key === "base") list.splice(0, 1, p.id); // the one base: picking another swaps it
     else return;
     st.focus = i;
     refresh();
@@ -206,7 +206,7 @@ function cookSpec(g: Game, f: Slot, r: Recipe, st: CookState): MenuSpec {
       const adds = ing.tags.filter((t) => !r.baseTags.includes(t));
       const left = have(g, o.id);
       const enough = left >= o.units;
-      const blocked = (!on && full && max > 1) || (!on && !enough);
+      const blocked = (!on && full && (max > 1 || grp.key === "optional")) || (!on && !enough);
       return {
         pick: String(i), icon: ing.icon, name: ing.name, tags: ing.tags, on, off: blocked, focus: i === st.focus,
         status: left === Infinity ? "" : enough ? `${amount(o.id, left)} in the pantry` : `short: needs ${amount(o.id, o.units)}`, tone: enough ? undefined : "warn",
