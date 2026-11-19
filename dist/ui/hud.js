@@ -1,4 +1,5 @@
 // The side panel (clock, orders, trays, log) and the debug view.
+import { startingPantry } from "../stock.js";
 import { ARCHETYPES, MEALS, NEED_IDS, REGULARS, TIME_WORDS, TUNING } from "../data.js";
 import { unmetLogText } from "../needs.js";
 import { isMuted, voicesNow } from "../sound/engine.js";
@@ -136,6 +137,8 @@ export function initDebug(g) {
         carterArrives(g);
     else
         g.say("Nothing on order."); };
+    $("dbg-pantry").onclick = () => { for (const [id, n] of Object.entries(startingPantry()))
+        g.stock[id] = Math.max(g.stock[id] ?? 0, n); g.say("The pantry is stocked up."); };
     const flow = $("dbg-flow");
     flow.oninput = () => { g.flowMultiplier = Number(flow.value); $("dbg-flow-v").textContent = `×${flow.value}`; };
     $("dbg-skip").onclick = () => {

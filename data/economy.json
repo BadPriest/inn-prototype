@@ -22,7 +22,7 @@
   },
 
   "startingPurse": 200,
-  "startingPantry": {"ale": 72, "cider": 36, "black": 20, "mint": 10, "chamomile": 10, "smokedLeaf": 6, "darkRoast": 3, "lightRoast": 2, "milk": 16, "oats": 8, "salt": 60, "sugar": 20, "honey": 15, "lard": 20, "butter": 12, "egg": 24, "loaf": 6, "flour": 20, "crumb": 5, "beef": 12, "sausage": 12, "bacon": 15, "fowl": 2, "mincedMeat": 4, "pork": 6, "fish": 6, "herring": 4, "roots": 20, "onion": 12, "mushroom": 10, "tomato": 6, "greens": 6, "radish": 4, "herbs": 6, "chives": 4, "pepper": 20, "nutmeg": 5, "zest": 3, "lemon": 6, "apple": 15, "berry": 3, "walnut": 5, "cheese": 8, "saltedPeanuts": 10, "pretzels": 10},
+  "startingPantry": {"ale": 200, "apple": 96, "appleRings": 17, "bacon": 184, "beef": 30, "berry": 36, "black": 75, "butter": 150, "chamomile": 75, "cheese": 73, "chestnuts": 30, "chicory": 5, "chives": 52, "cider": 75, "crumb": 57, "darkRoast": 5, "egg": 140, "fish": 84, "flour": 50, "fowl": 10, "garlic": 7, "greens": 60, "herbs": 104, "herring": 31, "honey": 191, "lamb": 15, "lard": 205, "lemon": 20, "lightRoast": 5, "loaf": 35, "milk": 80, "mincedMeat": 8, "mint": 95, "mushroom": 105, "nutmeg": 9, "oats": 20, "olives": 17, "onion": 79, "pepper": 83, "pickledEggs": 17, "pickledOnions": 17, "pork": 15, "pretzels": 17, "radish": 30, "roots": 100, "salt": 90, "saltedPeanuts": 17, "sausage": 168, "smokedLeaf": 75, "spice": 20, "spicedBlend": 5, "sugar": 137, "tomato": 40, "walnut": 27, "zest": 33},
 
   "deliveryFee": 3,
 
