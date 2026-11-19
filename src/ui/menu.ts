@@ -195,9 +195,9 @@ function render(): void {
           <div class="menu-item ${i === top.index ? "sel" : ""} ${it.disabled ? "dis" : ""}" data-i="${i}">
             <span>${it.label}</span>${it.sub ? `<span class="sub">${it.sub}</span>` : ""}
           </div>`;
-  const glyph = (it: MenuItem) => (it.button === "primary" ? `<span class="pad-glyph sq">□</span>` : it.cancel ? `<span class="pad-glyph ci">○</span>` : "");
+  const glyph = (it: MenuItem) => (it.button === "primary" ? `<span class="pad-glyph sq"></span>` : it.cancel ? `<span class="pad-glyph ci"></span>` : "");
   const btn = (it: MenuItem, i: number) =>
-    `<button class="menu-btn ${it.button} ${i === top.index && (!s.view || it.button === "primary" || s.focus !== undefined) ? "sel" : ""}" data-i="${i}" ${it.disabled ? "disabled" : ""}>${glyph(it)}${it.label}${it.sub ? `<span class="sub">${it.sub}</span>` : ""}</button>`;
+    `<button class="menu-btn ${it.button} ${i === top.index && (!s.view || it.button === "primary" || s.focus !== undefined) ? "sel" : ""}" data-i="${i}" ${it.disabled ? "disabled" : ""}><span class="btn-row">${glyph(it)}<span>${it.label}</span></span>${it.sub ? `<span class="sub">${it.sub}</span>` : ""}</button>`;
   const listed = s.items.map((it, i) => (it.button ? "" : row(it, i))).join("");
   const buttons = s.items.map((it, i) => (it.button ? btn(it, i) : "")).join("");
   // Redrawing the same screen (a card picked, a tab changed) keeps where its view was scrolled to.

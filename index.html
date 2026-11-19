@@ -355,8 +355,12 @@
   .ings .ing small { color:var(--muted); }
   .ings .ing.short, .ings .ing.short small { color:#e0954a; }
   .pad-glyph { display:none; }
-  body.pad .menu-btn:has(.pad-glyph) { position:relative; padding-left:3.1em; }
-  body.pad .pad-glyph { display:flex; align-items:center; justify-content:center; position:absolute; left:.55em; top:50%; transform:translateY(-50%); width:1.9em; height:1.9em; border-radius:50%; font:700 1.25em/1 system-ui; background:#1a1410; border:2px solid currentColor; box-shadow:0 1px 4px rgba(0,0,0,.5); }
+  .btn-row { display:inline-flex; align-items:center; justify-content:center; gap:.55em; }
+  body.pad .menu-btn:has(.pad-glyph) { padding-left:10px; }
+  body.pad .pad-glyph { display:inline-flex; flex:none; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:#1a1410; box-shadow:0 0 0 1.5px currentColor, 0 1px 4px rgba(0,0,0,.5); }
+  body.pad .pad-glyph::before { content:""; display:block; width:10px; height:10px; border:2.5px solid currentColor; box-sizing:border-box; }
+  body.pad .pad-glyph.sq::before { border-radius:1.5px; }
+  body.pad .pad-glyph.ci::before { width:12px; height:12px; border-radius:50%; }
   body.pad .pad-glyph.sq { color:#f2a6d2; }
   body.pad .pad-glyph.ci { color:#ff7a6a; }
   .slip-line { white-space: nowrap; margin-right: 0.6em; }

@@ -779,10 +779,10 @@ function openPause(): void {
     let panel = "";
     if (pauseTab === "game") {
       panel = `<div class="set-list">
-        <button class="set-btn" data-pick="objectives">✅ Objectives <small>${g.showObjectives ? "shown" : "hidden"}</small></button>
+        <button class="set-btn" data-pick="objectives">✅ Toggle objectives <small>${g.showObjectives ? "shown now" : "hidden now"}</small></button>
         <button class="set-btn" data-pick="howto">❔ How to play</button>
-        <button class="set-btn" data-pick="keys">⌨️ Keys and controls <small>H</small></button>
-        <button class="set-btn" data-pick="restart">🗑️ Start over <small>a new game: every day so far is forgotten</small></button>
+        <button class="set-btn" data-pick="keys">⌨️ Keys and controls <small>keybind: H</small></button>
+        <button class="set-btn" data-pick="restart">🗑️ Start Over? <small>all your progress will be erased</small></button>
       </div>`;
     } else if (pauseTab === "sound") {
       panel = `<div class="set-list">
@@ -878,7 +878,7 @@ function openPause(): void {
           });
         },
       },
-      items: [{ label: "▶ Resume", sub: "P", button: "primary" as const, action: () => resume() }],
+      items: [{ label: "Resume", button: "primary" as const, action: () => resume() }],
     };
   };
   openMenu(build());
