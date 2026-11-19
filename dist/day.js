@@ -1,7 +1,7 @@
 // The clock and the day cycle: open, last call, turn in, next morning. Days never end.
 import { carterArrives } from "./shop.js";
 import { deliveriesArrive } from "./supplies.js";
-import { MEALS, TUNING, currentEquipmentId, pieceById, EQUIPMENT, currentDishId, RECIPES } from "./data.js";
+import { MEALS, TUNING, currentEquipmentId, pieceById, EQUIPMENT, currentDishId, RECIPES, DEFAULT_MENU } from "./data.js";
 import { emptyStats } from "./game.js";
 import { defaultLayout, setOnStove } from "./world.js";
 import { callLastOrders, clearPatrons, scheduleRegulars, unlockRegulars } from "./patrons.js";
@@ -129,6 +129,8 @@ export function beginDay(g) {
     if (joined.length && g.day > 1)
         g.say(`New in town: ${joined.join(", ")}. They may drop by.`);
     g.say(marketDay(g) ? "The paper's come. It's market day." : "The paper's come; it's on the desk.");
+    if (!g.menuChosen)
+        g.say(`The bill of fare is on its default: guests can only order ${DEFAULT_MENU.map((id) => RECIPES.find((r) => r.id === id)?.name.toLowerCase() ?? id).join(" and ")}. Set your own at the desk.`);
 }
 export function save(g) {
     try {

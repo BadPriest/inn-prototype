@@ -1,12 +1,14 @@
 // The "Today" checklist: what to do before opening. The HUD shows it; ticking an item off
 // is announced (a Paper event), so the sound of a pen tick can follow.
 
-import { RECIPES, SNACKS } from "./data.js";
+import { DEFAULT_MENU, RECIPES, SNACKS } from "./data.js";
 import type { Game } from "./game.js";
 import { stockOf } from "./crafting.js";
 import { currentStep, stepText, STEPS } from "./walkthrough.js";
 
 export interface Objective { id: string; text: string; done: boolean; optional?: boolean }
+
+const defaultBill = () => DEFAULT_MENU.map((id) => RECIPES.find((r) => r.id === id)?.name.toLowerCase() ?? id).join(" and ");
 
 export function objectives(g: Game): Objective[] {
   const big = RECIPES.filter((r) => g.billAllDay().has(r.id) && r.servings);
@@ -14,7 +16,7 @@ export function objectives(g: Game): Objective[] {
     ? `Get the pots going in the kitchen: ${big.map((r) => `${r.icon} ${r.name.toLowerCase()}${stockOf(g, r.id) ? " ✓" : ""}`).join(", ")}`
     : "Get the pots going in the kitchen (nothing on the bill needs one today)";
   return [
-    { id: "bill", text: "Sit at the desk in your room and set today's bill of fare", done: g.menuChosen },
+    { id: "bill", text: g.menuChosen ? "Sit at the desk in your room and set today's bill of fare" : `The bill of fare is on its default (${defaultBill()}). Sit at the desk in your room and set your own`, done: g.menuChosen },
     { id: "pots", text: bigText, done: big.every((r) => stockOf(g, r.id) > 0) },
     { id: "snacks", text: `Put a bowl of something out on the tables ${SNACKS.map((x) => x.icon).join("")}`, done: [...g.bowls.values()].some((b) => b.left > 0), optional: true },
     { id: "open", text: "Unbolt the front door and open the inn", done: g.open },

@@ -1065,10 +1065,19 @@ else {
             buildRooms(g); // sound carries through this inn's rooms
             g.weather = newWeather(g.date.season, g.loc);
             g.log.length = 0;
-            startWalkthrough(g);
             beginDay(g); // the morning again, at the chosen place
-            save(g);
+            const begin = (guided) => { if (guided)
+                startWalkthrough(g); save(g); closeAll(); };
             closeAll();
+            openMenu({
+                title: "Play the tutorial?",
+                modal: true,
+                body: `<p>Nine small steps through your first morning: the bill of fare, a pot of stew, your first guest served, and a first buy. Each one puts a little money in the purse.</p><p class="muted">Or skip it and find your own way.</p>`,
+                items: [
+                    { label: "Yes, show me", button: "primary", confirmSound: true, action: () => begin(true) },
+                    { label: "No, skip it", button: "secondary", confirmSound: true, action: () => begin(false) },
+                ],
+            });
         });
     };
     openMenu({
