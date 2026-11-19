@@ -176,6 +176,37 @@ export function wakeUp(): void {
   wake.gain.exponentialRampToValueAtTime(1, t + T.wakeSeconds);
 }
 
+/**
+ * The room goes quiet for a moment that needs it (the turning-in jingle, first light): atmosphere and
+ * music fade out fast, cues carry on. `restoreAtmosphere` brings them back.
+ */
+let hushed = false;
+export function hushAtmosphere(fadeSeconds = 0.4): void {
+  hushed = true;
+  if (!ac) return;
+  for (const b of ["ambience", "music"] as Bus[]) {
+    const n = buses[b];
+    if (!n) continue;
+    n.gain.cancelScheduledValues(ac.currentTime);
+    n.gain.setTargetAtTime(0, ac.currentTime, fadeSeconds / 3);
+  }
+}
+/** After `afterSeconds`, fade the atmosphere and music back in over `overSeconds`. */
+export function restoreAtmosphere(afterSeconds: number, overSeconds: number): void {
+  hushed = false;
+  if (!ac) return;
+  for (const b of ["ambience", "music"] as Bus[]) buses[b]?.gain.setTargetAtTime(busLevel[b], ac.currentTime + afterSeconds, overSeconds / 3);
+}
+/** Morning, with a cue of its own: everything else hushed at once, the cue at full, then the room fades back in. */
+export function dawn(cueSeconds: number, overSeconds: number): void {
+  if (!ac || !wake) return;
+  hushAtmosphere(0.05);
+  const t = ac.currentTime;
+  wake.gain.cancelScheduledValues(t);
+  wake.gain.setValueAtTime(1, t);
+  restoreAtmosphere(cueSeconds, overSeconds);
+}
+
 let pauseTimer: ReturnType<typeof setTimeout> | undefined;
 /** Pause all sound. With `afterMs`, let a sound play out first (the pause latch): the atmosphere and music
  *  drop away at once, and everything stops after that long. */
@@ -189,7 +220,7 @@ export function suspend(afterMs = 0): void {
 export function resume(): void {
   if (!ac) return;
   clearTimeout(pauseTimer);
-  for (const b of ["ambience", "music"] as Bus[]) buses[b]?.gain.setTargetAtTime(busLevel[b], ac.currentTime, 0.03);
+  if (!hushed) for (const b of ["ambience", "music"] as Bus[]) buses[b]?.gain.setTargetAtTime(busLevel[b], ac.currentTime, 0.03);
   void ac.resume();
 }
 
@@ -423,7 +454,7 @@ export function voicesNow(): { key: string; gain: number }[] {
 export function setBusVolume(bus: Bus, value: number): void {
   busLevel[bus] = value;
   const n = buses[bus];
-  if (n && ac) n.gain.setTargetAtTime(value, ac.currentTime, 0.05);
+  if (n && ac && !(hushed && bus !== "cue")) n.gain.setTargetAtTime(value, ac.currentTime, 0.05);
 }
 
 /** Slow a voice down (pitch drags with it) to `toRate` over `seconds`: a gramophone's spring giving out. */

@@ -9,7 +9,7 @@
 //   sound/bgm.ts        background music when the gramophone has been quiet a while
 // This file listens to game events and calls soundscape() every frame. M mutes; pause silences everything.
 import { DOOR_TUNING, OUTCOME_SOUND, SOUND_TUNING as T } from "./data.js";
-import { attach, output, play, ready, resume, ringsOut, stop, suspend, updateVoices, vary, wakeUp } from "./sound/engine.js";
+import { attach, dawn, hushAtmosphere, output, play, ready, resume, ringsOut, stop, suspend, updateVoices, vary } from "./sound/engine.js";
 import { cookingLoops } from "./sound/loops.js";
 import { footsteps } from "./sound/footsteps.js";
 import { crowd } from "./sound/crowd.js";
@@ -179,15 +179,16 @@ export function initSound(g) {
                 setTimeout(() => play("coinsSilver", null), 300);
                 break;
             case "LevelUp":
-                synth.moment();
-                setTimeout(() => synth.moment(), 260);
+                play("levelUp", null);
                 break;
             case "CoinPaid":
                 coin(e.paid, e.tip, e.delight);
                 break;
             case "DayStarted":
-                wakeUp();
-                break;
+                hushBgm();
+                dawn(T.firstLightSeconds, T.wakeSeconds);
+                play("firstLight", null);
+                break; // first light: the room waits for it
             case "Thunder":
                 thunder(e.near);
                 break;
@@ -200,8 +201,9 @@ export function initSound(g) {
                 break;
             case "TurnedIn":
                 hushBgm();
+                hushAtmosphere();
                 play("turnIn", null);
-                break; // The Last Candle
+                break; // The Last Candle, in a quiet room (until morning)
             case "PatronLeft":
                 if (e.early)
                     synth.leave();

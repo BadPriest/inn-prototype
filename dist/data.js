@@ -739,6 +739,8 @@ export const SOUNDS = {
     // Background music (sound/bgm.ts): plays when the gramophone has been quiet a while. Clean, not through
     // the horn, heard the same everywhere. Originals are in assets/sounds/music/bgm/.
     // A jingle as the keeper turns in (sound.ts, on TurnedIn): a short piece of its own, not in the rotation.
+    firstLight: { bus: "cue", heardEverywhere: true, files: [SND + "cues/cue-first-light.opus"], volume: 0.5, pitch: 0, trim: true }, // waking up: each morning, in a quiet room
+    levelUp: { bus: "cue", heardEverywhere: true, files: [SND + "cues/cue-level-up.opus"], volume: 0.55, pitch: 0, trim: true }, // a level up, with the golden wave
     turnIn: { bus: "music", heardEverywhere: true, files: [SND + "jingles/the-last-candle.opus"], volume: 0.25, pitch: 0 }, // The Last Candle
     bgmDawn: { bus: "music", heardEverywhere: true, files: [SND + "bgm/dawn-in-the-vale.opus"], volume: 0.15, pitch: 0 }, // Dawn in the Vale
     bgmRain: { bus: "music", heardEverywhere: true, files: [SND + "bgm/a-day-of-gentle-rain.opus"], volume: 0.15, pitch: 0 }, // A Day of Gentle Rain
@@ -780,6 +782,7 @@ export const WEATHER_SOUND = {
 };
 export const SOUND_TUNING = {
     wakeSeconds: 9, // the soundscape fades in over this long when the game starts and each morning: the keeper waking
+    firstLightSeconds: 5, // each morning the room stays quiet this long for the first-light cue, then fades back in over wakeSeconds
     targetLoudness: 0.12, // every file is evened out to about this (RMS of its audible part)
     fullVolumeWithin: 2.5, // tiles: full volume this close
     fadeOverTiles: 16, // tiles beyond that over which it fades to quiet

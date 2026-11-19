@@ -79,7 +79,7 @@ export function watchSkills(g: Game): void {
   const now = earnedPoints(g);
   if (lastEarned !== null && now > lastEarned) {
     g.newSkills = true;
-    g.say(`✦ Level ${now + 1}! New skills available: spend your point${pointsLeft(g) === 1 ? "" : "s"} in Skills, at the desk.`);
+    g.say(`🎉 Level ${now + 1}! New skills available: spend your point${pointsLeft(g) === 1 ? "" : "s"} in Skills, at the desk.`);
     g.bus.emit({ type: "LevelUp", level: now + 1 });
   }
   lastEarned = now;

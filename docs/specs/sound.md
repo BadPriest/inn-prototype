@@ -50,7 +50,9 @@ A second check: **would a playtester notice it on a top-down map of circles?** I
 | Weather | Rain indoors, through the open door, and at the windows, mixed by intensity; wind; thunder; street noise | `sound/weather.ts` |
 | Gramophone | Records through a horn and turntable effect; the spring runs a few minutes and sags the record when it gives out; wound again, it carries on where it stopped | `sound/gramophone.ts` (#9, in review) |
 | Menu sounds | The desk, its papers and books, ticks and page turns in the in-world menus, the pause latch (see Menu sounds) | `sound.ts` `menuSound` |
-| Turning in | *The Last Candle*, a short jingle as the keeper goes to bed | `sound.ts` (`TurnedIn`) |
+| Turning in | *The Last Candle*, a short jingle as the keeper goes to bed; the atmosphere and music fade out fast first, and the room stays quiet until morning | `sound.ts` (`TurnedIn`), `hushAtmosphere` in `sound/engine.ts` |
+| First light | A cue each morning as the keeper wakes (`firstLight`, 6 s, `cues/`): the room is hushed while it plays (`SOUND_TUNING.firstLightSeconds`, 5 s), then fades back in over `wakeSeconds` | `sound.ts` (`DayStarted`), `dawn` in `sound/engine.ts` |
+| Level up | A cue with the golden wave (`levelUp`, 3 s, `cues/`) | `sound.ts` (`LevelUp`) |
 | Background music | A clean track after 90 s without music; the gramophone fades it out | `sound/bgm.ts` |
 
 ## The gramophone
@@ -111,7 +113,7 @@ Not covered: the pause screen's own tabs. Sound stops while paused, so a page tu
 
 ### Turning in (Decided, Nov 19)
 
-*The Last Candle* (9.6 s, `turnIn`, `assets/sounds/jingles/`) plays as the keeper goes to bed and the screen fades, into the day's summary. Music bus, heard everywhere. A background track playing then fades out over 1.5 s (`BGM.hushMs`) and the quiet is counted afresh. The gramophone isn't touched: if it's playing, the jingle plays over it. Code: the `TurnedIn` event in `sound.ts`.
+*The Last Candle* (9.6 s, `turnIn`, `assets/sounds/jingles/`) plays as the keeper goes to bed and the screen fades, into the day's summary. Music bus, heard everywhere. A background track playing then fades out over 1.5 s (`BGM.hushMs`) and the quiet is counted afresh. The atmosphere and music buses fade out over about 0.4 s so the jingle has room (**Decided** Nov 20, 2026: no music or ambience under the sleep and wake cues); they come back with first light the next morning. Code: the `TurnedIn` event in `sound.ts`.
 
 ### Next for the gramophone
 

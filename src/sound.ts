@@ -12,7 +12,7 @@
 import type { Game } from "./game.js";
 import type { MenuSound } from "./core.js";
 import { DOOR_TUNING, OUTCOME_SOUND, SOUND_TUNING as T } from "./data.js";
-import { attach, output, play, ready, resume, ringsOut, stop, suspend, updateVoices, vary, wakeUp, type Voice } from "./sound/engine.js";
+import { attach, dawn, hushAtmosphere, output, play, ready, resume, ringsOut, stop, suspend, updateVoices, vary, type Voice } from "./sound/engine.js";
 import { cookingLoops } from "./sound/loops.js";
 import { footsteps } from "./sound/footsteps.js";
 import { crowd } from "./sound/crowd.js";
@@ -153,13 +153,13 @@ export function initSound(g: Game): void {
       case "ServeOutcome": { const s = OUTCOME_SOUND[e.outcome]; if (s) reaction(s); break; }
       case "Paper": paper(); break;
       case "Reward": synth.moment(); setTimeout(() => play("coinsSilver", null), 300); break;
-      case "LevelUp": synth.moment(); setTimeout(() => synth.moment(), 260); break;
+      case "LevelUp": play("levelUp", null); break;
       case "CoinPaid": coin(e.paid, e.tip, e.delight); break;
-      case "DayStarted": wakeUp(); break;
+      case "DayStarted": hushBgm(); dawn(T.firstLightSeconds, T.wakeSeconds); play("firstLight", null); break; // first light: the room waits for it
       case "Thunder": thunder(e.near); break;
       case "Confirmed": if (T.confirmSound) play("confirm", null); break;
       case "MenuSound": menuSound(e.sound); break;
-      case "TurnedIn": hushBgm(); play("turnIn", null); break; // The Last Candle
+      case "TurnedIn": hushBgm(); hushAtmosphere(); play("turnIn", null); break; // The Last Candle, in a quiet room (until morning)
       case "PatronLeft": if (e.early) synth.leave(); break;
       case "Log": if (e.text.startsWith("✦")) setTimeout(() => synth.moment(), 350); break;
       case "Paused": { const v = play("menuPause", null); suspend(v ? ringsOut(v) * 1000 + 50 : 0); break; } // the latch, then quiet
