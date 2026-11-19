@@ -1,6 +1,6 @@
 // The clock and the day cycle: open, last call, turn in, next morning. Days never end.
 import { carterArrives } from "./shop.js";
-import { MEALS, TUNING, currentEquipmentId, pieceById, EQUIPMENT } from "./data.js";
+import { MEALS, TUNING, currentEquipmentId, pieceById, EQUIPMENT, currentDishId, RECIPES } from "./data.js";
 import { emptyStats } from "./game.js";
 import { defaultLayout, setOnStove } from "./world.js";
 import { callLastOrders, clearPatrons, scheduleRegulars, unlockRegulars } from "./patrons.js";
@@ -148,8 +148,9 @@ export function load(g) {
             return;
         } // a new save: keep the calendar season it starts in, even before day 1 ends
         const s = JSON.parse(raw);
+        const dishes = (ids) => new Set(ids.map(currentDishId).filter((id) => RECIPES.some((r) => r.id === id)));
         if (s.menu)
-            g.menu = new Set(s.menu);
+            g.menu = dishes(s.menu);
         g.menuChosen = !!s.menuChosen;
         // Saves from before there was a choice of inn are the big tavern.
         if (s.inn && s.inn !== g.inn)
@@ -177,11 +178,11 @@ export function load(g) {
                 if (meal) {
                     meal.from = m.from;
                     meal.to = m.to;
-                    meal.menu = new Set(m.menu);
+                    meal.menu = dishes(m.menu);
                 }
             }
         if (Array.isArray(s.betweenMenu))
-            g.betweenMenu = new Set(s.betweenMenu);
+            g.betweenMenu = dishes(s.betweenMenu);
         g.upgrades = new Set((s.upgrades ?? []).map(currentEquipmentId).filter((id) => pieceById(id)));
         g.totalServed = s.totalServed ?? 0;
         g.showObjectives = s.showObjectives ?? true;

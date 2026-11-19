@@ -95,7 +95,7 @@ export interface Patron {
   lingerSince?: number;
   greeted?: boolean; // the keeper has said hello this visit
   nextChatAt?: number;
-  consuming?: { icon: string; kind: ItemKind; from: number; tags?: string[] }; // what's in front of them
+  consuming?: { icon: string; kind: ItemKind; from: number; tags?: string[]; needs?: Record<NeedId, number> }; // what's in front of them
   marker?: { text: Outcome | string; until: number };
   /** Tips earned this visit, paid all at once when they get up to leave (pennies); whether any came from a Delight. */
   tipOwed?: number;

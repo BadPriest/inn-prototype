@@ -109,10 +109,10 @@ export function updateNeeds(g, simDt) {
         if (p.state === "consuming" && p.consuming) {
             const span = Math.max(1, p.consumeUntil - p.consuming.from);
             const share = simDt / span;
-            const eases = NEEDS.serving[p.consuming.kind];
+            const eases = p.consuming.needs ?? NEEDS.serving[p.consuming.kind];
             for (const need of NEED_IDS)
                 n[need] -= eases[need] * share;
-            if (p.consuming.tags?.includes("warm"))
+            if (!p.consuming.needs && p.consuming.tags?.includes("warm"))
                 n.warmth -= NEEDS.warmTag * share;
         }
         for (const need of NEED_IDS)

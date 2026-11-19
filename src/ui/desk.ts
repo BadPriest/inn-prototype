@@ -222,7 +222,7 @@ export function openBillOfFare(g: Game): void {
       const how = r.storedIn === "piesafe" ? "Baked whole, sold by the slice." : r.servings ? `Made by the pot: about ${r.servings[0]} servings, ~${r.minutes[0]} min.` : r.station === "tap" ? "Poured from the barrel." : `Made to order, ~${r.minutes[0]} min.`;
       return {
         pick: String(i), icon: r.icon, name: r.name,
-        fact: can ? `${moneyHtml(priceOfRecipe(g, r.id))}${unit ? ` <span class="unit">${unit}</span>` : ""}` : "",
+        fact: can ? `${r.base.options.length > 1 || r.optional.pick[1] > 0 ? "from " : ""}${moneyHtml(priceOfRecipe(g, r.id))}${unit ? ` <span class="unit">${unit}</span>` : ""}` : "",
         status: can ? whereShort(r) : needs(r), tone: can ? undefined : "warn",
         tags: r.baseTags, on, off: !can, focus: i === st.focus,
         detail: `${how} ${whereFull(r)}.`,

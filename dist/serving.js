@@ -1,5 +1,6 @@
 // Trays, pickup, pouring, garnishing and delivery.
-import { GARNISHES, RECIPES, TUNING, pieceById, traySlotsOf } from "./data.js";
+import { GARNISHES, RECIPES, TUNING, currentDishId, pieceById, traySlotsOf } from "./data.js";
+const needsOf = (recipeId) => RECIPES.find((r) => r.id === currentDishId(recipeId))?.needs;
 import { makeItem, serveFromPot, steepTea } from "./crafting.js";
 import { dist } from "./world.js";
 import { organic, uid } from "./core.js";
@@ -216,7 +217,7 @@ export function serveUnasked(g, p, item) {
         g.speak(p, "For me? Oh!", 1, true);
     g.stats.served++;
     g.totalServed++;
-    p.consuming = { icon: iconFor(item.recipeId, item.garnish) || "🥣", kind: item.kind, from: g.minute, tags: item.tags };
+    p.consuming = { icon: iconFor(item.recipeId, item.garnish) || "🥣", kind: item.kind, from: g.minute, tags: item.tags, needs: needsOf(item.recipeId) };
     g.stats.outcomes[v.outcome] = (g.stats.outcomes[v.outcome] ?? 0) + 1;
     g.bus.emit({ type: "ServeOutcome", patronId: p.id, outcome: v.outcome, score: v.score });
     takeCoin(g, p, 0, tipFor(v.outcome, priceOf(g, item)), v.outcome === "DELIGHT"); // on the house: only a tip, if it lands
@@ -268,7 +269,7 @@ export function deliverTo(g, p, quiet = false, extra = []) {
         g.speak(p, v.line, 1, true);
     g.stats.served++;
     g.totalServed++;
-    p.consuming = { icon: iconFor(item.recipeId, item.garnish) || "🥣", kind: item.kind, from: g.minute, tags: item.tags };
+    p.consuming = { icon: iconFor(item.recipeId, item.garnish) || "🥣", kind: item.kind, from: g.minute, tags: item.tags, needs: needsOf(item.recipeId) };
     g.stats.outcomes[v.outcome] = (g.stats.outcomes[v.outcome] ?? 0) + 1;
     g.bus.emit({ type: "ServeOutcome", patronId: p.id, outcome: v.outcome, score: v.score });
     // An ordered serve can't go wrong: they always pay for it. The tip follows the reaction.

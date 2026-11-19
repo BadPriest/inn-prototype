@@ -2,8 +2,8 @@
 // Times are in game minutes. [centre, spread] pairs are organic values.
 
 import type { Organic } from "./core.js";
-import { DISHES_DATA, EQUIPMENT_DATA, LOCATIONS_DATA } from "./gamedata.gen.js";
-import type { EquipmentPiece } from "./gamedata.js";
+import { DISHES_DATA, EQUIPMENT_DATA, INGREDIENTS_DATA, LOCATIONS_DATA } from "./gamedata.gen.js";
+import type { DishData, EquipmentPiece } from "./gamedata.js";
 
 // ---------------------------------------------------------------------------
 // The map. One character per tile. See TILE_LEGEND below.
@@ -182,8 +182,7 @@ export const PIE_SAFE_CAPACITY = pieceById("pieSafe")?.capacity?.batches ?? 4;
 export const URN_CAPACITY = pieceById("teaUrn")?.capacity?.servings ?? 8;
 export const BREAD_CASE_BATCHES = pieceById("breadCase")?.capacity?.batches ?? 3;
 
-const LEGACY_DISH_ID: Record<string, string> = { fish: "friedFish" };
-export const dishData = (recipeId: string) => DISHES_DATA.dishes.find((d) => d.id === (LEGACY_DISH_ID[recipeId] ?? recipeId));
+export const dishData = (recipeId: string) => DISHES_DATA.dishes.find((d) => d.id === currentDishId(recipeId));
 /** Tray slots one serving of this takes. */
 export const traySlotsOf = (recipeId: string) => dishData(recipeId)?.traySlots ?? 1;
 
@@ -294,44 +293,16 @@ export const innOf = (id: InnId | undefined): Inn => INNS.find((i) => i.id === (
 
 export type StationKind = "stove" | "griddle" | "oven" | "kettle" | "coffee" | "prep";
 
-export interface Ingredient { id: string; name: string; icon: string; tags: string[] }
+export interface Ingredient { id: string; name: string; icon: string; tags: string[]; worth: number; roles: string[] }
 
-export const INGREDIENTS: Ingredient[] = [
-  { id: "beef", icon: "🥩", name: "Beef", tags: ["rich"] },
-  { id: "mushroom", icon: "🍄", name: "Mushroom", tags: ["earthy"] },
-  { id: "roots", icon: "🥕", name: "Root veg", tags: ["sweet", "homely"] },
-  { id: "pepper", icon: "🌶️", name: "Pepper", tags: ["fiery"] },
-  { id: "herbs", icon: "🌿", name: "Herbs", tags: ["fragrant"] },
-  { id: "sausage", icon: "🌭", name: "Smoked sausage", tags: ["smoky"] },
-  { id: "apple", icon: "🍎", name: "Apple", tags: ["sweet", "crisp"] },
-  { id: "berry", icon: "🫐", name: "Berries", tags: ["tart"] },
-  { id: "meat", icon: "🍖", name: "Minced meat", tags: ["rich", "savoury"] },
-  { id: "cheese", icon: "🧀", name: "Cheese & onion", tags: ["savoury"] },
-  { id: "walnut", icon: "🌰", name: "Walnut", tags: ["earthy", "crisp"] },
-  { id: "radish", icon: "🔴", name: "Radish", tags: ["fiery", "crisp"] },
-  { id: "herring", icon: "🐟", name: "Pickled herring", tags: ["briny"] },
-  { id: "crumb", icon: "🍞", name: "Breadcrumb", tags: ["crisp"] },
-  { id: "zest", icon: "🍋", name: "Lemon zest", tags: ["bright"] },
-  { id: "mint", icon: "🌱", name: "Mint", tags: ["fragrant"] },
-  { id: "chamomile", icon: "🌼", name: "Chamomile", tags: ["homely"] },
-  { id: "black", icon: "🍂", name: "Black leaf", tags: ["bitter"] },
-  { id: "smokedleaf", icon: "🪵", name: "Smoked leaf", tags: ["smoky"] },
-  { id: "lightroast", icon: "🫘", name: "Light roast", tags: ["bright"] },
-  { id: "darkroast", icon: "☕", name: "Dark roast", tags: ["bitter"] },
-  { id: "chicory", icon: "🌾", name: "Chicory", tags: ["earthy"] },
-  { id: "spiced", icon: "🧂", name: "Spiced blend", tags: ["fiery"] },
-  // Mornings and roasts
-  { id: "butter", icon: "🧈", name: "Butter", tags: ["rich", "homely"] },
-  { id: "honey", icon: "🍯", name: "Honey", tags: ["sweet"] },
-  { id: "bacon", icon: "🥓", name: "Bacon", tags: ["smoky", "salty"] },
-  { id: "tomato", icon: "🍅", name: "Fried tomato", tags: ["tart", "savoury"] },
-  { id: "chives", icon: "🌿", name: "Chives", tags: ["fragrant", "bright"] },
-  { id: "pork", icon: "🐖", name: "Pork", tags: ["rich", "savoury"] },
-  { id: "lamb", icon: "🐑", name: "Lamb", tags: ["rich", "fragrant"] },
-  { id: "fowl", icon: "🐓", name: "Fowl", tags: ["homely", "light"] },
-];
+export const INGREDIENTS: Ingredient[] = INGREDIENTS_DATA.ingredients.map((x) => ({ id: x.id, name: x.name, icon: x.icon, tags: x.tags, worth: x.worth, roles: x.roles }));
+const ingredientById = (id: string) => INGREDIENTS.find((x) => x.id === id);
+/** The cheapest ingredient that fills a role (a liquid: water). */
+export const defaultForRole = (role: string) => INGREDIENTS.filter((x) => x.roles.includes(role)).sort((a, b) => a.worth - b.worth)[0];
 
 export type ItemKind = "food" | "drink";
+
+export interface IngredientChoice { pick: [min: number, max: number]; options: { id: string; units: number }[] }
 
 export interface Recipe {
   id: string;
@@ -339,55 +310,62 @@ export interface Recipe {
   kind: ItemKind;
   station: StationKind | "tap";
   baseTags: string[];
-  slots: number; // ingredients you must choose
-  maxSlots?: number; // ...and may choose, if more than that (default: the same). Meant to grow through progression or cards, not by default
-  options: string[]; // ingredient ids allowed in the slots
-  blurb?: string; // shown when you choose it at the station
-  minutes: Organic; // crafting time
-  tended?: boolean; // only progresses while the keeper is at the station
-  servings?: Organic; // made whole and served in portions: a pot of stew, a pie in slices
-  storedIn?: "piesafe" | "urn"; // a whole one waits on the station; the keeper carries it to the pie safe, where it's sliced
-  internal?: boolean; // made at a station but never ordered or put on the bill of fare (hot water for tea)
-  batch?: string; // what a whole batch is called when it's ready ("a roast"); default: a pot of it
+  /** Always in it, chosen for you: the dish's fundamentals ("liquid" filled by water). */
+  fundamental: { id: string; units: number }[];
+  base: IngredientChoice;
+  optional: IngredientChoice;
+  /** Every ingredient the player could choose, base and optional. */
+  options: string[];
+  blurb?: string;
+  minutes: Organic;
+  tended?: boolean;
+  servings?: Organic;
+  storedIn?: "piesafe" | "urn";
+  internal?: boolean;
+  batch?: string;
   icon: string;
+  needs?: { hunger: number; thirst: number; warmth: number };
+  boughtAs?: string;
 }
 
-export const RECIPES: Recipe[] = [
-  { id: "stew", blurb: "A pot that keeps the whole room warm. Slow to make and generous once it's done: it feeds whoever asks, a ladle at a time, until the pot scrapes bottom.", icon: "🍲", name: "Stew", kind: "food", station: "stove", baseTags: ["warm", "hearty"], slots: 2,
-    options: ["beef", "mushroom", "roots", "pepper", "herbs", "sausage"], minutes: [14, 3], servings: [7, 1] },
-  { id: "fish", blurb: "Fresh from the morning boats, into a hot pan. It needs you standing over it the whole time, and it's worth it.", icon: "🐟", name: "Fried fish", kind: "food", station: "griddle", baseTags: ["warm", "briny"], slots: 1,
-    options: ["crumb", "herbs", "zest"], minutes: [6, 1.5], tended: true },
-  { id: "pie", blurb: "Golden and lidded, cut into slices that keep in the pie safe. Tomorrow it's day-old, and still somebody's favourite.", icon: "🥧", name: "Pie", kind: "food", station: "oven", baseTags: ["warm", "homely"], slots: 1,
-    options: ["apple", "berry", "meat", "cheese"], minutes: [20, 4], servings: [6, 1], storedIn: "piesafe" },
-  { id: "salad", blurb: "Cold and crisp, put together by hand at the prep table. Quick to make, and easy to get just right.", icon: "🥗", name: "Salad", kind: "food", station: "prep", baseTags: ["cold", "light"], slots: 2,
-    options: ["apple", "walnut", "radish", "herbs", "cheese", "herring"], minutes: [4, 1] },
-  // Breakfast and other quick pan dishes: tended, like the fish.
-  { id: "scrambled", blurb: "Beaten, into a buttered pan, stirred slow until they just set. Stay with them; they turn rubbery the moment you look away.", icon: "🍳", name: "Scrambled eggs", kind: "food", station: "griddle", baseTags: ["warm", "mild"], slots: 1,
-    options: ["chives", "cheese", "bacon", "mushroom", "pepper"], minutes: [4, 1], tended: true },
-  { id: "toast", blurb: "Thick slices from the baker's loaf, browned in the pan. Quick, cheap, and nobody's ever sorry to see it.", icon: "🍞", name: "Toast", kind: "food", station: "griddle", baseTags: ["warm", "crisp"], slots: 1,
-    options: ["butter", "honey", "berry", "cheese", "herring"], minutes: [3, 0.8], tended: true },
-  { id: "fryup", blurb: "The working breakfast: whatever's in the larder, fried in one pan and piled on one plate. Sets anyone up till noon.", icon: "🥓", name: "Fried breakfast", kind: "food", station: "griddle", baseTags: ["warm", "hearty", "savoury"], slots: 2,
-    options: ["bacon", "sausage", "mushroom", "tomato", "crumb"], minutes: [7, 1.5], tended: true },
-  // A pot for the morning
-  { id: "porridge", blurb: "Oats, milk and a long slow stir. A pot of it carries the morning crowd, a bowl at a time.", icon: "🥣", name: "Porridge", kind: "food", station: "stove", baseTags: ["warm", "homely", "mild"], slots: 1,
-    options: ["honey", "apple", "berry", "walnut", "butter"], minutes: [10, 2], servings: [7, 1] },
-  // Bread: a batch of loaves, sliced to order until it's gone. Good alongside a stew or a soup.
-  { id: "bread", blurb: "A batch of loaves from the oven, crusty outside and soft in the middle, sliced to order. Good alongside a stew.", icon: "🍞", name: "Bread", kind: "food", station: "oven", baseTags: ["warm", "homely"], slots: 1,
-    options: ["butter", "herbs", "walnut", "cheese", "honey"], minutes: [18, 3], servings: [8, 1], batch: "a batch of bread" },
-  // Roasts: a whole joint in the oven, carved to order until it's gone. It holds the oven while it lasts.
-  { id: "roast", blurb: "A whole joint in the oven, an afternoon's work, carved to order until the bone's bare. The oven's taken while it lasts.", icon: "🍖", name: "Roast", kind: "food", station: "oven", baseTags: ["warm", "hearty", "rich"], slots: 2,
-    options: ["beef", "pork", "lamb", "fowl", "roots", "herbs", "apple"], minutes: [26, 4], servings: [9, 1.5], batch: "a roast" },
-  { id: "coffee", blurb: "A whole pot at a time, poured by the cup until it's gone. The beans decide what kind of morning it is.", icon: "☕", name: "Coffee", kind: "drink", station: "coffee", baseTags: ["warm", "rich"], slots: 1,
-    options: ["lightroast", "darkroast", "chicory", "spiced"], minutes: [8, 2], servings: [7, 1] },
-  { id: "water", internal: true, blurb: "Boil the kettle once, then steep a cup at a time, each with the leaf its drinker likes, until the water's gone.", icon: "♨️", name: "Boil the kettle", kind: "drink", station: "kettle", baseTags: ["warm"], slots: 0,
-    options: [], minutes: [4, 1], servings: [3, 0.8] },
-  { id: "tea", blurb: "A cup for one, steeped behind the counter. What goes in the pot decides who it comforts.", icon: "🍵", name: "Tea", kind: "drink", station: "kettle", baseTags: ["warm", "mild"], slots: 1,
-    options: ["mint", "chamomile", "black", "smokedleaf"], minutes: [3, 1] },
-  { id: "ale", icon: "🍺", name: "Ale", kind: "drink", station: "tap", baseTags: ["cold", "bitter", "hearty"], slots: 0,
-    options: [], minutes: [0, 0] },
-  { id: "cider", icon: "🍏", name: "Cider", kind: "drink", station: "tap", baseTags: ["cold", "crisp", "sweet"], slots: 0,
-    options: [], minutes: [0, 0] },
-];
+const NO_CHOICE: IngredientChoice = { pick: [0, 0], options: [] };
+const resolveUse = (u: { id?: string; role?: string; units: number }) => ({ id: u.id ?? defaultForRole(u.role!)?.id ?? "", units: u.units });
+
+function recipeOf(d: DishData): Recipe {
+  const needs = { hunger: d.effects?.needs?.hunger ?? 0, thirst: d.effects?.needs?.thirst ?? 0, warmth: d.effects?.needs?.warmth ?? 0 };
+  const base = d.ingredients ? { pick: d.ingredients.base.pick, options: d.ingredients.base.options.map(resolveUse) } : NO_CHOICE;
+  const optional = d.ingredients ? { pick: d.ingredients.optional.pick, options: d.ingredients.optional.options.map(resolveUse) } : NO_CHOICE;
+  return {
+    id: d.id, name: d.name, icon: d.icon,
+    kind: needs.thirst > needs.hunger ? "drink" : "food",
+    station: d.madeAt?.kinds[0] ?? "tap",
+    baseTags: d.tags,
+    fundamental: (d.ingredients?.fundamental ?? []).map(resolveUse),
+    base, optional,
+    options: [...new Set([...base.options, ...optional.options].map((o) => o.id))],
+    blurb: d.text?.craftingStation,
+    minutes: d.minutes ?? [0, 0],
+    tended: d.tended,
+    servings: d.batch?.servings,
+    storedIn: d.batch?.storedIn === "pieSafe" ? "piesafe" : undefined,
+    batch: d.batch?.calledWhenReady,
+    needs, boughtAs: d.boughtAs,
+  };
+}
+
+/** Hot water for tea: a step at the kettle, not a dish. */
+const BOIL_THE_KETTLE: Recipe = {
+  id: "water", internal: true, name: "Boil the kettle", icon: "♨️", kind: "drink", station: "kettle", baseTags: ["warm"],
+  fundamental: [{ id: "water", units: 3 }], base: NO_CHOICE, optional: NO_CHOICE, options: [],
+  blurb: "Boil the kettle once, then steep a cup at a time, each with the leaf its drinker likes, until the water's gone.",
+  minutes: [4, 1], servings: [3, 0.8],
+};
+
+export const RECIPES: Recipe[] = [...DISHES_DATA.dishes.filter((d) => !d.tableSnack).map(recipeOf), BOIL_THE_KETTLE];
+
+/** Dish ids from before the game data files, as old saves have them. */
+export const LEGACY_DISH_ID: Record<string, string> = { fish: "friedFish" };
+export const currentDishId = (id: string) => LEGACY_DISH_ID[id] ?? id;
 
 // Snack bowls: complimentary, set on a table. Their tags join the table's visit.
 export interface Snack { id: string; name: string; icon: string; tags: string[]; thirsty: number; blurb?: string }

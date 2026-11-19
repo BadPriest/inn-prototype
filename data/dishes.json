@@ -290,7 +290,7 @@
           },
           {
             "id": "roots",
-            "units": 1
+            "units": 0.3
           },
           {
             "role": "egg",
@@ -606,7 +606,7 @@
         "fundamental": [
           {
             "id": "egg",
-            "units": 3
+            "units": 2
           },
           {
             "role": "cookingFat",
@@ -707,7 +707,7 @@
         "fundamental": [
           {
             "role": "bread",
-            "units": 1,
+            "units": 0.25,
             "stages": [
               "fresh",
               "onTheTurn",
@@ -815,7 +815,7 @@
           },
           {
             "id": "egg",
-            "units": 2
+            "units": 1
           }
         ],
         "base": {

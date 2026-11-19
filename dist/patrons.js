@@ -430,14 +430,14 @@ function placeOrder(g, p) {
  * strangers sometimes. They name the one they truly like best (if they like any of them at all).
  */
 function namedOption(g, p, recipe) {
-    if (recipe.kind !== "drink" || recipe.slots !== 1 || !recipe.options.length)
+    if (recipe.kind !== "drink" || recipe.base.pick[0] !== 1 || recipe.base.pick[1] !== 1)
         return undefined;
     const st = g.regular(p.regularId);
     const knowsOwnMind = st ? (p.schema === "open" || st.openedUp || st.resolved) : false;
     const asks = chance(knowsOwnMind ? SPECIFIC_ORDERS.regular : p.fussiness >= SPECIFIC_ORDERS.fussyAt ? SPECIFIC_ORDERS.fussy : SPECIFIC_ORDERS.anyone);
     if (!asks)
         return undefined;
-    const best = recipe.options
+    const best = recipe.base.options.map((o) => o.id)
         .map((id) => ({ id, s: tagScore(INGREDIENTS.find((x) => x.id === id)?.tags ?? [], p.tastes[recipe.kind]).score }))
         .sort((a, b) => b.s - a.s)[0];
     return best && best.s > 0 ? best.id : undefined;

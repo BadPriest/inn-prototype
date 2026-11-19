@@ -6,7 +6,8 @@
 
 import type { Outcome } from "./core.js";
 import type { Game, Item, Patron } from "./game.js";
-import { ECONOMY_DATA } from "./gamedata.gen.js";
+import { ECONOMY_DATA, SPOILAGE_DATA } from "./gamedata.gen.js";
+import { INGREDIENTS, RECIPES, TUNING, currentDishId, dishData, traySlotsOf, type Recipe } from "./data.js";
 
 /** All money is counted in pennies. */
 export const PENCE_PER_SHILLING = 10;
@@ -50,17 +51,36 @@ export function moneyHtml(pence: number): string {
 }
 
 // ---------------------------------------------------------------------------
-// Prices. Placeholders from the session's baseline (ale 4d, tea 3d, stew 6d), to be tuned in play.
+// Prices, worked out from what goes in (data/economy.json):
+//   (ingredient cost + prep + per tray slot x tray slots) x (1 + margin) x (1 + markup) x house level x staleness
 
-/** What a dish sells for at Fair, in pennies: the dish and its prep. */
-const DISH_PRICE: Record<string, number> = {
-  ale: 4, cider: 4, tea: 3, coffee: 3,
-  stew: 6, porridge: 3, fish: 7, pie: 6, salad: 5, scrambled: 5, toast: 3, fryup: 8, bread: 2, roast: 9,
-};
-/** Dearer things that go in it add to the price. Everything else is in the dish's price already. */
-const INGREDIENT_EXTRA: Record<string, number> = { beef: 1, sausage: 1, meat: 1, bacon: 1, cheese: 1, herring: 1, pork: 1, lamb: 2, fowl: 1 };
-/** A garnish on a drink: a penny. */
-const GARNISH_EXTRA = 1;
+const P = ECONOMY_DATA.price;
+const worthOf = (id: string) => INGREDIENTS.find((x) => x.id === id)?.worth ?? 0;
+const GARNISH_INGREDIENT: Record<string, string> = { sprig: "mint" };
+const STALE_FACTOR = SPOILAGE_DATA.stageEffects.stale?.priceFactor ?? 1;
+
+/** The units of an ingredient a dish uses when it's chosen (from its base or its extras). */
+function unitsOf(r: Recipe, id: string): number {
+  return [...r.base.options, ...r.optional.options].find((o) => o.id === id)?.units ?? 1;
+}
+
+/** The cheapest way to make a dish: the fewest, cheapest choices it allows. */
+function cheapestChoices(r: Recipe): string[] {
+  const cheapest = (c: Recipe["base"]) => [...c.options].sort((a, b) => a.units * worthOf(a.id) - b.units * worthOf(b.id)).slice(0, c.pick[0]).map((o) => o.id);
+  return [...cheapest(r.base), ...cheapest(r.optional)];
+}
+
+/** Worked out at Fair, before markup and the house level, for one serving. */
+function workedOutPrice(r: Recipe, options: string[]): number {
+  const fixed = dishData(r.id)?.price?.fixed;
+  if (fixed !== undefined) return fixed;
+  const servings = r.servings?.[0] ?? 1;
+  const ingredients = r.fundamental.reduce((a, u) => a + u.units * worthOf(u.id), 0)
+    + options.reduce((a, id) => a + unitsOf(r, id) * worthOf(id), 0)
+    + (r.boughtAs ? worthOf(r.boughtAs) : 0);
+  const prep = r.minutes[0] * (r.tended ? P.prepPerMinute.tended : P.prepPerMinute.untended);
+  return (ingredients + prep) / servings + P.perTraySlot * traySlotsOf(r.id);
+}
 
 export type PriceLevel = "cheap" | "fair" | "dear";
 const LEVEL_NAMES: Record<PriceLevel, string> = { cheap: "Cheap", fair: "Fair", dear: "Dear" };
@@ -78,19 +98,23 @@ export const priceLevel = (g: Game) => PRICE_LEVELS.find((l) => l.id === g.price
 export const PRICE_MARKUP = 1 + ECONOMY_DATA.price.markup;
 
 /** What a dish sells for, exactly (fractions of a penny kept). */
-function exactPrice(g: Game, recipeId: string, options: string[], garnished: boolean): number {
-  const base = (DISH_PRICE[recipeId] ?? 4) + options.reduce((a, o) => a + (INGREDIENT_EXTRA[o] ?? 0), 0) + (garnished ? GARNISH_EXTRA : 0);
-  return Math.max(1, base * priceLevel(g).factor * PRICE_MARKUP);
+function exactPrice(g: Game, recipeId: string, options: string[], garnish: string | undefined, stale: boolean): number {
+  const r = RECIPES.find((x) => x.id === currentDishId(recipeId));
+  if (!r) return 4;
+  const garnishCost = garnish ? worthOf(GARNISH_INGREDIENT[garnish] ?? garnish) : 0;
+  const base = workedOutPrice(r, options) + garnishCost;
+  return Math.max(1, base * (1 + P.margin) * PRICE_MARKUP * priceLevel(g).factor * (stale ? STALE_FACTOR : 1));
 }
 
-/** What a dish on the bill sells for now, to the penny (no ingredients chosen: the plain dish). */
-export function priceOfRecipe(g: Game, recipeId: string, options: string[] = [], garnished = false): number {
-  return Math.round(exactPrice(g, recipeId, options, garnished));
+/** What a dish on the bill sells for now, to the penny: made the cheapest way it allows, unless ingredients are given. */
+export function priceOfRecipe(g: Game, recipeId: string, options?: string[], garnish?: string): number {
+  const r = RECIPES.find((x) => x.id === currentDishId(recipeId));
+  return Math.round(exactPrice(g, recipeId, options ?? (r ? cheapestChoices(r) : []), garnish, false));
 }
 
 /** What a guest pays for this dish: exact, so the markup counts even on a 4d pint. */
 export function priceOf(g: Game, item: Item): number {
-  return exactPrice(g, item.recipeId, item.options ?? [], !!item.garnish);
+  return exactPrice(g, item.recipeId, item.options ?? [], item.garnish, item.tags.includes(TUNING.staleTag));
 }
 
 /** A tip, by how it went: a Delight tips well, Pleased a little, anything else nothing. Modest either way. */

@@ -1,6 +1,8 @@
 // Trays, pickup, pouring, garnishing and delivery.
 
-import { GARNISHES, RECIPES, TUNING, pieceById, traySlotsOf } from "./data.js";
+import { GARNISHES, RECIPES, TUNING, currentDishId, pieceById, traySlotsOf } from "./data.js";
+
+const needsOf = (recipeId: string) => RECIPES.find((r) => r.id === currentDishId(recipeId))?.needs;
 import { makeItem, serveFromPot, steepTea } from "./crafting.js";
 import type { Game, Item, Patron, SetDownTray, Tray } from "./game.js";
 import { dist } from "./world.js";
@@ -198,7 +200,7 @@ export function serveUnasked(g: Game, p: Patron, item: Item): void {
   else if (v.outcome === "DELIGHT") g.speak(p, "For me? Oh!", 1, true);
   g.stats.served++;
   g.totalServed++;
-  p.consuming = { icon: iconFor(item.recipeId, item.garnish) || "🥣", kind: item.kind, from: g.minute, tags: item.tags };
+  p.consuming = { icon: iconFor(item.recipeId, item.garnish) || "🥣", kind: item.kind, from: g.minute, tags: item.tags, needs: needsOf(item.recipeId) };
   g.stats.outcomes[v.outcome] = (g.stats.outcomes[v.outcome] ?? 0) + 1;
   g.bus.emit({ type: "ServeOutcome", patronId: p.id, outcome: v.outcome, score: v.score });
   takeCoin(g, p, 0, tipFor(v.outcome, priceOf(g, item)), v.outcome === "DELIGHT"); // on the house: only a tip, if it lands
@@ -244,7 +246,7 @@ export function deliverTo(g: Game, p: Patron, quiet = false, extra: Item[] = [])
   if (v.line) g.speak(p, v.line, 1, true);
   g.stats.served++;
   g.totalServed++;
-  p.consuming = { icon: iconFor(item.recipeId, item.garnish) || "🥣", kind: item.kind, from: g.minute, tags: item.tags };
+  p.consuming = { icon: iconFor(item.recipeId, item.garnish) || "🥣", kind: item.kind, from: g.minute, tags: item.tags, needs: needsOf(item.recipeId) };
   g.stats.outcomes[v.outcome] = (g.stats.outcomes[v.outcome] ?? 0) + 1;
   g.bus.emit({ type: "ServeOutcome", patronId: p.id, outcome: v.outcome, score: v.score });
   // An ordered serve can't go wrong: they always pay for it. The tip follows the reaction.

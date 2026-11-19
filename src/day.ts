@@ -1,7 +1,7 @@
 // The clock and the day cycle: open, last call, turn in, next morning. Days never end.
 
 import { carterArrives } from "./shop.js";
-import { MEALS, TUNING, currentEquipmentId, pieceById, EQUIPMENT } from "./data.js";
+import { MEALS, TUNING, currentEquipmentId, pieceById, EQUIPMENT, currentDishId, RECIPES } from "./data.js";
 import { emptyStats, type DayStats, type Game, type RegularState } from "./game.js";
 import { defaultLayout, setOnStove } from "./world.js";
 import { callLastOrders, clearPatrons, scheduleRegulars, unlockRegulars } from "./patrons.js";
@@ -143,7 +143,8 @@ export function load(g: Game): void {
     const s = JSON.parse(raw) as { day: number; calendarStart?: number; location?: Game["location"]; inn?: Game["inn"]; weather?: WeatherState; history: DayStats[]; regulars?: RegularState[]; visitorNotes?: Game["visitorNotes"];
       menu?: string[]; menuChosen?: boolean; layout?: Game["layout"]; mealMode?: boolean; meals?: unknown; betweenMenu?: string[]; upgrades?: string[]; totalServed?: number; showObjectives?: boolean;
       purse?: number; priceLevel?: Game["priceLevel"]; onOrder?: string[]; toPlace?: string[] };
-    if (s.menu) g.menu = new Set(s.menu);
+    const dishes = (ids: string[]) => new Set(ids.map(currentDishId).filter((id) => RECIPES.some((r) => r.id === id)));
+    if (s.menu) g.menu = dishes(s.menu);
     g.menuChosen = !!s.menuChosen;
     // Saves from before there was a choice of inn are the big tavern.
     if (s.inn && s.inn !== g.inn) g.setInn(s.inn);
@@ -163,9 +164,9 @@ export function load(g: Game): void {
     g.mealMode = !!s.mealMode;
     if (Array.isArray(s.meals)) for (const m of s.meals as { id: string; from: number; to: number; menu: string[] }[]) {
       const meal = g.meals.find((x) => x.id === m.id);
-      if (meal) { meal.from = m.from; meal.to = m.to; meal.menu = new Set(m.menu); }
+      if (meal) { meal.from = m.from; meal.to = m.to; meal.menu = dishes(m.menu); }
     }
-    if (Array.isArray(s.betweenMenu)) g.betweenMenu = new Set(s.betweenMenu);
+    if (Array.isArray(s.betweenMenu)) g.betweenMenu = dishes(s.betweenMenu);
     g.upgrades = new Set((s.upgrades ?? []).map(currentEquipmentId).filter((id) => pieceById(id)));
     g.totalServed = s.totalServed ?? 0;
     g.showObjectives = s.showObjectives ?? true;
