@@ -127,6 +127,28 @@ Not covered: the pause screen's own tabs. Sound stops while paused, so a page tu
 | A base loop per calendar season (spring birdsong, summer insects, autumn wind and leaves, winter hush), maybe by time of day | Reacts to the calendar, which exists | #19 |
 | Outdoor storm loop through the open door | Reacts to weather; today a storm uses the medium rain, louder | optional |
 
+## Wanted: moments that have no sound yet (Nov 20, 2026)
+
+Each reacts to something the game already does. What it should sound like is a suggestion: anything in the spirit works. Cues are short (under 2 s unless said), go in `cues/` or `menus/`, and play flat.
+
+| Moment | What to listen for | Length | Where it would play from |
+| --- | --- | --- | --- |
+| **The carter arrives** (each morning with a delivery) | Hooves on cobbles getting closer, a cart creaking to a stop, a "whoa", a crate set down with a wooden thump, two knocks at the kitchen door. Muffled, outside. Could be one file or a few (hooves, thump, knock) | 3–6 s | `deliveriesArrive` / `carterArrives` (a new event) |
+| **Fetching supplies yourself: setting off** | An empty cart rattling away: light, bouncy wheels, a horse trotting off, fading out | 2–3 s | `fetchSlip` / `fetchThing` |
+| **Fetching supplies: coming back** | The same cart returning heavy (slower, deeper rumble, things clinking in crates), with a little musical flourish over it: a few bright notes, a "got it all" | 3–4 s | after the fetch |
+| **Carrying the delivery in** (unpacking crates) | A crate lid prised up, then things going onto shelves: jars, a sack slumped down | 1–2 s | `unpackCrate` |
+| **Opening Skills** | A book opened: a heavy cover, pages settling. Warmer than the newspaper | under 1 s | `MenuSound` when Skills opens |
+| **Learning a recipe or a knack** | A pen's satisfied scratch and a small chime: something learned, written down | 1–1.5 s | `learn` / `buyKnack` |
+| **Setting gear on a stove** (Dutch oven, kettle, coffee pot) | Cast iron set down on iron: a heavy clunk with a short ring. A kettle lighter and tinnier | under 1 s | Manage stove: set on, swap |
+| **Taking gear off a stove** | A lift and a lighter set-down on a shelf | under 1 s | Manage stove: take off |
+| **Throwing food out** | A scrape into a bucket, a hen's cluck outside (it goes to the hens) | 1 s | pantry: throw out, clear out the spoiled |
+| **The licence paid** | A rubber stamp thud on paper and coins counted out | 1–1.5 s | `payLicence` |
+| **The fire going out** (no firewood) | Embers settling, a last hiss | 1–2 s | `updateUpkeep` (fire out) |
+| **The lamps sputtering out** (no oil) | A wick flickering and a soft pop | under 1 s | `updateUpkeep` (oil out) |
+| **A tag flip over a guest** (snack bowl) | Very soft: a card flipped, a tiny pluck. Cozy, never sharp: it happens often | under 0.5 s | `showFlip` |
+| **The wardrobe** | Fabric: a coat shrugged on | under 1 s | wardrobe pick |
+| **Wear and tear** (when it's built) | Comic and varied: a mug smashing, a fork snapping, a mop flopping over, a goat bleat | under 1 s each | wear events |
+
 ## Not now
 
 | Idea | Why it waits |

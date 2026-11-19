@@ -14,7 +14,7 @@ import { longDate, seasonTurned } from "./calendar.js";
 import { morningLine, passNight, type WeatherState } from "./weather.js";
 import { deliverPaper, marketDay } from "./newspaper.js";
 import { SKILLS_DATA } from "./gamedata.gen.js";
-import { pantryNews } from "./stock.js";
+import { pantryNews, startingPantry } from "./stock.js";
 
 const SAVE_KEY = "travelling-inn-proto-v3"; // v3: the calendar (older saves start fresh)
 
@@ -197,6 +197,8 @@ export function load(g: Game): void {
     // Saves from before shelf life: what was in the pantry came in today.
     if (s.lots) g.lots = s.lots;
     else if (s.stock) g.lots = Object.fromEntries(Object.entries(s.stock).filter(([, n]) => n > 0).map(([id, units]) => [id, [{ units, day: g.day }]]));
+    // Saves from before upkeep: the starting firewood, lamp oil and sundries, as if just delivered.
+    for (const id of ["firewood", "lampOil", "sundries"]) if (!(id in g.lots)) g.lots[id] = [{ units: startingPantry()[id] ?? 0, day: g.day }];
     g.slips = s.slips ?? {};
     g.lastSlips = s.lastSlips ?? {};
     g.deliveries = s.deliveries ?? [];
