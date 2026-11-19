@@ -7,6 +7,7 @@
       "priceFactor": 1.0, "deliveryDays": "daily", "orderBy": 18,
       "distanceInMinutes": 90, "openHours": [6, 18],
       "inventory": [
+        { "item": "firewood", "pack": { "units": 20, "name": "a cartload" } },
         { "item": "milk",     "pack": { "units": 8,  "name": "a churn" } },
         { "item": "butter",   "pack": { "units": 10, "name": "a crock" } },
         { "item": "egg",      "pack": { "units": 12, "name": "a dozen" } },
@@ -68,6 +69,8 @@
       "priceFactor": 1.1, "deliveryDays": ["mon"], "orderBy": 17,
       "distanceInMinutes": 60, "openHours": [8, 18],
       "inventory": [
+        { "item": "sundries", "pack": { "units": 1, "name": "a box" } },
+        { "item": "lampOil", "pack": { "units": 4, "name": "a can" } },
         { "item": "oats",      "pack": { "units": 7,   "name": "a sack" } },
         { "item": "salt",      "pack": { "units": 200, "name": "a box" } },
         { "item": "sugar",     "pack": { "units": 50,  "name": "a bag" } },

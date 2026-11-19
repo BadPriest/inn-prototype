@@ -1,4 +1,6 @@
 // What happens when the keeper interacts with something. Menus live here.
+import { have } from "./stock.js";
+import { hasFirewood } from "./upkeep.js";
 import { setOut } from "./readymade.js";
 import { organic } from "./core.js";
 import { knack } from "./skills.js";
@@ -213,7 +215,7 @@ export function promptFor(g, t) {
             return `Space: pour ${RECIPES.find((r) => r.id === f.tap)?.name.toLowerCase()}`;
         case "garnish": return `Space or E: garnish a ${garnishKindAt(f.name) === "food" ? "dish" : "drink"}`;
         case "frontdoor": return g.open ? (g.lastCall ? "Space: bolt the door" : "Space: call last orders") : "Space: open the inn";
-        case "fireplace": return g.fireLit ? "Space: put out the fire" : "Space: light the fire";
+        case "fireplace": return `${g.fireLit ? "Space: put out the fire" : hasFirewood(g) ? "Space: light the fire" : "No firewood to light it"} · 🪵 ${Math.floor(have(g, "firewood"))} logs`;
         case "bed": return "Space: turn in";
         case "wardrobe": return "Space: the wardrobe (change your coat)";
         case "desk": return g.paper && !g.paper.read ? "Space: the desk (today's paper is here)" : "Space: bill of fare, paper, equipment, journal";
@@ -346,6 +348,10 @@ export function interact(g, t) {
             toggleInn(g);
             return;
         case "fireplace":
+            if (!g.fireLit && !hasFirewood(g)) {
+                g.say("🪵 No firewood to light it with. Order some at the desk (Supplies).");
+                return;
+            }
             g.fireLit = !g.fireLit;
             g.say(g.fireLit ? "The fire catches and crackles." : "You bank the fire.");
             return;
@@ -456,7 +462,7 @@ function slotPrompt(g, sl) {
     const job = g.jobs.get(sl.id);
     if (job) {
         const r = RECIPES.find((x) => x.id === job.recipeId);
-        const cooking = job.done ? `${r.name} done, waiting for room on the shelf` : `${r.name} ${Math.floor((job.progress / job.total) * 100)}% · hold Space to hurry`;
+        const cooking = job.done ? `${r.name} done, waiting for room on the shelf` : g.noFirewood && sl.f.equip?.fuel === "wood" ? `${r.name} stopped: no firewood` : `${r.name} ${Math.floor((job.progress / job.total) * 100)}% · hold Space to hurry`;
         return ready ? `${ready} · ${cooking}` : cooking;
     }
     return ready || `Space: cook at the ${sl.f.name.toLowerCase()}`;
@@ -738,6 +744,7 @@ function goToSleep(g) {
         ${row("Tips", moneyHtml(s.tips ?? 0))}
         ${(s.spent ?? 0) ? row("Spent", moneyHtml(s.spent ?? 0)) : ""}
         ${(s.sold ?? 0) ? row("Sold back", moneyHtml(s.sold ?? 0)) : ""}
+        ${(s.upkeep ?? 0) >= 1 ? row("Upkeep (wood, oil, sundries, licence)", moneyHtml(Math.round(s.upkeep ?? 0))) : ""}
         ${row("In the purse", moneyHtml(g.purse))}
         ${row("Patrons", s.arrivals)}
         ${row("Orders taken", s.orders ?? 0)}

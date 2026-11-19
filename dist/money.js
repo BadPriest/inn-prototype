@@ -3,6 +3,7 @@
 // Prices come from the dish and what went in it, never inflate, and move only with the house knob.
 //
 // Kept apart from reputation and knowledge: coin is spent, the other two never are.
+import { tipWithoutSundries } from "./upkeep.js";
 import { knack } from "./skills.js";
 import { READY_MADE } from "./readymade.js";
 import { ECONOMY_DATA, SPOILAGE_DATA } from "./gamedata.gen.js";
@@ -126,6 +127,8 @@ export function tipFor(outcome, price) {
 export function takeCoin(g, p, paid, tip, delight = false) {
     if (tip > 0)
         tip += knack(g, "charm", 0);
+    if (tip > 0 && g.noSundries)
+        tip = tipWithoutSundries(tip);
     if (tip > 0) {
         p.tipOwed = (p.tipOwed ?? 0) + tip;
         if (delight)

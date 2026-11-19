@@ -2,6 +2,7 @@
 // keeper lights when it gets gloomy (earlier on a rainy day), candles on the tables, the fire's glow,
 // and a flash when thunder cracks close by. Drawn as a layer of darkness over the inn with light cut
 // out of it, so the bodies dim while speech and orders, drawn after, stay readable. Tuning: LIGHT.
+import { hasLampOil } from "../upkeep.js";
 import { LIGHT, TUNING } from "../data.js";
 const clamp01 = (n) => Math.max(0, Math.min(1, n));
 /** Daylight outside, 0 (night) to 1 (full day): dawn and dusk shift with the calendar season. */
@@ -32,7 +33,7 @@ export function indoorLight(g) {
 /** Every frame: the keeper lights the lamps when it gets gloomy inside, and puts them out when it's bright. */
 export function updateLamps(g) {
     const inside = indoorLight(g);
-    if (!g.lampsLit && inside < LIGHT.lampsOnBelow) {
+    if (!g.lampsLit && inside < LIGHT.lampsOnBelow && hasLampOil(g)) {
         g.lampsLit = true;
         g.say(daylight(g) > 0.5 ? "It's gloomy out; you light the lamps." : "You light the lamps.");
     }

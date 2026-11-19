@@ -79,6 +79,12 @@ export interface EconomyData {
   startingPurse: Pence;
   startingPantry: Record<string, number>;
   deliveryFee: Pence;
+  upkeep: {
+    licence: { pence: Pence; weekday: string };
+    firewood: { item: string; fireLogsPerHour: number; stoveLogsPerHour: number; coldOrWetFactor: number };
+    lampOil: { item: string; pintsPerHour: number };
+    sundries: { item: string; perGuest: number; tipShareWithout: number };
+  };
   sellBackShare: number;
   fetchMinutes: number;
   suppliers: { priceFactor: number };

@@ -192,6 +192,8 @@ export interface DayStats {
   tips?: number;
   spent?: number;
   sold?: number;
+  /** What keeping the inn open cost today: wood, oil and sundries used, the licence. Pence. */
+  upkeep?: number;
   /** The day's weather, while the keeper was up: minutes of rain, a storm or not, minutes per sky. */
   weather?: { rainMinutes: number; storm: boolean; sky: Record<string, number> };
 }
@@ -258,6 +260,8 @@ export class Game {
   open = false;
   lastCall = false;
   fireLit = false;
+  noFirewood = false; // a wood stove wants wood and there's none: its cooking stops
+  noSundries = false; // the last guest served had no napkins: tips suffer
   lampsLit = false;
   /** The gramophone: playing or not, which record, and how many records the spring has left. */
   // spring: seconds of music left in it. resumeAt: where in the record it stopped when the spring gave out

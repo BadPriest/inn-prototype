@@ -4,9 +4,25 @@
   "description": "Values used to work out prices and payments. Money is in pence.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["price", "houseLevels", "tips", "startingPurse", "startingPantry", "deliveryFee", "sellBackShare", "fetchMinutes", "suppliers"],
+  "required": ["price", "houseLevels", "tips", "startingPurse", "startingPantry", "deliveryFee", "upkeep", "sellBackShare", "fetchMinutes", "suppliers"],
   "properties": {
     "$schema": { "type": "string" },
+    "upkeep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["licence", "firewood", "lampOil", "sundries"],
+      "description": "The cost of keeping the inn open, each something you can see. Wood, oil and sundries are pantry goods, used up as you go; the licence is paid weekly.",
+      "properties": {
+        "licence": { "type": "object", "additionalProperties": false, "required": ["pence", "weekday"], "description": "Paid on the morning of this weekday (not the first day).",
+          "properties": { "pence": { "type": "number", "minimum": 0 }, "weekday": { "type": "string" } } },
+        "firewood": { "type": "object", "additionalProperties": false, "required": ["item", "fireLogsPerHour", "stoveLogsPerHour", "coldOrWetFactor"], "description": "Logs burned per game hour: by the hearth while it's lit (times coldOrWetFactor in winter or rain), and by each wood stove while something's cooking on it. Without wood the fire goes out and wood stoves stop.",
+          "properties": { "item": { "type": "string" }, "fireLogsPerHour": { "type": "number", "minimum": 0 }, "stoveLogsPerHour": { "type": "number", "minimum": 0 }, "coldOrWetFactor": { "type": "number", "minimum": 0 } } },
+        "lampOil": { "type": "object", "additionalProperties": false, "required": ["item", "pintsPerHour"], "description": "Burned while the lamps are lit. Without it the lamps can't be lit.",
+          "properties": { "item": { "type": "string" }, "pintsPerHour": { "type": "number", "minimum": 0 } } },
+        "sundries": { "type": "object", "additionalProperties": false, "required": ["item", "perGuest", "tipShareWithout"], "description": "Napkins, soap, matches: used for each guest served. Without them, tips are this share of what they'd be.",
+          "properties": { "item": { "type": "string" }, "perGuest": { "type": "number", "minimum": 0 }, "tipShareWithout": { "type": "number", "minimum": 0, "maximum": 1 } } }
+      }
+    },
     "price": {
       "type": "object",
       "additionalProperties": false,

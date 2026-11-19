@@ -1,4 +1,5 @@
 // The clock and the day cycle: open, last call, turn in, next morning. Days never end.
+import { payLicence } from "./upkeep.js";
 import { carterArrives } from "./shop.js";
 import { deliveriesArrive } from "./supplies.js";
 import { MEALS, TUNING, currentEquipmentId, pieceById, EQUIPMENT, currentDishId, RECIPES, DEFAULT_MENU } from "./data.js";
@@ -114,6 +115,7 @@ export function startNextDay(g) {
     beginDay(g);
     carterArrives(g); // yesterday's orders
     deliveriesArrive(g);
+    payLicence(g);
     const pantry = pantryNews(g);
     if (pantry)
         g.say(pantry);

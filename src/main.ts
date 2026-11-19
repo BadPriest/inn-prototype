@@ -1,5 +1,6 @@
 // Wiring: input, the main loop, and the order systems run in.
 
+import { updateUpkeep } from "./upkeep.js";
 import { SELL_BACK_SHARE_WORDS } from "./shop.js";
 import { TUNING, type LocationId } from "./data.js";
 import { openInnPicker, openLocationPicker } from "./ui/location.js";
@@ -1013,6 +1014,7 @@ function frame(now: number): void {
     updateNeeds(g, sim);
     updateWeather(g, sim);
     updateLamps(g);
+    updateUpkeep(g, sim);
     updateFrontDoor(g, now);
     updateClock(g, sim, () => forcedTurnIn(g));
   }

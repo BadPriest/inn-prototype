@@ -7,6 +7,7 @@ import { breadCaseKeys } from "../crafting.js";
 // (the two edges farthest from the camera, whichever corner it stands at), so nothing in the room hides
 // behind them. What you need to read (labels, cooking,
 // bowls, orders, speech) is drawn over the blocks, so a guest standing in front never hides it.
+import { have } from "../stock.js";
 import { RECIPES, SNACKS, SOAKING, TUNING, PIE_SAFE_CAPACITY } from "../data.js";
 import { spotOf } from "../interact.js";
 import { iconFor, TRAY_COLOUR, trayLook } from "../serving.js";
@@ -553,6 +554,16 @@ function drawReadables(ctx, g, v, byTile, target) {
         ctx.font = `${Math.floor(ts * 0.36)}px system-ui, sans-serif`;
         ctx.fillText(sn?.icon ?? "🥣", c.x, c.y - ts * 0.04);
         ctx.globalAlpha = 1;
+    }
+    // The woodpile by the hearth: how many logs are left.
+    for (const f of g.world.furniture.filter((x) => x.kind === "fireplace")) {
+        const c = P(v, f.center.x, f.center.y, 1.1);
+        const logs = Math.floor(have(g, "firewood"));
+        ctx.font = `600 ${Math.floor(ts * 0.26)}px system-ui, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = logs < 15 ? "#ffb066" : "#f3e6d0";
+        ctx.fillText(`🪵 ${logs}`, c.x, c.y);
     }
     // The carter's crates at the kitchen door, piled up until they're carried in.
     for (const [key, n] of crateCounts(g)) {

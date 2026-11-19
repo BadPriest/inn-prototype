@@ -1,5 +1,6 @@
 import { breadCaseKeys } from "../crafting.js";
 // Canvas drawing. Basic shapes only: rectangles for furniture, circles for people.
+import { have } from "../stock.js";
 import { RECIPES, SNACKS, SOAKING, TUNING, PIE_SAFE_CAPACITY } from "../data.js";
 import { spotOf } from "../interact.js";
 import { iconFor, TRAY_COLOUR, trayLook } from "../serving.js";
@@ -334,6 +335,15 @@ export function draw(ctx, g, v, target, clickDest) {
             ctx.stroke();
         }
         ctx.lineWidth = 1;
+    }
+    // The woodpile by the hearth: how many logs are left.
+    for (const f of g.world.furniture.filter((x) => x.kind === "fireplace")) {
+        const logs = Math.floor(have(g, "firewood"));
+        ctx.font = `600 ${Math.floor(ts * 0.3)}px system-ui, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = logs < 15 ? "#ffb066" : "#f3e6d0";
+        ctx.fillText(`🪵 ${logs}`, X(f.center.x), Y(f.center.y) - ts * 0.9);
     }
     // The carter's crates at the kitchen door, piled up until they're carried in.
     for (const [key, n] of crateCounts(g)) {

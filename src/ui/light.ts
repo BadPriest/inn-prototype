@@ -3,6 +3,7 @@
 // and a flash when thunder cracks close by. Drawn as a layer of darkness over the inn with light cut
 // out of it, so the bodies dim while speech and orders, drawn after, stay readable. Tuning: LIGHT.
 
+import { hasLampOil } from "../upkeep.js";
 import { LIGHT, TUNING } from "../data.js";
 import type { Game } from "../game.js";
 
@@ -35,7 +36,7 @@ export function indoorLight(g: Game): number {
 /** Every frame: the keeper lights the lamps when it gets gloomy inside, and puts them out when it's bright. */
 export function updateLamps(g: Game): void {
   const inside = indoorLight(g);
-  if (!g.lampsLit && inside < LIGHT.lampsOnBelow) {
+  if (!g.lampsLit && inside < LIGHT.lampsOnBelow && hasLampOil(g)) {
     g.lampsLit = true;
     g.say(daylight(g) > 0.5 ? "It's gloomy out; you light the lamps." : "You light the lamps.");
   } else if (g.lampsLit && inside > LIGHT.lampsOffAbove) {

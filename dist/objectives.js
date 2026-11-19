@@ -1,5 +1,6 @@
 // The "Today" checklist: what to do before opening. The HUD shows it; ticking an item off
 // is announced (a Paper event), so the sound of a pen tick can follow.
+import { upkeepLow } from "./upkeep.js";
 import { DEFAULT_MENU, RECIPES, SNACKS, lowerName, pieceById } from "./data.js";
 import { stockOf } from "./crafting.js";
 import { nameOf, spoiledNow } from "./stock.js";
@@ -19,6 +20,7 @@ export function objectives(g) {
         { id: "snacks", text: `Put a bowl of something out on the tables ${SNACKS.map((x) => x.icon).join("")}`, done: [...g.bowls.values()].some((b) => b.left > 0), optional: true },
         { id: "open", text: "Unbolt the front door and open the inn", done: g.open },
         ...(g.crates.length ? [{ id: "crates", text: `Put away the delivery: ${g.crates.length === 1 ? "a crate" : `${g.crates.length} crates`} at the kitchen door`, done: false }] : []),
+        ...(upkeepLow(g).length ? [{ id: "upkeep", text: `Running low on ${upkeepLow(g).join(" and ")}: order more at the desk (Supplies)`, done: false, optional: true }] : []),
         ...(spoiled.length ? [{ id: "spoiled", text: `Clear the spoiled food out of the pantry (${spoiled.map((u) => nameOf(u.id).toLowerCase()).slice(0, 3).join(", ")}${spoiled.length > 3 ? "…" : ""})`, done: false, optional: true }] : []),
         ...(bigPieces.length ? [{ id: "place", text: `The carter left ${bigPieces.length === 1 ? "something" : `${bigPieces.length} things`}: place ${bigPieces.length === 1 ? "it" : "them"} from the desk, under Arrange the kitchen`, done: false, optional: true }] : []),
         ...(newGear.length ? [{ id: "gear", text: `Set the new ${newGear.map((id) => lowerName(pieceById(id).name)).join(" and the ")} on the stove: its Manage stove tab`, done: false, optional: true }] : []),

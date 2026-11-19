@@ -1,5 +1,6 @@
 // Trays, pickup, pouring, garnishing and delivery.
 
+import { useSundries } from "./upkeep.js";
 import { addStock, have, takeStock } from "./stock.js";
 import { RECIPES, TUNING, currentDishId, garnishById, garnishesFor, pieceById, traySlotsOf } from "./data.js";
 
@@ -214,6 +215,7 @@ export function serveUnasked(g: Game, p: Patron, item: Item): void {
   g.stats.outcomes[v.outcome] = (g.stats.outcomes[v.outcome] ?? 0) + 1;
   g.bus.emit({ type: "ServeOutcome", patronId: p.id, outcome: v.outcome, score: v.score });
   gainXp(g, v.outcome);
+  g.noSundries = !useSundries(g);
   takeCoin(g, p, 0, tipFor(v.outcome, priceOf(g, item)), v.outcome === "DELIGHT"); // on the house: only a tip, if it lands
   g.journal(p, `Offered, unasked: ${item.name} [${item.tags.join(", ")}]: ${describeReaction(p, v)}.${v.line ? ` “${v.line}”` : ""}`);
   for (const m of afterServe(g, p, item, v)) {
@@ -261,6 +263,7 @@ export function deliverTo(g: Game, p: Patron, quiet = false, extra: Item[] = [])
   g.stats.outcomes[v.outcome] = (g.stats.outcomes[v.outcome] ?? 0) + 1;
   g.bus.emit({ type: "ServeOutcome", patronId: p.id, outcome: v.outcome, score: v.score });
   gainXp(g, v.outcome);
+  g.noSundries = !useSundries(g);
   // An ordered serve can't go wrong: they always pay for it. The tip follows the reaction.
   const price = priceOf(g, item);
   takeCoin(g, p, price, tipFor(v.outcome, price), v.outcome === "DELIGHT");

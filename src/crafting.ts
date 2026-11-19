@@ -91,6 +91,7 @@ export function updateCrafting(g: Game, simDt: number, target: { f: Furniture; p
       const near = keeperNear(g, f);
       let rate = recipe.tended && !near ? 0 : 1;
       rate *= utensilFor(g.upgrades, recipe.station)?.craftingSpeed ?? 1;
+      if (g.noFirewood && f.equip?.fuel === "wood") rate = 0;
       if (near && (g.holdingSpace || g.hurrying) && target?.f.id === f.id && (!target.part || target.part.id === fid)) rate *= TUNING.speedUpFactor;
       job.progress += simDt * rate;
       if (job.progress >= job.total) {

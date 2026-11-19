@@ -4,6 +4,7 @@
 //
 // Kept apart from reputation and knowledge: coin is spent, the other two never are.
 
+import { tipWithoutSundries } from "./upkeep.js";
 import type { Outcome } from "./core.js";
 import type { Game, Item, Patron } from "./game.js";
 import { knack } from "./skills.js";
@@ -138,6 +139,7 @@ export function tipFor(outcome: Outcome, price: number): number {
  */
 export function takeCoin(g: Game, p: Patron, paid: number, tip: number, delight = false): void {
   if (tip > 0) tip += knack(g, "charm", 0);
+  if (tip > 0 && g.noSundries) tip = tipWithoutSundries(tip);
   if (tip > 0) { p.tipOwed = (p.tipOwed ?? 0) + tip; if (delight) p.tipDelight = true; }
   if (paid <= 0) return;
   g.purse += paid;
