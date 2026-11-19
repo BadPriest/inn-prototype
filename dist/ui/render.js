@@ -335,18 +335,22 @@ export function draw(ctx, g, v, target, clickDest) {
         }
         ctx.lineWidth = 1;
     }
-    // The carter's crates, on the floor until unpacked.
-    for (const cr of g.crates) {
-        ctx.fillStyle = "#a8743f";
-        ctx.fillRect(X(cr.x) + ts * 0.15, Y(cr.y) + ts * 0.15, ts * 0.7, ts * 0.7);
-        ctx.strokeStyle = "#5a3a1a";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(X(cr.x) + ts * 0.15, Y(cr.y) + ts * 0.15, ts * 0.7, ts * 0.7);
-        ctx.lineWidth = 1;
-        ctx.font = `${Math.floor(ts * 0.42)}px system-ui, sans-serif`;
+    // The carter's crates at the kitchen door, piled up until they're carried in.
+    for (const [key, n] of crateCounts(g)) {
+        const [cx, cy] = key.split(",").map(Number);
+        for (let i = Math.min(3, n) - 1; i >= 0; i--) {
+            const o = i * ts * 0.08;
+            ctx.fillStyle = i % 2 ? "#b9834a" : "#a8743f";
+            ctx.fillRect(X(cx) + ts * 0.15 + o, Y(cy) + ts * 0.15 - o, ts * 0.7, ts * 0.7);
+            ctx.strokeStyle = "#5a3a1a";
+            ctx.lineWidth = 2;
+            ctx.strokeRect(X(cx) + ts * 0.15 + o, Y(cy) + ts * 0.15 - o, ts * 0.7, ts * 0.7);
+            ctx.lineWidth = 1;
+        }
+        ctx.font = `${Math.floor(ts * 0.36)}px system-ui, sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText("📦", X(cr.x) + ts / 2, Y(cr.y) + ts / 2);
+        ctx.fillText(n > 1 ? `📦×${n}` : "📦", X(cx) + ts / 2, Y(cy) + ts / 2);
     }
     // Trays set down on counters and tables
     for (const sd of g.setDown) {
@@ -804,6 +808,13 @@ export function drawEyes(ctx, a, b, ts, color = "#2a1d14") {
         ctx.ellipse(e.x, e.y, ts * 0.032, Math.max(ts * 0.008, ts * 0.062 * open), 0, 0, Math.PI * 2);
         ctx.fill();
     }
+}
+/** Crates by the tile they're piled on. */
+export function crateCounts(g) {
+    const m = new Map();
+    for (const c of g.crates)
+        m.set(`${c.x},${c.y}`, (m.get(`${c.x},${c.y}`) ?? 0) + 1);
+    return m;
 }
 export function badge(ctx, x, y, text, ts) {
     ctx.fillStyle = "#ffd34d";

@@ -201,7 +201,7 @@ export function load(g) {
         g.xp = s.xp ?? g.totalServed * 2;
         g.knacks = s.knacks ?? {};
         g.newSkills = !!s.newSkills;
-        g.crates = Array.isArray(s.crates) ? s.crates : [];
+        g.crates = Array.isArray(s.crates) ? s.crates.map((c) => ({ ...c, day: c.day ?? g.day })) : [];
         g.coat = s.coat ?? "slate";
         g.under = s.under ?? "linen";
         g.newGear = Array.isArray(s.newGear) ? s.newGear : [];

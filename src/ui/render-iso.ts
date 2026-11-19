@@ -18,7 +18,7 @@ import { drawLevelUp } from "./levelup.js";
 import { coatColor, eyeColor, underColor } from "./wardrobe.js";
 import { gaitOf, keeperGait, type Gait } from "../sound/footsteps.js";
 import { ISO, P, Pt, floorPath, turn, turnedSize, unproject, unturn } from "./proj.js";
-import { badge, barLabel, drawEyes, busyWord, jobWord, drawCoinPops, drawGuide, drawPatronWords, drawSpeech, say, type View } from "./render.js";
+import { badge, barLabel, crateCounts, drawEyes, busyWord, jobWord, drawCoinPops, drawGuide, drawPatronWords, drawSpeech, say, type View } from "./render.js";
 
 /** Height of the back walls, in tiles; every other wall is a low stub so you can see past it. */
 const TALL = 1.5;
@@ -86,14 +86,16 @@ function poly(ctx: CanvasRenderingContext2D, pts: Vec[]): void {
 }
 
 /** A block over the inn's tiles x0..x1, y0..y1. `faceU`/`faceW`: show the face toward the viewer on that side. */
-interface Box { x0: number; y0: number; x1: number; y1: number; z: number; color: string; faceU: boolean; faceW: boolean }
+/** `zb`: where its sides start (a crate on another); the floor if not given. */
+interface Box { x0: number; y0: number; x1: number; y1: number; z: number; zb?: number; color: string; faceU: boolean; faceW: boolean }
 
 /** A block: its two faces toward the viewer (+u lower right, +w lower left), then its top. */
 function drawBox(ctx: CanvasRenderingContext2D, v: View, b: Box): void {
   const a = turn(v, b.x0, b.y0), c = turn(v, b.x1, b.y1);
   const u0 = Math.min(a.x, c.x), u1 = Math.max(a.x, c.x), w0 = Math.min(a.y, c.y), w1 = Math.max(a.y, c.y), z = b.z;
-  if (b.faceW) { ctx.fillStyle = shade(b.color, 0.72); poly(ctx, [Pt(v, u0, w1, z), Pt(v, u1, w1, z), Pt(v, u1, w1, 0), Pt(v, u0, w1, 0)]); ctx.fill(); }
-  if (b.faceU) { ctx.fillStyle = shade(b.color, 0.55); poly(ctx, [Pt(v, u1, w0, z), Pt(v, u1, w1, z), Pt(v, u1, w1, 0), Pt(v, u1, w0, 0)]); ctx.fill(); }
+  const zb = b.zb ?? 0;
+  if (b.faceW) { ctx.fillStyle = shade(b.color, 0.72); poly(ctx, [Pt(v, u0, w1, z), Pt(v, u1, w1, z), Pt(v, u1, w1, zb), Pt(v, u0, w1, zb)]); ctx.fill(); }
+  if (b.faceU) { ctx.fillStyle = shade(b.color, 0.55); poly(ctx, [Pt(v, u1, w0, z), Pt(v, u1, w1, z), Pt(v, u1, w1, zb), Pt(v, u1, w0, zb)]); ctx.fill(); }
   ctx.fillStyle = b.color;
   poly(ctx, [Pt(v, u0, w0, z), Pt(v, u1, w0, z), Pt(v, u1, w1, z), Pt(v, u0, w1, z)]);
   ctx.fill();
@@ -502,14 +504,21 @@ function drawReadables(ctx: CanvasRenderingContext2D, g: Game, v: View, byTile: 
     ctx.globalAlpha = 1;
   }
 
-  // The carter's crates, on the floor until unpacked.
-  for (const cr of g.crates) {
-    drawBox(ctx, v, { x0: cr.x + 0.18, x1: cr.x + 0.82, y0: cr.y + 0.18, y1: cr.y + 0.82, z: 0.42, color: "#a8743f", faceU: true, faceW: true });
-    const top = P(v, cr.x + 0.5, cr.y + 0.5, 0.42);
-    ctx.strokeStyle = "rgba(60,35,15,0.8)"; ctx.lineWidth = Math.max(1, ts * 0.03);
-    ctx.beginPath(); ctx.moveTo(top.x - ts * 0.28, top.y); ctx.lineTo(top.x + ts * 0.28, top.y); ctx.stroke(); ctx.lineWidth = 1;
-    ctx.font = `${Math.floor(ts * 0.3)}px system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillText("📦", top.x, top.y - ts * 0.32);
+  // The carter's crates at the kitchen door, piled up until they're carried in.
+  for (const [key, n] of crateCounts(g)) {
+    const [cx, cy] = key.split(",").map(Number);
+    const shown = Math.min(3, n);
+    for (let i = 0; i < shown; i++) {
+      // Each crate a little smaller and set askew on the one below.
+      const inset = 0.16 + i * 0.05, off = i % 2 ? 0.04 : -0.03;
+      const z0 = i * 0.32;
+      const top = P(v, cx + 0.5, cy + 0.5, z0 + 0.32);
+      drawBox(ctx, v, { x0: cx + inset + off, x1: cx + 1 - inset + off, y0: cy + inset - off, y1: cy + 1 - inset - off, z: z0 + 0.32, zb: z0, color: i % 2 ? "#b9834a" : "#a8743f", faceU: true, faceW: true });
+      if (i === shown - 1) {
+        ctx.font = `${Math.floor(ts * 0.3)}px system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(n > 1 ? `📦×${n}` : "📦", top.x, top.y - ts * 0.3);
+      }
+    }
   }
 
   // Trays set down on counters and tables.

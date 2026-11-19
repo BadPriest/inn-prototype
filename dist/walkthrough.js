@@ -141,7 +141,7 @@ export function worldGuide(g) {
             return deskGuide;
         const crate = g.crates[0];
         if (crate)
-            return { at: { x: crate.x + 0.5, y: crate.y + 0.5 }, z: 0.9, size: 0.8, label: "📦 Unpack supplies" };
+            return { at: { x: crate.x + 0.5, y: crate.y + 0.5 }, z: 0.9, size: 0.8, label: g.crates.length > 1 ? `📦 Unpack supplies (${g.crates.length})` : "📦 Unpack supplies" };
         if (!deskGuide)
             return null;
         if (g.toPlace.some((id) => pieceById(id)?.type !== "gear"))

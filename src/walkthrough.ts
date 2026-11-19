@@ -156,7 +156,7 @@ export function worldGuide(g: Game): WorldGuide | null {
   if (!w || !s) {
     if (!g.menuChosen) return deskGuide;
     const crate = g.crates[0];
-    if (crate) return { at: { x: crate.x + 0.5, y: crate.y + 0.5 }, z: 0.9, size: 0.8, label: "📦 Unpack supplies" };
+    if (crate) return { at: { x: crate.x + 0.5, y: crate.y + 0.5 }, z: 0.9, size: 0.8, label: g.crates.length > 1 ? `📦 Unpack supplies (${g.crates.length})` : "📦 Unpack supplies" };
     if (!deskGuide) return null;
     if (g.toPlace.some((id) => pieceById(id)?.type !== "gear")) return { ...deskGuide, label: "🛠 Place new equipment" };
     const gear = g.newGear.find((id) => g.toPlace.includes(id));

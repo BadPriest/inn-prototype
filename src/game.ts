@@ -226,8 +226,8 @@ export function emptyTastes(): Tastes {
 export interface LogLine { at: number; text: string }
 
 export interface Spill { id: number; x: number; y: number }
-/** Supplies the carter left, on the floor by the pantry, until they're unpacked. */
-export interface Crate { id: number; x: number; y: number; lines: { item: string; units: number }[]; got: string[] }
+/** Supplies the carter left at the kitchen door, until they're carried in. `day`: the day it came (it ages from the next). */
+export interface Crate { id: number; x: number; y: number; day: number; lines: { item: string; units: number }[]; got: string[] }
 
 export interface Cleaning { targetId: string; progress: number; total: number }
 

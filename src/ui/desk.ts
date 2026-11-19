@@ -44,7 +44,7 @@ export function openDeskScreen(g: Game, openJournal: () => void): void {
         detail: `${g.date.weekday}. This season's days: the weather so far, market days, and when the next season begins.`,
         does: "See the season" },
       { pick: "supplies", icon: "🧺", name: "Supplies",
-        fact: g.deliveries.length ? `🛻 ${g.deliveries.length} coming` : Object.values(g.slips).some((x) => Object.values(x).some(Boolean)) ? "A slip pencilled" : undefined,
+        fact: g.deliveries.length ? `🛻 ${Math.min(...g.deliveries.map((d) => d.day)) <= g.day + 1 ? "due tomorrow" : `${g.deliveries.length} coming`}` : Object.values(g.slips).some((x) => Object.values(x).some(Boolean)) ? "A slip pencilled" : undefined,
         status: g.deliveries.length ? undefined : "Order what the pantry needs.",
         tone: g.deliveries.length ? "good" : undefined,
         detail: "A slip for each supplier: pencil in what you need, then send it for the carter to bring, or fetch it yourself while the inn's shut.",
