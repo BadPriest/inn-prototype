@@ -113,6 +113,8 @@ export function updateWalkthrough(g) {
     g.purse += s.reward;
     g.bus.emit({ type: "Reward", pence: s.reward });
     w.step++;
+    if (w.step >= STEPS.length)
+        g.bus.emit({ type: "WalkthroughDone" });
 }
 /** The first guest: a traveller who's come in for the dish on the stove, and will wait for it. */
 function bringFirstGuest(g, w) {
@@ -128,14 +130,24 @@ function bringFirstGuest(g, w) {
     w.guestId = p.id;
     w.served = false;
 }
-/** Where in the room the guide points now, if anywhere. Without the walkthrough: the desk until the bill is set. */
+/** Where in the room the guide points now, if anywhere. Without the walkthrough: the desk until the bill is set, and after a level up until Skills is opened. */
 export function worldGuide(g) {
     const desk = g.world.furniture.find((f) => f.kind === "desk");
     const deskGuide = desk ? { at: desk.center, z: 1.2, size: Math.max(1, desk.tiles.length * 0.7) } : null;
     const w = g.walkthrough;
     const s = currentStep(g);
-    if (!w || !s)
-        return g.menuChosen ? null : deskGuide;
+    if (!w || !s) {
+        if (!g.menuChosen)
+            return deskGuide;
+        const crate = g.crates[0];
+        if (crate)
+            return { at: { x: crate.x + 0.5, y: crate.y + 0.5 }, z: 0.9, size: 0.8, label: "📦 Unpack supplies" };
+        if (!deskGuide)
+            return null;
+        if (g.toPlace.length)
+            return { ...deskGuide, label: "🛠 Place new equipment" };
+        return g.newSkills ? { ...deskGuide, label: "✦ New skills available" } : null;
+    }
     const dish = dishOf(g, w);
     const guest = guestOf(g, w);
     const station = () => { const sl = slotFor(g, dish?.id); return sl ? { at: sl.f.center, z: 1.1, size: Math.max(1, sl.f.tiles.length * 0.6) } : null; };
@@ -153,8 +165,11 @@ export function worldGuide(g) {
 }
 export function menuGuide(g, title, root) {
     const w = g.walkthrough, s = currentStep(g);
-    if (!w || !s)
-        return [];
+    if (!w || !s) {
+        if (title !== "🕯️ Desk")
+            return [];
+        return [...(g.toPlace.length ? [{ sel: '[data-pick="arrange"]' }] : []), ...(g.newSkills ? [{ sel: '[data-pick="skills"]' }] : [])];
+    }
     const dish = dishOf(g, w);
     const slot = slotFor(g, dish?.id);
     const primaryOff = !!root.querySelector(".menu-btn.primary[disabled]");

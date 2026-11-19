@@ -3,6 +3,7 @@
 // Prices come from the dish and what went in it, never inflate, and move only with the house knob.
 //
 // Kept apart from reputation and knowledge: coin is spent, the other two never are.
+import { knack } from "./skills.js";
 import { ECONOMY_DATA, SPOILAGE_DATA } from "./gamedata.gen.js";
 import { INGREDIENTS, RECIPES, TUNING, currentDishId, dishData, traySlotsOf } from "./data.js";
 /** All money is counted in pennies. */
@@ -115,6 +116,8 @@ export function tipFor(outcome, price) {
  * is paid in one go when they get up to leave (payTips), so a good visit ends on a bigger moment.
  */
 export function takeCoin(g, p, paid, tip, delight = false) {
+    if (tip > 0)
+        tip += knack(g, "charm", 0);
     if (tip > 0) {
         p.tipOwed = (p.tipOwed ?? 0) + tip;
         if (delight)

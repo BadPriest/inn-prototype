@@ -47,6 +47,11 @@
       "usedIn": ["coffee"], "craftingSpeed": 2,
       "text": { "shopCard": "Set it on a stove. Brews twice as fast as the plain pot." } },
 
+    { "id": "dutchOven", "name": "Dutch oven", "icon": "🫕", "label": "Dutch", "type": "gear", "line": "dutchOven", "tier": 1,
+      "shopTab": "cooking", "price": 120,
+      "usedIn": ["oven"], "craftingSpeed": 0.6,
+      "text": { "shopCard": "A heavy lidded pot for the back of the stove, with embers on the lid. Bakes what an oven does (bread, pies, a roast), only slower, and it takes a hot-drink spot." } },
+
     { "id": "stewPot", "name": "Stew pot", "icon": "🍲", "type": "utensil", "line": "pot", "tier": 1,
       "shopTab": "cooking", "price": 40,
       "usedIn": ["stove"], "servingsBonus": 0,

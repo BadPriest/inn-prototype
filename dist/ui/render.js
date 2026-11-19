@@ -1,12 +1,14 @@
 import { breadCaseKeys } from "../crafting.js";
 // Canvas drawing. Basic shapes only: rectangles for furniture, circles for people.
 import { RECIPES, SNACKS, SOAKING, TUNING, PIE_SAFE_CAPACITY } from "../data.js";
+import { spotOf } from "../interact.js";
 import { iconFor, TRAY_COLOUR, trayLook } from "../serving.js";
 import { drawLight } from "./light.js";
 import { RING_TRACK, ringColor } from "./tickets.js";
 import { walkoutProgress } from "../patrons.js";
 import { worldGuide } from "../walkthrough.js";
 import { P } from "./proj.js";
+import { drawLevelUp } from "./levelup.js";
 import { COINS, coinParts } from "../money.js";
 /** Fit the whole inn if it's big enough to read; otherwise zoom in and follow the keeper. */
 /** `top`: canvas pixels kept clear at the top (the status card sits there). */
@@ -228,6 +230,8 @@ export function draw(ctx, g, v, target, clickDest) {
                 ctx.fillRect(sx + 1, py + ph + 2, sw - 2, ts * 0.18);
                 ctx.fillStyle = job.done ? "#ffd34d" : r.tended ? "#ff9f43" : "#7fd37f";
                 ctx.fillRect(sx + 1, py + ph + 2, (sw - 2) * pct, ts * 0.18);
+                if (!job.done && (slots.length === 1 || (target?.type === "furniture" && target.part?.id === sl.id)))
+                    barLabel(ctx, jobWord(r.station), sx + sw / 2, py + ph + 1, ts);
                 ctx.fillStyle = "#fff";
                 ctx.font = `${Math.floor(ts * (slots.length > 1 ? 0.24 : 0.28))}px system-ui, sans-serif`;
                 ctx.fillText(slots.length > 1 ? r.icon : r.name, sx + sw / 2, py + ph + ts * 0.45);
@@ -322,12 +326,25 @@ export function draw(ctx, g, v, target, clickDest) {
                 ctx.strokeRect(X(t.x) + 1, Y(t.y) + 1, ts - 2, ts - 2);
         }
         else {
-            const c = target.type === "patron" ? target.p.pos : target.type === "tray" ? { x: target.t.x + 0.5, y: target.t.y + 0.5 } : { x: target.s.x + 0.5, y: target.s.y + 0.5 };
+            const c = target.type === "patron" ? target.p.pos : spotOf(target);
             ctx.beginPath();
             ctx.arc(X(c.x), Y(c.y), ts * 0.48, 0, Math.PI * 2);
             ctx.stroke();
         }
         ctx.lineWidth = 1;
+    }
+    // The carter's crates, on the floor until unpacked.
+    for (const cr of g.crates) {
+        ctx.fillStyle = "#a8743f";
+        ctx.fillRect(X(cr.x) + ts * 0.15, Y(cr.y) + ts * 0.15, ts * 0.7, ts * 0.7);
+        ctx.strokeStyle = "#5a3a1a";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(X(cr.x) + ts * 0.15, Y(cr.y) + ts * 0.15, ts * 0.7, ts * 0.7);
+        ctx.lineWidth = 1;
+        ctx.font = `${Math.floor(ts * 0.42)}px system-ui, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("📦", X(cr.x) + ts / 2, Y(cr.y) + ts / 2);
     }
     // Trays set down on counters and tables
     for (const sd of g.setDown) {
@@ -361,28 +378,18 @@ export function draw(ctx, g, v, target, clickDest) {
     ctx.stroke();
     ctx.lineWidth = 1;
     ctx.fillStyle = "#2a1d14";
-    ctx.beginPath();
-    ctx.arc(X(k.pos.x + k.facing.x * 0.22), Y(k.pos.y + k.facing.y * 0.22), ts * 0.07, 0, Math.PI * 2);
-    ctx.fill();
+    {
+        const f = k.facing, side = { x: -f.y * 0.11, y: f.x * 0.11 };
+        const at = (s) => ({ x: X(k.pos.x + f.x * 0.2 + side.x * s), y: Y(k.pos.y + f.y * 0.2 + side.y * s) });
+        drawEyes(ctx, at(-1), at(1), ts);
+    }
     drawLight(ctx, g, (x, y) => ({ x: X(x), y: Y(y) }), ts);
     for (const p of g.patrons)
         drawPatron(ctx, g, p, X, Y, ts, "words");
-    // Trays: one per arm, showing what's on them
-    k.trays.forEach((tray, i) => {
-        const side = i === 0 ? -1 : 1;
-        const n = Math.max(1, tray.items.length);
-        const w = Math.max(ts * 0.4, n * ts * 0.32 + ts * 0.08);
-        const tx = X(k.pos.x) + side * (ts * 0.4) + (side < 0 ? -w : 0), ty = Y(k.pos.y) + ts * 0.1;
-        ctx.fillStyle = trayLook(tray) ? TRAY_COLOUR[trayLook(tray)] : "rgba(255,255,255,0.15)";
-        ctx.fillRect(tx, ty, w, ts * 0.38);
-        ctx.font = `${Math.floor(ts * 0.3)}px system-ui, sans-serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        tray.items.forEach((it, j) => ctx.fillText(iconFor(it.recipeId, it.garnish) || "🥣", tx + ts * 0.2 + j * ts * 0.32, ty + ts * 0.2));
-    });
     if (g.keeperLine && g.minute < g.keeperLine.until) {
         speech.push({ x: X(k.pos.x), anchor: Y(k.pos.y) - ts * 0.38, text: `“${g.keeperLine.text}”`, color: "#ffe08a" });
     }
+    drawLevelUp(ctx, g, v);
     drawGuide(ctx, g, v);
     drawSpeech(ctx, ts);
     drawCoinPops(ctx, g, v); // over the speech, so the coin always reads
@@ -394,6 +401,7 @@ export function draw(ctx, g, v, target, clickDest) {
         ctx.fillRect(bx, by, ts, ts * 0.16);
         ctx.fillStyle = g.winding ? "#c9a24a" : g.pouring ? "#e8b25a" : "#8fd3ff";
         ctx.fillRect(bx, by, ts * pct, ts * 0.16);
+        barLabel(ctx, busyWord(g), bx + ts / 2, by - 2, ts);
     }
     // Paused overlay
     if (g.paused) {
@@ -716,7 +724,59 @@ export function drawGuide(ctx, g, v) {
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
+    if (guide.label) {
+        ctx.rotate(-angle);
+        ctx.shadowBlur = 0;
+        ctx.font = `600 ${Math.max(11, Math.floor(ts * 0.3))}px system-ui, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        const tw = ctx.measureText(guide.label).width, ph = ts * 0.46, pw = tw + ts * 0.5;
+        const ly = onScreen ? -aw * 1.2 - ph * 0.75 : (y < H / 2 ? aw * 1.6 + ph / 2 : -aw * 1.6 - ph / 2);
+        const lx = Math.max(-x + pw / 2 + 4, Math.min(W - x - pw / 2 - 4, 0));
+        ctx.fillStyle = "rgba(22,17,13,0.88)";
+        ctx.strokeStyle = "#ffd34d";
+        ctx.lineWidth = 1.5;
+        roundRect(ctx, lx - pw / 2, ly - ph / 2, pw, ph, ph / 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#ffe08a";
+        ctx.fillText(guide.label, lx, ly + 1);
+    }
     ctx.restore();
+}
+/** What the keeper's busy bar is for. */
+export const busyWord = (g) => (g.winding ? "Winding…" : g.pouring ? "Pouring…" : "Cleaning…");
+/** What a station's bar is doing, by where it's made. */
+export const jobWord = (station) => station === "kettle" ? "Boiling…" : station === "coffee" ? "Brewing…" : station === "oven" ? "Baking…" : station === "prep" ? "Preparing…" : "Cooking…";
+/** A small word over a progress bar, centred at x with its foot at y. */
+export function barLabel(ctx, text, x, y, ts) {
+    ctx.save();
+    ctx.font = `600 ${Math.max(10, Math.floor(ts * 0.22))}px system-ui, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    ctx.lineWidth = Math.max(2, ts * 0.06);
+    ctx.strokeStyle = "rgba(0,0,0,0.8)";
+    ctx.lineJoin = "round";
+    ctx.strokeText(text, x, y);
+    ctx.fillStyle = "#fff";
+    ctx.fillText(text, x, y);
+    ctx.restore();
+}
+/** How open the keeper's eyes are, 0 to 1: a blink every few seconds, now and then a double one. */
+export function eyeOpen(now = performance.now()) {
+    const t = (now / 1000) % 5.3;
+    const shut = (at) => Math.max(0, 1 - Math.abs(t - at) / 0.075);
+    return 1 - Math.max(shut(0.08), t > 2.6 && Math.floor(now / 5300) % 3 === 0 ? shut(2.75) : 0);
+}
+/** The keeper's eyes: two upright ovals, side by side where they're looking. */
+export function drawEyes(ctx, a, b, ts) {
+    const open = eyeOpen();
+    ctx.fillStyle = "#2a1d14";
+    for (const e of [a, b]) {
+        ctx.beginPath();
+        ctx.ellipse(e.x, e.y, ts * 0.032, Math.max(ts * 0.008, ts * 0.062 * open), 0, 0, Math.PI * 2);
+        ctx.fill();
+    }
 }
 export function badge(ctx, x, y, text, ts) {
     ctx.fillStyle = "#ffd34d";

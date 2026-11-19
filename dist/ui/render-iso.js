@@ -8,10 +8,12 @@ import { breadCaseKeys } from "../crafting.js";
 // behind them. What you need to read (labels, cooking,
 // bowls, orders, speech) is drawn over the blocks, so a guest standing in front never hides it.
 import { RECIPES, SNACKS, SOAKING, TUNING, PIE_SAFE_CAPACITY } from "../data.js";
+import { spotOf } from "../interact.js";
 import { iconFor, TRAY_COLOUR, trayLook } from "../serving.js";
 import { drawLight, windowColor } from "./light.js";
+import { drawLevelUp } from "./levelup.js";
 import { ISO, P, Pt, floorPath, turn, turnedSize, unproject, unturn } from "./proj.js";
-import { badge, drawCoinPops, drawGuide, drawPatronWords, drawSpeech, say } from "./render.js";
+import { badge, barLabel, drawEyes, busyWord, jobWord, drawCoinPops, drawGuide, drawPatronWords, drawSpeech, say } from "./render.js";
 /** Height of the back walls, in tiles; every other wall is a low stub so you can see past it. */
 const TALL = 1.5;
 const LOW_WALL = 0.3;
@@ -283,11 +285,13 @@ export function drawIso(ctx, g, v, target, clickDest) {
     items.push({
         d: depth(v, k.pos), pri: 1, draw: () => {
             personBody(ctx, v, k.pos, "#f2e2c2", 1, 0, 0);
-            const eye = P(v, k.pos.x + k.facing.x * 0.16, k.pos.y + k.facing.y * 0.16, HEAD_Z);
-            ctx.fillStyle = "#2a1d14";
-            ctx.beginPath();
-            ctx.arc(eye.x, eye.y, ts * 0.07, 0, Math.PI * 2);
-            ctx.fill();
+            // Two eyes on the side of the head that faces where they're looking; none when that's away from us.
+            const f = k.facing, side = { x: -f.y * 0.085, y: f.x * 0.085 };
+            const toward = depth(v, { x: k.pos.x + f.x, y: k.pos.y + f.y }) - depth(v, k.pos);
+            if (toward > -0.35) {
+                const at = (s) => P(v, k.pos.x + f.x * 0.17 + side.x * s, k.pos.y + f.y * 0.17 + side.y * s, HEAD_Z);
+                drawEyes(ctx, at(-1), at(1), ts);
+            }
         },
     });
     items.sort((a, b) => a.d - b.d || a.pri - b.pri);
@@ -300,21 +304,10 @@ export function drawIso(ctx, g, v, target, clickDest) {
         const foot = P(v, p.pos.x, p.pos.y);
         drawPatronWords(ctx, g, p, foot.x, foot.y - ts * 0.55, ts);
     }
-    const kf = P(v, k.pos.x, k.pos.y), kh = P(v, k.pos.x, k.pos.y, HEAD_Z);
-    k.trays.forEach((tray, i) => {
-        const side = i === 0 ? -1 : 1;
-        const n = Math.max(1, tray.items.length);
-        const w = Math.max(ts * 0.4, n * ts * 0.32 + ts * 0.08);
-        const tx = kf.x + side * (ts * 0.32) + (side < 0 ? -w : 0), ty = kf.y - ts * 0.5;
-        ctx.fillStyle = trayLook(tray) ? TRAY_COLOUR[trayLook(tray)] : "rgba(255,255,255,0.15)";
-        ctx.fillRect(tx, ty, w, ts * 0.38);
-        ctx.font = `${Math.floor(ts * 0.3)}px system-ui, sans-serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        tray.items.forEach((it, j) => ctx.fillText(iconFor(it.recipeId, it.garnish) || "🥣", tx + ts * 0.2 + j * ts * 0.32, ty + ts * 0.2));
-    });
+    const kh = P(v, k.pos.x, k.pos.y, HEAD_Z);
     if (g.keeperLine && g.minute < g.keeperLine.until)
         say(kh.x, kh.y - HEAD_R * ts - ts * 0.05, `“${g.keeperLine.text}”`, "#ffe08a");
+    drawLevelUp(ctx, g, v);
     drawGuide(ctx, g, v);
     drawSpeech(ctx, ts);
     drawCoinPops(ctx, g, v); // over the speech, so the coin always reads
@@ -326,6 +319,7 @@ export function drawIso(ctx, g, v, target, clickDest) {
         ctx.fillRect(bx, by, ts, ts * 0.16);
         ctx.fillStyle = g.winding ? "#c9a24a" : g.pouring ? "#e8b25a" : "#8fd3ff";
         ctx.fillRect(bx, by, ts * pct, ts * 0.16);
+        barLabel(ctx, busyWord(g), bx + ts / 2, by - 2, ts);
     }
     if (g.paused) {
         ctx.fillStyle = "rgba(0,0,0,0.45)";
@@ -442,6 +436,8 @@ function drawReadables(ctx, g, v, byTile, target) {
                 ctx.fillRect(sp.x - sw / 2, barY, sw, ts * 0.16);
                 ctx.fillStyle = job.done ? "#ffd34d" : r.tended ? "#ff9f43" : "#7fd37f";
                 ctx.fillRect(sp.x - sw / 2, barY, sw * pct, ts * 0.16);
+                if (!job.done && (slots.length === 1 || (target?.type === "furniture" && target.part?.id === sl.id)))
+                    barLabel(ctx, jobWord(r.station), sp.x, barY - 2, ts);
                 ctx.fillStyle = "#fff";
                 ctx.font = `${Math.floor(ts * (slots.length > 1 ? 0.24 : 0.26))}px system-ui, sans-serif`;
                 ctx.fillText(slots.length > 1 ? r.icon : r.name, sp.x, barY + ts * 0.32);
@@ -526,6 +522,22 @@ function drawReadables(ctx, g, v, byTile, target) {
         ctx.fillText(sn?.icon ?? "🥣", c.x, c.y - ts * 0.04);
         ctx.globalAlpha = 1;
     }
+    // The carter's crates, on the floor until unpacked.
+    for (const cr of g.crates) {
+        drawBox(ctx, v, { x0: cr.x + 0.18, x1: cr.x + 0.82, y0: cr.y + 0.18, y1: cr.y + 0.82, z: 0.42, color: "#a8743f", faceU: true, faceW: true });
+        const top = P(v, cr.x + 0.5, cr.y + 0.5, 0.42);
+        ctx.strokeStyle = "rgba(60,35,15,0.8)";
+        ctx.lineWidth = Math.max(1, ts * 0.03);
+        ctx.beginPath();
+        ctx.moveTo(top.x - ts * 0.28, top.y);
+        ctx.lineTo(top.x + ts * 0.28, top.y);
+        ctx.stroke();
+        ctx.lineWidth = 1;
+        ctx.font = `${Math.floor(ts * 0.3)}px system-ui, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("📦", top.x, top.y - ts * 0.32);
+    }
     // Trays set down on counters and tables.
     for (const sd of g.setDown) {
         const z = zAt(sd.x, sd.y);
@@ -551,7 +563,7 @@ function drawReadables(ctx, g, v, byTile, target) {
             }
         }
         else {
-            const c = target.type === "patron" ? target.p.pos : target.type === "tray" ? { x: target.t.x + 0.5, y: target.t.y + 0.5 } : { x: target.s.x + 0.5, y: target.s.y + 0.5 };
+            const c = target.type === "patron" ? target.p.pos : spotOf(target);
             const z = target.type === "tray" ? zAt(target.t.x, target.t.y) : 0;
             const q = P(v, c.x, c.y, z);
             ctx.beginPath();

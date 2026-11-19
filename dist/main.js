@@ -21,9 +21,10 @@ import { updateFrontDoor } from "./door.js";
 import { cancelPour, updatePour } from "./serving.js";
 import { watchObjectives } from "./objectives.js";
 import { initWalkthrough, startWalkthrough, updateWalkthrough } from "./walkthrough.js";
+import { initLevelUp } from "./ui/levelup.js";
 import { updateMenuGuide } from "./ui/quest.js";
 import { watchSkills } from "./skills.js";
-import { emptyHere, offerUnasked, putDownHere, cleanable, cleanStep, findTargets, targetName, forcedTurnIn, interact, openGarnishMenu, openJournal, promptFor, targetId } from "./interact.js";
+import { emptyHere, offerUnasked, putDownHere, cleanable, cleanStep, findTargets, spotOf, targetName, forcedTurnIn, interact, openGarnishMenu, openJournal, promptFor, targetId } from "./interact.js";
 import { draw, computeView } from "./ui/render.js";
 import { computeIsoView, drawIso, isoPick } from "./ui/render-iso.js";
 import { P, screenDir } from "./ui/proj.js";
@@ -53,6 +54,22 @@ initDebug(g);
 initSound(g);
 initTalk(g);
 initWalkthrough(g);
+initLevelUp(g);
+/** The walkthrough's last step done: its closing words wait for the quest card to finish and the menus to close. */
+let walkthroughDoneAt = null;
+g.bus.on((e) => { if (e.type === "WalkthroughDone")
+    walkthroughDoneAt = performance.now(); });
+function sayWalkthroughDone() {
+    if (walkthroughDoneAt === null || performance.now() - walkthroughDoneAt < 1600 || menuOpen())
+        return;
+    walkthroughDoneAt = null;
+    openMenu({
+        title: "🎉 Your first patron",
+        modal: true,
+        body: `<p class="blurb">Congratulations on serving your first patron! This concludes the tutorial.</p><p class="blurb">Experiment with the ingredients, get back to your desk for management decisions, and keep striving for Delight.</p>`,
+        items: [{ label: "Carry on", button: "primary", confirmSound: true, action: () => closeAll() }],
+    });
+}
 initLight(g);
 // For checking from the browser console (and screenshots): the game state.
 window.innGame = g;
@@ -274,6 +291,17 @@ function clickAt(p, slop = 0) {
             go(spot, `tray:${sd.id}`);
         return true;
     }
+    const cr = g.crates.find((c) => c.x === tx && c.y === ty);
+    if (cr) {
+        if (dist(g.keeper.pos, { x: tx + 0.5, y: ty + 0.5 }) <= 1.4) {
+            use({ type: "crate", c: cr });
+            return true;
+        }
+        const spot = nearestReachable({ x: tx + 0.5, y: ty + 0.5 }, 1.3);
+        if (spot)
+            go(spot, `crate:${cr.id}`);
+        return true;
+    }
     const sp = g.spills.find((s) => s.x === tx && s.y === ty);
     if (sp) {
         if (dist(g.keeper.pos, { x: tx + 0.5, y: ty + 0.5 }) > 1.1)
@@ -413,7 +441,7 @@ canvas.addEventListener("pointermove", (e) => {
     fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (fingers.size === 2 && pinchFrom > 0) {
         const now = spread();
-        setZoom(zoom() * (now / pinchFrom));
+        setZoom(zoom() * (now / pinchFrom), false);
         pinchFrom = now;
     }
 });
@@ -450,7 +478,7 @@ initPad({
     arranging: () => !!g.arranging,
     paused: () => g.paused,
     setWalk: (v, run) => { padWalk = v; padRun = run; },
-    zoomBy: (f) => setZoom(zoom() * f),
+    zoomBy: (f) => setZoom(zoom() * f, false),
     cardStep: (by) => {
         handIndex = (handIndex + by + HAND.length) % HAND.length;
         showHandPick();
@@ -602,12 +630,14 @@ function inReach(t) {
         return dist(t.p.pos, k) <= 2.3;
     if (t.type === "tray")
         return dist({ x: t.t.x + 0.5, y: t.t.y + 0.5 }, k) <= 1.5;
+    if (t.type === "crate")
+        return dist({ x: t.c.x + 0.5, y: t.c.y + 0.5 }, k) <= 1.4;
     if (t.type === "spill")
         return dist({ x: t.s.x + 0.5, y: t.s.y + 0.5 }, k) <= 1.2;
     return t.f.tiles.some((tt) => dist({ x: tt.x + 0.5, y: tt.y + 0.5 }, k) <= 1.45);
 }
 function targetPos(t) {
-    return t.type === "patron" ? t.p.pos : t.type === "furniture" ? t.f.center : t.type === "tray" ? { x: t.t.x + 0.5, y: t.t.y + 0.5 } : { x: t.s.x + 0.5, y: t.s.y + 0.5 };
+    return t.type === "patron" ? t.p.pos : t.type === "furniture" ? t.f.center : spotOf(t);
 }
 /** Arrived (or close enough): face the thing and use it. */
 function arriveAndUse() {
@@ -739,6 +769,10 @@ function resolveTarget(id) {
         const sp = g.spills.find((x) => x.id === Number(id.slice(6)));
         return sp ? { type: "spill", s: sp } : null;
     }
+    if (id.startsWith("crate:")) {
+        const c = g.crates.find((x) => x.id === Number(id.slice(6)));
+        return c ? { type: "crate", c } : null;
+    }
     if (id.startsWith("tray:")) {
         const t = g.setDown.find((x) => x.id === Number(id.slice(5)));
         return t ? { type: "tray", t } : null;
@@ -808,10 +842,11 @@ function toggleIso() {
 const ZOOM_STEP = 1.15;
 const ZOOM_MIN = 0.5, ZOOM_MAX = 3;
 function zoom() { return (settings.iso ? settings.zoomIso : settings.zoomFlat) ?? 1; }
-function setZoom(z) {
+/** `snap`: a step (wheel, keys) lands on "fits the inn" when it passes close; the stick's smooth zoom doesn't. */
+function setZoom(z, snap = true) {
     z = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
-    if (Math.abs(z - 1) < 0.03)
-        z = 1; // snaps to "fits the inn" on the way past
+    if (snap && Math.abs(z - 1) < 0.03)
+        z = 1;
     if (settings.iso)
         settings.zoomIso = z;
     else
@@ -892,10 +927,10 @@ function openPause() {
         let panel = "";
         if (pauseTab === "game") {
             panel = `<div class="set-list">
-        <button class="set-btn" data-pick="objectives">✅ Objectives <small>${g.showObjectives ? "shown" : "hidden"}</small></button>
+        <button class="set-btn" data-pick="objectives">✅ Toggle objectives <small>${g.showObjectives ? "shown now" : "hidden now"}</small></button>
         <button class="set-btn" data-pick="howto">❔ How to play</button>
-        <button class="set-btn" data-pick="keys">⌨️ Keys and controls <small>H</small></button>
-        <button class="set-btn" data-pick="restart">🗑️ Start over <small>a new game: every day so far is forgotten</small></button>
+        <button class="set-btn" data-pick="keys">⌨️ Keys and controls <small>keybind: H</small></button>
+        <button class="set-btn" data-pick="restart">🗑️ Start Over? <small>all your progress will be erased</small></button>
       </div>`;
         }
         else if (pauseTab === "sound") {
@@ -1047,7 +1082,7 @@ function openPause() {
                     });
                 },
             },
-            items: [{ label: "▶ Resume", sub: "P", button: "primary", action: () => resume() }],
+            items: [{ label: "Resume", button: "primary", action: () => resume() }],
         };
     };
     openMenu(build());
@@ -1154,7 +1189,9 @@ function frame(now) {
     moveKeeper(realDt);
     target = chooseTarget();
     // Cleaning is a hold (Space, mouse or finger) on something dirty; a quick tap does the other thing.
-    const cleaningWhat = !holding() ? null : (mouseHeld ? messAt(mouseAt) : null) ?? (g.holdingSpace ? target : null);
+    // A wipe under way keeps going on the same thing, even if a guest there starts wanting something.
+    const wiping = g.cleaning && holding() ? findTargets(g).find((t) => targetId(t) === g.cleaning.targetId) : undefined;
+    const cleaningWhat = !holding() ? null : wiping ?? (mouseHeld ? messAt(mouseAt) : null) ?? (g.holdingSpace ? target : null);
     if (cleaningWhat && !g.paused && !g.modal && !menuOpen() && cleanable(g, cleaningWhat))
         cleanStep(g, cleaningWhat, realDt);
     else if (g.cleaning && (!cleaningWhat || targetId(cleaningWhat) !== g.cleaning.targetId))
@@ -1174,6 +1211,7 @@ function frame(now) {
     }
     watchTrays();
     updateWalkthrough(g);
+    sayWalkthroughDone();
     watchSkills(g);
     updateMenuGuide(g);
     watchObjectives(g);

@@ -75,6 +75,7 @@ export class Game {
     pieSafe = [];
     dirt = new Map(); // table key "x,y" -> dirt units
     spills = [];
+    crates = [];
     setDown = [];
     groups = [];
     reservations = new Map(); // table key -> group id waiting for it
@@ -91,7 +92,10 @@ export class Game {
     totalServed = 0; // across all days
     showObjectives = true;
     known = new Set(SKILLS_DATA.startKnown); // the recipe book
-    pointsSpent = 0; // skill points spent on recipes
+    pointsSpent = 0; // skill points spent on recipes and knacks
+    xp = 0; // experience from guests served, across all days
+    knacks = {}; // tiers bought
+    newSkills = false; // levelled up and Skills not opened since
     hurrying = false; // F held: hurry what's cooking at the target
     walkthrough;
     cleaning = null;

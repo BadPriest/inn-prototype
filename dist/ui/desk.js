@@ -9,6 +9,7 @@ import { openSupplies } from "./supplies.js";
 import { ingredientsHtml } from "./cook.js";
 import { knows, pointsLeft } from "../skills.js";
 import { openSkills } from "./skills.js";
+import { needs, whereFull, whereShort } from "./where.js";
 import { canFetch, fetchThing, FETCH_MINUTES, hasOrBetter, onOrderCount, orderThing, priceOfThing, SELL_BACK_SHARE_WORDS, toPlaceCount } from "../shop.js";
 import { fmtMoney, moneyHtml, priceLevel, priceOfRecipe, PRICE_LEVELS } from "../money.js";
 export function openDeskScreen(g, openJournal) {
@@ -161,16 +162,6 @@ const DRINKS = MENU.filter((r) => r.kind === "drink");
 const TABS = [...MEALS.map((m) => m.id), "between"];
 const DAY_FROM = TUNING.dayStartHour, DAY_TO = TUNING.dayStartHour + TUNING.dayLengthMinutes / 60;
 const hourLabel = (h) => `${h % 24}:00`;
-/** What a dish needs that this kitchen hasn't got (buy it at the desk). */
-const NEEDS = { stove: "needs a hob", griddle: "needs a hob", oven: "needs an oven", kettle: "needs a kettle", coffee: "needs a coffee pot", prep: "needs a prep table" };
-/** Where a dish is made, in a few words, and in full (which pieces of equipment) for the hover. */
-const WHERE = { stove: "🔥 a pot on a hob", griddle: "🍳 a pan on a hob", oven: "🍞 in an oven", kettle: "🫖 the kettle", coffee: "☕ the coffee pot", prep: "🔪 the prep table" };
-const whereShort = (r) => (r.station === "tap" ? `🍺 the ${r.name.toLowerCase()} barrel` : WHERE[r.station] ?? "");
-const whereFull = (r) => {
-    const on = EQUIPMENT.filter((e) => (r.station === "tap" ? e.tap === r.id : e.slots.some((sl) => sl.kinds.includes(r.station)))).map((e) => e.name.toLowerCase());
-    return on.length ? `Made at: ${on.join(", ")}` : "";
-};
-const needs = (r) => (r.station === "tap" ? `needs a barrel of ${r.name.toLowerCase()}` : NEEDS[r.station] ?? "needs equipment");
 /** First time into meal times: every meal starts as a copy of the all-day bill; between meals, its drinks. */
 function seedMeals(g) {
     if (g.meals.some((m) => m.menu.size) || g.betweenMenu.size)

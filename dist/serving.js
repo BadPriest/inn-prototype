@@ -8,6 +8,7 @@ import { organic, uid } from "./core.js";
 import { afterServe, describeReaction, judge } from "./tastes.js";
 import { inspireOthers, maybeIntroduce } from "./patrons.js";
 import { priceOf, takeCoin, tipFor } from "./money.js";
+import { gainXp } from "./skills.js";
 export function trayItems(g) {
     return [...g.keeper.trays[0].items, ...g.keeper.trays[1].items];
 }
@@ -237,6 +238,7 @@ export function serveUnasked(g, p, item) {
     p.consuming = { icon: iconFor(item.recipeId, item.garnish) || "🥣", kind: item.kind, from: g.minute, tags: item.tags, needs: needsOf(item.recipeId) };
     g.stats.outcomes[v.outcome] = (g.stats.outcomes[v.outcome] ?? 0) + 1;
     g.bus.emit({ type: "ServeOutcome", patronId: p.id, outcome: v.outcome, score: v.score });
+    gainXp(g, v.outcome);
     takeCoin(g, p, 0, tipFor(v.outcome, priceOf(g, item)), v.outcome === "DELIGHT"); // on the house: only a tip, if it lands
     g.journal(p, `Offered, unasked: ${item.name} [${item.tags.join(", ")}]: ${describeReaction(p, v)}.${v.line ? ` “${v.line}”` : ""}`);
     for (const m of afterServe(g, p, item, v)) {
@@ -289,6 +291,7 @@ export function deliverTo(g, p, quiet = false, extra = []) {
     p.consuming = { icon: iconFor(item.recipeId, item.garnish) || "🥣", kind: item.kind, from: g.minute, tags: item.tags, needs: needsOf(item.recipeId) };
     g.stats.outcomes[v.outcome] = (g.stats.outcomes[v.outcome] ?? 0) + 1;
     g.bus.emit({ type: "ServeOutcome", patronId: p.id, outcome: v.outcome, score: v.score });
+    gainXp(g, v.outcome);
     // An ordered serve can't go wrong: they always pay for it. The tip follows the reaction.
     const price = priceOf(g, item);
     takeCoin(g, p, price, tipFor(v.outcome, price), v.outcome === "DELIGHT");

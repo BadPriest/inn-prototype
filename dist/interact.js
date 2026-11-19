@@ -1,7 +1,9 @@
 // What happens when the keeper interacts with something. Menus live here.
 import { organic } from "./core.js";
+import { knack } from "./skills.js";
 import { moneyHtml } from "./money.js";
 import { GRAMOPHONE, RECIPES, REGULARS, TUNING } from "./data.js";
+import { unpackCrate } from "./supplies.js";
 import { dist } from "./world.js";
 import { canPutBack, collectShelf, emptyPot, putBack, recipesFor, serveFromPot, fillUrn, breadCaseKeys, breadCaseWithRoom, storeBread, takeBatch } from "./crafting.js";
 import { tableKey } from "./patrons.js";
@@ -15,6 +17,8 @@ import { grid, gridKeys } from "./ui/cards.js";
 import { openPieSafeScreen, openSnackScreen, openPantryScreen } from "./ui/larder.js";
 import { openBinScreen, openGarnishScreen, openHatchScreen, openOfferScreen, openSetDownScreen } from "./ui/trays.js";
 import { openBillOfFare as openBillOfFareScreen, openDeskScreen } from "./ui/desk.js";
+/** Where a spill, set-down tray or crate is: its tile's centre. */
+export const spotOf = (t) => t.type === "spill" ? { x: t.s.x + 0.5, y: t.s.y + 0.5 } : t.type === "tray" ? { x: t.t.x + 0.5, y: t.t.y + 0.5 } : t.type === "crate" ? { x: t.c.x + 0.5, y: t.c.y + 0.5 } : null;
 export function targetId(t) {
     if (!t)
         return null;
@@ -24,10 +28,12 @@ export function targetId(t) {
         return `spill:${t.s.id}`;
     if (t.type === "tray")
         return `tray:${t.t.id}`;
+    if (t.type === "crate")
+        return `crate:${t.c.id}`;
     return `patron:${t.p.id}`;
 }
 export function targetName(t) {
-    return t.type === "furniture" ? (t.part ? `${t.f.name}: ${t.part.name.toLowerCase()}` : t.f.name) : t.type === "spill" ? "Spill" : t.type === "tray" ? "Tray" : t.p.name;
+    return t.type === "furniture" ? (t.part ? `${t.f.name}: ${t.part.name.toLowerCase()}` : t.f.name) : t.type === "spill" ? "Spill" : t.type === "tray" ? "Tray" : t.type === "crate" ? "Crate of supplies" : t.p.name;
 }
 /** How many people at this table are waiting on an order. */
 export function waitingAt(g, key) {
@@ -43,13 +49,15 @@ export function cleanable(g, t) {
         return false;
     if (t.type === "spill")
         return true;
-    return t.type === "furniture" && t.f.kind === "table" && tableDirt(g, t.f) > 0.3 && !waitingAt(g, `${t.f.tiles[0].x},${t.f.tiles[0].y}`);
+    if (t.type !== "furniture" || t.f.kind !== "table" || tableDirt(g, t.f) <= 0.3)
+        return false;
+    return g.cleaning?.targetId === targetId(t) || !waitingAt(g, `${t.f.tiles[0].x},${t.f.tiles[0].y}`);
 }
 /** Called every frame while Space is held on something cleanable. Real seconds. */
 export function cleanStep(g, t, realDt) {
     const id = targetId(t);
     if (!g.cleaning || g.cleaning.targetId !== id)
-        g.cleaning = { targetId: id, progress: 0, total: Math.max(0.8, organic(TUNING.cleanSeconds)) };
+        g.cleaning = { targetId: id, progress: 0, total: Math.max(0.4, organic(TUNING.cleanSeconds) * knack(g, "quickHands", 1)) };
     g.cleaning.progress += realDt;
     if (g.cleaning.progress >= g.cleaning.total) {
         if (t.type === "spill")
@@ -102,6 +110,8 @@ export function findTargets(g) {
     // Set-down trays win over the table or counter they sit on.
     for (const t of g.setDown)
         consider({ type: "tray", t }, { x: t.x + 0.45, y: t.y + 0.45 }, 1.5);
+    for (const c of g.crates)
+        consider({ type: "crate", c }, { x: c.x + 0.5, y: c.y + 0.5 }, 1.4);
     found.sort((a, b) => a.s - b.s);
     // Uninteresting furniture (walls of the room, as it were) doesn't crowd the choice.
     const quiet = new Set(["wardrobe", "coats"]);
@@ -121,6 +131,8 @@ export function promptFor(g, t) {
             return `Space: serve the table from this tray (${n} waiting)`;
         return `Space: pick up the tray (${t.t.tray.items.map((i) => i.name).join(", ")})`;
     }
+    if (t.type === "crate")
+        return "Space: unpack the crate into the pantry";
     if (t.type === "spill")
         return g.cleaning ? `Mopping… ${Math.floor((g.cleaning.progress / g.cleaning.total) * 100)}%` : "Hold Space or the mouse: mop up the spill";
     if (t.type === "patron") {
@@ -209,6 +221,10 @@ export function interact(g, t) {
         return;
     if (t.type === "spill")
         return; // cleaning is a hold, handled each frame
+    if (t.type === "crate") {
+        unpackCrate(g, t.c);
+        return;
+    }
     if (t.type === "tray") {
         // A tray on a table where people are waiting: serve them from it. Otherwise pick it up.
         const table = g.world.tableAt(t.t.x, t.t.y);
