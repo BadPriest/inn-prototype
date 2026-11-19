@@ -114,7 +114,7 @@ function chooseStoveOrGear(g: Game, stove: Placed, gear: Placed[], at: Vec): voi
         action: () => { closeAll(); pickUp(g, stove, at); } },
       ...gear.map((q) => ({ label: `Take the ${eqOf(q.type).name.toLowerCase()} off`, sub: "to set it on another stove, or sell it",
         action: () => { closeAll(); pickUp(g, q, { x: 0, y: 0 }); } })),
-      { label: "Not now", button: "secondary" as const, action: () => closeAll() },
+      { label: "Not now", button: "secondary", cancel: true as const, action: () => closeAll() },
     ],
   });
 }

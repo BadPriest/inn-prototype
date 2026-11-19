@@ -44,6 +44,6 @@ export function openCalendar(g: Game): void {
     subtitle: `Today is ${today.weekday}, ${compactDate(today, today.year)} of ${length}`,
     body: `<div class="cal">${head}${cells.join("")}</div>
       <p class="muted">${next.name} begins in ${left} day${left === 1 ? "" : "s"}.${g.loc.marketDay ? ` 🧺 Market day: ${g.loc.marketDay}s.` : ""} Past days show the weather they had.</p>`,
-    items: [{ label: "Close", button: "secondary", action: () => back() }],
+    items: [{ label: "Close", button: "secondary", cancel: true, action: () => back() }],
   });
 }

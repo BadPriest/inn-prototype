@@ -933,10 +933,10 @@ function openPause() {
                         askChoice({
                             title: "Start over?",
                             body: `<p>The inn, the purse, the journal and every regular you've met are forgotten, and a new game begins.</p><p class="muted">This can't be undone.</p>`,
-                            yes: "Keep playing", no: "Start over", onYes: () => back(), onNo: () => { resetSave(); location.reload(); },
+                            confirm: "Start over", cancel: "Keep playing", danger: true, onConfirm: () => { resetSave(); location.reload(); }, onCancel: () => back(),
                         });
                     else if (k === "howto")
-                        openMenu({ title: "How to play", body: welcomeBody(), items: [{ label: "Back", button: "secondary", action: () => back() }] });
+                        openMenu({ title: "How to play", body: welcomeBody(), items: [{ label: "Back", button: "secondary", cancel: true, action: () => back() }] });
                     else if (k === "mute") {
                         toggleMute();
                         redraw();
@@ -1044,7 +1044,7 @@ function openKeys(fromPause = false) {
         title: "⌨️ Keys and controls",
         holdsClock: true,
         view: { html },
-        items: [{ label: fromPause ? "Back" : "Close", button: "secondary", action: () => (fromPause ? back() : closeAll()) }],
+        items: [{ label: fromPause ? "Back" : "Close", button: "secondary", cancel: true, action: () => (fromPause ? back() : closeAll()) }],
     });
 }
 // A welcome before anything moves. The clock starts when the player presses Start.
@@ -1087,7 +1087,7 @@ else {
             askChoice({
                 title: "Play the tutorial?",
                 body: `<p>Nine small steps through your first morning: the bill of fare, a pot of stew, your first guest served, and a first buy. Each one puts a little money in the purse.</p><p class="muted">Or skip it and find your own way.</p>`,
-                yes: "Yes, show me", no: "No, skip it", onYes: () => begin(true), onNo: () => begin(false),
+                confirm: "Yes, show me", cancel: "No, skip it", onConfirm: () => begin(true), onCancel: () => begin(false),
             });
         });
     };

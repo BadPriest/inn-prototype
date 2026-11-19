@@ -7,11 +7,12 @@
 //           stick zoom (↑↓) and turn the isometric camera (←→) · R3 top-down or isometric · Options
 //           pause · touchpad the keys · □ hold: hurry (F). ○ and △ are free while playing.
 // Menus:    D-pad or left stick move · ✕ pick (like Space: a card, an item) · □ confirm the screen (like
-//           Enter: Cook, Put up…, without going to the button) · ○ back or close · L1/R1 switch tabs, L2/R2 the tabs inside them
+//           Enter: Cook, Put up…, without going to the button) · ○ the negative choice (Not now, Keep playing), else back or close · L1/R1 switch tabs, L2/R2 the tabs inside them
 // Kitchen:  left stick moves a cursor · ✕ pick up / place · ○ put back or finish · □ buy · △ another ·
 //           L2 get rid of the piece in hand
 
 import type { Vec } from "./world.js";
+import { padCancel, padConfirm } from "./ui/menu.js";
 
 /** What the game lends the controller: where things are and what's going on. */
 export interface PadHooks {
@@ -52,10 +53,17 @@ let turned = false;
 
 export function initPad(h: PadHooks): void {
   hooks = h;
-  window.addEventListener("gamepadconnected", () => { active = true; });
+  window.addEventListener("gamepadconnected", () => setActive(true));
   // Anything from the keyboard or mouse hands the prompts back to them.
-  window.addEventListener("keydown", (e) => { if (e.isTrusted) active = false; }, true);
-  window.addEventListener("pointerdown", (e) => { if (e.isTrusted) active = false; }, true);
+  window.addEventListener("keydown", (e) => { if (e.isTrusted) setActive(false); }, true);
+  window.addEventListener("pointerdown", (e) => { if (e.isTrusted) setActive(false); }, true);
+}
+
+/** The controller is in use: buttons show its glyphs (body.pad). */
+function setActive(on: boolean): void {
+  if (on === active) return;
+  active = on;
+  document.body.classList.toggle("pad", on);
 }
 
 /** Whether to show controller buttons in the prompts. */
@@ -107,7 +115,7 @@ export function pollPad(dt: number): void {
   const heldFor = (i: number) => (btn[i] ? now - (downAt[i] ?? now) : 0);
   const left = stick(pad.axes[0] ?? 0, pad.axes[1] ?? 0);
   const right = stick(pad.axes[2] ?? 0, pad.axes[3] ?? 0);
-  if (btn.some(Boolean) || left || right) active = true;
+  if (btn.some(Boolean) || left || right) setActive(true);
 
   if (hooks.menuOpen()) {
     hooks.setWalk(null, false);
@@ -121,8 +129,8 @@ export function pollPad(dt: number): void {
     if (dir !== stickDir) { stickDir = dir; if (dir) { key(dir); stickNext = now + 0.35; } }
     else if (dir && now >= stickNext) { key(dir); stickNext = now + 0.12; }
     if (pressed(B.cross)) key(" ");
-    if (pressed(B.square)) key("Enter");
-    if (pressed(B.circle)) key(hooks.paused() ? "Escape" : "Backspace");
+    if (pressed(B.square)) padConfirm();
+    if (pressed(B.circle) && !padCancel()) key(hooks.paused() ? "Escape" : "Backspace");
     // Tabs: L1/R1 the outer level, L2/R2 the inner one (the meals on the bill of fare).
     if (pressed(B.l1)) key("Tab", { shift: true });
     if (pressed(B.r1)) key("Tab");

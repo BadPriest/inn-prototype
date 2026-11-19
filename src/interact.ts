@@ -235,7 +235,7 @@ export function interact(g: Game, t: Target | null): void {
         title: "🥖 Bread case",
         items: [
           ...kept.map((k) => ({ label: `${g.pots.get(k)!.item.name}`, sub: `${g.pots.get(k)!.left} slices`, action: () => { closeAll(); serveFromPot(g, k); } })),
-          { label: "Not now", button: "secondary" as const, action: () => closeAll() },
+          { label: "Not now", button: "secondary", cancel: true as const, action: () => closeAll() },
         ],
       });
       return;
@@ -558,7 +558,7 @@ export function askTurnIn(g: Game): void {
     subtitle: "The day ends when you sleep",
     modal: true,
     items: [
-      { label: "Not yet", button: "secondary", action: () => closeAll() },
+      { label: "Not yet", button: "secondary", cancel: true, action: () => closeAll() },
       { label: "Turn in", button: "primary", action: () => { closeAll(); goToSleep(g); } },
     ],
   });

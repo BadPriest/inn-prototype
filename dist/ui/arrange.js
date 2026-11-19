@@ -123,7 +123,7 @@ function chooseStoveOrGear(g, stove, gear, at) {
                 action: () => { closeAll(); pickUp(g, stove, at); } },
             ...gear.map((q) => ({ label: `Take the ${eqOf(q.type).name.toLowerCase()} off`, sub: "to set it on another stove, or sell it",
                 action: () => { closeAll(); pickUp(g, q, { x: 0, y: 0 }); } })),
-            { label: "Not now", button: "secondary", action: () => closeAll() },
+            { label: "Not now", button: "secondary", cancel: true, action: () => closeAll() },
         ],
     });
 }

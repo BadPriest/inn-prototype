@@ -293,7 +293,7 @@ export function interact(g, t) {
                 title: "🥖 Bread case",
                 items: [
                     ...kept.map((k) => ({ label: `${g.pots.get(k).item.name}`, sub: `${g.pots.get(k).left} slices`, action: () => { closeAll(); serveFromPot(g, k); } })),
-                    { label: "Not now", button: "secondary", action: () => closeAll() },
+                    { label: "Not now", button: "secondary", cancel: true, action: () => closeAll() },
                 ],
             });
             return;
@@ -655,7 +655,7 @@ export function askTurnIn(g) {
         subtitle: "The day ends when you sleep",
         modal: true,
         items: [
-            { label: "Not yet", button: "secondary", action: () => closeAll() },
+            { label: "Not yet", button: "secondary", cancel: true, action: () => closeAll() },
             { label: "Turn in", button: "primary", action: () => { closeAll(); goToSleep(g); } },
         ],
     });

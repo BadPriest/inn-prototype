@@ -11,6 +11,8 @@ export interface MenuItem {
   /** Play the confirm sound (piano) when pressed: decisions outside the world (where to start, settings).
    *  In-world menus tick a box instead (the MenuSound "tick"). */
   confirmSound?: boolean;
+  /** The negative choice (Not now, Back, Keep playing): ○ on a controller presses it. */
+  cancel?: boolean;
   action: () => void;
 }
 
@@ -42,6 +44,8 @@ export interface MenuSpec {
   onClose?: () => void;
   /** This screen is left: Back, or the menus closing (not when it's redrawn with replaceMenu). */
   onLeave?: () => void;
+  /** Which item starts selected, when it shouldn't be the first. */
+  focus?: number;
 }
 
 interface Open { spec: MenuSpec; index: number }
@@ -74,22 +78,45 @@ export function menuOpen(): boolean {
 
 export function openMenu(spec: MenuSpec): void {
   const first = spec.items.findIndex((i) => !i.disabled);
-  stack.push({ spec, index: Math.max(0, first) });
+  stack.push({ spec, index: spec.focus ?? Math.max(0, first) });
   render();
 }
 
 /** Replace the current menu (for multi-step flows without growing the back stack). */
-/** A yes-or-no question in a modal: the main choice first, the other beside it. */
-export function askChoice(o: { title: string; body: string; yes: string; no: string; onYes: () => void; onNo: () => void }): void {
+/**
+ * A yes-or-no question in a modal: confirm (□ on a controller) and cancel (○). A `danger` question starts
+ * on cancel, so a stray press doesn't do it.
+ */
+export function askChoice(o: { title: string; body: string; confirm: string; cancel: string; onConfirm: () => void; onCancel: () => void; danger?: boolean }): void {
   openMenu({
     title: o.title,
     modal: true,
     body: o.body,
+    focus: o.danger ? 1 : 0,
     items: [
-      { label: o.yes, button: "primary", confirmSound: true, action: o.onYes },
-      { label: o.no, button: "secondary", confirmSound: true, action: o.onNo },
+      { label: o.confirm, button: "primary", confirmSound: true, action: o.onConfirm },
+      { label: o.cancel, button: "secondary", confirmSound: true, cancel: true, action: o.onCancel },
     ],
   });
+}
+
+/** □ on a controller: the screen's main button (what Enter does on screens that have one). */
+export function padConfirm(): void {
+  if (!stack.length) return;
+  const top = stack[stack.length - 1];
+  if (top.spec.view?.onKey?.(new KeyboardEvent("keydown", { key: "Enter" }))) return;
+  const i = top.spec.items.findIndex((it) => it.button === "primary" && !it.disabled);
+  const it = top.spec.items[i >= 0 ? i : top.index];
+  if (it && !it.disabled) { top.index = i >= 0 ? i : top.index; run(it); }
+}
+
+/** ○ on a controller: the negative choice if there is one; false if not (it's then back or close). */
+export function padCancel(): boolean {
+  if (!stack.length) return false;
+  const it = stack[stack.length - 1].spec.items.find((x) => x.cancel && !x.disabled);
+  if (!it) return false;
+  run(it);
+  return true;
 }
 
 export function replaceMenu(spec: MenuSpec): void {
@@ -168,8 +195,9 @@ function render(): void {
           <div class="menu-item ${i === top.index ? "sel" : ""} ${it.disabled ? "dis" : ""}" data-i="${i}">
             <span>${it.label}</span>${it.sub ? `<span class="sub">${it.sub}</span>` : ""}
           </div>`;
+  const glyph = (it: MenuItem) => (it.button === "primary" ? `<span class="pad-glyph sq">□</span>` : it.cancel ? `<span class="pad-glyph ci">○</span>` : "");
   const btn = (it: MenuItem, i: number) =>
-    `<button class="menu-btn ${it.button} ${i === top.index && (!s.view || it.button === "primary") ? "sel" : ""}" data-i="${i}" ${it.disabled ? "disabled" : ""}>${it.label}${it.sub ? `<span class="sub">${it.sub}</span>` : ""}</button>`;
+    `<button class="menu-btn ${it.button} ${i === top.index && (!s.view || it.button === "primary" || s.focus !== undefined) ? "sel" : ""}" data-i="${i}" ${it.disabled ? "disabled" : ""}>${glyph(it)}${it.label}${it.sub ? `<span class="sub">${it.sub}</span>` : ""}</button>`;
   const listed = s.items.map((it, i) => (it.button ? "" : row(it, i))).join("");
   const buttons = s.items.map((it, i) => (it.button ? btn(it, i) : "")).join("");
   // Redrawing the same screen (a card picked, a tab changed) keeps where its view was scrolled to.

@@ -343,7 +343,7 @@ export function openShop(g: Game): void {
               closeAll();
               startArranging(g, it.id); // straight to placing it
             } },
-          { label: "Not now", button: "secondary", action: () => back() },
+          { label: "Not now", button: "secondary", cancel: true, action: () => back() },
         ],
       });
     };

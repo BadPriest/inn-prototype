@@ -7,9 +7,10 @@
 //           stick zoom (↑↓) and turn the isometric camera (←→) · R3 top-down or isometric · Options
 //           pause · touchpad the keys · □ hold: hurry (F). ○ and △ are free while playing.
 // Menus:    D-pad or left stick move · ✕ pick (like Space: a card, an item) · □ confirm the screen (like
-//           Enter: Cook, Put up…, without going to the button) · ○ back or close · L1/R1 switch tabs, L2/R2 the tabs inside them
+//           Enter: Cook, Put up…, without going to the button) · ○ the negative choice (Not now, Keep playing), else back or close · L1/R1 switch tabs, L2/R2 the tabs inside them
 // Kitchen:  left stick moves a cursor · ✕ pick up / place · ○ put back or finish · □ buy · △ another ·
 //           L2 get rid of the piece in hand
+import { padCancel, padConfirm } from "./ui/menu.js";
 // Standard mapping (what Chrome and Edge give a DualSense).
 const B = { cross: 0, circle: 1, square: 2, triangle: 3, l1: 4, r1: 5, l2: 6, r2: 7, share: 8, options: 9, l3: 10, r3: 11, up: 12, down: 13, left: 14, right: 15, ps: 16, touchpad: 17 };
 const DEAD = 0.22; // stick dead zone
@@ -31,12 +32,19 @@ let cursorEl = null;
 let turned = false;
 export function initPad(h) {
     hooks = h;
-    window.addEventListener("gamepadconnected", () => { active = true; });
+    window.addEventListener("gamepadconnected", () => setActive(true));
     // Anything from the keyboard or mouse hands the prompts back to them.
     window.addEventListener("keydown", (e) => { if (e.isTrusted)
-        active = false; }, true);
+        setActive(false); }, true);
     window.addEventListener("pointerdown", (e) => { if (e.isTrusted)
-        active = false; }, true);
+        setActive(false); }, true);
+}
+/** The controller is in use: buttons show its glyphs (body.pad). */
+function setActive(on) {
+    if (on === active)
+        return;
+    active = on;
+    document.body.classList.toggle("pad", on);
 }
 /** Whether to show controller buttons in the prompts. */
 export function padActive() { return active; }
@@ -103,7 +111,7 @@ export function pollPad(dt) {
     const left = stick(pad.axes[0] ?? 0, pad.axes[1] ?? 0);
     const right = stick(pad.axes[2] ?? 0, pad.axes[3] ?? 0);
     if (btn.some(Boolean) || left || right)
-        active = true;
+        setActive(true);
     if (hooks.menuOpen()) {
         hooks.setWalk(null, false);
         hideCursor();
@@ -131,8 +139,8 @@ export function pollPad(dt) {
         if (pressed(B.cross))
             key(" ");
         if (pressed(B.square))
-            key("Enter");
-        if (pressed(B.circle))
+            padConfirm();
+        if (pressed(B.circle) && !padCancel())
             key(hooks.paused() ? "Escape" : "Backspace");
         // Tabs: L1/R1 the outer level, L2/R2 the inner one (the meals on the bill of fare).
         if (pressed(B.l1))
