@@ -2,7 +2,7 @@
 // What you make waits where you made it: single servings on the station's shelf (labelled for the
 // order they were made for), pots on the station, whole pies in the pie safe. You pick them up there.
 // The hatch is for a hired cook, later.
-import { describeUses, have, nameOf, shortOf, takeStock, usesOf } from "./stock.js";
+import { applyTaken, describeUses, have, nameOf, shortOf, takeStockFrom, usesOf } from "./stock.js";
 import { organic, uid } from "./core.js";
 import { BREAD_CASE_BATCHES, INGREDIENTS, RECIPES, TUNING, URN_CAPACITY, utensilFor } from "./data.js";
 import { dist } from "./world.js";
@@ -22,9 +22,10 @@ export function slotName(slot) {
     const base = slot.f.name.toLowerCase();
     return (slot.f.slots?.length ?? 1) > 1 ? `${base} (${slot.name.toLowerCase()})` : base;
 }
-export function makeItem(recipe, ingredients) {
+/** A dish or drink from a recipe and the ingredients chosen. `taken`: anything past fresh that went in, and its tags. */
+export function makeItem(recipe, ingredients, taken) {
     const ings = ingredients.map((id) => INGREDIENTS.find((i) => i.id === id)).filter(Boolean);
-    const tags = [...new Set([...recipe.baseTags, ...ings.flatMap((i) => i.tags)])];
+    const tags = applyTaken([...new Set([...recipe.baseTags, ...ings.flatMap((i) => i.tags)])], taken);
     const base = recipe.id === "tea" ? "Tea" : recipe.name;
     const name = ings.length ? `${base} (${ings.map((i) => i.name.toLowerCase()).join(", ")})` : base;
     return { id: uid(), recipeId: recipe.id, name, kind: recipe.kind, tags, options: [...ingredients] };
@@ -66,12 +67,12 @@ export function startJob(g, slot, recipeIn, ingredients, ticket) {
         g.say(`Not enough in the pantry: short ${describeUses(short)}.`);
         return false;
     }
-    takeStock(g, uses);
+    const taken = takeStockFrom(g, uses);
     if (recipe.servings)
         ticket = null;
     let total = Math.max(1, organic(recipe.minutes));
     total /= slot.speed ?? slot.f.equip?.craftingSpeed ?? 1;
-    g.jobs.set(slot.id, { recipeId: recipe.id, ingredients, total, progress: 0, done: false, ticket: ticket?.id, ticketName: ticket?.name, batch });
+    g.jobs.set(slot.id, { recipeId: recipe.id, ingredients, total, progress: 0, done: false, ticket: ticket?.id, ticketName: ticket?.name, batch, taken: taken ?? undefined });
     const forWho = ticket ? ` for ${ticket.name}` : recipe.storedIn === "piesafe" ? " (a whole pie)" : recipe.storedIn === "urn" ? "" : recipe.batch ? ` (${recipe.batch})` : recipe.servings ? " (a whole pot)" : "";
     if (recipe.id === "water") {
         g.say("You put the kettle on.");
@@ -98,7 +99,7 @@ export function updateCrafting(g, simDt, target) {
             job.progress += simDt * rate;
             if (job.progress >= job.total) {
                 job.done = true;
-                job.item = makeItem(recipe, job.ingredients);
+                job.item = makeItem(recipe, job.ingredients, job.taken);
                 if (job.ticket) {
                     job.item.ticket = job.ticket;
                     job.item.ticketName = job.ticketName;
@@ -315,7 +316,8 @@ export function steepTea(g, fid, leaf) {
         g.say("No room on your trays.");
         return;
     }
-    takeStock(g, [{ id: leaf, units: 1 }]);
+    const leafTaken = takeStockFrom(g, [{ id: leaf, units: 1 }]);
+    item.tags = applyTaken(item.tags, leafTaken);
     g.stats.crafted++;
     water.left--;
     g.say(`${item.name}${p ? ` for ${p.name}` : ""} (${water.left} cup${water.left === 1 ? "" : "s"} of hot water left).`);
@@ -395,7 +397,7 @@ export function finishAllJobs(g) {
     for (const [fid, job] of g.jobs) {
         const recipe = effectiveRecipe(g, RECIPES.find((r) => r.id === job.recipeId), job.batch);
         if (!job.item)
-            job.item = makeItem(recipe, job.ingredients);
+            job.item = makeItem(recipe, job.ingredients, job.taken);
         job.item.ticket = undefined;
         job.item.ticketName = undefined;
         job.item.madeDay = g.day;

@@ -4,7 +4,7 @@
 import type { Game } from "../game.js";
 import { INGREDIENTS, RECIPES } from "../data.js";
 import { fmtMoney, moneyHtml } from "../money.js";
-import { amount, startingPantry } from "../stock.js";
+import { amount, condition, have, stageName, startingPantry } from "../stock.js";
 import {
   canFetchFrom, deliveryDaysText, fetchSlip, linesOf, nextDeliveryDay, packContents, packPrice, sendSlip, slipEmpty, slipOf, slipTotal,
   suppliersHere, whenText,
@@ -35,7 +35,7 @@ export function openSupplies(g: Game): void {
     const s = all[tab];
     const uses = usedByBill(g);
     const start = startingPantry();
-    const left = (id: string) => (g.stock[id] ?? 0) / Math.max(1, start[id] ?? 1);
+    const left = (id: string) => have(g, id) / Math.max(1, start[id] ?? 1);
     const low = (id: string) => left(id) < LOW_SHARE;
     const lines = [...linesOf(s)].sort((a, b) => Number(uses.has(b.item)) - Number(uses.has(a.item)) || (uses.has(a.item) ? left(a.item) - left(b.item) : 0));
     const forBill = lines.filter((l) => uses.has(l.item)).length;
@@ -58,9 +58,9 @@ export function openSupplies(g: Game): void {
       return {
         pick: String(i), icon: x.icon, name: x.name, tags: x.tags, focus: i === st.focus, on: on > 0,
         fact: `${moneyHtml(packPrice(s, l))} <span class="unit">${l.pack.name}</span>`,
-        status: on ? `${on} on the slip` : `${amount(l.item, g.stock[l.item] ?? 0)} in the pantry${uses.has(l.item) ? ` · for ${uses.get(l.item)!.join(", ")}` : ""}${uses.has(l.item) && low(l.item) ? " · running low" : ""}`,
-        tone: on ? "good" : (g.stock[l.item] ?? 0) <= 0 || (uses.has(l.item) && low(l.item)) ? "warn" : undefined,
-        detail: `${l.pack.name[0].toUpperCase()}${l.pack.name.slice(1)}: ${packContents(l)}. In the pantry: ${amount(l.item, g.stock[l.item] ?? 0)}.`,
+        status: on ? `${on} on the slip` : `${amount(l.item, have(g, l.item))} in the pantry${condition(g, l.item).turning > 0 ? ` (${amount(l.item, condition(g, l.item).turning)} ${stageName(condition(g, l.item).turningStage ?? "onTheTurn")})` : ""}${uses.has(l.item) ? ` · for ${uses.get(l.item)!.join(", ")}` : ""}${uses.has(l.item) && low(l.item) ? " · running low" : ""}`,
+        tone: on ? "good" : (have(g, l.item)) <= 0 || (uses.has(l.item) && low(l.item)) ? "warn" : undefined,
+        detail: `${l.pack.name[0].toUpperCase()}${l.pack.name.slice(1)}: ${packContents(l)}. In the pantry: ${amount(l.item, have(g, l.item))}.`,
         does: on ? "Add another (- or Delete takes one off)" : "Pencil it onto the slip",
       };
     });

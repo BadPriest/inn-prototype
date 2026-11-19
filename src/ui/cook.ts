@@ -5,7 +5,7 @@
 //   steep tea         the same panel and cards; picking a leaf pours the cup
 // Click an ingredient to add it, again to take it out.
 
-import { amount, describeUses, have, shortOf, usesOf } from "../stock.js";
+import { amount, describeUses, have, nextPastFresh, shortOf, stageName, usesOf } from "../stock.js";
 import { INGREDIENTS, RECIPES, type Recipe } from "../data.js";
 import { startPour } from "../serving.js";
 import type { Game } from "../game.js";
@@ -232,7 +232,8 @@ function cookSpec(g: Game, f: Slot, r: Recipe, st: CookState): MenuSpec {
       const blocked = (!on && full && (max > 1 || grp.key === "optional")) || (!on && !enough);
       return {
         pick: String(i), icon: ing.icon, name: ing.name, tags: ing.tags, on, off: blocked, focus: i === st.focus,
-        status: left === Infinity ? "" : enough ? `${amount(o.id, left)} in the pantry` : `short: needs ${amount(o.id, o.units)}`, tone: enough ? undefined : "warn",
+        status: left === Infinity ? "" : !enough ? `short: needs ${amount(o.id, o.units)}` : nextPastFresh(g, o.id) ? `${amount(o.id, left)} · the oldest is ${stageName(nextPastFresh(g, o.id)!)}` : `${amount(o.id, left)} in the pantry`,
+        tone: !enough || nextPastFresh(g, o.id) ? "warn" : undefined,
         detail: adds.length ? `Adds ${adds.join(" and ")} to the ${r.name.toLowerCase()}.` : `Keeps the ${r.name.toLowerCase()} as it is.`,
         does: on ? "Take it out" : !enough ? "Not enough in the pantry: order more at the desk" : blocked ? `Full: take one out first (${max} at most)` : max === 1 && grp.chosen.length ? "Use this instead" : "Add it",
       };

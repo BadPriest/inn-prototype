@@ -12,6 +12,7 @@ import { longDate, seasonTurned } from "./calendar.js";
 import { morningLine, passNight } from "./weather.js";
 import { deliverPaper, marketDay } from "./newspaper.js";
 import { SKILLS_DATA } from "./gamedata.gen.js";
+import { pantryNews } from "./stock.js";
 const SAVE_KEY = "travelling-inn-proto-v3"; // v3: the calendar (older saves start fresh)
 export function simDelta(g, realDt) {
     if (g.paused || g.modal || g.arranging)
@@ -113,6 +114,9 @@ export function startNextDay(g) {
     beginDay(g);
     carterArrives(g); // yesterday's orders
     deliveriesArrive(g);
+    const pantry = pantryNews(g);
+    if (pantry)
+        g.say(pantry);
     g.bus.emit({ type: "DayStarted", day: g.day });
     save(g);
 }
@@ -141,7 +145,7 @@ export function save(g) {
         localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, calendarStart: g.calendarStart, location: g.location, inn: g.inn, weather: g.weather, history, regulars, visitorNotes: g.visitorNotes,
             menu: [...g.menu], menuChosen: g.menuChosen,
             layout: g.layout, mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives, walkthroughStep: g.walkthrough?.step, known: [...g.known], pointsSpent: g.pointsSpent, xp: g.xp, knacks: g.knacks, newSkills: g.newSkills, crates: g.crates, coat: g.coat, under: g.under, newGear: g.newGear,
-            purse: g.purse, priceLevel: g.priceLevel, onOrder: g.onOrder, toPlace: g.toPlace, stock: g.stock, slips: g.slips, lastSlips: g.lastSlips, deliveries: g.deliveries }));
+            purse: g.purse, priceLevel: g.priceLevel, onOrder: g.onOrder, toPlace: g.toPlace, lots: g.lots, slips: g.slips, lastSlips: g.lastSlips, deliveries: g.deliveries }));
     }
     catch { /* storage unavailable: carry on */ }
 }
@@ -208,8 +212,11 @@ export function load(g) {
         if (s.priceLevel)
             g.priceLevel = s.priceLevel;
         // Saved before the pantry counted anything: it starts as a new keeper's.
-        if (s.stock)
-            g.stock = s.stock;
+        // Saves from before shelf life: what was in the pantry came in today.
+        if (s.lots)
+            g.lots = s.lots;
+        else if (s.stock)
+            g.lots = Object.fromEntries(Object.entries(s.stock).filter(([, n]) => n > 0).map(([id, units]) => [id, [{ units, day: g.day }]]));
         g.slips = s.slips ?? {};
         g.lastSlips = s.lastSlips ?? {};
         g.deliveries = s.deliveries ?? [];

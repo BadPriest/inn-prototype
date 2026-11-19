@@ -3,7 +3,7 @@
 // order they were made for), pots on the station, whole pies in the pie safe. You pick them up there.
 // The hatch is for a hired cook, later.
 
-import { describeUses, have, nameOf, shortOf, takeStock, usesOf } from "./stock.js";
+import { applyTaken, describeUses, have, nameOf, shortOf, takeStockFrom, usesOf, type Taken } from "./stock.js";
 import { organic, uid } from "./core.js";
 import { BREAD_CASE_BATCHES, INGREDIENTS, RECIPES, TUNING, URN_CAPACITY, utensilFor, type Recipe } from "./data.js";
 import type { Game, Item, Job } from "./game.js";
@@ -27,9 +27,10 @@ export function slotName(slot: Slot): string {
   return (slot.f.slots?.length ?? 1) > 1 ? `${base} (${slot.name.toLowerCase()})` : base;
 }
 
-export function makeItem(recipe: Recipe, ingredients: string[]): Item {
+/** A dish or drink from a recipe and the ingredients chosen. `taken`: anything past fresh that went in, and its tags. */
+export function makeItem(recipe: Recipe, ingredients: string[], taken?: Taken): Item {
   const ings = ingredients.map((id) => INGREDIENTS.find((i) => i.id === id)!).filter(Boolean);
-  const tags = [...new Set([...recipe.baseTags, ...ings.flatMap((i) => i.tags)])];
+  const tags = applyTaken([...new Set([...recipe.baseTags, ...ings.flatMap((i) => i.tags)])], taken);
   const base = recipe.id === "tea" ? "Tea" : recipe.name;
   const name = ings.length ? `${base} (${ings.map((i) => i.name.toLowerCase()).join(", ")})` : base;
   return { id: uid(), recipeId: recipe.id, name, kind: recipe.kind, tags, options: [...ingredients] };
@@ -66,11 +67,11 @@ export function startJob(g: Game, slot: Slot, recipeIn: Recipe, ingredients: str
   const uses = usesOf(g, recipe, ingredients);
   const short = shortOf(g, uses);
   if (short.length) { g.say(`Not enough in the pantry: short ${describeUses(short)}.`); return false; }
-  takeStock(g, uses);
+  const taken = takeStockFrom(g, uses);
   if (recipe.servings) ticket = null;
   let total = Math.max(1, organic(recipe.minutes));
   total /= slot.speed ?? slot.f.equip?.craftingSpeed ?? 1;
-  g.jobs.set(slot.id, { recipeId: recipe.id, ingredients, total, progress: 0, done: false, ticket: ticket?.id, ticketName: ticket?.name, batch });
+  g.jobs.set(slot.id, { recipeId: recipe.id, ingredients, total, progress: 0, done: false, ticket: ticket?.id, ticketName: ticket?.name, batch, taken: taken ?? undefined });
   const forWho = ticket ? ` for ${ticket.name}` : recipe.storedIn === "piesafe" ? " (a whole pie)" : recipe.storedIn === "urn" ? "" : recipe.batch ? ` (${recipe.batch})` : recipe.servings ? " (a whole pot)" : "";
   if (recipe.id === "water") { g.say("You put the kettle on."); return true; }
   g.say(`Started ${recipe.name.toLowerCase()}${forWho} at the ${slotName(slot)}${recipe.tended ? ". Stay with it" : ""}.`);
@@ -94,7 +95,7 @@ export function updateCrafting(g: Game, simDt: number, target: { f: Furniture; p
       job.progress += simDt * rate;
       if (job.progress >= job.total) {
         job.done = true;
-        job.item = makeItem(recipe, job.ingredients);
+        job.item = makeItem(recipe, job.ingredients, job.taken);
         if (job.ticket) { job.item.ticket = job.ticket; job.item.ticketName = job.ticketName; }
         g.stats.crafted++;
       }
@@ -252,7 +253,8 @@ export function steepTea(g: Game, fid: string, leaf: string): void {
   if (p) { item.ticket = p.id; item.ticketName = p.name; }
   if (have(g, leaf) < 1) { g.say(`There's no ${nameOf(leaf).toLowerCase()} left in the pantry.`); return; }
   if (!addToTray(g, item)) { g.say("No room on your trays."); return; }
-  takeStock(g, [{ id: leaf, units: 1 }]);
+  const leafTaken = takeStockFrom(g, [{ id: leaf, units: 1 }]);
+  item.tags = applyTaken(item.tags, leafTaken);
   g.stats.crafted++;
   water.left--;
   g.say(`${item.name}${p ? ` for ${p.name}` : ""} (${water.left} cup${water.left === 1 ? "" : "s"} of hot water left).`);
@@ -318,7 +320,7 @@ export function emptyPot(g: Game, fid: string): void {
 export function finishAllJobs(g: Game): void {
   for (const [fid, job] of g.jobs) {
     const recipe = effectiveRecipe(g, RECIPES.find((r) => r.id === job.recipeId)!, job.batch);
-    if (!job.item) job.item = makeItem(recipe, job.ingredients);
+    if (!job.item) job.item = makeItem(recipe, job.ingredients, job.taken);
     job.item.ticket = undefined;
     job.item.ticketName = undefined;
     job.item.madeDay = g.day;

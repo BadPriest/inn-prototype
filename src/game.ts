@@ -2,7 +2,7 @@
 
 import { EventBus, type Outcome } from "./core.js";
 import { STARTING_PURSE, type PriceLevel } from "./money.js";
-import { startingPantry } from "./stock.js";
+import { startingLots, type Lot, type Taken } from "./stock.js";
 import { World, defaultLayout, type Placed, type Vec } from "./world.js";
 import { dateOf, randomStartSeason, type GameDate } from "./calendar.js";
 import { newWeather, type CameIn, type WeatherState } from "./weather.js";
@@ -150,6 +150,7 @@ export interface Job {
   progress: number; // minutes done
   done: boolean;
   item?: Item; // finished, waiting for room on the shelf
+  taken?: Taken; // what went in that was past fresh, and the tags it gives the dish
   ticket?: number;
   ticketName?: string;
   batch?: boolean; // made as a batch (the tea urn)
@@ -273,7 +274,7 @@ export class Game {
   /** Bought, coming with the carter tomorrow morning (equipment and goods ids). */
   onOrder: string[] = [];
   /** The pantry: units of each ingredient. */
-  stock: Record<string, number> = startingPantry();
+  lots: Record<string, Lot[]> = startingLots(1); // the pantry, as batches by the day they came in
   /** Pencilled slips on the desk, one per supplier (item id -> packs); the last one sent to each; what's coming. */
   slips: Record<string, Record<string, number>> = {};
   lastSlips: Record<string, Record<string, number>> = {};

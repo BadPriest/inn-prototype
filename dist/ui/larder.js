@@ -1,6 +1,6 @@
 // Card screens for what's already made: the snack bowl on a table, and the pie safe.
 // Same template as cooking (docs/specs/ui.md): what's there now pinned on top, then cards to pick.
-import { amount, have, takeStock } from "../stock.js";
+import { amount, clearSpoiled, condition, describeUses, have, lotsOf, spoiledNow, stageName, takeStock } from "../stock.js";
 import { SNACKS, INGREDIENTS } from "../data.js";
 import { returnSlice, storePie, takeSlice } from "../crafting.js";
 import { trayItems, trayRoomFor } from "../serving.js";
@@ -169,25 +169,55 @@ function pieSpec(g, st) {
     };
 }
 // ---------------------------------------------------------------------------
-// The pantry: what's in stock.
+// The pantry: what's in stock, and how it's keeping.
+/** "in 5 hours", "tomorrow", "in 3 days": how long until it turns, roughly. */
+function untilWords(days) {
+    if (days < 0.3)
+        return `in ${Math.max(1, Math.round(days * 20))} hour${Math.round(days * 20) === 1 ? "" : "s"}`;
+    if (days < 1.3)
+        return "by tomorrow";
+    return `in ${Math.round(days)} days`;
+}
 export function openPantryScreen(g) {
     const st = { focus: 0 };
     const build = () => {
-        const inStock = INGREDIENTS.filter((x) => x.worth > 0 && (g.stock[x.id] ?? 0) > 0.001);
-        const cards = inStock.map((x, i) => ({
-            pick: x.id, icon: x.icon, name: x.name, tags: x.tags, focus: i === st.focus,
-            fact: amount(x.id, g.stock[x.id] ?? 0),
-            detail: `${amount(x.id, g.stock[x.id] ?? 0)} on the shelves.`,
-        }));
+        const shelves = INGREDIENTS.filter((x) => x.worth > 0 && lotsOf(g, x.id).some((l) => l.units > 0.001))
+            .map((x) => ({ x, c: condition(g, x.id) }))
+            // What needs using or clearing first: spoiled, then turning, then soonest to turn.
+            .sort((a, b) => Number(b.c.spoiled > 0) - Number(a.c.spoiled > 0) || Number(b.c.turning > 0) - Number(a.c.turning > 0) || (a.c.nextTurn ?? 1e9) - (b.c.nextTurn ?? 1e9));
+        const spoiled = spoiledNow(g);
+        const cards = shelves.map(({ x, c }, i) => {
+            const parts = [
+                c.fresh > 0 ? `${amount(x.id, c.fresh)} fresh` : "",
+                c.turning > 0 ? `${amount(x.id, c.turning)} ${stageName(c.turningStage ?? "onTheTurn")}` : "",
+                c.spoiled > 0 ? `${amount(x.id, c.spoiled)} spoiled` : "",
+            ].filter(Boolean);
+            const soon = c.fresh > 0 && c.nextTurn !== undefined && c.nextTurn < 2;
+            return {
+                pick: x.id, icon: x.icon, name: x.name, tags: x.tags, focus: i === st.focus,
+                fact: amount(x.id, have(g, x.id)),
+                status: c.spoiled > 0 ? `${amount(x.id, c.spoiled)} spoiled` : c.turning > 0 ? `${amount(x.id, c.turning)} ${stageName(c.turningStage ?? "onTheTurn")}` : soon ? `turns ${untilWords(c.nextTurn)}` : "",
+                tone: c.spoiled > 0 ? "warn" : c.turning > 0 || soon ? "warn" : undefined,
+                detail: `On the shelves: ${parts.join(", ")}.${c.fresh > 0 && c.nextTurn !== undefined && c.nextTurn < 60 ? ` The fresh turns ${untilWords(c.nextTurn)}.` : ""}${c.turning > 0 ? " Past fresh, a dish made with it shows it." : ""}${c.spoiled > 0 ? " Spoiled can't be used: clear it out." : ""}`,
+            };
+        });
+        const clear = () => {
+            const gone = clearSpoiled(g);
+            if (!gone.length)
+                return;
+            g.bus.emit({ type: "MenuSound", sound: "tick" });
+            g.say(`You clear out the spoiled: ${describeUses(gone)}.`);
+            replaceMenu(build());
+        };
         return {
             title: "🧺 Pantry",
-            subtitle: inStock.length ? "What's on the shelves · order more at the desk (Supplies)" : "The shelves are bare · order supplies at the desk",
+            subtitle: shelves.length ? "What's on the shelves, and how it's keeping · order more at the desk (Supplies)" : "The shelves are bare · order supplies at the desk",
             view: {
                 html: cards.length ? grid(cards) : `<div class="muted">Nothing left. Water from the pump is always there.</div>`,
                 onPick: () => undefined,
                 onKey: gridKeys(() => cards.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, () => undefined),
             },
-            items: [],
+            items: spoiled.length ? [{ label: "🗑️ Clear out the spoiled", sub: describeUses(spoiled), button: "primary", action: clear }] : [],
         };
     };
     openMenu(build());
