@@ -14,8 +14,9 @@ import type { Target } from "../interact.js";
 import { iconFor, TRAY_COLOUR, trayLook } from "../serving.js";
 import type { Furniture, Tile, Vec } from "../world.js";
 import { drawLight, windowColor } from "./light.js";
+import { drawLevelUp } from "./levelup.js";
 import { ISO, P, Pt, floorPath, turn, turnedSize, unproject, unturn } from "./proj.js";
-import { badge, drawCoinPops, drawGuide, drawPatronWords, drawSpeech, say, type View } from "./render.js";
+import { badge, barLabel, drawEyes, busyWord, jobWord, drawCoinPops, drawGuide, drawPatronWords, drawSpeech, say, type View } from "./render.js";
 
 /** Height of the back walls, in tiles; every other wall is a low stub so you can see past it. */
 const TALL = 1.5;
@@ -290,19 +291,9 @@ export function drawIso(ctx: CanvasRenderingContext2D, g: Game, v: View, target:
     const foot = P(v, p.pos.x, p.pos.y);
     drawPatronWords(ctx, g, p, foot.x, foot.y - ts * 0.55, ts);
   }
-  const kf = P(v, k.pos.x, k.pos.y), kh = P(v, k.pos.x, k.pos.y, HEAD_Z);
-  k.trays.forEach((tray, i) => {
-    const side = i === 0 ? -1 : 1;
-    const n = Math.max(1, tray.items.length);
-    const w = Math.max(ts * 0.4, n * ts * 0.32 + ts * 0.08);
-    const tx = kf.x + side * (ts * 0.32) + (side < 0 ? -w : 0), ty = kf.y - ts * 0.5;
-    ctx.fillStyle = trayLook(tray) ? TRAY_COLOUR[trayLook(tray)!] : "rgba(255,255,255,0.15)";
-    ctx.fillRect(tx, ty, w, ts * 0.38);
-    ctx.font = `${Math.floor(ts * 0.3)}px system-ui, sans-serif`;
-    ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    tray.items.forEach((it, j) => ctx.fillText(iconFor(it.recipeId, it.garnish) || "🥣", tx + ts * 0.2 + j * ts * 0.32, ty + ts * 0.2));
-  });
+  const kh = P(v, k.pos.x, k.pos.y, HEAD_Z);
   if (g.keeperLine && g.minute < g.keeperLine.until) say(kh.x, kh.y - HEAD_R * ts - ts * 0.05, `“${g.keeperLine.text}”`, "#ffe08a");
+  drawLevelUp(ctx, g, v);
   drawGuide(ctx, g, v);
   drawSpeech(ctx, ts);
   drawCoinPops(ctx, g, v); // over the speech, so the coin always reads

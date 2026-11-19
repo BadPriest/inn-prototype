@@ -22,9 +22,10 @@ import { updateFrontDoor } from "./door.js";
 import { cancelPour, updatePour } from "./serving.js";
 import { watchObjectives } from "./objectives.js";
 import { initWalkthrough, startWalkthrough, updateWalkthrough } from "./walkthrough.js";
+import { initLevelUp } from "./ui/levelup.js";
 import { updateMenuGuide } from "./ui/quest.js";
 import { watchSkills } from "./skills.js";
-import { emptyHere, offerUnasked, putDownHere, cleanable, cleanStep, findTargets, targetName, forcedTurnIn, interact, openGarnishMenu, openJournal, promptFor, targetId, type Target } from "./interact.js";
+import { emptyHere, offerUnasked, putDownHere, cleanable, cleanStep, findTargets, spotOf, targetName, forcedTurnIn, interact, openGarnishMenu, openJournal, promptFor, targetId, type Target } from "./interact.js";
 import { draw, computeView, type View } from "./ui/render.js";
 import { computeIsoView, drawIso, isoPick } from "./ui/render-iso.js";
 import { P, screenDir } from "./ui/proj.js";
@@ -57,6 +58,20 @@ initDebug(g);
 initSound(g);
 initTalk(g);
 initWalkthrough(g);
+initLevelUp(g);
+/** The walkthrough's last step done: its closing words wait for the quest card to finish and the menus to close. */
+let walkthroughDoneAt: number | null = null;
+g.bus.on((e) => { if (e.type === "WalkthroughDone") walkthroughDoneAt = performance.now(); });
+function sayWalkthroughDone(): void {
+  if (walkthroughDoneAt === null || performance.now() - walkthroughDoneAt < 1600 || menuOpen()) return;
+  walkthroughDoneAt = null;
+  openMenu({
+    title: "🎉 Your first patron",
+    modal: true,
+    body: `<p class="blurb">Congratulations on serving your first patron! This concludes the tutorial.</p><p class="blurb">Experiment with the ingredients, get back to your desk for management decisions, and keep striving for Delight.</p>`,
+    items: [{ label: "Carry on", button: "primary", confirmSound: true, action: () => closeAll() }],
+  });
+}
 initLight(g);
 // For checking from the browser console (and screenshots): the game state.
 (window as unknown as Record<string, unknown>).innGame = g;

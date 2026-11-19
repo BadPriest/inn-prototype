@@ -144,15 +144,22 @@ function bringFirstGuest(g: Game, w: WalkthroughState): void {
 // ---------------------------------------------------------------------------
 // The guide: what to point at
 
-export interface WorldGuide { at: Vec; z: number; size: number }
+export interface WorldGuide { at: Vec; z: number; size: number; label?: string }
 
-/** Where in the room the guide points now, if anywhere. Without the walkthrough: the desk until the bill is set. */
+/** Where in the room the guide points now, if anywhere. Without the walkthrough: the desk until the bill is set, and after a level up until Skills is opened. */
 export function worldGuide(g: Game): WorldGuide | null {
   const desk = g.world.furniture.find((f) => f.kind === "desk");
   const deskGuide = desk ? { at: desk.center, z: 1.2, size: Math.max(1, desk.tiles.length * 0.7) } : null;
   const w = g.walkthrough;
   const s = currentStep(g);
-  if (!w || !s) return g.menuChosen ? null : deskGuide;
+  if (!w || !s) {
+    if (!g.menuChosen) return deskGuide;
+    const crate = g.crates[0];
+    if (crate) return { at: { x: crate.x + 0.5, y: crate.y + 0.5 }, z: 0.9, size: 0.8, label: "📦 Unpack supplies" };
+    if (!deskGuide) return null;
+    if (g.toPlace.length) return { ...deskGuide, label: "🛠 Place new equipment" };
+    return g.newSkills ? { ...deskGuide, label: "✦ New skills available" } : null;
+  }
   const dish = dishOf(g, w);
   const guest = guestOf(g, w);
   const station = () => { const sl = slotFor(g, dish?.id); return sl ? { at: sl.f.center, z: 1.1, size: Math.max(1, sl.f.tiles.length * 0.6) } : null; };
@@ -170,7 +177,10 @@ export type MenuGuide = { sel: string; name?: string; has?: string[] } | Element
 
 export function menuGuide(g: Game, title: string, root: HTMLElement): MenuGuide[] {
   const w = g.walkthrough, s = currentStep(g);
-  if (!w || !s) return [];
+  if (!w || !s) {
+    if (title !== "🕯️ Desk") return [];
+    return [...(g.toPlace.length ? [{ sel: '[data-pick="arrange"]' }] : []), ...(g.newSkills ? [{ sel: '[data-pick="skills"]' }] : [])];
+  }
   const dish = dishOf(g, w);
   const slot = slotFor(g, dish?.id);
   const primaryOff = !!root.querySelector(".menu-btn.primary[disabled]");

@@ -153,6 +153,7 @@ export function initSound(g: Game): void {
       case "ServeOutcome": { const s = OUTCOME_SOUND[e.outcome]; if (s) reaction(s); break; }
       case "Paper": paper(); break;
       case "Reward": synth.moment(); setTimeout(() => play("coinsSilver", null), 300); break;
+      case "LevelUp": synth.moment(); setTimeout(() => synth.moment(), 260); break;
       case "CoinPaid": coin(e.paid, e.tip, e.delight); break;
       case "DayStarted": wakeUp(); break;
       case "Thunder": thunder(e.near); break;

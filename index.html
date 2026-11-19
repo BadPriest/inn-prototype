@@ -126,6 +126,19 @@
   .set-val { font:600 12px system-ui; text-align:right; color:#e9dfc9; }
   .set-btn { text-align:left; background:#2a1f18; color:var(--ink); border:1px solid #6b5338; border-radius:7px; padding:7px 10px; font:13px Georgia, serif; cursor:pointer; }
   .set-btn:hover { border-color:#c9a24a; }
+  .levelup { position:fixed; left:50%; top:24%; transform:translateX(-50%); z-index:60; pointer-events:none; animation:lu-in .7s cubic-bezier(.2,1.6,.4,1) both; }
+  .levelup.out { animation:lu-out .7s ease-in forwards; }
+  .lu-ribbon { position:relative; padding:12px 54px 14px; text-align:center; color:#3a2504; background:linear-gradient(#ffe9a3,#f2c14e 45%,#c98f22); border-top:2px solid #fff3c4; border-bottom:2px solid #8a5a10; box-shadow:0 6px 24px rgba(0,0,0,.5), 0 0 40px rgba(255,200,80,.45); overflow:hidden; }
+  .lu-ribbon::before, .lu-ribbon::after { content:""; position:absolute; top:0; bottom:0; width:22px; background:#a8721a; }
+  .lu-ribbon::before { left:0; clip-path:polygon(0 0,100% 0,100% 100%,0 100%,55% 50%); }
+  .lu-ribbon::after { right:0; clip-path:polygon(0 0,100% 0,45% 50%,100% 100%,0 100%); }
+  .lu-ribbon > div { position:relative; }
+  .lu-ribbon .lu-title { font:700 40px/1.05 "Playfair Display", "Libre Caslon Text", Georgia, serif; letter-spacing:.03em; text-shadow:0 1px 0 #fff4c8; }
+  .lu-ribbon .lu-sub { font:600 13px system-ui; letter-spacing:.08em; text-transform:uppercase; color:#5a3a08; margin-top:2px; }
+  .lu-ribbon .lu-title::after { content:""; position:absolute; inset:-20px -200px; background:linear-gradient(100deg,transparent 40%,rgba(255,255,255,.75) 50%,transparent 60%); animation:lu-shine 1.6s .4s ease-out both; }
+  @keyframes lu-in { from { opacity:0; transform:translateX(-50%) translateY(30px) scale(.4); } to { opacity:1; transform:translateX(-50%) scale(1); } }
+  @keyframes lu-out { to { opacity:0; transform:translateX(-50%) translateY(-30px) scale(.95); } }
+  @keyframes lu-shine { from { transform:translateX(-60%); } to { transform:translateX(60%); } }
   .set-list > .focus { outline:2px solid #ffd34d; outline-offset:3px; border-radius:7px; }
   /* Arranging the kitchen: a banner across the top of the map. */
   #arrange-bar { position:absolute; left:50%; bottom:34px; transform:translateX(-50%); z-index:3; display:flex; align-items:center; gap:12px; background:rgba(26,20,16,.95); border:1px solid #c9a24a; border-radius:9px; padding:7px 8px 7px 14px; font-size:13px; color:var(--ink); max-width:min(92%, 760px); zoom:var(--ui,1); box-shadow:0 4px 14px rgba(0,0,0,.45); }
@@ -386,7 +399,8 @@
       <h4>Debug (` or F2)</h4>
       <div id="dbg-next" class="muted"></div>
       <div style="margin:4px 0">Purse <button id="dbg-coin-add">+1 crown</button> <button id="dbg-coin-sub">−1 crown</button> <button id="dbg-carter">Carter now</button>
-          <button id="dbg-pantry" title="Fill the pantry to the starting stock">Fill pantry</button></div>
+          <button id="dbg-pantry" title="Fill the pantry to the starting stock">Fill pantry</button>
+          <button id="dbg-level" title="Enough experience for the next level">Level up</button></div>
       <div style="margin:4px 0">Flow <input id="dbg-flow" type="range" min="0" max="3" step="0.25" value="1"> <span id="dbg-flow-v">×1</span></div>
       <div style="margin:4px 0"><select id="dbg-arch"></select> <button id="dbg-spawn">Spawn patron</button> <button id="dbg-skip">Skip to 17:00</button></div>
       <h4>Sounds playing</h4>

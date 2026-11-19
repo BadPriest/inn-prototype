@@ -9,6 +9,7 @@ import { newWeather, type CameIn, type WeatherState } from "./weather.js";
 import type { Paper } from "./newspaper.js";
 import type { WalkthroughState } from "./walkthrough.js";
 import { SKILLS_DATA } from "./gamedata.gen.js";
+import type { KnackId } from "./gamedata.js";
 import { TIME_WORDS, TUNING, timeOfDayAt, type Archetype, type ItemKind, type Line, type NeedId, type Regular, type SchemaId, type TasteSet, type TimeOfDay, type WeatherTaste, type Location, type LocationId, type MealId, MEALS, RECIPES, innOf, type Inn, type InnId } from "./data.js";
 
 export interface Item {
@@ -304,7 +305,10 @@ export class Game {
   totalServed = 0; // across all days
   showObjectives = true;
   known = new Set<string>(SKILLS_DATA.startKnown); // the recipe book
-  pointsSpent = 0; // skill points spent on recipes
+  pointsSpent = 0; // skill points spent on recipes and knacks
+  xp = 0; // experience from guests served, across all days
+  knacks: Partial<Record<KnackId, number>> = {}; // tiers bought
+  newSkills = false; // levelled up and Skills not opened since
   hurrying = false; // F held: hurry what's cooking at the target
   walkthrough?: WalkthroughState;
   cleaning: Cleaning | null = null;

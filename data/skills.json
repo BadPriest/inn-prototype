@@ -1,13 +1,14 @@
 {
   "$schema": "./schemas/skills.schema.json",
-  "startKnown": ["porridge", "soup", "stew", "tea", "coffee"],
-  "servedPerPoint": 8,
+  "startKnown": ["porridge", "tea", "coffee", "stew", "breadAndButter"],
+  "xpPerServe": { "DELIGHT": 3, "PLEASED": 2, "FULFILLED": 1 },
+  "levels": { "first": 20, "step": 14 },
   "recipes": [
+    { "dish": "soup", "points": 1 },
     { "dish": "toast", "points": 1 },
     { "dish": "scrambled", "points": 1 },
     { "dish": "friedFish", "points": 1 },
     { "dish": "salad", "points": 1 },
-    { "dish": "breadAndButter", "points": 1 },
     { "dish": "cheeseBoard", "points": 1 },
     { "dish": "crostini", "points": 1 },
     { "dish": "roastChestnuts", "points": 1 },
@@ -17,5 +18,23 @@
     { "dish": "pie", "points": 2 },
     { "dish": "breadPudding", "points": 2 },
     { "dish": "roast", "points": 3 }
+  ],
+  "knacks": [
+    {
+      "id": "quickHands", "icon": "🧽", "name": "Quick hands", "text": "Wipe tables faster.",
+      "tiers": [
+        { "points": 1, "value": 0.8, "text": "a fifth faster" },
+        { "points": 1, "value": 0.65, "text": "a third faster" },
+        { "points": 2, "value": 0.5, "text": "twice as fast" }
+      ]
+    },
+    {
+      "id": "charm", "icon": "😊", "name": "Charm", "text": "Guests who tip, tip more.",
+      "tiers": [
+        { "points": 1, "value": 1, "text": "every tip a penny more" },
+        { "points": 2, "value": 2, "text": "every tip two pence more" },
+        { "points": 2, "value": 3, "text": "every tip three pence more" }
+      ]
+    }
   ]
 }

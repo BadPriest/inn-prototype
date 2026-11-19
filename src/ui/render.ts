@@ -10,6 +10,7 @@ import { RING_TRACK, ringColor } from "./tickets.js";
 import { walkoutProgress } from "../patrons.js";
 import { worldGuide } from "../walkthrough.js";
 import { P } from "./proj.js";
+import { drawLevelUp } from "./levelup.js";
 import { COINS, coinParts, type CoinId } from "../money.js";
 
 /** `iso`: drawn isometric (render-iso.ts); otherwise straight down, `ts` pixels a tile. */
@@ -322,6 +323,7 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
   if (g.keeperLine && g.minute < g.keeperLine.until) {
     speech.push({ x: X(k.pos.x), anchor: Y(k.pos.y) - ts * 0.38, text: `“${g.keeperLine.text}”`, color: "#ffe08a" });
   }
+  drawLevelUp(ctx, g, v);
   drawGuide(ctx, g, v);
   drawSpeech(ctx, ts);
   drawCoinPops(ctx, g, v); // over the speech, so the coin always reads
@@ -605,7 +607,49 @@ export function drawGuide(ctx: CanvasRenderingContext2D, g: Game, v: View): void
   ctx.moveTo(-aw * 0.4, -aw * 1.2); ctx.lineTo(aw * 0.4, -aw * 1.2); ctx.lineTo(aw * 0.4, -aw * 0.55);
   ctx.lineTo(aw * 0.9, -aw * 0.55); ctx.lineTo(0, aw * 0.3); ctx.lineTo(-aw * 0.9, -aw * 0.55); ctx.lineTo(-aw * 0.4, -aw * 0.55);
   ctx.closePath(); ctx.fill(); ctx.stroke();
+  if (guide.label) {
+    ctx.rotate(-angle);
+    ctx.shadowBlur = 0;
+    ctx.font = `600 ${Math.max(11, Math.floor(ts * 0.3))}px system-ui, sans-serif`;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    const tw = ctx.measureText(guide.label).width, ph = ts * 0.46, pw = tw + ts * 0.5;
+    const ly = onScreen ? -aw * 1.2 - ph * 0.75 : (y < H / 2 ? aw * 1.6 + ph / 2 : -aw * 1.6 - ph / 2);
+    const lx = Math.max(-x + pw / 2 + 4, Math.min(W - x - pw / 2 - 4, 0));
+    ctx.fillStyle = "rgba(22,17,13,0.88)"; ctx.strokeStyle = "#ffd34d"; ctx.lineWidth = 1.5;
+    roundRect(ctx, lx - pw / 2, ly - ph / 2, pw, ph, ph / 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#ffe08a"; ctx.fillText(guide.label, lx, ly + 1);
+  }
   ctx.restore();
+}
+
+/** What the keeper's busy bar is for. */
+export const busyWord = (g: Game): string => (g.winding ? "Winding…" : g.pouring ? "Pouring…" : "Cleaning…");
+/** What a station's bar is doing, by where it's made. */
+export const jobWord = (station: string): string =>
+  station === "kettle" ? "Boiling…" : station === "coffee" ? "Brewing…" : station === "oven" ? "Baking…" : station === "prep" ? "Preparing…" : "Cooking…";
+
+/** A small word over a progress bar, centred at x with its foot at y. */
+export function barLabel(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, ts: number): void {
+  ctx.save();
+  ctx.font = `600 ${Math.max(10, Math.floor(ts * 0.22))}px system-ui, sans-serif`;
+  ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+  ctx.lineWidth = Math.max(2, ts * 0.06); ctx.strokeStyle = "rgba(0,0,0,0.8)"; ctx.lineJoin = "round";
+  ctx.strokeText(text, x, y); ctx.fillStyle = "#fff"; ctx.fillText(text, x, y);
+  ctx.restore();
+}
+
+/** How open the keeper's eyes are, 0 to 1: a blink every few seconds, now and then a double one. */
+export function eyeOpen(now = performance.now()): number {
+  const t = (now / 1000) % 5.3;
+  const shut = (at: number) => Math.max(0, 1 - Math.abs(t - at) / 0.075);
+  return 1 - Math.max(shut(0.08), t > 2.6 && Math.floor(now / 5300) % 3 === 0 ? shut(2.75) : 0);
+}
+
+/** The keeper's eyes: two upright ovals, side by side where they're looking. */
+export function drawEyes(ctx: CanvasRenderingContext2D, a: { x: number; y: number }, b: { x: number; y: number }, ts: number): void {
+  const open = eyeOpen();
+  ctx.fillStyle = "#2a1d14";
+  for (const e of [a, b]) { ctx.beginPath(); ctx.ellipse(e.x, e.y, ts * 0.032, Math.max(ts * 0.008, ts * 0.062 * open), 0, 0, Math.PI * 2); ctx.fill(); }
 }
 
 export function badge(ctx: CanvasRenderingContext2D, x: number, y: number, text: string, ts: number): void {

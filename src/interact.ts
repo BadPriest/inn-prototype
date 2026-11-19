@@ -1,9 +1,11 @@
 // What happens when the keeper interacts with something. Menus live here.
 
 import { organic } from "./core.js";
+import { knack } from "./skills.js";
 import { moneyHtml } from "./money.js";
 import { GARNISHES, GRAMOPHONE, INGREDIENTS, RECIPES, REGULARS, SNACKS, TUNING, UPGRADES, type Recipe } from "./data.js";
-import type { Game, Patron, SetDownTray, Spill } from "./game.js";
+import type { Crate, Game, Patron, SetDownTray, Spill } from "./game.js";
+import { unpackCrate } from "./supplies.js";
 import { dist, type Furniture, type Slot } from "./world.js";
 import { canPutBack, collectShelf, emptyPot, putBack, recipesFor, returnSlice, startJob, makeItem, serveFromPot, takeSlice, ticketFor, fillUrn, breadCaseKeys, breadCaseWithRoom, storeBread, takeBatch } from "./crafting.js";
 import { tableKey } from "./patrons.js";
@@ -57,7 +59,7 @@ export function cleanable(g: Game, t: Target | null): boolean {
 /** Called every frame while Space is held on something cleanable. Real seconds. */
 export function cleanStep(g: Game, t: Target, realDt: number): void {
   const id = targetId(t)!;
-  if (!g.cleaning || g.cleaning.targetId !== id) g.cleaning = { targetId: id, progress: 0, total: Math.max(0.8, organic(TUNING.cleanSeconds)) };
+  if (!g.cleaning || g.cleaning.targetId !== id) g.cleaning = { targetId: id, progress: 0, total: Math.max(0.4, organic(TUNING.cleanSeconds) * knack(g, "quickHands", 1)) };
   g.cleaning.progress += realDt;
   if (g.cleaning.progress >= g.cleaning.total) {
     if (t.type === "spill") g.spills = g.spills.filter((s) => s.id !== t.s.id);

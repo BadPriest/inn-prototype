@@ -1,5 +1,6 @@
 // The side panel (clock, orders, trays, log) and the debug view.
 
+import { earnedPoints, xpFor } from "../skills.js";
 import { startingPantry } from "../stock.js";
 import { ARCHETYPES, MEALS, NEED_IDS, REGULARS, TIME_WORDS, TUNING } from "../data.js";
 import type { Game, Patron, UnmetStretch } from "../game.js";
@@ -151,6 +152,7 @@ export function initDebug(g: Game): void {
   ($("dbg-coin-sub") as HTMLButtonElement).onclick = () => { g.purse = Math.max(0, g.purse - PENCE_PER_CROWN); };
   ($("dbg-carter") as HTMLButtonElement).onclick = () => { if (g.onOrder.length) carterArrives(g); else g.say("Nothing on order."); };
   ($("dbg-pantry") as HTMLButtonElement).onclick = () => { for (const [id, n] of Object.entries(startingPantry())) g.stock[id] = Math.max(g.stock[id] ?? 0, n); g.say("The pantry is stocked up."); };
+  ($("dbg-level") as HTMLButtonElement).onclick = () => { g.xp = xpFor(earnedPoints(g) + 1); };
   const flow = $("dbg-flow") as HTMLInputElement;
   flow.oninput = () => { g.flowMultiplier = Number(flow.value); $("dbg-flow-v").textContent = `×${flow.value}`; };
   ($("dbg-skip") as HTMLButtonElement).onclick = () => {

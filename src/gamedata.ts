@@ -142,4 +142,13 @@ export interface LocationsData { locations: LocationData[] }
 export type WalkthroughStepId = "desk" | "bill" | "cook" | "open" | "greet" | "make" | "carry" | "eat" | "buy";
 export interface WalkthroughData { steps: { id: WalkthroughStepId; text: string; reward: number }[] }
 
-export interface SkillsData { startKnown: string[]; servedPerPoint: number; recipes: { dish: string; points: number }[] }
+export type KnackId = "quickHands" | "charm";
+export interface KnackTier { points: number; value: number; text: string }
+export interface Knack { id: KnackId; icon: string; name: string; text: string; tiers: KnackTier[] }
+export interface SkillsData {
+  startKnown: string[];
+  xpPerServe: Partial<Record<"DELIGHT" | "PLEASED" | "FULFILLED" | "UNFINISHED" | "COMPLAINS", number>>;
+  levels: { first: number; step: number };
+  recipes: { dish: string; points: number }[];
+  knacks: Knack[];
+}
