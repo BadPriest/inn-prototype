@@ -85,6 +85,7 @@ export const TILE_LEGEND: Record<string, TileDef> = {
   A: { kind: "furniture", floor: C.staff, label: "Ale", name: "Ale tap", interact: "tap" },
   Y: { kind: "furniture", floor: C.staff, label: "Cid", name: "Cider tap", interact: "tap" },
   S: { kind: "furniture", floor: C.kitchen, label: "Stove", name: "Stove", interact: "station" },
+  T: { kind: "furniture", floor: C.kitchen, label: "Stove", name: "Two-hob stove", interact: "station" },
   R: { kind: "furniture", floor: C.kitchen, label: "Pan", name: "Griddle", interact: "station" },
   O: { kind: "furniture", floor: C.kitchen, label: "Oven", name: "Oven", interact: "station" },
   H: { kind: "furniture", floor: C.staff, label: "Kettle", name: "Tea kettle", interact: "station" },
@@ -195,9 +196,9 @@ export const LEGACY_EQUIPMENT_ID: Record<string, string> = {
 export const currentEquipmentId = (id: string) => LEGACY_EQUIPMENT_ID[id] ?? id;
 
 /** Where the first equipment stands, by map letter. */
-export const EQUIPMENT_OF_TILE: Record<string, string> = { S: "woodStove", O: "breadOven", K: "prepTable", H: "teaKettle", V: "coffeePot", Z: "pieSafe", A: "aleBarrel", Y: "ciderBarrel" };
+export const EQUIPMENT_OF_TILE: Record<string, string> = { S: "woodStove", T: "twoHobStove", O: "breadOven", K: "prepTable", H: "teaKettle", V: "coffeePot", Z: "pieSafe", A: "aleBarrel", Y: "ciderBarrel" };
 /** What's under an equipment letter once it's lifted off the map. */
-export const UNDER_EQUIPMENT: Record<string, string> = { S: ",", R: ",", O: ",", K: ",", H: "n", V: "n", Z: "n", A: "n", Y: "n" };
+export const UNDER_EQUIPMENT: Record<string, string> = { S: ",", T: ",", R: ",", O: ",", K: ",", H: "n", V: "n", Z: "n", A: "n", Y: "n" };
 /** Tiles equipment can stand on: the kitchen floor, behind the bar, and the nooks in the counter wall. */
 export const PLACEABLE_ON = [",", "_", "n"];
 
@@ -230,12 +231,12 @@ export interface Inn {
 
 /**
  * The small tavern: the real start. Two four-seat tables and three stools, a small fire, the gramophone,
- * a one-hob stove, a kettle, one barrel of ale and the pantry. No oven, no prep table. The kitchen's spare
+ * a used two-hob stove, a kettle, one barrel of ale and the pantry. No oven, no prep table. The kitchen's spare
  * room is let to a tenant as storage.
  */
 export const SMALL_MAP: string[] = [
   "####o#######o#########",
-  "#B~dw~#,,SS,PPP#rrrrr#",
+  "#B~dw~#,,TT,PPP#rrrrr#",
   "#B~~~~#,,,,,,,,#rrrrr#",
   "#~~~~~#,,,,,,,,#rrrrr#",
   "#~~~~~#W,,,,,,,#rrrrr#",
@@ -253,7 +254,7 @@ export const SMALL_MAP: string[] = [
 export const INNS: Inn[] = [
   {
     id: "small", name: "A small tavern", icon: "🏠", traits: ["easiest start", "cosy", "one keeper"],
-    blurb: "Two tables, three stools at a short bar, a small fire. A one-hob stove, a kettle and a barrel of ale; no oven yet. The spare room is let to a tenant.",
+    blurb: "Two tables, three stools at a short bar, a small fire. A used two-hob stove, a kettle and a barrel of ale; no oven yet. The spare room is let to a tenant.",
     map: SMALL_MAP,
     rooms: [
       { text: "Bedroom", x: 3.5, y: 3.6 },

@@ -5,6 +5,7 @@ import { startingPantry } from "./stock.js";
 import { World, defaultLayout } from "./world.js";
 import { dateOf, randomStartSeason } from "./calendar.js";
 import { newWeather } from "./weather.js";
+import { SKILLS_DATA } from "./gamedata.gen.js";
 import { TIME_WORDS, TUNING, timeOfDayAt, MEALS, RECIPES, innOf } from "./data.js";
 export function emptyStats(day) {
     return {
@@ -89,6 +90,8 @@ export class Game {
     upgrades = new Set();
     totalServed = 0; // across all days
     showObjectives = true;
+    known = new Set(SKILLS_DATA.startKnown); // the recipe book
+    pointsSpent = 0; // skill points spent on recipes
     hurrying = false; // F held: hurry what's cooking at the target
     walkthrough;
     cleaning = null;
@@ -179,6 +182,8 @@ export class Game {
     canMake(recipeId) {
         const r = RECIPES.find((x) => x.id === recipeId);
         if (!r)
+            return false;
+        if (!r.internal && r.station !== "tap" && !this.known.has(r.id))
             return false;
         if (r.station === "tap")
             return this.world.furniture.some((f) => f.tap === r.id);

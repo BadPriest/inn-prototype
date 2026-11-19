@@ -1,0 +1,21 @@
+{
+  "$schema": "./schemas/skills.schema.json",
+  "startKnown": ["porridge", "soup", "stew", "tea", "coffee"],
+  "servedPerPoint": 8,
+  "recipes": [
+    { "dish": "toast", "points": 1 },
+    { "dish": "scrambled", "points": 1 },
+    { "dish": "friedFish", "points": 1 },
+    { "dish": "salad", "points": 1 },
+    { "dish": "breadAndButter", "points": 1 },
+    { "dish": "cheeseBoard", "points": 1 },
+    { "dish": "crostini", "points": 1 },
+    { "dish": "roastChestnuts", "points": 1 },
+    { "dish": "fryup", "points": 2 },
+    { "dish": "fishCakes", "points": 2 },
+    { "dish": "bread", "points": 2 },
+    { "dish": "pie", "points": 2 },
+    { "dish": "breadPudding", "points": 2 },
+    { "dish": "roast", "points": 3 }
+  ]
+}

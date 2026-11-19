@@ -9,6 +9,8 @@ import { openNewspaper } from "./newspaper.js";
 import { openCalendar } from "./calendar.js";
 import { openSupplies } from "./supplies.js";
 import { ingredientsHtml } from "./cook.js";
+import { knows, pointsLeft } from "../skills.js";
+import { openSkills } from "./skills.js";
 import { canFetch, fetchThing, FETCH_MINUTES, hasOrBetter, onOrderCount, orderThing, priceOfThing, SELL_BACK_SHARE_WORDS, toPlaceCount } from "../shop.js";
 import { fmtMoney, moneyHtml, priceLevel, priceOfRecipe, PRICE_LEVELS } from "../money.js";
 
@@ -58,6 +60,11 @@ export function openDeskScreen(g: Game, openJournal: () => void): void {
         tone: g.toPlace.length ? "warn" : undefined,
         detail: `Place what's been delivered, move what you have, or sell a piece back for ${SELL_BACK_SHARE_WORDS} its price. The clock stops while you do.`,
         does: "Leave the desk and start arranging" },
+      { pick: "skills", icon: "📚", name: "Skills", warn: pointsLeft(g) > 0,
+        fact: pointsLeft(g) ? `${pointsLeft(g)} point${pointsLeft(g) === 1 ? "" : "s"} to spend` : `${g.known.size} recipes known`,
+        tone: pointsLeft(g) ? "good" : undefined,
+        detail: "Recipes you know and recipes to learn. Every guest you serve teaches you something: enough of them earn a point to spend on a new recipe.",
+        does: "Open the recipe book" },
       { pick: "journal", icon: "📖", name: "Journal",
         fact: g.journalUnread ? `${g.journalUnread} new` : undefined,
         status: g.journalUnread ? undefined : "Information about patrons you served.",
@@ -73,6 +80,7 @@ export function openDeskScreen(g: Game, openJournal: () => void): void {
       else if (v === "shop") { g.bus.emit({ type: "MenuSound", sound: "penClick" }); openShop(g); }
       else if (v === "supplies") { g.bus.emit({ type: "MenuSound", sound: "penClick" }); openSupplies(g); }
       else if (v === "arrange") { closeAll(); startArranging(g); }
+      else if (v === "skills") { g.bus.emit({ type: "MenuSound", sound: "penClick" }); openSkills(g, () => replaceMenu(build())); }
       else openJournal();
     };
     return {
@@ -187,6 +195,7 @@ export function openBillOfFare(g: Game): void {
     const toggle = (i: number) => {
       const r = list[i];
       if (!r) return;
+      if (!set.has(r.id) && !knows(g, r.id)) { g.say(`You don't know how to make ${r.name.toLowerCase()} yet: learn it in Skills, at the desk.`); return; }
       if (!set.has(r.id) && !g.canMake(r.id)) { g.say(`You can't make ${r.name.toLowerCase()} here: ${needs(r)}.`); return; }
       if (set.has(r.id)) set.delete(r.id); else set.add(r.id); // menuChosen waits for "Put it up"
       g.bus.emit({ type: "Paper", what: "menu" });
@@ -226,16 +235,16 @@ export function openBillOfFare(g: Game): void {
       back();
     };
     const cards: CardSpec[] = list.map((r, i) => {
-      const can = g.canMake(r.id), on = set.has(r.id);
+      const can = g.canMake(r.id), on = set.has(r.id), known = knows(g, r.id);
       const unit = r.storedIn === "piesafe" ? "a slice" : r.servings ? "a serving" : r.station === "tap" ? "a pint" : "";
       const how = r.storedIn === "piesafe" ? "Baked whole, sold by the slice." : r.servings ? `Made by the pot: about ${r.servings[0]} servings, ~${r.minutes[0]} min.` : r.station === "tap" ? "Poured from the barrel." : `Made to order, ~${r.minutes[0]} min.`;
       return {
         pick: String(i), icon: r.icon, name: r.name,
         fact: can ? `${r.base.options.length > 1 || r.optional.pick[1] > 0 ? "from " : ""}${moneyHtml(priceOfRecipe(g, r.id))}${unit ? ` <span class="unit">${unit}</span>` : ""}` : "",
-        status: can ? whereShort(r) : needs(r), tone: can ? undefined : "warn",
+        status: !known ? "📚 learn it in Skills" : can ? whereShort(r) : needs(r), tone: can ? undefined : "warn",
         tags: r.baseTags, on, off: !can, focus: i === st.focus,
         detail: `${how} ${whereFull(r)}.${ingredientsHtml(g, r)}`,
-        does: !can ? "Buy what it needs in Equipment" : on ? "Take it off the board" : "Put it on the board",
+        does: !known ? "Learn the recipe in Skills, at the desk" : !can ? "Buy what it needs in Equipment" : on ? "Take it off the board" : "Put it on the board",
       };
     });
 

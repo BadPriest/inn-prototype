@@ -141,3 +141,5 @@ export interface LocationsData { locations: LocationData[] }
 
 export type WalkthroughStepId = "desk" | "bill" | "cook" | "open" | "greet" | "make" | "carry" | "eat" | "buy";
 export interface WalkthroughData { steps: { id: WalkthroughStepId; text: string; reward: number }[] }
+
+export interface SkillsData { startKnown: string[]; servedPerPoint: number; recipes: { dish: string; points: number }[] }

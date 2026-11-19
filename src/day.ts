@@ -134,7 +134,7 @@ export function save(g: Game): void {
     const history = g.history.map((d, i) => (i < g.history.length - 14 ? { ...d, unmet: undefined } : d));
     localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, calendarStart: g.calendarStart, location: g.location, inn: g.inn, weather: g.weather, history, regulars, visitorNotes: g.visitorNotes,
       menu: [...g.menu], menuChosen: g.menuChosen,
-      layout: g.layout, mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives, walkthroughStep: g.walkthrough?.step,
+      layout: g.layout, mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives, walkthroughStep: g.walkthrough?.step, known: [...g.known], pointsSpent: g.pointsSpent,
       purse: g.purse, priceLevel: g.priceLevel, onOrder: g.onOrder, toPlace: g.toPlace, stock: g.stock, slips: g.slips, lastSlips: g.lastSlips, deliveries: g.deliveries }));
   } catch { /* storage unavailable: carry on */ }
 }
@@ -144,7 +144,7 @@ export function load(g: Game): void {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) { save(g); return; } // a new save: keep the calendar season it starts in, even before day 1 ends
     const s = JSON.parse(raw) as { day: number; calendarStart?: number; location?: Game["location"]; inn?: Game["inn"]; weather?: WeatherState; history: DayStats[]; regulars?: RegularState[]; visitorNotes?: Game["visitorNotes"];
-      menu?: string[]; menuChosen?: boolean; layout?: Game["layout"]; mealMode?: boolean; meals?: unknown; betweenMenu?: string[]; upgrades?: string[]; totalServed?: number; showObjectives?: boolean; walkthroughStep?: number;
+      menu?: string[]; menuChosen?: boolean; layout?: Game["layout"]; mealMode?: boolean; meals?: unknown; betweenMenu?: string[]; upgrades?: string[]; totalServed?: number; showObjectives?: boolean; walkthroughStep?: number; known?: string[]; pointsSpent?: number;
       purse?: number; priceLevel?: Game["priceLevel"]; onOrder?: string[]; toPlace?: string[]; stock?: Record<string, number>; slips?: Game["slips"]; lastSlips?: Game["lastSlips"]; deliveries?: Game["deliveries"] };
     const dishes = (ids: string[]) => new Set(ids.map(currentDishId).filter((id) => RECIPES.some((r) => r.id === id)));
     if (s.menu) g.menu = dishes(s.menu);
@@ -173,6 +173,8 @@ export function load(g: Game): void {
     g.upgrades = new Set((s.upgrades ?? []).map(currentEquipmentId).filter((id) => pieceById(id)));
     g.totalServed = s.totalServed ?? 0;
     g.showObjectives = s.showObjectives ?? true;
+    g.known = new Set(Array.isArray(s.known) ? s.known.map(currentDishId) : RECIPES.map((r) => r.id));
+    g.pointsSpent = s.pointsSpent ?? 0;
     g.walkthrough = typeof s.walkthroughStep === "number" ? { step: s.walkthroughStep } : undefined;
     // Saves from before coin start with the new keeper's purse.
     if (typeof s.purse === "number") g.purse = s.purse;

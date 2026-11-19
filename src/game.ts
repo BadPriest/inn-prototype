@@ -8,6 +8,7 @@ import { dateOf, randomStartSeason, type GameDate } from "./calendar.js";
 import { newWeather, type CameIn, type WeatherState } from "./weather.js";
 import type { Paper } from "./newspaper.js";
 import type { WalkthroughState } from "./walkthrough.js";
+import { SKILLS_DATA } from "./gamedata.gen.js";
 import { TIME_WORDS, TUNING, timeOfDayAt, type Archetype, type ItemKind, type Line, type NeedId, type Regular, type SchemaId, type TasteSet, type TimeOfDay, type WeatherTaste, type Location, type LocationId, type MealId, MEALS, RECIPES, innOf, type Inn, type InnId } from "./data.js";
 
 export interface Item {
@@ -302,6 +303,8 @@ export class Game {
   upgrades = new Set<string>();
   totalServed = 0; // across all days
   showObjectives = true;
+  known = new Set<string>(SKILLS_DATA.startKnown); // the recipe book
+  pointsSpent = 0; // skill points spent on recipes
   hurrying = false; // F held: hurry what's cooking at the target
   walkthrough?: WalkthroughState;
   cleaning: Cleaning | null = null;
@@ -396,6 +399,7 @@ export class Game {
   canMake(recipeId: string): boolean {
     const r = RECIPES.find((x) => x.id === recipeId);
     if (!r) return false;
+    if (!r.internal && r.station !== "tap" && !this.known.has(r.id)) return false;
     if (r.station === "tap") return this.world.furniture.some((f) => f.tap === r.id);
     return this.world.furniture.some((f) => (f.slots ?? []).some((sl) => sl.kinds.includes(r.station as never)));
   }

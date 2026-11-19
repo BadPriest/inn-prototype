@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Skills",
+  "description": "The recipes the keeper knows and learns. Guests served earn points; a point or more learns a recipe in the Skills screen at the desk. Dishes that are bought in (ale, cider, bought snacks) need no recipe.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["startKnown", "servedPerPoint", "recipes"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "startKnown": { "type": "array", "items": { "type": "string" }, "description": "Dish ids a new keeper knows." },
+    "servedPerPoint": { "type": "number", "exclusiveMinimum": 0, "description": "Guests served for each point." },
+    "recipes": {
+      "type": "array",
+      "description": "Dishes that can be learned, and what each costs.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["dish", "points"],
+        "properties": {
+          "dish": { "type": "string" },
+          "points": { "type": "integer", "minimum": 0 }
+        }
+      }
+    }
+  }
+}

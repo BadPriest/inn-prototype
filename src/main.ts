@@ -23,6 +23,7 @@ import { cancelPour, updatePour } from "./serving.js";
 import { watchObjectives } from "./objectives.js";
 import { initWalkthrough, startWalkthrough, updateWalkthrough } from "./walkthrough.js";
 import { updateMenuGuide } from "./ui/quest.js";
+import { watchSkills } from "./skills.js";
 import { emptyHere, offerUnasked, putDownHere, cleanable, cleanStep, findTargets, targetName, forcedTurnIn, interact, openGarnishMenu, openJournal, promptFor, targetId, type Target } from "./interact.js";
 import { draw, computeView, type View } from "./ui/render.js";
 import { computeIsoView, drawIso, isoPick } from "./ui/render-iso.js";
@@ -957,6 +958,7 @@ function frame(now: number): void {
 
   watchTrays();
   updateWalkthrough(g);
+  watchSkills(g);
   updateMenuGuide(g);
   watchObjectives(g);
   soundscape(g, realDt);

@@ -10,11 +10,13 @@ import type { Game, Item, Job } from "./game.js";
 import { dist, type Furniture, type Slot } from "./world.js";
 import { addToTray, removeFromTray, trayItems } from "./serving.js";
 
+import { knows } from "./skills.js";
+
 export function recipesFor(g: Game, slot: Slot): Recipe[] {
   // At a kettle, tea isn't made as a job: you boil the kettle, then steep cups from the hot water.
   // With an urn in the kitchen, the kettle can also brew a whole pot of one tea to keep hot in it.
   const tea = RECIPES.find((r) => r.id === "tea")!;
-  const list = RECIPES.filter((r) => slot.kinds.includes(r.station as never) && r.id !== "tea");
+  const list = RECIPES.filter((r) => slot.kinds.includes(r.station as never) && r.id !== "tea" && knows(g, r.id));
   if (slot.kinds.includes("kettle") && g.world.furniture.some((f) => f.kind === "urn")) list.push(urnTea(tea));
   return list;
 }
