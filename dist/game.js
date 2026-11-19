@@ -1,4 +1,5 @@
 // The shared game state. Systems read and change it; the UI only reads it.
+import { servedReadyMade } from "./readymade.js";
 import { EventBus } from "./core.js";
 import { STARTING_PURSE } from "./money.js";
 import { startingLots } from "./stock.js";
@@ -190,6 +191,8 @@ export class Game {
         const r = RECIPES.find((x) => x.id === recipeId);
         if (!r)
             return false;
+        if (servedReadyMade(this, r.id))
+            return true;
         if (!r.internal && r.station !== "tap" && !this.known.has(r.id))
             return false;
         if (r.station === "tap")

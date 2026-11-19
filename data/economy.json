@@ -4,6 +4,7 @@
   "price": {
     "markup": 0.07,
     "margin": 1.0,
+    "readyMade": 1.4,
     "prepPerMinute": { "tended": 0.2, "untended": 0.15 },
     "perTraySlot": 0.5,
     "roundShownTo": 1

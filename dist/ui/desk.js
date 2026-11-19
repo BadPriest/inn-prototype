@@ -1,4 +1,5 @@
 // The desk in your room: the bill of fare, equipment to buy and arrange, and the way to the journal. Card screens (cards.ts).
+import { READY_MADE, servedReadyMade } from "../readymade.js";
 import { CARRIED, EQUIP_GROUPS, EQUIPMENT, FUELS, MEALS, RECIPES, TUNING, bestInLine, pieceById } from "../data.js";
 import { back, closeAll, openMenu, replaceMenu } from "./menu.js";
 import { startArranging } from "./arrange.js";
@@ -11,7 +12,7 @@ import { knows, pointsLeft } from "../skills.js";
 import { openSkills } from "./skills.js";
 import { needs, whereFull, whereShort } from "./where.js";
 import { canFetch, fetchThing, FETCH_MINUTES, hasOrBetter, onOrderCount, orderThing, priceOfThing, SELL_BACK_SHARE_WORDS, toPlaceCount } from "../shop.js";
-import { fmtMoney, moneyHtml, priceLevel, priceOfRecipe, PRICE_LEVELS } from "../money.js";
+import { fmtMoney, moneyHtml, priceLevel, priceOfRecipe, readyMadePrice, PRICE_LEVELS } from "../money.js";
 export function openDeskScreen(g, openJournal) {
     const st = { focus: 0 };
     g.bus.emit({ type: "MenuSound", sound: "desk" }); // you sit down at the desk
@@ -195,7 +196,7 @@ export function openBillOfFare(g) {
             const r = list[i];
             if (!r)
                 return;
-            if (!set.has(r.id) && !knows(g, r.id)) {
+            if (!set.has(r.id) && !knows(g, r.id) && !servedReadyMade(g, r.id)) {
                 g.say(`You don't know how to make ${r.name.toLowerCase()} yet: learn it in Skills, at the desk.`);
                 return;
             }
@@ -253,13 +254,14 @@ export function openBillOfFare(g) {
             back();
         };
         const cards = list.map((r, i) => {
-            const can = g.canMake(r.id), on = set.has(r.id), known = knows(g, r.id);
+            const bought = servedReadyMade(g, r.id);
+            const can = g.canMake(r.id), on = set.has(r.id), known = knows(g, r.id) || bought;
             const unit = r.storedIn === "piesafe" ? "a slice" : r.servings ? "a serving" : r.station === "tap" ? "a pint" : "";
             const how = r.storedIn === "piesafe" ? "Baked whole, sold by the slice." : r.servings ? `Made by the pot: about ${r.servings[0]} servings, ~${r.minutes[0]} min.` : r.station === "tap" ? "Poured from the barrel." : `Made to order, ~${r.minutes[0]} min.`;
             return {
                 pick: String(i), icon: r.icon, name: r.name,
-                fact: can ? `${r.base.options.length > 1 || r.optional.pick[1] > 0 ? "from " : ""}${moneyHtml(priceOfRecipe(g, r.id))}${unit ? ` <span class="unit">${unit}</span>` : ""}` : "",
-                status: !known ? "📚 learn it in Skills" : can ? whereShort(r) : needs(r), tone: can ? undefined : "warn",
+                fact: can && bought && !knows(g, r.id) ? `${moneyHtml(Math.round(readyMadePrice(g, Object.keys(READY_MADE).find((k) => READY_MADE[k].dish === r.id))))}${unit ? ` <span class="unit">${unit}</span>` : ""}` : can ? `${r.base.options.length > 1 || r.optional.pick[1] > 0 ? "from " : ""}${moneyHtml(priceOfRecipe(g, r.id))}${unit ? ` <span class="unit">${unit}</span>` : ""}` : "",
+                status: !known ? "📚 learn it in Skills" : bought && !knows(g, r.id) ? "🧺 the baker's" : can ? whereShort(r) : needs(r), tone: can ? undefined : "warn",
                 tags: r.baseTags, on, off: !can, focus: i === st.focus,
                 detail: `${how} ${whereFull(r)}.${ingredientsHtml(g, r)}`,
                 does: !known ? "Learn the recipe in Skills, at the desk" : !can ? "Buy what it needs in Equipment" : on ? "Take it off the board" : "Put it on the board",

@@ -1,5 +1,6 @@
 // The shared game state. Systems read and change it; the UI only reads it.
 
+import { servedReadyMade } from "./readymade.js";
 import { EventBus, type Outcome } from "./core.js";
 import { STARTING_PURSE, type PriceLevel } from "./money.js";
 import { startingLots, type Lot, type Taken } from "./stock.js";
@@ -30,6 +31,8 @@ export interface Item {
   fromPot?: boolean;
   /** Which pot it came out of (its dish's id). It can go back into any pot of the same dish made the same way. */
   fromPotId?: number;
+  /** Bought, not made (a baker's pie): the ingredient id it came as. Priced from what it cost. */
+  readyMade?: string;
 }
 
 export interface Tray {
@@ -410,6 +413,7 @@ export class Game {
   canMake(recipeId: string): boolean {
     const r = RECIPES.find((x) => x.id === recipeId);
     if (!r) return false;
+    if (servedReadyMade(this, r.id)) return true;
     if (!r.internal && r.station !== "tap" && !this.known.has(r.id)) return false;
     if (r.station === "tap") return this.world.furniture.some((f) => f.tap === r.id);
     return this.world.furniture.some((f) => (f.slots ?? []).some((sl) => sl.kinds.includes(r.station as never)));

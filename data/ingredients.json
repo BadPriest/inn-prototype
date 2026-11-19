@@ -50,6 +50,8 @@
     { "id": "pickledEggs", "name": "Pickled eggs", "icon": "🥚", "unit": "bowlful", "worth": 1.2, "tags": ["tart", "savoury"], "roles": [], "spoilage": "keeps" },
     { "id": "pretzels", "name": "Pretzels", "icon": "🥨", "unit": "bowlful", "worth": 1, "tags": ["salty", "crisp"], "roles": [], "spoilage": "keeps" },
     { "id": "appleRings", "name": "Dried apple rings", "icon": "🍎", "unit": "bowlful", "worth": 1, "tags": ["sweet", "crisp"], "roles": [], "spoilage": "keeps" },
+    { "id": "bakersPie", "name": "Baker's pie", "icon": "🥧", "unit": "pie", "worth": 5, "tags": ["homely"], "roles": [], "spoilage": "baked" },
+    { "id": "bakersBread", "name": "Baker's bread", "icon": "🍞", "unit": "batch", "worth": 3, "tags": ["homely"], "roles": [], "spoilage": "bread" },
     { "id": "bakedCrostini", "name": "Crostini", "icon": "🥖", "unit": "bowlful", "worth": 1.2, "tags": ["crisp", "savoury"], "roles": [], "spoilage": "keeps" },
     { "id": "roastedChestnuts", "name": "Roasted chestnuts", "icon": "🌰", "unit": "bowlful", "worth": 1.5, "tags": ["earthy", "sweet"], "roles": [], "spoilage": "keeps", "seasons": ["autumn", "winter"] },
     { "id": "peanuts",   "name": "Peanuts",        "icon": "🥜", "unit": "bowlful","worth": 1,  "tags": ["crisp"],               "roles": [],             "spoilage": "keeps" },

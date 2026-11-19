@@ -31,7 +31,9 @@
         { "item": "loaf",  "pack": { "units": 6,  "name": "a half-dozen" } },
         { "item": "flour", "pack": { "units": 14, "name": "a stone" } },
         { "item": "crumb", "pack": { "units": 10, "name": "a bag" } },
-        { "item": "bakedCrostini", "pack": { "units": 6, "name": "a tray" } }
+        { "item": "bakedCrostini", "pack": { "units": 6, "name": "a tray" } },
+        { "item": "bakersPie", "pack": { "units": 1, "name": "a pie" } },
+        { "item": "bakersBread", "pack": { "units": 1, "name": "a batch of loaves" } }
       ] },
 
     { "id": "butcher", "name": "Garrow's", "icon": "🔪",

@@ -4,6 +4,7 @@
 //
 // Kept apart from reputation and knowledge: coin is spent, the other two never are.
 import { knack } from "./skills.js";
+import { READY_MADE } from "./readymade.js";
 import { ECONOMY_DATA, SPOILAGE_DATA } from "./gamedata.gen.js";
 import { INGREDIENTS, RECIPES, TUNING, currentDishId, dishData, traySlotsOf } from "./data.js";
 /** All money is counted in pennies. */
@@ -103,7 +104,14 @@ export function priceOfRecipe(g, recipeId, options, garnish) {
     return Math.round(exactPrice(g, recipeId, options ?? (r ? cheapestChoices(r) : []), garnish, false));
 }
 /** What a guest pays for this dish: exact, so the markup counts even on a 4d pint. */
+/** What a serving of a ready-made good sells for (a slice of the baker's pie). */
+export function readyMadePrice(g, id, stale = false) {
+    const servings = READY_MADE[id]?.servings ?? 1;
+    return Math.max(1, (worthOf(id) / servings) * P.readyMade * priceLevel(g).factor * (stale ? STALE_FACTOR : 1));
+}
 export function priceOf(g, item) {
+    if (item.readyMade)
+        return readyMadePrice(g, item.readyMade, item.tags.includes(TUNING.staleTag));
     return exactPrice(g, item.recipeId, item.options ?? [], item.garnish, item.tags.includes(TUNING.staleTag));
 }
 /** A tip, by how it went: a Delight tips well, Pleased a little, anything else nothing. Modest either way. */

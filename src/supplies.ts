@@ -5,6 +5,7 @@
 import { INGREDIENTS } from "./data.js";
 import type { Crate, Game } from "./game.js";
 import { uid } from "./core.js";
+import { setOutDelivered } from "./readymade.js";
 import { ECONOMY_DATA, LOCATIONS_DATA, SUPPLIERS_DATA } from "./gamedata.gen.js";
 import type { InventoryLine, SupplierData } from "./gamedata.js";
 import { spend } from "./money.js";
@@ -93,6 +94,7 @@ export function fetchSlip(g: Game, s: SupplierData): boolean {
   if (!spend(g, slipTotal(s, slip))) { g.say(`The slip comes to more than you have.`); return false; }
   g.minute = Math.min(g.minute + (s.distanceInMinutes ?? 0), TUNING.dayLengthMinutes - 1);
   stockUp(g, s, slip);
+  setOutDelivered(g);
   g.lastSlips[s.id] = { ...slip };
   g.slips[s.id] = {};
   g.say(`You fetch it from ${s.name} yourself. It's ${g.clockText()} when you get back.`);
@@ -141,6 +143,7 @@ export function unpackCrate(g: Game, c: Crate): void {
   const pile = g.crates.filter((x) => x.x === c.x && x.y === c.y);
   for (const cr of pile) for (const l of cr.lines) addStock(g, l.item, l.units, cr.day);
   g.crates = g.crates.filter((x) => !pile.includes(x));
+  setOutDelivered(g);
   g.bus.emit({ type: "MenuSound", sound: "tick" });
   const got = pile.flatMap((x) => x.got);
   g.say(`📦 ${pile.length > 1 ? `${pile.length} crates` : "The crate"} carried in to the pantry: ${got.join(", ")}.`);

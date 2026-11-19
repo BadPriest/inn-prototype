@@ -7,6 +7,7 @@
 import type { Outcome } from "./core.js";
 import type { Game, Item, Patron } from "./game.js";
 import { knack } from "./skills.js";
+import { READY_MADE } from "./readymade.js";
 import { ECONOMY_DATA, SPOILAGE_DATA } from "./gamedata.gen.js";
 import { INGREDIENTS, RECIPES, TUNING, currentDishId, dishData, traySlotsOf, type Recipe } from "./data.js";
 
@@ -114,7 +115,14 @@ export function priceOfRecipe(g: Game, recipeId: string, options?: string[], gar
 }
 
 /** What a guest pays for this dish: exact, so the markup counts even on a 4d pint. */
+/** What a serving of a ready-made good sells for (a slice of the baker's pie). */
+export function readyMadePrice(g: Game, id: string, stale = false): number {
+  const servings = READY_MADE[id]?.servings ?? 1;
+  return Math.max(1, (worthOf(id) / servings) * P.readyMade * priceLevel(g).factor * (stale ? STALE_FACTOR : 1));
+}
+
 export function priceOf(g: Game, item: Item): number {
+  if (item.readyMade) return readyMadePrice(g, item.readyMade, item.tags.includes(TUNING.staleTag));
   return exactPrice(g, item.recipeId, item.options ?? [], item.garnish, item.tags.includes(TUNING.staleTag));
 }
 

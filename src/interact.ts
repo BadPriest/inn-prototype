@@ -1,5 +1,6 @@
 // What happens when the keeper interacts with something. Menus live here.
 
+import { setOut } from "./readymade.js";
 import { organic } from "./core.js";
 import { knack } from "./skills.js";
 import { moneyHtml } from "./money.js";
@@ -244,7 +245,8 @@ export function interact(g: Game, t: Target | null): void {
       const batch = trayItems(g).find((i) => i.whole && i.recipeId === "bread");
       if (batch) { storeBread(g, f.id, batch); return; }
       const kept = breadCaseKeys(f.id).filter((k) => g.pots.has(k));
-      if (!kept.length) { g.say("The bread case is empty. Take a batch out of the oven for it."); return; }
+      if (!kept.length && setOut(g, "bakersBread")) return;
+      if (!kept.length) { g.say("The bread case is empty. Take a batch out of the oven for it, or order the baker's bread."); return; }
       if (kept.length === 1) { serveFromPot(g, kept[0]); return; }
       openMenu({
         title: "🥖 Bread case",

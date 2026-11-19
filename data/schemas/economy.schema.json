@@ -15,6 +15,7 @@
       "properties": {
         "markup": { "type": "number", "minimum": 0, "description": "Fraction added to every worked-out price." },
         "margin": { "type": "number", "minimum": 0, "description": "Fraction added on top of cost." },
+        "readyMade": { "type": "number", "minimum": 0, "description": "Ready-made goods (a baker's pie or bread) sell for what one serving cost, times this, times the house level and staleness. No margin or markup: there's no cooking in them." },
         "prepPerMinute": {
           "type": "object", "additionalProperties": false, "required": ["tended", "untended"],
           "description": "Pence per minute of cooking. Split across the servings of a batch.",

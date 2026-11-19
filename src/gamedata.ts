@@ -73,7 +73,7 @@ export interface SpoilageProfile { stages: Record<string, number>; stageEffects?
 export interface SpoilageData { stageEffects: Record<string, StageEffect>; profiles: Record<string, SpoilageProfile> }
 
 export interface EconomyData {
-  price: { markup: number; margin: number; prepPerMinute: { tended: Pence; untended: Pence }; perTraySlot: Pence; roundShownTo: Pence };
+  price: { markup: number; margin: number; readyMade: number; prepPerMinute: { tended: Pence; untended: Pence }; perTraySlot: Pence; roundShownTo: Pence };
   houseLevels: { id: "cheap" | "fair" | "dear"; factor: number; flow: number }[];
   tips: { delight: { share: number; atLeast: Pence }; pleased: { share: number; atLeast: Pence }; walkoutShare: number };
   startingPurse: Pence;

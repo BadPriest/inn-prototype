@@ -1,6 +1,7 @@
 // Card screens for what's already made: the snack bowl on a table, and the pie safe.
 // Same template as cooking (docs/specs/ui.md): what's there now pinned on top, then cards to pick.
 
+import { setOut } from "../readymade.js";
 import { amount, clearSpoiled, condition, describeUses, have, lotsOf, spoiledNow, stageName, takeStock } from "../stock.js";
 import { SNACKS, type Snack, INGREDIENTS } from "../data.js";
 import type { Game } from "../game.js";
@@ -90,7 +91,7 @@ function snackSpec(g: Game, key: string, st: { focus: number }): MenuSpec {
 
 export function openPieSafeScreen(g: Game): void {
   const carried = trayItems(g).filter((i) => i.recipeId === "pie");
-  if (!g.pieSafe.length && !carried.length) { g.say("The pie safe is empty. Bake one in the oven, then bring it here."); return; }
+  if (!g.pieSafe.length && !carried.length && have(g, "bakersPie") < 1) { g.say("The pie safe is empty. Bake one in the oven, then bring it here."); return; }
   openMenu(pieSpec(g, { focus: 0 }));
 }
 
@@ -104,16 +105,18 @@ function pieSpec(g: Game, st: { focus: number }): MenuSpec {
   const room = trayRoomFor(g, "pie");
   const full = g.pieSafe.length >= g.pieSafeCapacity;
   // One list for the keyboard: whole pies to put away, then pies in the safe, then slices you could put back.
-  const picks = [...wholes.map((w) => `store:${w.id}`), ...g.pieSafe.map((p) => `take:${p.id}`), ...slices.map((s) => `back:${s.id}`)];
+  const bought = have(g, "bakersPie");
+  const picks = [...wholes.map((w) => `store:${w.id}`), ...(bought >= 1 ? ["bought:"] : []), ...g.pieSafe.map((p) => `take:${p.id}`), ...slices.map((s) => `back:${s.id}`)];
   st.focus = Math.min(st.focus, Math.max(0, picks.length - 1));
   const refresh = () => {
-    if (!g.pieSafe.length && !trayItems(g).some((i) => i.recipeId === "pie")) { closeAll(); return; }
+    if (!g.pieSafe.length && !trayItems(g).some((i) => i.recipeId === "pie") && have(g, "bakersPie") < 1) { closeAll(); return; }
     replaceMenu(pieSpec(g, st));
   };
   const use = (v: string) => {
     const [what, id] = v.split(":");
     const it = trayItems(g).find((i) => i.id === Number(id));
-    if (what === "take") takeSlice(g, Number(id));
+    if (what === "bought") { if (!setOut(g, "bakersPie")) g.say(full ? "The pie safe is full." : "No baker's pie in the pantry."); }
+    else if (what === "take") takeSlice(g, Number(id));
     else if (what === "store") { if (it) storePie(g, it); }
     else if (it) returnSlice(g, it);
     g.bus.emit({ type: "MenuSound", sound: "tick" });
@@ -125,23 +128,30 @@ function pieSpec(g: Game, st: { focus: number }): MenuSpec {
     detail: `${w.whole ?? 0} slices once it's in the safe.`,
     does: full ? "Sell or serve a pie first" : "Put it in the safe",
   }));
+  const boughtCard: CardSpec[] = bought >= 1 ? [{
+    pick: "bought:", icon: "🥧", name: "Baker's pie", off: full, focus: wholes.length === st.focus,
+    fact: `${Math.floor(bought)} in the pantry`, status: full ? "the safe is full" : "set one out", tone: full ? "warn" : "good",
+    detail: "Bought from the baker: six slices, pleasant enough, nothing special.",
+    does: full ? "Sell or serve a pie first" : "Put one in the safe",
+  }] : [];
   const pies: CardSpec[] = g.pieSafe.map((p, i0) => {
     const old = g.day - p.bakedDay >= 1;
     return {
       pick: `take:${p.id}`, icon: "🥧", name: p.item.name.replace(/^Day-old (\w)/, (_m, c: string) => c.toUpperCase()),
-      tags: p.item.tags, off: !room, focus: wholes.length + i0 === st.focus,
+      tags: p.item.tags, off: !room, focus: wholes.length + boughtCard.length + i0 === st.focus,
       fact: pips(p.left, p.total), status: `${p.left} of ${p.total} left${old ? " · day-old" : ""}`, tone: old ? "warn" : undefined,
-      detail: old ? "Baked yesterday: it goes to the hens tomorrow." : "Baked today.",
+      detail: `${p.item.readyMade ? "From the baker. " : ""}${old ? "Baked yesterday: it goes to the hens tomorrow." : "Baked today."}`,
       does: room ? "Cut a slice onto your tray" : "No room on your trays",
     };
   });
   const back: CardSpec[] = slices.map((s, i) => ({
-    pick: `back:${s.id}`, icon: "🍰", name: s.name, focus: wholes.length + g.pieSafe.length + i === st.focus,
+    pick: `back:${s.id}`, icon: "🍰", name: s.name, focus: wholes.length + boughtCard.length + g.pieSafe.length + i === st.focus,
     status: s.ticketName ? `was for ${s.ticketName}` : "on your tray", tags: s.tags,
     does: "Put it back in the pie",
   }));
   const html = `
     ${store.length ? `<div class="sec-h"><h4>From the oven</h4><small>${full ? "the safe is full" : "put it away"}</small></div>${grid(store)}` : ""}
+    ${boughtCard.length ? `<div class="sec-h"><h4>From the baker</h4><small>${full ? "the safe is full" : "set one out"}</small></div>${grid(boughtCard)}` : ""}
     <div class="sec-h"><h4>In the safe</h4><small>${g.pieSafe.length} of ${g.pieSafeCapacity}${pies.length ? (room ? " · cut a slice" : " · no room on your trays") : ""}</small></div>
     ${pies.length ? grid(pies) : `<p class="lead">No pies. Bake one in the oven, then bring it here.</p>`}
     ${back.length ? `<div class="sec-h"><h4>On your tray</h4><small>put a slice back</small></div>${grid(back)}` : ""}`;
