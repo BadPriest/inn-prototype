@@ -105,7 +105,7 @@ export class Game {
         this.keeper = {
             pos: { x: b.x + 0.5, y: b.y + 0.5 },
             facing: { x: 0, y: 1 },
-            trays: [{ kind: null, items: [] }, { kind: null, items: [] }],
+            trays: [{ items: [] }, { items: [] }],
             path: [],
             running: false,
             pendingInteract: null,
@@ -139,9 +139,8 @@ export class Game {
         const all = !this.mealMode ? this.menu : new Set([...this.meals.flatMap((m) => [...m.menu]), ...this.betweenMenu]);
         return new Set([...all].filter((r) => this.canMake(r)));
     }
-    /** How many whole pies fit: each pie safe holds its share. */
     get pieSafeCapacity() {
-        return T2.pieSafeCapacity * this.layout.filter((p) => p.type === "piesafe").length;
+        return PIE_SAFE_CAPACITY * this.layout.filter((p) => p.type === "pieSafe").length;
     }
     /** The equipment moved: build the inn again around it. Seats keep who's sitting in them. */
     rebuildWorld() {
@@ -317,9 +316,9 @@ export class Game {
                 this.visitorNotes.shift();
         }
     }
-    /** Tray capacity, with upgrades. */
-    trayCap(kind) {
-        return T2.trayCapacity[kind] + (this.upgrades.has("trays") ? 1 : 0);
+    /** Slots on each tray: the best tray the keeper has. */
+    get traySlots() {
+        return bestInLine(this.upgrades, "tray")?.traySlots ?? 4;
     }
     /** The snack bowl a seat can reach: its table's, or for a stool, the nearest snack spot on the counter. */
     bowlKeyFor(seat) {
@@ -340,6 +339,6 @@ export class Game {
         return REGULAR_LOOKUP.get(id ?? "");
     }
 }
-import { REGULARS, DEFAULT_MENU, LOCATIONS, TUNING as T2 } from "./data.js";
+import { REGULARS, DEFAULT_MENU, LOCATIONS, PIE_SAFE_CAPACITY, bestInLine } from "./data.js";
 const LOCATION_LOOKUP = new Map(LOCATIONS.map((l) => [l.id, l]));
 const REGULAR_LOOKUP = new Map(REGULARS.map((r) => [r.id, r]));

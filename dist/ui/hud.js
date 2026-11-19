@@ -7,7 +7,7 @@ import { forceWeather, weatherLabel, weatherTags } from "../weather.js";
 import { shelterFactor, spawnRegular, spawnVisitors } from "../patrons.js";
 import { emptyTastes } from "../game.js";
 import { resetSave } from "../day.js";
-import { iconFor, itemLabel } from "../serving.js";
+import { iconFor, itemLabel, slotsUsed } from "../serving.js";
 import { objectives } from "../objectives.js";
 import { moneyHtml, PENCE_PER_CROWN } from "../money.js";
 import { carterArrives } from "../shop.js";
@@ -45,13 +45,13 @@ export function updateHud(g, prompt) {
         }).join("")
         : `<div class="muted">No orders.</div>`;
     $("trays").innerHTML = g.keeper.trays.map((t, i) => {
-        const head = `${i === 0 ? "Left" : "Right"} tray: ${t.kind ? `${t.kind} ${t.items.length}/${g.trayCap(t.kind)}` : "empty"}`;
+        const head = `${i === 0 ? "Left" : "Right"} tray: ${t.items.length ? `${slotsUsed(t)} of ${g.traySlots} slots` : "empty"}`;
         return `<div class="tray"><div class="tray-h">${head}</div>${t.items.map((it) => `<div class="it">${itemLabel(it)}<span class="tags">${it.tags.join(", ")}</span></div>`).join("")}</div>`;
     }).join("");
     if (g.setDown.length) {
         $("trays").innerHTML += g.setDown.map((sd) => {
             const where = g.world.tile(sd.x, sd.y)?.def.kind === "table" ? "on a table" : "on the counter";
-            return `<div class="tray"><div class="tray-h">Set down ${where}: ${sd.tray.items.length} ${sd.tray.kind ?? ""}</div>${sd.tray.items.map((it) => `<div class="it">${itemLabel(it)}</div>`).join("")}</div>`;
+            return `<div class="tray"><div class="tray-h">Set down ${where}: ${sd.tray.items.length}</div>${sd.tray.items.map((it) => `<div class="it">${itemLabel(it)}</div>`).join("")}</div>`;
         }).join("");
     }
     // Ready to pick up: on the station shelves (and the hatch, once there's a cook).

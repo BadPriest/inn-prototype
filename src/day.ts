@@ -1,7 +1,7 @@
 // The clock and the day cycle: open, last call, turn in, next morning. Days never end.
 
 import { carterArrives } from "./shop.js";
-import { MEALS, TUNING } from "./data.js";
+import { MEALS, TUNING, currentEquipmentId, pieceById } from "./data.js";
 import { emptyStats, type DayStats, type Game, type RegularState } from "./game.js";
 import { defaultLayout } from "./world.js";
 import { callLastOrders, clearPatrons, scheduleRegulars, unlockRegulars } from "./patrons.js";
@@ -148,10 +148,10 @@ export function load(g: Game): void {
     // Saves from before there was a choice of inn are the big tavern.
     if (s.inn && s.inn !== g.inn) g.setInn(s.inn);
     if (Array.isArray(s.layout) && s.layout.length) {
-      g.layout = s.layout;
+      g.layout = s.layout.map((p) => ({ ...p, type: currentEquipmentId(p.type) }));
       // Saved before barrels could be bought: they were part of the inn then, so they stand where they were.
-      if (g.inn === "medium" && !g.layout.some((p) => p.type === "alekeg" || p.type === "ciderkeg")) {
-        for (const p of defaultLayout()) if (p.type === "alekeg" || p.type === "ciderkeg") g.layout.push(p);
+      if (g.inn === "medium" && !g.layout.some((p) => p.type === "aleBarrel" || p.type === "ciderBarrel")) {
+        for (const p of defaultLayout()) if (p.type === "aleBarrel" || p.type === "ciderBarrel") g.layout.push(p);
       }
       g.rebuildWorld();
     }
@@ -161,14 +161,14 @@ export function load(g: Game): void {
       if (meal) { meal.from = m.from; meal.to = m.to; meal.menu = new Set(m.menu); }
     }
     if (Array.isArray(s.betweenMenu)) g.betweenMenu = new Set(s.betweenMenu);
-    g.upgrades = new Set(s.upgrades ?? []);
+    g.upgrades = new Set((s.upgrades ?? []).map(currentEquipmentId).filter((id) => pieceById(id)));
     g.totalServed = s.totalServed ?? 0;
     g.showObjectives = s.showObjectives ?? true;
     // Saves from before coin start with the new keeper's purse.
     if (typeof s.purse === "number") g.purse = s.purse;
     if (s.priceLevel) g.priceLevel = s.priceLevel;
-    g.onOrder = s.onOrder ?? [];
-    g.toPlace = s.toPlace ?? [];
+    g.onOrder = (s.onOrder ?? []).map(currentEquipmentId).filter((id) => pieceById(id));
+    g.toPlace = (s.toPlace ?? []).map(currentEquipmentId).filter((id) => pieceById(id));
     g.day = s.day ?? 1;
     g.calendarStart = s.calendarStart ?? 0;
     // Saves played before locations existed stand in the town centre; a brand-new save still has to pick.

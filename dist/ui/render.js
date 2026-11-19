@@ -1,6 +1,6 @@
 // Canvas drawing. Basic shapes only: rectangles for furniture, circles for people.
-import { RECIPES, SNACKS, SOAKING, TUNING } from "../data.js";
-import { iconFor } from "../serving.js";
+import { RECIPES, SNACKS, SOAKING, TUNING, PIE_SAFE_CAPACITY } from "../data.js";
+import { iconFor, TRAY_COLOUR, trayLook } from "../serving.js";
 import { drawLight } from "./light.js";
 import { RING_TRACK, ringColor } from "./tickets.js";
 import { walkoutProgress } from "../patrons.js";
@@ -252,8 +252,8 @@ export function draw(ctx, g, v, target, clickDest) {
         });
         if (f.kind === "piesafe" && g.pieSafe.length) {
             // Pie safes share the pies, filling in order: each shows the slices in its own share.
-            const safes = g.layout.filter((p) => p.type === "piesafe").map((p) => p.uid);
-            const i = Math.max(0, safes.indexOf(f.id)), cap = TUNING.pieSafeCapacity;
+            const safes = g.layout.filter((p) => p.type === "pieSafe").map((p) => p.uid);
+            const i = Math.max(0, safes.indexOf(f.id)), cap = PIE_SAFE_CAPACITY;
             const mine = g.pieSafe.slice(i * cap, (i + 1) * cap).reduce((a, p) => a + p.left, 0);
             if (mine)
                 badge(ctx, px + pw - 2, py + 2, String(mine), ts);
@@ -311,7 +311,7 @@ export function draw(ctx, g, v, target, clickDest) {
     // Trays set down on counters and tables
     for (const sd of g.setDown) {
         const x = X(sd.x) + ts * 0.15, y = Y(sd.y) + ts * 0.25;
-        ctx.fillStyle = sd.tray.kind === "food" ? "#c9a46b" : "#8fb3c9";
+        ctx.fillStyle = TRAY_COLOUR[trayLook(sd.tray) ?? "mixed"];
         ctx.fillRect(x, y, ts * 0.7, ts * 0.5);
         ctx.strokeStyle = "#ffe08a";
         ctx.lineWidth = 1.5;
@@ -352,7 +352,7 @@ export function draw(ctx, g, v, target, clickDest) {
         const n = Math.max(1, tray.items.length);
         const w = Math.max(ts * 0.4, n * ts * 0.32 + ts * 0.08);
         const tx = X(k.pos.x) + side * (ts * 0.4) + (side < 0 ? -w : 0), ty = Y(k.pos.y) + ts * 0.1;
-        ctx.fillStyle = tray.kind ? (tray.kind === "food" ? "rgba(201,164,107,0.9)" : "rgba(143,179,201,0.9)") : "rgba(255,255,255,0.15)";
+        ctx.fillStyle = trayLook(tray) ? TRAY_COLOUR[trayLook(tray)] : "rgba(255,255,255,0.15)";
         ctx.fillRect(tx, ty, w, ts * 0.38);
         ctx.font = `${Math.floor(ts * 0.3)}px system-ui, sans-serif`;
         ctx.textAlign = "center";

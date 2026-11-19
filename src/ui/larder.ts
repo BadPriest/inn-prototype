@@ -78,7 +78,7 @@ function pips(left: number, total: number): string {
 function pieSpec(g: Game, st: { focus: number }): MenuSpec {
   const slices = trayItems(g).filter((i) => i.recipeId === "pie" && !i.whole);
   const wholes = trayItems(g).filter((i) => i.recipeId === "pie" && i.whole);
-  const room = trayRoomFor(g, "food");
+  const room = trayRoomFor(g, "pie");
   const full = g.pieSafe.length >= g.pieSafeCapacity;
   // One list for the keyboard: whole pies to put away, then pies in the safe, then slices you could put back.
   const picks = [...wholes.map((w) => `store:${w.id}`), ...g.pieSafe.map((p) => `take:${p.id}`), ...slices.map((s) => `back:${s.id}`)];

@@ -1,11 +1,11 @@
 // The desk in your room: the bill of fare, equipment to buy and arrange, and the way to the journal. Card screens (cards.ts).
-import { EQUIP_GROUPS, EQUIPMENT, FUELS, GOODS, MEALS, RECIPES, TUNING } from "../data.js";
+import { CARRIED, EQUIP_GROUPS, EQUIPMENT, FUELS, MEALS, RECIPES, TUNING, bestInLine, pieceById } from "../data.js";
 import { back, closeAll, openMenu, replaceMenu } from "./menu.js";
 import { startArranging } from "./arrange.js";
 import { grid, gridKeys } from "./cards.js";
 import { openNewspaper } from "./newspaper.js";
 import { openCalendar } from "./calendar.js";
-import { canFetch, fetchThing, FETCH_MINUTES, onOrderCount, orderThing, priceOfThing, SELL_BACK_SHARE_WORDS, toPlaceCount } from "../shop.js";
+import { canFetch, fetchThing, FETCH_MINUTES, hasOrBetter, onOrderCount, orderThing, priceOfThing, SELL_BACK_SHARE_WORDS, toPlaceCount } from "../shop.js";
 import { fmtMoney, moneyHtml, priceLevel, priceOfRecipe, PRICE_LEVELS } from "../money.js";
 export function openDeskScreen(g, openJournal) {
     const st = { focus: 0 };
@@ -312,15 +312,16 @@ export function openBillOfFare(g) {
     openMenu(build());
 }
 // ---------------------------------------------------------------------------
-// Equipment: buy a piece and place it (money is no object, for now). Goods like wider trays just arrive.
+// Equipment: buy a piece and place it. Utensils and trays are kept, not placed: one of each, and a better one replaces a worse.
 let shopTab = "cooking"; // the shop opens where you left it
 export function openShop(g) {
     const st = { focus: 0 };
     const all = [
         ...EQUIPMENT.map((e) => ({ id: e.id, icon: e.icon, name: e.name, blurb: e.blurb, goods: false, group: e.group, fuel: e.fuel })),
-        ...GOODS.map((x) => ({ id: x.id, icon: x.icon, name: x.name, blurb: x.blurb, goods: true, group: "goods", fuel: x.fuel })),
+        ...CARRIED.map((x) => ({ id: x.id, icon: x.icon, name: x.name, blurb: x.text?.shopCard ?? "", goods: true, group: x.shopTab, fuel: undefined })),
     ];
-    const ownedOf = (it) => (it.goods ? (g.upgrades.has(it.id) ? 1 : 0) : g.layout.filter((p) => p.type === it.id).length + toPlaceCount(g, it.id));
+    const isBest = (id) => { const p = pieceById(id); return !!p?.line && bestInLine(g.upgrades, p.line)?.id === id; };
+    const ownedOf = (it) => (it.goods ? (hasOrBetter(g, it.id) ? 1 : 0) : g.layout.filter((p) => p.type === it.id).length + toPlaceCount(g, it.id));
     const build = () => {
         // What you have comes first, so you can see your kitchen at a glance.
         const items = all.filter((it) => it.group === shopTab).sort((a, b) => Number(ownedOf(b) > 0) - Number(ownedOf(a) > 0));
@@ -329,8 +330,8 @@ export function openShop(g) {
             if (!it)
                 return;
             st.focus = i;
-            if (it.goods && (g.upgrades.has(it.id) || onOrderCount(g, it.id)))
-                return; // one of each
+            if (it.goods && (hasOrBetter(g, it.id) || onOrderCount(g, it.id)))
+                return;
             const price = priceOfThing(it.id);
             if (g.purse < price) {
                 g.say(`The ${it.name.toLowerCase()} costs ${fmtMoney(price)}; you have ${fmtMoney(g.purse)}.`);
@@ -381,7 +382,7 @@ export function openShop(g) {
             const coming = onOrderCount(g, it.id);
             const short = price - g.purse;
             const done = it.goods && (owned > 0 || coming > 0); // an upgrade is bought once
-            const status = done ? (owned ? "Yours" : "🛻 coming tomorrow")
+            const status = done ? (owned ? (isBest(it.id) ? "Yours" : "You have better") : "🛻 coming tomorrow")
                 : coming ? `🛻 ${coming} coming tomorrow` : short > 0 ? `short ${moneyHtml(short)}` : owned ? "buy another" : "";
             return {
                 pick: String(i), icon: it.icon, name: it.name, focus: i === st.focus,
@@ -390,7 +391,7 @@ export function openShop(g) {
                 have: it.goods ? 0 : owned, on: done, off: !done && short > 0,
                 tags: fuel ? [`${fuel.icon} ${fuel.name}`] : undefined,
                 detail: it.blurb,
-                does: done ? (owned ? "You have this upgrade" : "It's on the carter's cart") : short > 0 ? `You need ${fmtMoney(short)} more` : owned ? "Buy another: order it or fetch it" : "Buy it: order it or fetch it",
+                does: done ? (owned ? (isBest(it.id) ? "You have this" : "You have a better one") : "It's on the carter's cart") : short > 0 ? `You need ${fmtMoney(short)} more` : owned ? "Buy another: order it or fetch it" : "Buy it: order it or fetch it",
             };
         });
         const tabs = `<div class="bf-tabs">${EQUIP_GROUPS.map((t) => {

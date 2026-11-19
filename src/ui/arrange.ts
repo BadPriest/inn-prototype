@@ -3,7 +3,7 @@
 // their ids). A spot is allowed when it's kitchen floor, behind the bar or a nook in the counter wall,
 // nothing else stands there, and the keeper can still reach everything.
 
-import { EQUIPMENT, PLACEABLE_ON, TUNING } from "../data.js";
+import { EQUIPMENT, PIE_SAFE_CAPACITY, PLACEABLE_ON, TUNING } from "../data.js";
 import type { Game } from "../game.js";
 import type { Vec } from "../world.js";
 import type { View } from "./render.js";
@@ -127,7 +127,7 @@ export function arrangeRemove(g: Game): void {
   const f = g.world.furniture.find((x) => x.id === h.uid);
   const busy = (f?.slots ?? []).some((sl) => g.jobs.has(sl.id) || g.pots.has(sl.id) || g.shelves.get(sl.id)?.length);
   if (busy) { g.say("Something's still on it. Finish with that first."); return; }
-  if (h.type === "piesafe" && g.pieSafe.length > g.pieSafeCapacity - TUNING.pieSafeCapacity) { g.say("There are pies in it with nowhere else to go."); return; }
+  if (h.type === "pieSafe" && g.pieSafe.length > g.pieSafeCapacity - PIE_SAFE_CAPACITY) { g.say("There are pies in it with nowhere else to go."); return; }
   g.layout = g.layout.filter((x) => x.uid !== h.uid);
   const got = sellBack(g, h.type);
   g.bus.emit({ type: "MenuSound", sound: "coins" });

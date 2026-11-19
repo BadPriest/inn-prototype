@@ -1,5 +1,5 @@
 // Trays, pickup, pouring, garnishing and delivery.
-import { GARNISHES, RECIPES, TUNING } from "./data.js";
+import { GARNISHES, RECIPES, TUNING, pieceById, traySlotsOf } from "./data.js";
 import { makeItem, serveFromPot, steepTea } from "./crafting.js";
 import { dist } from "./world.js";
 import { organic, uid } from "./core.js";
@@ -19,15 +19,20 @@ export function itemLabel(i) {
     const base = i.whole ? `${iconFor(i.recipeId, i.garnish)} Whole ${i.name.charAt(0).toLowerCase()}${i.name.slice(1)} (${i.whole} slices)` : `${iconFor(i.recipeId, i.garnish)} ${i.name}`;
     return i.ticketName ? `${base} → ${i.ticketName}` : base;
 }
-/** Put an item on a tray: one with the same kind and room, else an empty one. */
+export const slotsUsed = (t) => t.items.reduce((n, it) => n + traySlotsOf(it.recipeId), 0);
+/** What a tray carries, for how it's drawn. */
+export function trayLook(t) {
+    const kinds = new Set(t.items.map((it) => it.kind));
+    return kinds.size === 0 ? null : kinds.size > 1 ? "mixed" : kinds.has("food") ? "food" : "drink";
+}
+export const TRAY_COLOUR = { food: "#c9a46b", drink: "#8fb3c9", mixed: "#b3ab99" };
+const fits = (g, t, recipeId) => slotsUsed(t) + traySlotsOf(recipeId) <= g.traySlots;
+/** Put an item on a tray: the one already in use if it fits there, else the other. */
 export function addToTray(g, item) {
-    const cap = g.trayCap(item.kind);
-    const trays = g.keeper.trays;
-    const same = trays.find((t) => t.kind === item.kind && t.items.length < cap);
-    const target = same ?? trays.find((t) => t.kind === null);
+    const trays = [...g.keeper.trays].sort((a, b) => b.items.length - a.items.length);
+    const target = trays.find((t) => fits(g, t, item.recipeId));
     if (!target)
         return false;
-    target.kind = item.kind;
     target.items.push(item);
     return true;
 }
@@ -37,8 +42,6 @@ export function removeFromTray(g, item) {
         const i = t.items.indexOf(item);
         if (i >= 0) {
             t.items.splice(i, 1);
-            if (t.items.length === 0)
-                t.kind = null;
         }
     }
     g.setDown = g.setDown.filter((s) => s.tray.items.length > 0);
@@ -110,40 +113,39 @@ export function setTrayDown(g, index) {
         g.say("Nowhere to set it down here. Try the counter or a table.");
         return;
     }
-    g.setDown.push({ id: uid(), x: spot.x, y: spot.y, tray: { kind: tray.kind, items: [...tray.items] } });
+    g.setDown.push({ id: uid(), x: spot.x, y: spot.y, tray: { items: [...tray.items] } });
     tray.items = [];
-    tray.kind = null;
     g.say("You set the tray down.");
 }
 export function pickUpTray(g, s) {
-    const free = g.keeper.trays.find((t) => t.kind === null);
+    const free = g.keeper.trays.find((t) => t.items.length === 0);
     if (!free) {
         g.say("Both hands are full.");
         return;
     }
-    free.kind = s.tray.kind;
     free.items = s.tray.items;
     g.setDown = g.setDown.filter((x) => x.id !== s.id);
     g.say("You pick the tray back up.");
 }
-/** Is there room on the trays for one more of this kind? */
-export function trayRoomFor(g, kind) {
-    const cap = g.trayCap(kind);
-    return g.keeper.trays.some((t) => (t.kind === kind && t.items.length < cap) || t.kind === null);
+export function trayRoomFor(g, recipeId) {
+    return g.keeper.trays.some((t) => fits(g, t, recipeId));
 }
-// Pouring takes a moment (TUNING.pourSeconds at a tap, TUNING.urnPourSeconds from the urn). The drink lands on a tray when it's done;
+// Pouring takes a moment (the barrel's or urn's serveSeconds). The drink lands on a tray when it's done;
 // walking away stops it. `from` is "tap:<recipe>" or the id of a station holding a drink pot (the urn).
 export function startPour(g, from, recipeId) {
     if (g.pouring) {
         g.say("Still pouring…");
         return;
     }
-    if (!trayRoomFor(g, "drink")) {
+    const tap = from.startsWith("tap:");
+    const drink = recipeId ?? g.pots.get(from)?.item.recipeId ?? "tea";
+    if (!trayRoomFor(g, drink)) {
         g.say("No room for a drink on your trays.");
         return;
     }
-    const tap = from.startsWith("tap:");
-    g.pouring = { id: uid(), from, recipeId, at: { ...g.keeper.pos }, progress: 0, total: organic(tap ? TUNING.pourSeconds : TUNING.urnPourSeconds) };
+    const piece = tap ? pieceById(g.world.furniture.find((f) => f.tap === drink)?.equip?.id ?? "") : pieceById(g.world.slot(from)?.f.equip?.id ?? "");
+    const seconds = piece?.serveSeconds ?? pieceById(tap ? "aleBarrel" : "teaUrn")?.serveSeconds ?? [2, 0.2];
+    g.pouring = { id: uid(), from, recipeId, at: { ...g.keeper.pos }, progress: 0, total: organic(seconds) };
     g.bus.emit({ type: "PourStarted", id: g.pouring.id, from: tap ? "tap" : "urn" });
 }
 /** Stop pouring (right-click). The drink isn't made. */

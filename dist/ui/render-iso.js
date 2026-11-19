@@ -6,8 +6,8 @@
 // (the two edges farthest from the camera, whichever corner it stands at), so nothing in the room hides
 // behind them. What you need to read (labels, cooking,
 // bowls, orders, speech) is drawn over the blocks, so a guest standing in front never hides it.
-import { RECIPES, SNACKS, SOAKING, TUNING } from "../data.js";
-import { iconFor } from "../serving.js";
+import { RECIPES, SNACKS, SOAKING, TUNING, PIE_SAFE_CAPACITY } from "../data.js";
+import { iconFor, TRAY_COLOUR, trayLook } from "../serving.js";
 import { drawLight, windowColor } from "./light.js";
 import { ISO, P, Pt, floorPath, turn, turnedSize, unproject, unturn } from "./proj.js";
 import { badge, drawCoinPops, drawDeskHint, drawPatronWords, drawSpeech, say } from "./render.js";
@@ -305,7 +305,7 @@ export function drawIso(ctx, g, v, target, clickDest) {
         const n = Math.max(1, tray.items.length);
         const w = Math.max(ts * 0.4, n * ts * 0.32 + ts * 0.08);
         const tx = kf.x + side * (ts * 0.32) + (side < 0 ? -w : 0), ty = kf.y - ts * 0.5;
-        ctx.fillStyle = tray.kind ? (tray.kind === "food" ? "rgba(201,164,107,0.9)" : "rgba(143,179,201,0.9)") : "rgba(255,255,255,0.15)";
+        ctx.fillStyle = trayLook(tray) ? TRAY_COLOUR[trayLook(tray)] : "rgba(255,255,255,0.15)";
         ctx.fillRect(tx, ty, w, ts * 0.38);
         ctx.font = `${Math.floor(ts * 0.3)}px system-ui, sans-serif`;
         ctx.textAlign = "center";
@@ -474,8 +474,8 @@ function drawReadables(ctx, g, v, byTile, target) {
             }
         });
         if (f.kind === "piesafe" && g.pieSafe.length) {
-            const safes = g.layout.filter((p) => p.type === "piesafe").map((p) => p.uid);
-            const i = Math.max(0, safes.indexOf(f.id)), cap = TUNING.pieSafeCapacity;
+            const safes = g.layout.filter((p) => p.type === "pieSafe").map((p) => p.uid);
+            const i = Math.max(0, safes.indexOf(f.id)), cap = PIE_SAFE_CAPACITY;
             const mine = g.pieSafe.slice(i * cap, (i + 1) * cap).reduce((a, p) => a + p.left, 0);
             if (mine)
                 badge(ctx, top.x + ts * 0.35, top.y - ts * 0.3, String(mine), ts);
@@ -514,7 +514,7 @@ function drawReadables(ctx, g, v, byTile, target) {
     for (const sd of g.setDown) {
         const z = zAt(sd.x, sd.y);
         floorPath(ctx, v, sd.x, sd.y, 1, 1, 0.18, z);
-        ctx.fillStyle = sd.tray.kind === "food" ? "#c9a46b" : "#8fb3c9";
+        ctx.fillStyle = TRAY_COLOUR[trayLook(sd.tray) ?? "mixed"];
         ctx.fill();
         ctx.strokeStyle = "#ffe08a";
         ctx.lineWidth = 1.5;

@@ -4,7 +4,7 @@
 // The hatch is for a hired cook, later.
 
 import { organic, uid } from "./core.js";
-import { FIREWOOD_BOOST, INGREDIENTS, RECIPES, TUNING, type Recipe } from "./data.js";
+import { INGREDIENTS, RECIPES, TUNING, utensilFor, type Recipe } from "./data.js";
 import type { Game, Item, Job } from "./game.js";
 import { dist, type Furniture, type Slot } from "./world.js";
 import { addToTray, removeFromTray, trayItems } from "./serving.js";
@@ -61,7 +61,7 @@ export function startJob(g: Game, slot: Slot, recipeIn: Recipe, ingredients: str
   const recipe = effectiveRecipe(g, RECIPES.find((r) => r.id === recipeIn.id)!, batch);
   if (recipe.servings) ticket = null;
   let total = Math.max(1, organic(recipe.minutes));
-  if (recipe.id === "water") total /= slot.f.equip?.boilSpeed ?? 1;
+  total /= slot.f.equip?.craftingSpeed ?? 1;
   g.jobs.set(slot.id, { recipeId: recipe.id, ingredients, total, progress: 0, done: false, ticket: ticket?.id, ticketName: ticket?.name, batch });
   const forWho = ticket ? ` for ${ticket.name}` : recipe.storedIn === "piesafe" ? " (a whole pie)" : recipe.servings ? " (a whole pot)" : "";
   if (recipe.id === "water") { g.say("You put the kettle on."); return; }
@@ -80,7 +80,7 @@ export function updateCrafting(g: Game, simDt: number, target: Furniture | null)
     if (!job.done) {
       const near = keeperNear(g, f);
       let rate = recipe.tended && !near ? 0 : 1;
-      if (g.upgrades.has("firewood") && recipe.station !== "prep" && recipe.station !== "tap") rate *= FIREWOOD_BOOST; // anything heated
+      rate *= utensilFor(g.upgrades, recipe.station)?.craftingSpeed ?? 1;
       if (near && g.holdingSpace && target?.id === f.id) rate *= TUNING.speedUpFactor;
       job.progress += simDt * rate;
       if (job.progress >= job.total) {
@@ -99,7 +99,7 @@ function finish(g: Game, fid: string, job: Job, recipe: Recipe): void {
   // Whole pies wait on the oven's shelf like any dish; the keeper carries them to the pie safe.
   if (recipe.storedIn === "piesafe") job.item!.whole = Math.max(2, Math.round(organic(recipe.servings ?? [6, 1])));
   else if (recipe.servings) {
-    const n = Math.max(2, Math.round(organic(recipe.servings)));
+    const n = Math.max(2, Math.round(organic(recipe.servings))) + (utensilFor(g.upgrades, recipe.station)?.servingsBonus ?? 0);
     g.pots.set(fid, { item: job.item!, left: n, total: n });
     g.jobs.delete(fid);
     const what = recipe.batch
@@ -216,7 +216,7 @@ export function ageFood(g: Game): void {
   };
   g.hatch = g.hatch.filter(keep);
   for (const [fid, shelf] of g.shelves) { const left = shelf.filter(keep); if (left.length) g.shelves.set(fid, left); else g.shelves.delete(fid); }
-  for (const t of g.keeper.trays) { t.items = t.items.filter(keep); if (!t.items.length) t.kind = null; }
+  for (const t of g.keeper.trays) t.items = t.items.filter(keep);
   for (const sd of g.setDown) sd.tray.items = sd.tray.items.filter(keep);
   g.setDown = g.setDown.filter((sd) => sd.tray.items.length);
   for (const [fid, pot] of g.pots) {

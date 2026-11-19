@@ -1,6 +1,6 @@
 // ALL AUTHORED CONTENT LIVES HERE. Edit freely: no code changes needed.
 // Times are in game minutes. [centre, spread] pairs are organic values.
-import { LOCATIONS_DATA } from "./gamedata.gen.js";
+import { DISHES_DATA, EQUIPMENT_DATA, LOCATIONS_DATA } from "./gamedata.gen.js";
 // ---------------------------------------------------------------------------
 // The map. One character per tile. See TILE_LEGEND below.
 export const MAP = [
@@ -81,49 +81,65 @@ export const EQUIP_GROUPS = [
     { id: "cooking", name: "Cooking", icon: "🔥" },
     { id: "drinks", name: "Drinks", icon: "🍺" },
     { id: "storage", name: "Storage", icon: "🗄️" },
-    { id: "goods", name: "Upgrades", icon: "⭐" },
+    { id: "serving", name: "Serving", icon: "🍽️" },
 ];
 export const FUELS = { wood: { icon: "🪵", name: "wood" } };
-const HOB = { name: "Hob", kinds: ["stove", "griddle"] }; // a pot or a pan
-const OVEN = { name: "Oven", kinds: ["oven"] };
-export const EQUIPMENT = [
-    { id: "stove1", name: "Wood stove", label: "Stove", icon: "🔥", w: 2, h: 1, slots: [HOB], group: "cooking", fuel: "wood",
-        blurb: "A small stove with one hob: a pot of stew or porridge, or a pan for eggs, toast or fish. One at a time." },
-    { id: "stove2", name: "Two-hob stove", label: "Stove ⚬⚬", icon: "🍳", w: 2, h: 1, slots: [HOB, HOB], group: "cooking", fuel: "wood",
-        blurb: "Two hobs: a pot and a pan, two pots, two pans, whatever the day needs." },
-    { id: "range", name: "Range stove", label: "Range stove", icon: "🥧", w: 2, h: 1, slots: [HOB, OVEN], group: "cooking", fuel: "wood",
-        blurb: "A range stove: one hob on top and an oven below, for pies and roasts." },
-    { id: "oven", name: "Bread oven", label: "Oven", icon: "🍞", w: 2, h: 1, slots: [OVEN, OVEN], group: "cooking", fuel: "wood",
-        blurb: "A big brick oven with room for two bakes at once: bread, pies, a roast, in any pair." },
-    { id: "prep", name: "Prep table", label: "Prep", icon: "🔪", w: 2, h: 1, slots: [{ name: "Table", kinds: ["prep"] }], group: "cooking",
-        blurb: "A scrubbed table and a good knife, for cold dishes put together by hand." },
-    { id: "kettle", name: "Tea kettle", label: "Kettle", icon: "🫖", w: 1, h: 1, slots: [{ name: "Kettle", kinds: ["kettle"] }], group: "drinks",
-        blurb: "Boil it once, then steep a cup at a time, each with its own leaf." },
-    { id: "copperkettle", name: "Copper kettle", label: "Copper", icon: "🫖", w: 1, h: 1, slots: [{ name: "Kettle", kinds: ["kettle"] }], boilSpeed: 2, group: "drinks",
-        blurb: "Boils twice as fast as the plain one." },
-    { id: "urn", name: "Tea urn", label: "Urn", icon: "⚱️", w: 1, h: 1, slots: [{ name: "Urn", kinds: ["kettle"] }], urn: true, group: "drinks",
-        blurb: "Brews a whole urn of one tea, about 8 cups, poured straight from it." },
-    { id: "coffee", name: "Coffee pot", label: "Coffee", icon: "☕", w: 1, h: 1, slots: [{ name: "Coffee pot", kinds: ["coffee"] }], group: "drinks",
-        blurb: "A whole pot at a time, poured by the cup until it's gone." },
-    { id: "alekeg", name: "Ale barrel", label: "Ale", icon: "🍺", w: 1, h: 1, slots: [], kind: "tap", tap: "ale", group: "drinks",
-        blurb: "A barrel of ale on a tap. Another one means a second place to pour from." },
-    { id: "ciderkeg", name: "Cider barrel", label: "Cid", icon: "🍏", w: 1, h: 1, slots: [], kind: "tap", tap: "cider", group: "drinks",
-        blurb: "A barrel of cider on a tap. Another one means a second place to pour from." },
-    { id: "piesafe", name: "Pie safe", label: "Pies", icon: "🥧", w: 1, h: 1, slots: [], kind: "piesafe", group: "storage",
-        blurb: "A screened cupboard that keeps whole pies, sliced as they're asked for. Each holds 4 pies; your pie safes share them." },
-];
-/** Where the first equipment stands, by map letter. The old separate pan ("R") is gone: hobs take pans now. */
-export const EQUIPMENT_OF_TILE = { S: "stove1", O: "oven", K: "prep", H: "kettle", V: "coffee", Z: "piesafe", A: "alekeg", Y: "ciderkeg" };
+const HOT_DRINK_KINDS = ["kettle", "coffee"];
+const isHotDrinkSlot = (s) => s.kinds.every((k) => HOT_DRINK_KINDS.includes(k));
+const STORAGE_KIND = { pie: "piesafe", ale: "tap", cider: "tap" };
+function placedPiece(e) {
+    const shape = e.shape ?? ["#"];
+    const holds = e.holds ?? [];
+    const slots = e.type === "crafting" ? (e.slots ?? []).filter((sl) => !isHotDrinkSlot(sl))
+        : e.type === "gear" ? [{ name: e.name, kinds: e.usedIn ?? [] }]
+            : holds.includes("tea") ? [{ name: "Urn", kinds: ["kettle"] }]
+                : [];
+    const kind = STORAGE_KIND[holds[0] ?? ""];
+    return {
+        id: e.id, name: e.name, label: e.label ?? e.name, icon: e.icon,
+        w: shape[0].length, h: shape.length, slots, blurb: e.text?.shopCard ?? "",
+        craftingSpeed: e.craftingSpeed ?? 1,
+        urn: holds.includes("tea") || undefined,
+        kind, tap: kind === "tap" ? holds[0] : undefined,
+        group: e.shopTab, fuel: e.fuel,
+    };
+}
+export const EQUIPMENT_PIECES = EQUIPMENT_DATA.equipment;
+const STORAGE_NOT_YET_WORKING = new Set(["breadCase"]);
+export const EQUIPMENT = EQUIPMENT_PIECES
+    .filter((e) => (e.type === "crafting" || e.type === "storage" || e.type === "gear") && !STORAGE_NOT_YET_WORKING.has(e.id))
+    .map(placedPiece);
+/** Owned and used, never placed: utensils and trays. */
+export const CARRIED = EQUIPMENT_PIECES.filter((e) => e.type === "utensil" || e.type === "tray");
+export const pieceById = (id) => EQUIPMENT_PIECES.find((e) => e.id === id);
+/** The best piece of a line the keeper has. Tier 1 of every line comes with the inn. */
+export function bestInLine(owned, line) {
+    return EQUIPMENT_PIECES.filter((e) => e.line === line && (e.tier === 1 || owned.has(e.id)))
+        .sort((a, b) => (b.tier ?? 0) - (a.tier ?? 0))[0];
+}
+/** The best utensil the keeper has for a kind of slot (a pot for the stove, a pan for the griddle). */
+export function utensilFor(owned, kind) {
+    const line = EQUIPMENT_PIECES.find((e) => e.type === "utensil" && e.usedIn?.includes(kind))?.line;
+    return line ? bestInLine(owned, line) : undefined;
+}
+export const PIE_SAFE_CAPACITY = pieceById("pieSafe")?.capacity?.batches ?? 4;
+const LEGACY_DISH_ID = { fish: "friedFish" };
+export const dishData = (recipeId) => DISHES_DATA.dishes.find((d) => d.id === (LEGACY_DISH_ID[recipeId] ?? recipeId));
+/** Tray slots one serving of this takes. */
+export const traySlotsOf = (recipeId) => dishData(recipeId)?.traySlots ?? 1;
+/** Ids from before the game data files, as old saves have them. */
+export const LEGACY_EQUIPMENT_ID = {
+    stove1: "woodStove", stove2: "twoHobStove", range: "rangeStove", oven: "breadOven", prep: "prepTable",
+    kettle: "teaKettle", copperkettle: "copperKettle", urn: "teaUrn", coffee: "coffeePot",
+    alekeg: "aleBarrel", ciderkeg: "ciderBarrel", piesafe: "pieSafe", trays: "widerTray",
+};
+export const currentEquipmentId = (id) => LEGACY_EQUIPMENT_ID[id] ?? id;
+/** Where the first equipment stands, by map letter. */
+export const EQUIPMENT_OF_TILE = { S: "woodStove", O: "breadOven", K: "prepTable", H: "teaKettle", V: "coffeePot", Z: "pieSafe", A: "aleBarrel", Y: "ciderBarrel" };
 /** What's under an equipment letter once it's lifted off the map. */
 export const UNDER_EQUIPMENT = { S: ",", R: ",", O: ",", K: ",", H: "n", V: "n", Z: "n", A: "n", Y: "n" };
 /** Tiles equipment can stand on: the kitchen floor, behind the bar, and the nooks in the counter wall. */
 export const PLACEABLE_ON = [",", "_", "n"];
-export const GOODS = [
-    { id: "trays", name: "Wider trays", icon: "🍽️", blurb: "Carry 3 dishes per tray, and 5 drinks." },
-    { id: "firewood", name: "Seasoned oak", icon: "🪵", fuel: "wood", blurb: "Dry, well-split firewood that burns hotter: everything on a hob, in an oven or over a flame cooks a little faster." },
-];
-/** Seasoned oak: how much faster anything heated cooks. */
-export const FIREWOOD_BOOST = 1.12;
 /** Which drink each tap letter pours. */
 export const TAP_OF_TILE = { A: "ale", Y: "cider" };
 export const ROOM_LABELS = [
@@ -982,10 +998,8 @@ export const TUNING = {
     quietClockBoost: 5, // extra speed while the inn is closed or empty
     keeperWalk: 4.2, // tiles per real second
     keeperRun: 7,
-    trayCapacity: { drink: 4, food: 2 },
     hatchCapacity: 8,
     shelfCapacity: 2, // finished dishes a station can hold, waiting to be picked up
-    pieSafeCapacity: 4, // whole pies per pie safe
     // Freshness, first pass: food left over a night turns day-old (still servable, a bit less nice);
     // anything older goes to the hens.
     staleTag: "day-old",
@@ -1000,8 +1014,6 @@ export const TUNING = {
     tableDirtyAt: 2, // dirt units before a table counts as dirty
     spillChancePerHour: 0.5, // times messiness, while eating or drinking
     cleanSeconds: [2.4, 0.8], // real seconds of holding Space
-    pourSeconds: [3, 0.3], // real seconds to pour a drink at a tap (an upgrade could shorten it)
-    urnPourSeconds: [2, 0.2], // real seconds to pour a cup of tea from the urn at the kettle
     // Snack bowls
     bowlEatenPerHour: 0.35, // share of a bowl one patron who likes it picks at in an hour
     bowlCommentChance: 0.5, // chance someone who loves or hates the snack says so

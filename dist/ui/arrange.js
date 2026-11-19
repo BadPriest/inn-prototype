@@ -2,7 +2,7 @@
 // the carter brought (g.toPlace). Delete sells the piece in hand back for half its price. The clock stops while you do. What's cooking on it moves with it (its slots keep
 // their ids). A spot is allowed when it's kitchen floor, behind the bar or a nook in the counter wall,
 // nothing else stands there, and the keeper can still reach everything.
-import { EQUIPMENT, PLACEABLE_ON, TUNING } from "../data.js";
+import { EQUIPMENT, PIE_SAFE_CAPACITY, PLACEABLE_ON } from "../data.js";
 import { P, floorPath } from "./proj.js";
 import { openShop } from "./desk.js";
 import { padActive } from "../gamepad.js";
@@ -137,7 +137,7 @@ export function arrangeRemove(g) {
         g.say("Something's still on it. Finish with that first.");
         return;
     }
-    if (h.type === "piesafe" && g.pieSafe.length > g.pieSafeCapacity - TUNING.pieSafeCapacity) {
+    if (h.type === "pieSafe" && g.pieSafe.length > g.pieSafeCapacity - PIE_SAFE_CAPACITY) {
         g.say("There are pies in it with nowhere else to go.");
         return;
     }

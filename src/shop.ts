@@ -6,25 +6,25 @@
 // No secondhand pieces yet: those come with the tinker (inn#66). The carter is a message for now; his
 // cart and the crates by the kitchen door come with inn#62.
 
-import { EQUIPMENT, GOODS, TUNING } from "./data.js";
+import { CARRIED, TUNING, bestInLine, pieceById } from "./data.js";
 import type { Game } from "./game.js";
 import { spend } from "./money.js";
 import { ECONOMY_DATA } from "./gamedata.gen.js";
 
-/** What each piece and each good costs new, in pennies. Placeholders, tuned to the session's pacing targets. */
-export const SHOP_PRICE: Record<string, number> = {
-  kettle: 50, coffee: 80, copperkettle: 150, alekeg: 60, ciderkeg: 60,
-  piesafe: 100, prep: 150, urn: 200,
-  stove1: 300, stove2: 600, range: 1200, oven: 1500,
-  trays: 100, firewood: 50,
-};
-export const priceOfThing = (id: string): number => SHOP_PRICE[id] ?? 100;
+export const priceOfThing = (id: string): number => pieceById(id)?.price ?? 100;
 export const sellBackPrice = (id: string): number => Math.floor(priceOfThing(id) * ECONOMY_DATA.sellBackShare);
 export const FETCH_MINUTES = ECONOMY_DATA.fetchMinutes;
 export const SELL_BACK_SHARE_WORDS = ECONOMY_DATA.sellBackShare === 0.5 ? "half" : `${Math.round(ECONOMY_DATA.sellBackShare * 100)}% of`;
 
-const nameOf = (id: string) => (EQUIPMENT.find((e) => e.id === id) ?? GOODS.find((x) => x.id === id))?.name ?? id;
-const isGoods = (id: string) => GOODS.some((x) => x.id === id);
+const nameOf = (id: string) => pieceById(id)?.name ?? id;
+/** Utensils and trays: owned and used, never placed. */
+export const isCarried = (id: string) => CARRIED.some((x) => x.id === id);
+/** A utensil or tray the keeper has, or has something better in its line. */
+export function hasOrBetter(g: Game, id: string): boolean {
+  const p = pieceById(id);
+  if (!p?.line) return false;
+  return (bestInLine(g.upgrades, p.line)?.tier ?? 0) >= (p.tier ?? 1);
+}
 
 /** You can only go out when there's nobody to look after. */
 export function canFetch(g: Game): boolean {
@@ -54,7 +54,7 @@ export function fetchThing(g: Game, id: string): boolean {
 }
 
 function receive(g: Game, id: string): void {
-  if (isGoods(id)) g.upgrades.add(id);
+  if (isCarried(id)) g.upgrades.add(id);
   else g.toPlace.push(id);
 }
 
@@ -65,7 +65,7 @@ export function carterArrives(g: Game): void {
   g.onOrder = [];
   for (const id of came) receive(g, id);
   const list = came.map((id) => nameOf(id).toLowerCase()).join(", ");
-  const place = came.some((id) => !isGoods(id)) ? " Place it from the desk: Arrange the kitchen." : "";
+  const place = came.some((id) => !isCarried(id)) ? " Place it from the desk: Arrange the kitchen." : "";
   g.say(`🛻 The carter's been: ${list}.${place}`);
 }
 

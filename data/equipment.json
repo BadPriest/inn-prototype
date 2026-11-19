@@ -27,22 +27,22 @@
       "slots": [ { "name": "Table", "kinds": ["prep"] } ], "craftingSpeed": 1,
       "text": { "shopCard": "A scrubbed table and a good knife, for cold dishes put together by hand." } },
 
-    { "id": "teaKettle", "name": "Tea kettle", "icon": "🫖", "type": "gear", "line": "kettle", "tier": 1,
+    { "id": "teaKettle", "name": "Tea kettle", "icon": "🫖", "label": "Kettle", "type": "gear", "line": "kettle", "tier": 1,
       "shopTab": "drinks", "price": 50,
       "usedIn": ["kettle"], "craftingSpeed": 1,
       "text": { "shopCard": "Set it on a stove. Boil it once, then steep a cup at a time, each with its own leaf." } },
 
-    { "id": "copperKettle", "name": "Copper kettle", "icon": "🫖", "type": "gear", "line": "kettle", "tier": 2,
+    { "id": "copperKettle", "name": "Copper kettle", "icon": "🫖", "label": "Copper", "type": "gear", "line": "kettle", "tier": 2,
       "shopTab": "drinks", "price": 150,
       "usedIn": ["kettle"], "craftingSpeed": 2,
       "text": { "shopCard": "Set it on a stove. Boils twice as fast as the plain one." } },
 
-    { "id": "coffeePot", "name": "Coffee pot", "icon": "☕", "type": "gear", "line": "coffeePot", "tier": 1,
+    { "id": "coffeePot", "name": "Coffee pot", "icon": "☕", "label": "Coffee", "type": "gear", "line": "coffeePot", "tier": 1,
       "shopTab": "drinks", "price": 80,
       "usedIn": ["coffee"], "craftingSpeed": 1,
       "text": { "shopCard": "Set it on a stove. A whole pot at a time, poured by the cup until it's gone." } },
 
-    { "id": "percolator", "name": "Percolator", "icon": "☕", "type": "gear", "line": "coffeePot", "tier": 2,
+    { "id": "percolator", "name": "Percolator", "icon": "☕", "label": "Perc", "type": "gear", "line": "coffeePot", "tier": 2,
       "shopTab": "drinks", "price": 240,
       "usedIn": ["coffee"], "craftingSpeed": 2,
       "text": { "shopCard": "Set it on a stove. Brews twice as fast as the plain pot." } },
