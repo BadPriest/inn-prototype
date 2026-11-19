@@ -6,6 +6,14 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 116 · Nov 19, 2026 · deployed
+
+### Added
+- **A garnish board in the kitchen** for dishes (herbs, pepper, chives): in the small tavern's kitchen corner, and next to the prep table in the big one. The bar's garnish spot is now for drinks only; the wrong one tells you where to go.
+
+### Changed
+- **A finished objective's ✓ slides out from behind the card's right edge**, clear of the text, instead of stamping over it.
+
 ## Build 115 · Nov 19, 2026 · deployed
 
 ### Added

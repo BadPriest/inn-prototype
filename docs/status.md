@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 19, 2026 · build 115 (deployed) · https://inn-prototype.vercel.app
+Updated Nov 19, 2026 · build 116 (deployed) · https://inn-prototype.vercel.app
 
 History by build: [../CHANGELOG.md](../CHANGELOG.md). What the prototype is and how to play: [../README.md](../README.md).
 
@@ -28,7 +28,7 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 
 ## Built and deployed (Nov 19, builds 107–115)
 
-- Build 115: guests bob as they walk, like the keeper
+- Builds 115–116: guests bob as they walk, like the keeper; a garnish board in the kitchen for dishes (the bar's spot for drinks); the objective ✓ slides out beside the card
 
 - Build 114: #75 levels (experience by reaction, rising curve) with a level-up wave and banner, Skills tabs and knacks (Quick hands, Charm), new starting recipes; Dutch oven + Manage stove tab; #62 supply crates to unpack; arrows for new gear and equipment; tutorial ending; wardrobe (coat and under); keeper eyes, blink and walking bob; progress-bar labels; garnish plaques; fixes (wiping, stick zoom, extras greying)
 
