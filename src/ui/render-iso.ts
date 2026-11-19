@@ -304,6 +304,7 @@ export function drawIso(ctx: CanvasRenderingContext2D, g: Game, v: View, target:
     const bx = kh.x - ts * 0.5, by = kh.y - ts * 0.6;
     ctx.fillStyle = "rgba(0,0,0,0.65)"; ctx.fillRect(bx, by, ts, ts * 0.16);
     ctx.fillStyle = g.winding ? "#c9a24a" : g.pouring ? "#e8b25a" : "#8fd3ff"; ctx.fillRect(bx, by, ts * pct, ts * 0.16);
+    barLabel(ctx, busyWord(g), bx + ts / 2, by - 2, ts);
   }
 
   if (g.paused) {
@@ -410,6 +411,7 @@ function drawReadables(ctx: CanvasRenderingContext2D, g: Game, v: View, byTile: 
         const pct = Math.min(1, job.progress / job.total);
         ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(sp.x - sw / 2, barY, sw, ts * 0.16);
         ctx.fillStyle = job.done ? "#ffd34d" : r.tended ? "#ff9f43" : "#7fd37f"; ctx.fillRect(sp.x - sw / 2, barY, sw * pct, ts * 0.16);
+        if (!job.done && (slots.length === 1 || (target?.type === "furniture" && target.part?.id === sl.id))) barLabel(ctx, jobWord(r.station), sp.x, barY - 2, ts);
         ctx.fillStyle = "#fff";
         ctx.font = `${Math.floor(ts * (slots.length > 1 ? 0.24 : 0.26))}px system-ui, sans-serif`;
         ctx.fillText(slots.length > 1 ? r.icon : r.name, sp.x, barY + ts * 0.32);

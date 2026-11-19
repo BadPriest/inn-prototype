@@ -196,6 +196,7 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
         ctx.fillRect(sx + 1, py + ph + 2, sw - 2, ts * 0.18);
         ctx.fillStyle = job.done ? "#ffd34d" : r.tended ? "#ff9f43" : "#7fd37f";
         ctx.fillRect(sx + 1, py + ph + 2, (sw - 2) * pct, ts * 0.18);
+        if (!job.done && (slots.length === 1 || (target?.type === "furniture" && target.part?.id === sl.id))) barLabel(ctx, jobWord(r.station), sx + sw / 2, py + ph + 1, ts);
         ctx.fillStyle = "#fff";
         ctx.font = `${Math.floor(ts * (slots.length > 1 ? 0.24 : 0.28))}px system-ui, sans-serif`;
         ctx.fillText(slots.length > 1 ? r.icon : r.name, sx + sw / 2, py + ph + ts * 0.45);
@@ -321,6 +322,7 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
     const bx = X(k.pos.x) - ts * 0.5, by = Y(k.pos.y) - ts * 0.75;
     ctx.fillStyle = "rgba(0,0,0,0.65)"; ctx.fillRect(bx, by, ts, ts * 0.16);
     ctx.fillStyle = g.winding ? "#c9a24a" : g.pouring ? "#e8b25a" : "#8fd3ff"; ctx.fillRect(bx, by, ts * pct, ts * 0.16);
+    barLabel(ctx, busyWord(g), bx + ts / 2, by - 2, ts);
   }
 
   // Paused overlay
