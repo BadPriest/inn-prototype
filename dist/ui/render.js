@@ -10,7 +10,7 @@ import { worldGuide } from "../walkthrough.js";
 import { P } from "./proj.js";
 import { drawLevelUp } from "./levelup.js";
 import { coatColor, eyeColor, underColor } from "./wardrobe.js";
-import { keeperGait } from "../sound/footsteps.js";
+import { gaitOf, keeperGait } from "../sound/footsteps.js";
 import { COINS, coinParts } from "../money.js";
 /** Fit the whole inn if it's big enough to read; otherwise zoom in and follow the keeper. */
 /** `top`: canvas pixels kept clear at the top (the status card sits there). */
@@ -445,12 +445,15 @@ function drawPatron(ctx, g, p, X, Y, ts, part) {
     const wet = p.soaked ?? 0;
     const t = performance.now() / 1000;
     const shiver = wet > 0.08 ? Math.sin(t * 38 + p.id) * ts * 0.035 * Math.min(1, wet * 1.5) : 0;
-    const x = X(p.pos.x) + shiver, y = Y(p.pos.y);
+    const gait = gaitOf(p.id);
+    const lean = 0.05 * gait.amount;
+    const x = X(p.pos.x + gait.dir.x * lean) + shiver, y = Y(p.pos.y + gait.dir.y * lean);
     if (part === "body") {
+        const swell = 1 + Math.sin(gait.phase * Math.PI) * 0.06 * gait.amount;
         ctx.fillStyle = p.color;
         ctx.globalAlpha = p.state === "leaving" ? 0.6 : 1;
         ctx.beginPath();
-        ctx.arc(x, y, ts * 0.32, 0, Math.PI * 2);
+        ctx.arc(x, y, ts * 0.32 * swell, 0, Math.PI * 2);
         ctx.fill();
         if (wet > 0.05) {
             ctx.fillStyle = SOAKING.tint;

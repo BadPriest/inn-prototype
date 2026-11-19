@@ -16,7 +16,7 @@ import type { Furniture, Tile, Vec } from "../world.js";
 import { drawLight, windowColor } from "./light.js";
 import { drawLevelUp } from "./levelup.js";
 import { coatColor, eyeColor, underColor } from "./wardrobe.js";
-import { keeperGait } from "../sound/footsteps.js";
+import { gaitOf, keeperGait, type Gait } from "../sound/footsteps.js";
 import { ISO, P, Pt, floorPath, turn, turnedSize, unproject, unturn } from "./proj.js";
 import { badge, barLabel, drawEyes, busyWord, jobWord, drawCoinPops, drawGuide, drawPatronWords, drawSpeech, say, type View } from "./render.js";
 
@@ -223,6 +223,16 @@ function personBody(ctx: CanvasRenderingContext2D, v: View, pos: Vec, color: str
   ctx.globalAlpha = 1;
 }
 
+/** Walking: the head bounces in time with the footsteps and leans a little the way they're going. */
+function stepBob(v: View, pos: Vec, gait: Readonly<Gait>, dir: Vec): Vec {
+  if (gait.amount < 0.01) return { x: 0, y: 0 };
+  const lift = Math.sin(gait.phase * Math.PI) * v.ts * (gait.running ? 0.07 : 0.05) * gait.amount;
+  const reach = (gait.running ? 0.12 : 0.07) * gait.amount;
+  const ahead = P(v, pos.x + dir.x * reach, pos.y + dir.y * reach, HEAD_Z);
+  const base = P(v, pos.x, pos.y, HEAD_Z);
+  return { x: ahead.x - base.x, y: ahead.y - base.y - lift };
+}
+
 function shadow(ctx: CanvasRenderingContext2D, v: View, pos: Vec): void {
   const c = P(v, pos.x, pos.y);
   ctx.fillStyle = "rgba(0,0,0,0.28)";
@@ -273,18 +283,12 @@ export function drawIso(ctx: CanvasRenderingContext2D, g: Game, v: View, target:
   type Item = { d: number; pri: number; draw: () => void };
   const items: Item[] = solid.map((s) => ({ d: turnedTile(v, s.t.x, s.t.y).d, pri: 0, draw: () => drawSolid(ctx, g, v, s, byTile) }));
   for (const p of g.patrons) {
-    items.push({ d: depth(v, p.pos), pri: 1, draw: () => personBody(ctx, v, p.pos, p.color, p.state === "leaving" ? 0.6 : 1, p.soaked ?? 0, p.id) });
+    items.push({ d: depth(v, p.pos), pri: 1, draw: () => personBody(ctx, v, p.pos, p.color, p.state === "leaving" ? 0.6 : 1, p.soaked ?? 0, p.id, undefined, stepBob(v, p.pos, gaitOf(p.id), gaitOf(p.id).dir)) });
   }
   const k = g.keeper;
   items.push({
     d: depth(v, k.pos), pri: 1, draw: () => {
-      // Walking: a bounce in time with the footsteps, and a slight lean the way they're going.
-      const gait = keeperGait();
-      const lift = Math.sin(gait.phase * Math.PI) * ts * (gait.running ? 0.07 : 0.05) * gait.amount;
-      const reach = (gait.running ? 0.12 : 0.07) * gait.amount;
-      const ahead = P(v, k.pos.x + k.facing.x * reach, k.pos.y + k.facing.y * reach, HEAD_Z);
-      const base = P(v, k.pos.x, k.pos.y, HEAD_Z);
-      const bob = { x: ahead.x - base.x, y: ahead.y - base.y - lift };
+      const bob = stepBob(v, k.pos, keeperGait(), k.facing);
       personBody(ctx, v, k.pos, coatColor(g), 1, 0, 0, underColor(g), bob);
       // Two eyes on the side of the head that faces where they're looking; none when that's away from us.
       const f = k.facing, side = { x: -f.y * 0.085, y: f.x * 0.085 };

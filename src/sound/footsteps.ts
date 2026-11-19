@@ -24,9 +24,25 @@ function stride(id: number | "keeper", pos: Vec, length: number): { moved: numbe
   return { moved, step: true };
 }
 
-/** The keeper's step, for drawing: where in the stride (0 at a footfall), how much they're walking (0 to 1), and running. */
-const gait = { phase: 0, amount: 0, running: false };
-export const keeperGait = (): Readonly<typeof gait> => gait;
+/** Someone's step, for drawing: where in the stride (0 at a footfall), how much they're walking (0 to 1), running, and which way they're going. */
+export interface Gait { phase: number; amount: number; running: boolean; dir: { x: number; y: number } }
+const gaits = new Map<number | "keeper", Gait>();
+const STILL: Gait = { phase: 0, amount: 0, running: false, dir: { x: 0, y: 1 } };
+export const gaitOf = (id: number | "keeper"): Readonly<Gait> => gaits.get(id) ?? STILL;
+export const keeperGait = (): Readonly<Gait> => gaitOf("keeper");
+
+/** After a stride's been counted: where in it they are, and ease in or out of walking. */
+function updateGait(id: number | "keeper", length: number, moved: { x: number; y: number }, realDt: number, running: boolean): void {
+  let gt = gaits.get(id);
+  if (!gt) { gt = { phase: 0, amount: 0, running: false, dir: { x: 0, y: 1 } }; gaits.set(id, gt); }
+  const w = walkers.get(id);
+  if (w) gt.phase = (w.travelled % length) / length;
+  const d = Math.hypot(moved.x, moved.y);
+  const speed = realDt > 0 ? d / realDt : 0;
+  if (d > 1e-4 && d < 2) gt.dir = { x: moved.x / d, y: moved.y / d };
+  gt.amount += ((speed > 0.3 ? 1 : 0) - gt.amount) * Math.min(1, realDt * 10);
+  gt.running = running;
+}
 
 export function footsteps(g: Game, realDt: number): void {
   // The keeper. Speed decides walking or running (and the stride that goes with it).
@@ -35,21 +51,24 @@ export function footsteps(g: Game, realDt: number): void {
   const speed = prev && realDt > 0 ? Math.hypot(k.x - prev.x, k.y - prev.y) / realDt : 0;
   const running = speed > RUN_ABOVE;
   const length = running ? T.keeperRunStride : T.keeperStride;
+  const kFrom = prev ? { x: prev.x, y: prev.y } : { ...k };
   if (stride("keeper", k, length).step) {
     play(running ? "keeperRun" : "keeperWalk", { ...k });
   }
-  gait.phase = (walkers.get("keeper")!.travelled % length) / length;
-  gait.amount += ((speed > 0.3 ? 1 : 0) - gait.amount) * Math.min(1, realDt * 10);
-  gait.running = running;
+  updateGait("keeper", length, { x: k.x - kFrom.x, y: k.y - kFrom.y }, realDt, running);
 
   // Guests: quieter, and capped so a busy room doesn't turn into a clatter.
   const here = new Set<number>();
   for (const p of g.patrons) {
     here.add(p.id);
-    if (!stride(p.id, p.pos, T.patronStride).step) continue;
+    const was = walkers.get(p.id);
+    const from = was ? { x: was.x, y: was.y } : { ...p.pos };
+    const stepped = stride(p.id, p.pos, T.patronStride).step;
+    updateGait(p.id, T.patronStride, { x: p.pos.x - from.x, y: p.pos.y - from.y }, realDt, false);
+    if (!stepped) continue;
     if (playingCount("patronStep") >= T.patronStepsAtOnce) continue;
     if (placement(p.pos, SOUNDS.patronStep).gain < 0.02) continue; // out of earshot
     play("patronStep", { ...p.pos });
   }
-  for (const id of walkers.keys()) if (id !== "keeper" && !here.has(id)) walkers.delete(id);
+  for (const id of walkers.keys()) if (id !== "keeper" && !here.has(id)) { walkers.delete(id); gaits.delete(id); }
 }
