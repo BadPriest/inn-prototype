@@ -79,7 +79,7 @@ export function keeperNear(g: Game, f: Furniture, range = 1.5): boolean {
   return f.tiles.some((t) => dist(g.keeper.pos, { x: t.x + 0.5, y: t.y + 0.5 }) <= range);
 }
 
-export function updateCrafting(g: Game, simDt: number, target: Furniture | null): void {
+export function updateCrafting(g: Game, simDt: number, target: { f: Furniture; part?: Slot } | null): void {
   for (const [fid, job] of g.jobs) {
     const f = g.world.slot(fid)?.f;
     if (!f) continue;
@@ -88,7 +88,7 @@ export function updateCrafting(g: Game, simDt: number, target: Furniture | null)
       const near = keeperNear(g, f);
       let rate = recipe.tended && !near ? 0 : 1;
       rate *= utensilFor(g.upgrades, recipe.station)?.craftingSpeed ?? 1;
-      if (near && g.holdingSpace && target?.id === f.id) rate *= TUNING.speedUpFactor;
+      if (near && (g.holdingSpace || g.hurrying) && target?.f.id === f.id && (!target.part || target.part.id === fid)) rate *= TUNING.speedUpFactor;
       job.progress += simDt * rate;
       if (job.progress >= job.total) {
         job.done = true;

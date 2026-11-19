@@ -8,6 +8,7 @@ import { grid, gridKeys, type CardSpec } from "./cards.js";
 import { openNewspaper } from "./newspaper.js";
 import { openCalendar } from "./calendar.js";
 import { openSupplies } from "./supplies.js";
+import { ingredientsHtml } from "./cook.js";
 import { canFetch, fetchThing, FETCH_MINUTES, hasOrBetter, onOrderCount, orderThing, priceOfThing, SELL_BACK_SHARE_WORDS, toPlaceCount } from "../shop.js";
 import { fmtMoney, moneyHtml, priceLevel, priceOfRecipe, PRICE_LEVELS } from "../money.js";
 
@@ -233,7 +234,7 @@ export function openBillOfFare(g: Game): void {
         fact: can ? `${r.base.options.length > 1 || r.optional.pick[1] > 0 ? "from " : ""}${moneyHtml(priceOfRecipe(g, r.id))}${unit ? ` <span class="unit">${unit}</span>` : ""}` : "",
         status: can ? whereShort(r) : needs(r), tone: can ? undefined : "warn",
         tags: r.baseTags, on, off: !can, focus: i === st.focus,
-        detail: `${how} ${whereFull(r)}.`,
+        detail: `${how} ${whereFull(r)}.${ingredientsHtml(g, r)}`,
         does: !can ? "Buy what it needs in Equipment" : on ? "Take it off the board" : "Put it on the board",
       };
     });

@@ -302,6 +302,7 @@ export class Game {
   upgrades = new Set<string>();
   totalServed = 0; // across all days
   showObjectives = true;
+  hurrying = false; // F held: hurry what's cooking at the target
   walkthrough?: WalkthroughState;
   cleaning: Cleaning | null = null;
   /** A drink being poured (at a tap, or a cup from the urn). Walking away stops it. */

@@ -132,6 +132,9 @@ window.addEventListener("keydown", (e) => {
             if (target?.type === "furniture" && target.f.kind === "garnish")
                 openGarnishMenu(g);
             break;
+        case "f":
+            g.hurrying = true;
+            break;
         case "q":
         case "r": // one key puts things down: back where they came from, or a tray on the nearest spot
             putDownHere(g, target);
@@ -200,8 +203,10 @@ window.addEventListener("keyup", (e) => {
         g.holdingSpace = false;
         release();
     }
+    if (k === "f")
+        g.hurrying = false;
 });
-window.addEventListener("blur", () => { keys.clear(); g.holdingSpace = false; });
+window.addEventListener("blur", () => { keys.clear(); g.holdingSpace = false; g.hurrying = false; });
 // Out of sight pauses: another tab, a minimised window, or (Chrome/Edge) a window covering it.
 // Focus alone doesn't: the address bar or devtools take it too, and the game is still on screen.
 document.addEventListener("visibilitychange", () => { if (document.hidden)
@@ -741,8 +746,10 @@ function resolveTarget(id) {
         const p = g.patron(Number(id.slice(7)));
         return p ? { type: "patron", p } : null;
     }
-    const f = g.world.furniture.find((x) => x.id === id);
-    return f ? { type: "furniture", f } : null;
+    const [fid, partId] = id.split("#part:");
+    const f = g.world.furniture.find((x) => x.id === fid);
+    const part = partId ? f?.slots?.find((s) => s.id === partId) : undefined;
+    return f ? { type: "furniture", f, part } : null;
 }
 // ---------------------------------------------------------------------------
 // Main loop
@@ -1004,7 +1011,7 @@ const KEYS = [
         ] },
     { group: "Using things", rows: [
             ["Click / tap a thing or person", "go and use it"], ["Space", "use what's in reach: serve, pick up, pour, cook"],
-            ["Tab", "pick between things in reach · in menus: switch tabs (PageUp/PageDown: the tabs inside)"], ["Hold Space / hold the mouse", "hurry cooking · clean a mess"],
+            ["Tab", "pick between things in reach · in menus: switch tabs (PageUp/PageDown: the tabs inside)"], ["Hold Space / hold the mouse", "hurry cooking · clean a mess"], ["Hold F", "hurry what's cooking (Tab picks one part of a stove: the hob, the kettle)"],
         ] },
     { group: "Serving", rows: [
             ["E", "garnish a drink (at the counter)"], ["C", "offer something unasked"],
@@ -1043,7 +1050,7 @@ function openKeys(fromPause = false) {
 const touch = window.matchMedia("(pointer: coarse)").matches;
 const controls = touch
     ? `<b>Tap</b> the floor to walk, <b>double tap</b> to run. <b>Tap</b> things and people to use them. <b>Keep your finger</b> on a pot or a mess to hurry or clean. The buttons on the side do the rest.`
-    : `<b>Click</b> the floor to walk, <b>click</b> things and people to use them, <b>double-click</b> to run, <b>right-click</b> to stop. Or <b>WASD</b> to walk (<b>Shift</b> runs) and <b>Space</b> to use. Hold <b>Space</b> to hurry cooking; hold <b>Space</b> or the mouse on a mess to clean it. <b>R</b> puts back a dish picked up by mistake; <b>X</b> empties a pot. When several things are in reach, <b>Tab</b> picks one. The <b>wheel</b> zooms; <b>V</b> switches to an isometric view. <b>P</b> pauses; <b>H</b> lists every key.`;
+    : `<b>Click</b> the floor to walk, <b>click</b> things and people to use them, <b>double-click</b> to run, <b>right-click</b> to stop. Or <b>WASD</b> to walk (<b>Shift</b> runs) and <b>Space</b> to use. Hold <b>Space</b> or <b>F</b> to hurry cooking; hold <b>Space</b> or the mouse on a mess to clean it. <b>R</b> puts back a dish picked up by mistake; <b>X</b> empties a pot. When several things are in reach, <b>Tab</b> picks one. The <b>wheel</b> zooms; <b>V</b> switches to an isometric view. <b>P</b> pauses; <b>H</b> lists every key.`;
 function welcomeBody() {
     return `<div class="welcome">
     <p><b>${longDate(g.date)}.</b></p>
@@ -1109,7 +1116,7 @@ function frame(now) {
     updateWinding(g, realDt);
     const sim = simDelta(g, realDt);
     if (sim > 0) {
-        updateCrafting(g, sim, target?.type === "furniture" ? target.f : null);
+        updateCrafting(g, sim, target?.type === "furniture" ? target : null);
         updatePatrons(g, sim);
         updateNeeds(g, sim);
         updateWeather(g, sim);

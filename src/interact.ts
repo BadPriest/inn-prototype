@@ -20,21 +20,21 @@ import { openBinScreen, openGarnishScreen, openHatchScreen, openOfferScreen, ope
 import { openBillOfFare as openBillOfFareScreen, openDeskScreen } from "./ui/desk.js";
 
 export type Target =
-  | { type: "furniture"; f: Furniture }
+  | { type: "furniture"; f: Furniture; part?: Slot }
   | { type: "patron"; p: Patron }
   | { type: "spill"; s: Spill }
   | { type: "tray"; t: SetDownTray };
 
 export function targetId(t: Target | null): string | null {
   if (!t) return null;
-  if (t.type === "furniture") return t.f.id;
+  if (t.type === "furniture") return t.part ? `${t.f.id}#part:${t.part.id}` : t.f.id;
   if (t.type === "spill") return `spill:${t.s.id}`;
   if (t.type === "tray") return `tray:${t.t.id}`;
   return `patron:${t.p.id}`;
 }
 
 export function targetName(t: Target): string {
-  return t.type === "furniture" ? t.f.name : t.type === "spill" ? "Spill" : t.type === "tray" ? "Tray" : t.p.name;
+  return t.type === "furniture" ? (t.part ? `${t.f.name}: ${t.part.name.toLowerCase()}` : t.f.name) : t.type === "spill" ? "Spill" : t.type === "tray" ? "Tray" : t.p.name;
 }
 
 /** How many people at this table are waiting on an order. */
@@ -75,12 +75,12 @@ const PATRON_RANGE = 2.3; // reaches across the counter
 export function findTargets(g: Game): Target[] {
   const k = g.keeper;
   const found: { t: Target; s: number }[] = [];
-  const consider = (t: Target, pos: { x: number; y: number }, range: number) => {
+  const consider = (t: Target, pos: { x: number; y: number }, range: number, after = 0) => {
     const d = dist(k.pos, pos);
     if (d > range) return;
     const dx = pos.x - k.pos.x, dy = pos.y - k.pos.y;
     const facing = d > 0.01 ? (dx * k.facing.x + dy * k.facing.y) / d : 1;
-    found.push({ t, s: d - facing * 0.6 });
+    found.push({ t, s: d - facing * 0.6 + after });
   };
   for (const f of g.world.furniture) {
     // Distance to the nearest tile of the piece, not its centre.
@@ -91,6 +91,9 @@ export function findTargets(g: Game): Target[] {
       if (d < nd) { nd = d; near = t; }
     }
     consider({ type: "furniture", f }, { x: near.x + 0.5, y: near.y + 0.5 }, FURNITURE_RANGE);
+    // A station with several parts (a hob, a kettle, a coffee pot): Tab picks each on its own.
+    const parts = (f.slots ?? []).filter((sl) => recipesFor(g, sl).length || g.pots.has(sl.id) || g.jobs.has(sl.id) || g.shelves.get(sl.id)?.length);
+    if (f.kind === "station" && parts.length > 1) parts.forEach((part, i) => consider({ type: "furniture", f, part }, { x: near.x + 0.5, y: near.y + 0.5 }, FURNITURE_RANGE, 0.001 * (i + 1)));
   }
   for (const p of g.patrons) {
     if (p.state === "entering" || p.state === "leaving") continue;
@@ -139,6 +142,11 @@ export function promptFor(g: Game, t: Target | null): string {
       return n && !trayItems(g).length ? `${n} waiting here · ${tap}` : tap;
     }
     case "station": {
+      if (t.part) {
+        const job = g.jobs.get(t.part.id);
+        const main = slotActs(g, t.part, false).filter((a) => a.main);
+        return main.length === 1 ? slotPrompt(g, t.part) : main.length ? `Space: choose (${main.map((a) => a.short).join(", ")})` : job && !job.done ? `${slotStatus(g, t.part)} · hold F to hurry` : slotPrompt(g, t.part);
+      }
       const slots = f.slots ?? [];
       const plan = stationPlan(g, f);
       const status = slots.length === 1 ? "" : slots.map((sl) => `${sl.name}: ${slotStatus(g, sl)}`).join(" · ") + " · ";
@@ -204,7 +212,7 @@ export function interact(g: Game, t: Target | null): void {
       openSnackMenu(g, key);
       return;
     }
-    case "station": useStation(g, f); return;
+    case "station": if (t.part) usePart(g, f, t.part); else useStation(g, f); return;
     case "gramophone": {
       const gr = g.gramophone;
       if (!recordsReady()) { g.say("No records to play yet."); return; }
@@ -469,12 +477,21 @@ function sideHint(g: Game, f: Furniture): string {
   return [back.length ? "R: put back" : "", empty.length ? "X: empty" : ""].filter(Boolean).join(" · ");
 }
 
+/** Space on one part of a station: its one thing straight away, or a choice of its things. */
+function usePart(g: Game, f: Furniture, part: Slot): void {
+  const acts = slotActs(g, part, false).filter((a) => a.main);
+  if (acts.length === 1) { acts[0].run(); return; }
+  if (acts.length) { openActCards(g, f, part.name, acts); return; }
+  const job = g.jobs.get(part.id);
+  g.say(job?.done ? "It's done, waiting for room on the shelf." : "Still cooking. Hold F here to hurry it a little.");
+}
+
 function useStation(g: Game, f: Furniture): void {
   const plan = stationPlan(g, f);
   if (plan.direct) { plan.direct.run(); return; }
   if (!plan.choices.length) {
     const job = (f.slots ?? []).map((sl) => g.jobs.get(sl.id)).find(Boolean);
-    g.say(job?.done ? "It's done, waiting for room on the shelf." : "Still cooking. Hold Space here to hurry it a little.");
+    g.say(job?.done ? "It's done, waiting for room on the shelf." : "Still cooking. Hold F here to hurry it a little.");
     return;
   }
   openActCards(g, f, "What now?", plan.choices);

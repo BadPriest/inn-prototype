@@ -5,7 +5,7 @@
 //           counter) · L1/R1 pick between things in reach · D-pad ←/→ choose a card, ↑ play it,
 //           ↓ put down (a dish back where it came from, or else a tray; hold ↓: empty a pot) · right
 //           stick zoom (↑↓) and turn the isometric camera (←→) · R3 top-down or isometric · Options
-//           pause · touchpad the keys. ○, □ and △ are free while playing.
+//           pause · touchpad the keys · □ hold: hurry (F). ○ and △ are free while playing.
 // Menus:    D-pad or left stick move · ✕ pick (like Space: a card, an item) · □ confirm the screen (like
 //           Enter: Cook, Put up…, without going to the button) · ○ back or close · L1/R1 switch tabs, L2/R2 the tabs inside them
 // Kitchen:  left stick moves a cursor · ✕ pick up / place · ○ put back or finish · □ buy · △ another ·
@@ -159,6 +159,9 @@ export function pollPad(dt: number): void {
     if (released(B.cross)) key(" ", { down: false });
     if (pressed(B.l1)) key("Tab", { shift: true });
     if (pressed(B.r1)) key("Tab");
+    // Square is F: hold to hurry what's cooking at the target.
+    if (pressed(B.square)) key("f", { up: false });
+    if (released(B.square)) key("f", { down: false });
     // The cards: ←/→ choose, ↑ plays. ↓ puts down: a tap puts a dish back (or a tray down), a hold empties a pot.
     if (pressed(B.left)) hooks.cardStep(-1);
     if (pressed(B.right)) hooks.cardStep(1);

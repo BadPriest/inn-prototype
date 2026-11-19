@@ -2,9 +2,9 @@
 // the slip, - or Delete takes one off), the slip and the supplier's terms pinned on top.
 
 import type { Game } from "../game.js";
-import { INGREDIENTS } from "../data.js";
+import { INGREDIENTS, RECIPES } from "../data.js";
 import { fmtMoney, moneyHtml } from "../money.js";
-import { amount } from "../stock.js";
+import { amount, startingPantry } from "../stock.js";
 import {
   canFetchFrom, deliveryDaysText, fetchSlip, linesOf, nextDeliveryDay, packContents, packPrice, sendSlip, slipEmpty, slipOf, slipTotal,
   suppliersHere, whenText,
@@ -14,13 +14,31 @@ import { grid, gridKeys, type CardSpec } from "./cards.js";
 
 let tab = 0; // the screen opens on the supplier you left it at
 
+/** Below this share of the starting pantry, an ingredient the bill uses is running low. */
+const LOW_SHARE = 0.25;
+
+/** Each ingredient the dishes on the bill of fare use, with those dishes' names. */
+function usedByBill(g: Game): Map<string, string[]> {
+  const out = new Map<string, string[]>();
+  for (const r of RECIPES.filter((x) => g.billAllDay().has(x.id))) {
+    const ids = new Set([...r.fundamental.map((u) => u.id), ...r.base.options.map((o) => o.id), ...r.optional.options.map((o) => o.id), ...(r.boughtAs ? [r.boughtAs] : [])]);
+    for (const id of ids) out.set(id, [...(out.get(id) ?? []), r.name.toLowerCase()]);
+  }
+  return out;
+}
+
 export function openSupplies(g: Game): void {
   const st = { focus: 0 };
   const build = (): MenuSpec => {
     const all = suppliersHere(g);
     tab = Math.min(tab, all.length - 1);
     const s = all[tab];
-    const lines = linesOf(s);
+    const uses = usedByBill(g);
+    const start = startingPantry();
+    const left = (id: string) => (g.stock[id] ?? 0) / Math.max(1, start[id] ?? 1);
+    const low = (id: string) => left(id) < LOW_SHARE;
+    const lines = [...linesOf(s)].sort((a, b) => Number(uses.has(b.item)) - Number(uses.has(a.item)) || (uses.has(a.item) ? left(a.item) - left(b.item) : 0));
+    const forBill = lines.filter((l) => uses.has(l.item)).length;
     const slip = slipOf(g, s);
     const ing = (id: string) => INGREDIENTS.find((x) => x.id === id)!;
     const refresh = () => replaceMenu(build());
@@ -40,8 +58,8 @@ export function openSupplies(g: Game): void {
       return {
         pick: String(i), icon: x.icon, name: x.name, tags: x.tags, focus: i === st.focus, on: on > 0,
         fact: `${moneyHtml(packPrice(s, l))} <span class="unit">${l.pack.name}</span>`,
-        status: on ? `${on} on the slip` : `${amount(l.item, g.stock[l.item] ?? 0)} in the pantry`,
-        tone: on ? "good" : (g.stock[l.item] ?? 0) <= 0 ? "warn" : undefined,
+        status: on ? `${on} on the slip` : `${amount(l.item, g.stock[l.item] ?? 0)} in the pantry${uses.has(l.item) ? ` · for ${uses.get(l.item)!.join(", ")}` : ""}${uses.has(l.item) && low(l.item) ? " · running low" : ""}`,
+        tone: on ? "good" : (g.stock[l.item] ?? 0) <= 0 || (uses.has(l.item) && low(l.item)) ? "warn" : undefined,
         detail: `${l.pack.name[0].toUpperCase()}${l.pack.name.slice(1)}: ${packContents(l)}. In the pantry: ${amount(l.item, g.stock[l.item] ?? 0)}.`,
         does: on ? "Add another (- or Delete takes one off)" : "Pencil it onto the slip",
       };
@@ -84,7 +102,8 @@ export function openSupplies(g: Game): void {
       holdsClock: true,
       view: {
         pinned,
-        html: grid(cards),
+        html: (forBill ? `<div class="sec-h"><h4>For your bill of fare</h4><small>what's on it uses these · lowest first</small></div>${grid(cards.slice(0, forBill))}` : "")
+          + (cards.length > forBill ? `<div class="sec-h"><h4>${forBill ? "Everything else" : "Their goods"}</h4><small>${forBill ? "nothing on your bill uses these" : "nothing on your bill comes from here"}</small></div>${grid(cards.slice(forBill))}` : ""),
         onPick: (v) => { if (v.startsWith("minus:")) { change(Number(v.slice(6)), -1); return; } if (v.startsWith("tab:")) { const i = Number(v.slice(4)); if (i !== tab) { tab = i; st.focus = 0; g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); refresh(); } return; } change(Number(v), 1); },
         onKey: (e) => {
           if (e.key === "Tab") { e.preventDefault(); switchTab(e.shiftKey ? -1 : 1); return true; }

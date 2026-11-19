@@ -17,15 +17,29 @@ import { chip, grid, gridKeys, type CardSpec } from "./cards.js";
 interface CookState { base: string[]; optional: string[]; focus: number }
 
 const ingName = (id: string) => INGREDIENTS.find((x) => x.id === id)?.name.toLowerCase() ?? id;
-/** What you choose for a dish, in words: "choose 1 base, and up to 2 extras". */
-function choiceText(r: Recipe): string {
-  const part = ([lo, hi]: [number, number], one: string, many: string) =>
-    hi === 0 ? "" : lo === hi ? `${lo} ${lo === 1 ? one : many}` : lo === 0 ? `up to ${hi} ${hi === 1 ? one : many}` : `${lo} to ${hi} ${many}`;
-  const parts = [part(r.base.pick, "base", "bases"), part(r.optional.pick, "extra", "extras")].filter(Boolean);
-  return parts.length ? `Choose ${parts.join(", and ")}` : "Nothing to choose";
-}
 /** What always goes in: "water, salt". */
 const alwaysIn = (r: Recipe) => r.fundamental.map((u) => ingName(u.id)).join(", ");
+
+/** What a dish takes, and how much of each is in the pantry: what always goes in, then the choices. */
+export function ingredientsHtml(g: Game, r: Recipe): string {
+  const one = (id: string, units: number) => {
+    const ing = INGREDIENTS.find((x) => x.id === id);
+    const left = have(g, id);
+    const short = left !== Infinity && left < units;
+    return `<span class="ing${short ? " short" : ""}">${ing?.icon ?? ""} ${ing?.name.toLowerCase() ?? id}${left === Infinity ? "" : ` <small>${amount(id, left)}</small>`}</span>`;
+  };
+  const part = ([lo, hi]: [number, number]) => (lo === hi ? `choose ${lo}` : lo === 0 ? `up to ${hi}` : `${lo} to ${hi}`);
+  const rows = [
+    r.fundamental.length ? `<div><b>Always in it:</b> ${r.fundamental.map((u) => one(u.id, u.units)).join(", ")}</div>` : "",
+    r.base.pick[1] > 0 ? `<div><b>Base</b> (${part(r.base.pick)}): ${r.base.options.map((o) => one(o.id, o.units)).join(", ")}</div>` : "",
+    r.optional.pick[1] > 0 ? `<div><b>Extras</b> (${part(r.optional.pick)}): ${r.optional.options.map((o) => one(o.id, o.units)).join(", ")}</div>` : "",
+  ].filter(Boolean);
+  if (!rows.length && r.boughtAs) rows.push(`<div><b>Bought in:</b> ${one(r.boughtAs, 1)}</div>`);
+  return rows.length ? `<div class="ings">${rows.join("")}</div>` : "";
+}
+
+/** The base choices as icons, for a card's face. */
+export const baseIcons = (r: Recipe): string => r.base.options.map((o) => INGREDIENTS.find((x) => x.id === o.id)?.icon ?? "").join("");
 
 /** The panel at the top of a crafting screen: what you'll get. */
 export function resultPanel(o: { icon: string; name: string; tags: string[]; lit?: string[]; meta: string; forWho?: string; empty?: boolean }): string {
@@ -72,11 +86,11 @@ export function openRecipeScreen(g: Game, slot: Slot): void {
       const onBoard = g.billNow().has(r.id);
       return {
         pick: String(i), icon: r.icon, name: r.name, focus: i === st.focus,
-        fact: timeOf(r),
+        fact: `${timeOf(r)}${r.base.options.length ? ` · ${baseIcons(r)}` : ""}`,
         status: n ? `${n} waiting` : r.internal ? "" : r.tableSnack ? "for the tables" : onBoard ? "on the board" : "not on the board",
         tone: n ? "good" : onBoard || r.internal || r.tableSnack ? undefined : "muted",
         tags: r.baseTags,
-        detail: `${makesOf(r, slot)}. ${choiceText(r)}.${r.fundamental.length ? ` Always in it: ${alwaysIn(r)}.` : ""}`,
+        detail: `${makesOf(r, slot)}.${ingredientsHtml(g, r)}`,
         flavour: r.blurb,
         does: "Choose its ingredients",
       };

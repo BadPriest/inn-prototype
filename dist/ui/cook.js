@@ -11,14 +11,28 @@ import { makeItem, recipesFor, slotName, startJob, ticketFor } from "../crafting
 import { closeAll, openMenu, replaceMenu } from "./menu.js";
 import { chip, grid, gridKeys } from "./cards.js";
 const ingName = (id) => INGREDIENTS.find((x) => x.id === id)?.name.toLowerCase() ?? id;
-/** What you choose for a dish, in words: "choose 1 base, and up to 2 extras". */
-function choiceText(r) {
-    const part = ([lo, hi], one, many) => hi === 0 ? "" : lo === hi ? `${lo} ${lo === 1 ? one : many}` : lo === 0 ? `up to ${hi} ${hi === 1 ? one : many}` : `${lo} to ${hi} ${many}`;
-    const parts = [part(r.base.pick, "base", "bases"), part(r.optional.pick, "extra", "extras")].filter(Boolean);
-    return parts.length ? `Choose ${parts.join(", and ")}` : "Nothing to choose";
-}
 /** What always goes in: "water, salt". */
 const alwaysIn = (r) => r.fundamental.map((u) => ingName(u.id)).join(", ");
+/** What a dish takes, and how much of each is in the pantry: what always goes in, then the choices. */
+export function ingredientsHtml(g, r) {
+    const one = (id, units) => {
+        const ing = INGREDIENTS.find((x) => x.id === id);
+        const left = have(g, id);
+        const short = left !== Infinity && left < units;
+        return `<span class="ing${short ? " short" : ""}">${ing?.icon ?? ""} ${ing?.name.toLowerCase() ?? id}${left === Infinity ? "" : ` <small>${amount(id, left)}</small>`}</span>`;
+    };
+    const part = ([lo, hi]) => (lo === hi ? `choose ${lo}` : lo === 0 ? `up to ${hi}` : `${lo} to ${hi}`);
+    const rows = [
+        r.fundamental.length ? `<div><b>Always in it:</b> ${r.fundamental.map((u) => one(u.id, u.units)).join(", ")}</div>` : "",
+        r.base.pick[1] > 0 ? `<div><b>Base</b> (${part(r.base.pick)}): ${r.base.options.map((o) => one(o.id, o.units)).join(", ")}</div>` : "",
+        r.optional.pick[1] > 0 ? `<div><b>Extras</b> (${part(r.optional.pick)}): ${r.optional.options.map((o) => one(o.id, o.units)).join(", ")}</div>` : "",
+    ].filter(Boolean);
+    if (!rows.length && r.boughtAs)
+        rows.push(`<div><b>Bought in:</b> ${one(r.boughtAs, 1)}</div>`);
+    return rows.length ? `<div class="ings">${rows.join("")}</div>` : "";
+}
+/** The base choices as icons, for a card's face. */
+export const baseIcons = (r) => r.base.options.map((o) => INGREDIENTS.find((x) => x.id === o.id)?.icon ?? "").join("");
 /** The panel at the top of a crafting screen: what you'll get. */
 export function resultPanel(o) {
     return `<div class="dish result ${o.empty ? "empty" : ""}">
@@ -67,11 +81,11 @@ export function openRecipeScreen(g, slot) {
             const onBoard = g.billNow().has(r.id);
             return {
                 pick: String(i), icon: r.icon, name: r.name, focus: i === st.focus,
-                fact: timeOf(r),
+                fact: `${timeOf(r)}${r.base.options.length ? ` · ${baseIcons(r)}` : ""}`,
                 status: n ? `${n} waiting` : r.internal ? "" : r.tableSnack ? "for the tables" : onBoard ? "on the board" : "not on the board",
                 tone: n ? "good" : onBoard || r.internal || r.tableSnack ? undefined : "muted",
                 tags: r.baseTags,
-                detail: `${makesOf(r, slot)}. ${choiceText(r)}.${r.fundamental.length ? ` Always in it: ${alwaysIn(r)}.` : ""}`,
+                detail: `${makesOf(r, slot)}.${ingredientsHtml(g, r)}`,
                 flavour: r.blurb,
                 does: "Choose its ingredients",
             };
