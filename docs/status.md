@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 19, 2026 · build 113 (deployed) · https://inn-prototype.vercel.app
+Updated Nov 19, 2026 · build 114 (deployed) · https://inn-prototype.vercel.app
 
 History by build: [../CHANGELOG.md](../CHANGELOG.md). What the prototype is and how to play: [../README.md](../README.md).
 
@@ -26,7 +26,9 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
 
-## Built and deployed (Nov 19, builds 107–113)
+## Built and deployed (Nov 19, builds 107–114)
+
+- Build 114: #75 levels (experience by reaction, rising curve) with a level-up wave and banner, Skills tabs and knacks (Quick hands, Charm), new starting recipes; Dutch oven + Manage stove tab; #62 supply crates to unpack; arrows for new gear and equipment; tutorial ending; wardrobe (coat and under); keeper eyes, blink and walking bob; progress-bar labels; garnish plaques; fixes (wiping, stick zoom, extras greying)
 
 - Builds 112–113: #71 game data in files (prices worked out from ingredients, +7% markup), isometric default, #61 supplies and a 4-day starting pantry, #75 tutorial with rewards and on-screen objectives, recipe book + Skills, dish cards list ingredients, Tab picks a stove part + F hurries, Start over, □/○ in menus, two-hob small tavern
 

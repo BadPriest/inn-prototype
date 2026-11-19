@@ -16,7 +16,7 @@ Design decisions live in [docs/design-session-journal.md](docs/design-session-jo
 
 ## How to play
 
-1. **Morning.** You wake in your room at 6:00. A new game offers a **tutorial**: a guided first day, one step at a time, each paying a little coin. The newspaper on the desk has the forecast and the town's news. At the **desk** ("manage your business") you set the **bill of fare** (what's on the menu today), order **supplies**, buy equipment, learn recipes in **Skills**, and arrange the kitchen. Until you've put up a bill of fare once, it's on a default (ale and cider), and an arrow points to the desk.
+1. **Morning.** You wake in your room at 6:00. A new game offers a **tutorial**: a guided first day, one step at a time, each paying a little coin. The newspaper on the desk has the forecast and the town's news. The wardrobe changes the keeper's coat. At the **desk** ("manage your business") you set the **bill of fare** (what's on the menu today), order **supplies**, buy equipment, learn recipes in **Skills**, and arrange the kitchen. Until you've put up a bill of fare once, it's on a default (ale and cider), and an arrow points to the desk.
 2. **Open up.** Light the fire, set out snacks if you like, and open the **front door**. The card under the status card shows the next thing to do (the "Today" checklist on the side lists them all).
 3. **Take orders.** Guests sit at tables, on the benches, or at the counter, and order from your bill of fare. Each order becomes a **ticket** along the top of the screen. A matching numbered plaque floats over the guest. Its ring fills as their patience runs down.
 4. **Cook and pour.** Cook at the stoves, ovens and prep table, and choose ingredients as you go. Pour ale and cider at the barrels. Make coffee by the pot and tea by the kettle (or the urn). Some dishes are single servings made for one guest; stew, porridge, roasts and bread come by the pot or batch; pies go to the pie safe and are sliced to order. Finished dishes wait where they were made until you pick them up.
@@ -53,8 +53,8 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 - Drinks: ale and cider on tap, coffee by the pot, tea by the cup or the urn, with garnishes.
 - Snacks in bowls on the tables and the counter: peanuts, olives, pickled eggs, crostini, bread and butter, cheese, pretzels, chestnuts, pickled onions, apple rings.
 - The bill of fare can be one all-day bill, or a bill per meal time. Each dish says where it's made (a pot on a hob, a pan, an oven, the kettle…). Dishes your kitchen can't make are greyed out, with what they need. Every card lists what a dish takes and how much of each is in the pantry.
-- **Recipes.** A new keeper knows porridge, soup, stew, tea and coffee. Every 8 guests served earn a point to spend on a new recipe in Skills at the desk.
-- **The pantry.** Cooking and pouring use stock. Order more at the desk in Supplies: a slip per supplier (what your bill uses first), sent for the carter or fetched yourself. You start with about four busy days' worth.
+- **Levels and Skills.** A new keeper knows porridge, tea, coffee, stew, and bread and butter. Guests served earn experience (more for a delighted guest); each level up is a point to spend in Skills at the desk, on a new recipe or a knack (Quick hands wipes faster, Charm adds to tips). Levels get further apart.
+- **The pantry.** Cooking and pouring use stock. Order more at the desk in Supplies: a slip per supplier (what your bill uses first), sent for the carter (who leaves it in a crate by the pantry, to unpack) or fetched yourself. You start with about four busy days' worth.
 
 **Coin.**
 - A purse in crowns, shillings and pence (10d = 1s, 10s = 1 crown), on the status card. You start with 2 crowns.
@@ -63,7 +63,7 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 - Equipment, goods and supplies cost coin. Upkeep is next.
 
 **The kitchen.**
-- Equipment to buy at the desk, for coin: order it and the carter brings it the next morning, or fetch it yourself while the inn's shut (you're out about an hour and a half). Delivered pieces wait to be placed; anything sells back for half. On offer: wood stoves with one or two hobs, a range stove (hob and oven), a bread oven that bakes two at once, a prep table, kettles, a copper kettle, an urn, coffee pots, ale and cider barrels, pie safes, wider trays, seasoned firewood.
+- Equipment to buy at the desk, for coin: order it and the carter brings it the next morning, or fetch it yourself while the inn's shut (you're out about an hour and a half). Delivered pieces wait to be placed; kettles, coffee pots and a Dutch oven go on a stove's back spots from its Manage stove tab, and swap there; anything sells back for half. On offer: wood stoves with one or two hobs, a range stove (hob and oven), a bread oven that bakes two at once, a Dutch oven (bakes on a stove, slower), a prep table, kettles, a copper kettle, an urn, coffee pots, ale and cider barrels, pie safes, wider trays, seasoned firewood.
 - Arrange the kitchen any time. The clock stops, and what's cooking moves with the piece.
 - Hobs take a pot or a pan. Tended dishes (fish, eggs, toast, a fry-up) need you at the stove, and go straight onto your tray when they're done if there's room. Put back what you picked up by mistake: a serving into any pot of the same dish made the same way, if it has room; a dish onto the shelf it came from. Empty a pot you don't need.
 
@@ -124,7 +124,7 @@ The built `dist/` folder is committed, so a fresh clone runs with `npm start` wi
 | `src/serving.ts` | Trays, pickup, pouring, garnishing, delivery |
 | `src/objectives.ts` | The "Today" checklist |
 | `src/walkthrough.ts` | The tutorial: its steps, rewards, the first guest, and what the guide points at |
-| `src/skills.ts` | The recipe book and the points to learn more |
+| `src/skills.ts` | Levels, the recipe book and knacks |
 | `src/stock.ts`, `src/supplies.ts` | The pantry, and slips to the suppliers |
 | `src/door.ts` | The front door |
 | `src/day.ts` | Clock, meal times, open and close, turning in, saving |

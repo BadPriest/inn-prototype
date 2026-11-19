@@ -6,6 +6,36 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 114 · Nov 19, 2026 · deployed
+
+### Added
+- **Levels.** Guests earn the keeper experience by how they took it: delighted 3, pleased 2, simply served 1. The first level takes 20, each after 14 more (about 5 levels in a 150-guest session). Each level is a point to spend in Skills. Placeholder curve, in `data/skills.json`.
+- **Levelling up is celebrated.** A golden wave rises from the keeper's feet, then a gold "Level Up!" ribbon with the new level. The arrow points at the desk ("✦ New skills available") and the Skills card glows until you open it.
+- **Knacks in Skills**, bought tier by tier on one card: **Quick hands** (wiping takes 0.8×, 0.65×, 0.5× as long) and **Charm** (every tip +1d, +2d, +3d).
+- **A Dutch oven** (120d, Cooking): sits on a stove's back spot and bakes bread, pies and roasts at 0.6× speed. A roast on the small tavern's stove, early on.
+- **Manage stove**: a tab on every stove menu (Tab or L1/R1) for its back spots. Take a kettle, coffee pot or Dutch oven off to the shelf, set a spare on, or swap one for another. Instant. A busy one waits; one with something left in it asks first. With every part busy, Space at the stove opens it.
+- **Supplies come in a crate.** The carter leaves delivered supplies in a 📦 crate by the pantry; the arrow says "📦 Unpack supplies". Space (✕) next to it puts it all in the pantry. Fetching it yourself still goes straight in.
+- **The arrow points at new things**: the desk for new furniture ("🛠 Place new equipment"), the stove for new gear ("🔧 Set out the Dutch oven"), each with an objective.
+- **The tutorial ends** with a congratulations once the last step's done.
+- **The wardrobe**: choose the keeper's coat and what's under it (the head), ten colours each. A new keeper wears slate blue over linen.
+- **The keeper has two eyes** that blink, and **walking bobs** in time with the footsteps, leaning a little forward.
+- **Progress bars say what's happening**: Cleaning…, Pouring…, Winding…, and Cooking…, Baking…, Boiling…, Brewing… or Preparing… at a station (on a multi-part stove, the part you're aiming at).
+- **The garnish screen shows each drink's order plaque** and who it's for, and marks the garnish they asked for.
+- Debug: **Level up** gives enough experience for the next level.
+
+### Changed
+- **A new keeper knows porridge, tea, coffee, stew, and bread and butter** (which needs a prep table); soup is learnt for 1 point.
+- **Skills has tabs** (Drinks, Breakfast, Meals, Snacks, Knacks), and each recipe says where it's made and what your kitchen lacks for it.
+- **Extras grey out** once a recipe's limit is reached, also when only one is allowed (take one out to pick another).
+- **The trays beside the keeper only show with something on them.**
+- **Controller glyphs** in menu buttons are drawn shapes, centred, beside the label; Resume is just "Resume".
+- **The pause screen** says Toggle objectives, "keybind: H" and "Start Over?" (all your progress will be erased). Arrows and the controller move through it.
+
+### Fixed
+- **A wipe under way finishes** even if a guest at that table starts waiting to order.
+- **Zooming with the right stick (and pinch) works** from 100%; it used to snap back.
+- **Order plaque numbers are centred**, over guests and on tickets.
+
 ## Build 113 · Nov 19, 2026 · deployed
 
 ### Added
