@@ -1,5 +1,6 @@
 // ALL AUTHORED CONTENT LIVES HERE. Edit freely: no code changes needed.
 // Times are in game minutes. [centre, spread] pairs are organic values.
+import { LOCATIONS_DATA } from "./gamedata.gen.js";
 // ---------------------------------------------------------------------------
 // The map. One character per tile. See TILE_LEGEND below.
 export const MAP = [
@@ -489,21 +490,22 @@ export const CALENDAR = {
     ],
     weekdays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
 };
-export const LOCATIONS = [
-    { id: "town", name: "Town centre", icon: "🏘️", traits: ["busy", "rain rush"], days: [28, 28, 28, 28], rain: 1, storm: 1, traffic: 1.3, shelter: 1.5, visitors: {}, street: "streetTown", marketDay: "Saturday",
-        blurb: "On the market square. Busy all year; when it rains, half the street comes in." },
-    { id: "dockside", name: "Dockside", icon: "⚓", traits: ["dockworkers", "wet", "stormy"], days: [28, 28, 28, 28], rain: 1.3, storm: 1.6, traffic: 1.1, shelter: 1.1, visitors: { dock: 2.5, scholar: 0.6 }, street: "streetTown", marketDay: "Friday",
-        blurb: "By the harbour, where the boats come in. Thirsty dockworkers, wet weather, the odd storm off the sea." },
-    { id: "mountainside", name: "Mountainside", icon: "🏔️", traits: ["long winter", "quiet", "cold"], days: [21, 21, 28, 42], rain: 1.2, storm: 1.2, traffic: 0.6, shelter: 0.6, street: "streetCountry",
-        cold: { seasons: ["autumn", "winter"], nights: ["spring", "summer"] },
-        visitors: { traveller: 2, farmer: 1.5, dock: 0.3, scholar: 0.6 },
-        blurb: "On the pass road, high up. Long winters, few passers-by, and everyone who comes in is glad of the fire." },
-    { id: "crossroads", name: "Crossroads", icon: "🪧", traits: ["travellers", "quiet"], days: [28, 28, 28, 28], rain: 1, storm: 1, traffic: 0.85, shelter: 0.4, visitors: { traveller: 2.5, dock: 0.4 }, street: "streetCountry", marketDay: "Wednesday",
-        blurb: "Where the roads meet, out among the fields. Travellers passing through; rain or shine, much the same." },
-    { id: "hills", name: "Hill country", icon: "🌳", traits: ["long summer", "gentle", "farmers"], days: [35, 35, 21, 21], rain: 0.8, storm: 0.4, traffic: 0.8, shelter: 0.7, visitors: { farmer: 2.5, traveller: 1.2, dock: 0.3 }, street: "streetCountry", marketDay: "Thursday",
-        cold: { seasons: ["winter"], nights: ["autumn"] },
-        blurb: "Among green hills and smallholdings. Long, gentle springs and summers; soft rain, hardly ever a storm." },
-];
+export const LOCATIONS = LOCATIONS_DATA.locations.map((l) => ({
+    id: l.id,
+    name: l.name,
+    icon: l.icon,
+    traits: l.text.cardChips,
+    blurb: l.text.card,
+    days: l.seasonDays,
+    rain: l.rainWeight,
+    storm: l.stormWeight,
+    cold: l.cold,
+    traffic: l.traffic,
+    shelter: l.shelter,
+    visitors: l.visitorWeights,
+    marketDay: l.marketDay,
+    street: l.streetSound,
+}));
 /** The gramophone (sound/gramophone.ts): its records, and how many play per winding. */
 export const GRAMOPHONE = {
     records: [
