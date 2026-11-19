@@ -39,6 +39,8 @@ In-world menus confirm with the pen tick; out-of-world choices with the piano (s
 
 Desk, House prices (its own screen now), Equipment (Upgrades tab: trays and seasoned oak), Bill of fare, Newspaper headings.
 
+Crafting, on one template (`src/ui/cook.ts`): choosing what to make is recipe cards (time, how many waiting, on the board or not, tags; the drawer says what one go makes and carries the blurb); building the dish pins a **result panel** on top (`resultPanel()`: the dish as it will come out, the tags the choices add lit), then the ingredient cards (the drawer says what each adds), then one main button whose sub-line says what's missing or who it's for (Cook, Bake or Boil). Steeping tea and garnishing a drink use the same panel and cards.
+
 ## To do
 
-Crafting screens on one template (station, a result panel with the dish's tags, servings and time, ingredient cards, a main button saying what happens); calendar, journal, snack bowls, pie safe, bin, hatch, unasked offer, setting a tray down, pause, the start screens.
+The station's own "What now?" list; calendar, journal, snack bowls, pie safe, bin, hatch, unasked offer, setting a tray down, pause, the start screens.

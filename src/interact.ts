@@ -11,7 +11,7 @@ import { applyGarnish, removeFromTray, servePatron, serveTable, garnishableDrink
 import { endDay, startNextDay, toggleInn } from "./day.js";
 import { compactDate, longDate } from "./calendar.js";
 import { gramophoneChanged, gramophoneWound, recordsReady, springLeft } from "./sound/gramophone.js";
-import { openSteepScreen } from "./ui/cook.js";
+import { openRecipeScreen, openSteepScreen } from "./ui/cook.js";
 import { closeAll, openMenu, replaceMenu, back } from "./ui/menu.js";
 import { openCookScreen } from "./ui/cook.js";
 import { openPieSafeScreen, openSnackScreen } from "./ui/larder.js";
@@ -278,16 +278,7 @@ export function askSetDown(g: Game): void {
 // Crafting menus
 
 function openCraftMenu(g: Game, slot: Slot): void {
-  const recipes = recipesFor(g, slot);
-  openMenu({
-    title: (slot.f.slots?.length ?? 1) > 1 ? `${slot.f.name}: ${slot.name.toLowerCase()}` : slot.f.name,
-    subtitle: "What will you make?",
-    items: recipes.map((r) => ({
-      label: `${r.icon} ${r.name}`,
-      sub: `${r.servings ? `about ${r.servings[0]} servings · ` : ""}${r.baseTags.join(", ")} · ~${r.minutes[0]} min${r.tended ? " · tended" : ""}`,
-      action: () => openCookScreen(g, slot, r),
-    })),
-  });
+  openRecipeScreen(g, slot);
 }
 
 /** What a place to cook is doing, in a few words. */

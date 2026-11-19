@@ -6,6 +6,13 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 109 · Nov 19, 2026 · deployed
+
+### Changed
+- **Cooking screens all work the same way.** Choosing what to make at a stove, oven or prep table is now a row of cards: how long each takes (and whether you must stay with it), how many guests are waiting for it, whether it's on the board, and its tags. Point at one for what a batch makes and its description. Dishes guests are waiting for come first.
+- **Building a dish shows the result first.** A panel at the top shows the dish as it will come out, with the tags your ingredients add lit up; below it, the ingredients in one row (point at one to see what it adds); then one button, **Cook**, **Bake** or **Boil**, that says what's still missing or who it's for. The recipe's description sits quietly under the title.
+- **Steeping tea and garnishing a drink** use the same panel and cards: the cup or drink as it will be, who it's for, and what each leaf or garnish adds.
+
 ## Build 108 · Nov 19, 2026 · deployed
 
 ### Added

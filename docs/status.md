@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 19, 2026 · build 108 (deployed) · https://inn-prototype.vercel.app
+Updated Nov 19, 2026 · build 109 (deployed) · https://inn-prototype.vercel.app
 
 History by build: [../CHANGELOG.md](../CHANGELOG.md). What the prototype is and how to play: [../README.md](../README.md).
 
@@ -26,9 +26,9 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
 
-## Built and deployed (Nov 19, builds 107–108)
+## Built and deployed (Nov 19, builds 107–109)
 
-- Build 108: UI pass 1 (rules in [specs/ui.md](specs/ui.md)): cards with a drawer when pointed at; desk tidied to two balanced rows; House prices its own screen; Equipment with an Upgrades tab and "You have n"; bill of fare with a pinned header, 7 + 7 dishes; newspaper headings
+- Builds 108–109: UI pass 1 (rules in [specs/ui.md](specs/ui.md)): cards with a drawer when pointed at; desk tidied to two balanced rows; House prices its own screen; Equipment with an Upgrades tab and "You have n"; bill of fare with a pinned header, 7 + 7 dishes; newspaper headings; crafting screens on one template (recipe cards, a result panel on top, ingredient cards, one button), steeping and garnishing too
 
 - Build 107: gramophone carries on where it stopped when wound again; background music after 90 s without music (six tracks); sounds for the desk and in-world menus (sitting down, papers, pen ticks, page turns, coins, the pause latch); The Last Candle jingle when turning in
 
