@@ -92,7 +92,7 @@ In build order. Each waits on the one it builds on.
 
 1. ~~#58 coin~~ (built, build 101)
 2. ~~#59 equipment costs coin~~ (built, build 102; secondhand moved to #66) · #60 upkeep you can see (licence, fuel, light, sundries, wear)
-3. #61 supplies: stock that runs out, suppliers, the order slip on the desk
+3. ~~#61 supplies~~ (built, not deployed): the pantry runs out; a Supplies card at the desk with a slip per supplier, sent for the carter or fetched yourself
 4. #62 deliveries: the carter, crates by the kitchen door (feeds #41, day two) · #63 shelf life · #64 ready-made goods
 5. Any time: #65 hearth cooking (bake kettle) · #66 the tinker and breakdowns
 6. Later: #67 equipment character and cookware · #68 the catalogue · #69 ideas not yet tasks
