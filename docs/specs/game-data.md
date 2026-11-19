@@ -52,12 +52,12 @@ Costs, prices, spoilage and as much of the economy as possible are kept in JSON 
 - **Anything can be served anywhere**, a soup at the counter included. The game's "stools get drinks only" rule goes when this is wired in.
 - **One margin for every dish.** The flat charge is per tray slot (0.5d), so a bowl carries more than a cup.
 - **Equipment comes in two types.** Crafting pieces (stoves, ovens, prep table, kettles, coffee pot) have slots, a crafting speed and fuel. Storage pieces (pie safe, barrels, urn) hold finished dishes and serve them by the dish's `pickUp`.
-  - **Gear** (kettles, coffee pots) is set on a stove's "Hot drinks" slot when arranging, and shows there. Each stove and the range has 2 of those slots (the bread oven has none). Without a stove there is no tea or coffee, until electric kettles.
+  - **Gear** (kettles, coffee pots) is set on a stove's "Hot drinks" slot when arranging, and shows there. Clicking a stove with gear on it asks whether to move the stove (the gear goes with it) or take a piece off. Selling a stove leaves its gear by the door. Each stove and the range has 2 of those slots (the bread oven has none). Without a stove there is no tea or coffee, until electric kettles.
   - **Utensils** (pots, pans, knives) are never placed: a slot uses the best one you own. A bigger pot adds servings to every batch; a better pan or knife crafts faster.
   - **Upgrade lines:** gear, utensils and trays each name a `line` and a `tier` (the copper kettle is `kettle` tier 2, and keeps its name).
   - **`serveSeconds`** on a storage piece: how long taking one serving out takes. Barrels 3 s a pint, the urn 2 s a cup, as today; a better tap could pour faster.
-  - **The bread and pastry case** keeps bread (pastries once they exist), as the pie safe keeps pies.
-  - **The urn is a tea safe:** tea is brewed at the kettle and kept hot in the urn. Today the urn brews its own; that changes when this is wired in.
+  - **The bread and pastry case** keeps up to 3 batches of bread (pastries once they exist). A finished batch can be lifted out of the oven to free it and carried to the case; slices are served from there.
+  - **The urn is a tea safe:** with an urn in the kitchen, the kettle offers "Tea for the urn", a whole pot of one tea (about 8 cups). The keeper carries it over and pours it in; the same tea tops it up.
   - **Barrels are storage** that hold ale or cider. Ale and cider are bought in for now; brewing comes with cellars. Barrel capacity in pints comes with supplies (#61).
   - **`shape`** is written as rows, so an L is `["##", "#."]`. The code handles rectangles only until an L-shaped piece exists.
   - **Fields for later** (fuel per hour #60, health and wear #66, tags a piece adds #67) are added when each lands.

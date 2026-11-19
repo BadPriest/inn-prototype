@@ -88,7 +88,7 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 
 In build order. Each waits on the one it builds on.
 
-0. **#71 game data in files** (in progress): costs, prices, dishes, equipment, suppliers and locations in [data/](../data/), checked by every build ([spec](specs/game-data.md)). Economy numbers and locations read from it already; equipment, dishes and snacks are next.
+0. **#71 game data in files** (in progress): costs, prices, dishes, equipment, suppliers and locations in [data/](../data/), checked by every build ([spec](specs/game-data.md)). Economy numbers, locations and equipment read from it already (kettles on the stove, the urn kept from the kettle, the bread case, utensils, trays with slots); dishes and snacks are next. Not deployed yet.
 
 1. ~~#58 coin~~ (built, build 101)
 2. ~~#59 equipment costs coin~~ (built, build 102; secondhand moved to #66) · #60 upkeep you can see (licence, fuel, light, sundries, wear)
