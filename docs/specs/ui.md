@@ -42,6 +42,8 @@ Desk, House prices (its own screen now), Equipment (Upgrades tab: trays and seas
 
 Crafting, on one template (`src/ui/cook.ts`): choosing what to make is recipe cards (time, how many waiting, on the board or not, tags; grown, it says what one go makes and carries the blurb); building the dish pins a **result panel** on top (`resultPanel()`: the dish as it will come out, the tags the choices add lit), then the ingredient cards (grown, each says what it adds), then one main button whose sub-line says what's missing or who it's for (Cook, Bake or Boil). Steeping tea and garnishing a drink use the same panel and cards.
 
+The rest of the kitchen side: the station's choices ("What now?", "Put back which?", "Empty which?") are small cards with an icon and one status line; snack bowls pin the bowl that's there (with its level) as the result panel; the pie safe has headed sections (from the oven, in the safe, on your tray) with slices as pips; offering something unasked, the bin, the hatch and setting a tray down lost their paragraphs (subtitle and flavour instead) and say what picking does.
+
 ## To do
 
-The station's own "What now?" list; calendar, journal, snack bowls, pie safe, bin, hatch, unasked offer, setting a tray down, pause, the start screens.
+Calendar, journal, pause, the start screens (location and inn pickers, welcome), the end-of-day summary, keys and controls.

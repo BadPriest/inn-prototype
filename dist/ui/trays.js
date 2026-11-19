@@ -99,10 +99,11 @@ export function openOfferScreen(g, p) {
             return; closeAll(); g.bus.emit({ type: "MenuSound", sound: "tick" }); serveUnasked(g, p, it); };
         return {
             title: `🃏 Something for ${p.name}?`,
-            subtitle: "Unasked",
+            subtitle: "A gift, on the house: it doesn't count as their order",
+            flavour: "It might be exactly what they needed.",
             view: {
-                html: `<p class="blurb">They didn't order it, so it won't count as their order. It's just a gift, and it might be exactly what they needed.</p>
-          ${grid(items.map((it, i) => itemCard(it, String(i), i === st.focus)))}`,
+                html: `<div class="sec-h"><h4>On your trays</h4><small>choose one to give</small></div>
+          ${grid(items.map((it, i) => itemCard(it, String(i), i === st.focus, { does: `Give it to ${p.name}` })))}`,
                 onPick: (v) => give(Number(v)),
                 onKey: gridKeys(() => items.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, give),
             },
@@ -136,15 +137,15 @@ export function openBinScreen(g) {
         };
         return {
             title: "🗑️ Scrap bin",
-            subtitle: "For the hens",
+            subtitle: "Throw away something on your trays",
+            flavour: "Nothing's wasted here: what goes in the bin goes to the hens.",
             view: {
-                html: `<p class="blurb">Nothing's wasted here: what goes in the bin goes to the hens.</p>
-          <div class="need">Pick what to throw away:</div>${grid(items.map((it, i) => itemCard(it, String(i), i === st.focus)))}`,
+                html: `<div class="sec-h"><h4>On your trays</h4><small>choose what to throw away</small></div>${grid(items.map((it, i) => itemCard(it, String(i), i === st.focus, { does: "Throw it away" })))}`,
                 onPick: (v) => toss(Number(v)),
                 onKey: gridKeys(() => items.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, toss),
             },
             items: [{
-                    label: "Everything on your trays", sub: `${items.length} item${items.length === 1 ? "" : "s"}`, button: "secondary",
+                    label: "Throw it all away", sub: `everything on your trays · ${items.length} item${items.length === 1 ? "" : "s"}`, button: "secondary",
                     action: () => { for (const it of trayItems(g))
                         removeFromTray(g, it); g.say("You scrape your trays clean."); g.bus.emit({ type: "MenuSound", sound: "tick" }); closeAll(); },
                 }],
@@ -175,8 +176,9 @@ export function openHatchScreen(g) {
         };
         return {
             title: "🪟 Kitchen hatch",
+            subtitle: "Dishes ready to take out",
             view: {
-                html: `<div class="need">Pick a dish to take:</div>${grid(g.hatch.map((it, i) => itemCard(it, String(i), i === st.focus)))}`,
+                html: `<div class="sec-h"><h4>Ready</h4><small>choose one to take</small></div>${grid(g.hatch.map((it, i) => itemCard(it, String(i), i === st.focus, { does: "Put it on your tray" })))}`,
                 onPick: (v) => take(Number(v)),
                 onKey: gridKeys(() => g.hatch.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, take),
             },
@@ -195,13 +197,16 @@ export function openSetDownScreen(g) {
             pick: String(i),
             icon: t.items.map((x) => iconFor(x.recipeId, x.garnish) || "🍽").join(""),
             name: i === 0 ? "Left tray" : "Right tray",
-            note: t.items.map((x) => x.name).join(", "),
+            status: t.items.map((x) => x.name).join(", "),
             focus: i === st.focus,
+            detail: "Sets it on the counter or the nearest free table. At a table where people are waiting, you can serve them all from it.",
+            does: "Set this tray down",
         }));
         return {
             title: "Set down which tray?",
+            subtitle: "On the counter or a nearby table, to free your hands",
             view: {
-                html: `<p class="blurb">On the counter or a nearby table, to free your hands. On a table where people are waiting, you can serve them all from it.</p>${grid(cards)}`,
+                html: grid(cards, { cols: 2 }),
                 onPick: (v) => put(Number(v)),
                 onKey: gridKeys(() => 2, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, put),
             },

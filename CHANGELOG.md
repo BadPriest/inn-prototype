@@ -6,6 +6,15 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 111 · Nov 19, 2026 · deployed
+
+### Changed
+- **The rest of the kitchen's screens match the cooking ones.**
+  - A station's choices ("What now?", "Put back which?", "Empty which?") are small cards with an icon and one line each, not a plain list.
+  - **Snack bowls** show the bowl that's out at the top, with how much is left; each snack says whether it makes guests thirsty, and grows to say what it is and whether picking it tops up or swaps the bowl.
+  - **The pie safe** is in headed sections (from the oven, in the safe, on your tray), with slices shown as dots and day-old pies marked.
+  - Offering something unasked, the scrap bin, the kitchen hatch and setting a tray down lost their paragraphs and say what picking does ("Give it to Ana", "Throw it away"). The bin's button is now "Throw it all away".
+
 ## Build 110 · Nov 19, 2026 · deployed
 
 ### Changed

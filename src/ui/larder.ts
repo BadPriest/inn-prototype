@@ -1,12 +1,13 @@
 // Card screens for what's already made: the snack bowl on a table, and the pie safe.
-// Same look and handling as cooking (see cards.ts).
+// Same template as cooking (docs/specs/ui.md): what's there now pinned on top, then cards to pick.
 
-import { SNACKS, TUNING } from "../data.js";
+import { SNACKS } from "../data.js";
 import type { Game } from "../game.js";
 import { returnSlice, storePie, takeSlice } from "../crafting.js";
 import { trayItems, trayRoomFor } from "../serving.js";
 import { closeAll, openMenu, replaceMenu, type MenuSpec } from "./menu.js";
-import { card, gridKeys, type CardSpec } from "./cards.js";
+import { grid, gridKeys, type CardSpec } from "./cards.js";
+import { resultPanel } from "./cook.js";
 
 // ---------------------------------------------------------------------------
 // Snacks: a complimentary bowl on a table. Pick a card to set it out, top it up, or swap it.
@@ -31,36 +32,32 @@ function snackSpec(g: Game, key: string, st: { focus: number }): MenuSpec {
     g.bus.emit({ type: "MenuSound", sound: "tick" });
     closeAll();
   };
-  const cards: CardSpec[] = SNACKS.map((sn, i) => ({
-    pick: String(i),
-    icon: sn.icon,
-    name: sn.name,
-    tags: sn.tags,
-    note: bowl?.snack === sn.id ? (bowl.left < 0.15 ? `on the ${where} · top it up` : `on the ${where} now`) : sn.thirsty >= 0.25 ? "makes them thirsty" : "easy on the throat",
-    on: bowl?.snack === sn.id,
-    focus: i === st.focus,
-  }));
-  const focused = SNACKS[st.focus];
-  const left = bowl ? (bowl.left < 0.15 ? "empty" : `about ${Math.round(bowl.left * 100)}% left`) : "";
-  const html = `
-    <p class="blurb">${where === "counter" ? "A bowl on the counter, free to the stools beside it." : "A bowl on the table, free to whoever sits there."} Salty ones make people thirsty, and thirsty people order drinks.</p>
-    ${bowl && current ? `<div class="dish slim"><span class="ic">${current.icon}</span><div>
-        <div class="nm">${current.name} on the ${where}</div>
-        <div class="meter"><span style="width:${Math.round(bowl.left * 100)}%"></span></div>
-        <div class="meta">${left}</div></div></div>` : ""}
-    <div class="need">${bowl ? "Pick one to top up or swap:" : "Pick one to set out:"}</div>
-    <div class="cards">${cards.map(card).join("")}</div>
-    ${focused?.blurb ? `<p class="aside">${focused.icon} ${focused.blurb}</p>` : ""}`;
+  const cards: CardSpec[] = SNACKS.map((sn, i) => {
+    const here = bowl?.snack === sn.id;
+    return {
+      pick: String(i), icon: sn.icon, name: sn.name, tags: sn.tags, on: here, focus: i === st.focus,
+      status: here ? (bowl!.left < 0.15 ? "empty: top it up" : `on the ${where} now`) : sn.thirsty >= 0.25 ? "makes them thirsty" : "easy on the throat",
+      tone: here && bowl!.left < 0.15 ? "warn" : here ? "good" : undefined,
+      detail: sn.blurb,
+      does: here ? "Top it up" : bowl ? `Swap the ${current?.name.toLowerCase()} for this` : "Set out a bowl",
+    };
+  });
+  const pct = bowl ? Math.round(bowl.left * 100) : 0;
+  const now = bowl && current
+    ? resultPanel({ icon: current.icon, name: `${current.name} on the ${where}`, tags: current.tags,
+        meta: `<div class="meter"><span style="width:${pct}%"></span></div>${bowl.left < 0.15 ? "Empty" : `About ${pct}% left`}` })
+    : resultPanel({ icon: "🥣", name: `No bowl on the ${where}`, tags: [], meta: "Pick a snack to set one out", empty: true });
   return {
     title: where === "counter" ? "🥜 Snacks for the counter" : "🥜 Snacks for the table",
-    subtitle: "On the house",
+    subtitle: `On the house${where === "counter" ? ", for the stools beside it" : ""} · salty ones make guests thirsty, and thirsty guests order drinks`,
     view: {
-      html,
+      pinned: now,
+      html: `<div class="sec-h"><h4>Snacks</h4><small>${bowl ? "top up or swap" : "choose one"}</small></div>${grid(cards)}`,
       onPick: (v) => setOut(Number(v)),
       onKey: gridKeys(() => SNACKS.length, () => st.focus, (i) => { st.focus = i; refresh(); }, setOut),
     },
     items: bowl
-      ? [{ label: "Clear the bowl away", button: "secondary" as const, action: () => { g.bowls.delete(key); g.say("You clear the snack bowl away."); closeAll(); } }]
+      ? [{ label: "Clear the bowl away", button: "secondary" as const, action: () => { g.bowls.delete(key); g.say("You clear the snack bowl away."); g.bus.emit({ type: "MenuSound", sound: "tick" }); closeAll(); } }]
       : [],
   };
 }
@@ -82,6 +79,7 @@ function pieSpec(g: Game, st: { focus: number }): MenuSpec {
   const slices = trayItems(g).filter((i) => i.recipeId === "pie" && !i.whole);
   const wholes = trayItems(g).filter((i) => i.recipeId === "pie" && i.whole);
   const room = trayRoomFor(g, "food");
+  const full = g.pieSafe.length >= g.pieSafeCapacity;
   // One list for the keyboard: whole pies to put away, then pies in the safe, then slices you could put back.
   const picks = [...wholes.map((w) => `store:${w.id}`), ...g.pieSafe.map((p) => `take:${p.id}`), ...slices.map((s) => `back:${s.id}`)];
   st.focus = Math.min(st.focus, Math.max(0, picks.length - 1));
@@ -99,42 +97,35 @@ function pieSpec(g: Game, st: { focus: number }): MenuSpec {
     refresh();
   };
   const store: CardSpec[] = wholes.map((w, i) => ({
-    pick: `store:${w.id}`,
-    icon: "🥧",
-    name: w.name,
-    note: `${pips(w.whole ?? 0, w.whole ?? 0)}<br>whole, from the oven: put it away`,
-    tags: w.tags,
-    off: g.pieSafe.length >= g.pieSafeCapacity,
-    focus: i === st.focus,
+    pick: `store:${w.id}`, icon: "🥧", name: w.name, tags: w.tags, off: full, focus: i === st.focus,
+    fact: pips(w.whole ?? 0, w.whole ?? 0), status: full ? "the safe is full" : "whole, from the oven", tone: full ? "warn" : undefined,
+    detail: `${w.whole ?? 0} slices once it's in the safe.`,
+    does: full ? "Sell or serve a pie first" : "Put it in the safe",
   }));
-  const pies: CardSpec[] = g.pieSafe.map((p, i0) => { const i = wholes.length + i0;
+  const pies: CardSpec[] = g.pieSafe.map((p, i0) => {
     const old = g.day - p.bakedDay >= 1;
     return {
-      pick: `take:${p.id}`,
-      icon: "🥧",
-      name: p.item.name.replace(/^Day-old (\w)/, (_m, c: string) => c.toUpperCase()),
-      note: `${pips(p.left, p.total)}<br>${p.left} of ${p.total} slices${old ? " · day-old" : ""}`,
-      tags: p.item.tags,
-      off: !room,
-      focus: i === st.focus,
+      pick: `take:${p.id}`, icon: "🥧", name: p.item.name.replace(/^Day-old (\w)/, (_m, c: string) => c.toUpperCase()),
+      tags: p.item.tags, off: !room, focus: wholes.length + i0 === st.focus,
+      fact: pips(p.left, p.total), status: `${p.left} of ${p.total} left${old ? " · day-old" : ""}`, tone: old ? "warn" : undefined,
+      detail: old ? "Baked yesterday: it goes to the hens tomorrow." : "Baked today.",
+      does: room ? "Cut a slice onto your tray" : "No room on your trays",
     };
   });
   const back: CardSpec[] = slices.map((s, i) => ({
-    pick: `back:${s.id}`,
-    icon: "↩️",
-    name: s.name,
-    note: s.ticketName ? `was for ${s.ticketName}` : "put it back",
-    focus: wholes.length + g.pieSafe.length + i === st.focus,
+    pick: `back:${s.id}`, icon: "🍰", name: s.name, focus: wholes.length + g.pieSafe.length + i === st.focus,
+    status: s.ticketName ? `was for ${s.ticketName}` : "on your tray", tags: s.tags,
+    does: "Put it back in the pie",
   }));
   const html = `
-    <p class="blurb">Pies keep here for the day they're baked. Tomorrow they're day-old; the day after, they go to the hens.</p>
-    ${store.length ? `<div class="need">${g.pieSafe.length >= g.pieSafeCapacity ? "The pie safe is full." : "From the oven (pick to put away):"}</div><div class="cards">${store.map(card).join("")}</div>` : ""}
-    ${pies.length ? `<div class="need">${room ? "Pick a pie to cut a slice:" : "No room on your trays for a slice."}</div><div class="cards">${pies.map(card).join("")}</div>`
-      : `<div class="need">No whole pies. Bake one in the oven.</div>`}
-    ${back.length ? `<div class="need" style="margin-top:12px">On your tray (pick to put back):</div><div class="cards">${back.map(card).join("")}</div>` : ""}`;
+    ${store.length ? `<div class="sec-h"><h4>From the oven</h4><small>${full ? "the safe is full" : "put it away"}</small></div>${grid(store)}` : ""}
+    <div class="sec-h"><h4>In the safe</h4><small>${g.pieSafe.length} of ${g.pieSafeCapacity}${pies.length ? (room ? " · cut a slice" : " · no room on your trays") : ""}</small></div>
+    ${pies.length ? grid(pies) : `<p class="lead">No pies. Bake one in the oven, then bring it here.</p>`}
+    ${back.length ? `<div class="sec-h"><h4>On your tray</h4><small>put a slice back</small></div>${grid(back)}` : ""}`;
   return {
     title: "🥧 Pie safe",
-    subtitle: "Baked fresh, sliced to order",
+    subtitle: "Whole pies, sold by the slice",
+    flavour: "Pies keep for the day they're baked. Tomorrow they're day-old; the day after, they go to the hens.",
     view: {
       html,
       onPick: use,

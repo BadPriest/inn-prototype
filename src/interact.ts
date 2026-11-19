@@ -12,7 +12,8 @@ import { endDay, startNextDay, toggleInn } from "./day.js";
 import { compactDate, longDate } from "./calendar.js";
 import { gramophoneChanged, gramophoneWound, recordsReady, springLeft } from "./sound/gramophone.js";
 import { openRecipeScreen, openSteepScreen } from "./ui/cook.js";
-import { closeAll, openMenu, replaceMenu, back } from "./ui/menu.js";
+import { closeAll, openMenu, replaceMenu, back, type MenuSpec } from "./ui/menu.js";
+import { grid, gridKeys, type CardSpec } from "./ui/cards.js";
 import { openCookScreen } from "./ui/cook.js";
 import { openPieSafeScreen, openSnackScreen } from "./ui/larder.js";
 import { openBinScreen, openGarnishScreen, openHatchScreen, openOfferScreen, openSetDownScreen } from "./ui/trays.js";
@@ -370,7 +371,34 @@ function sideActs(g: Game, f: Furniture, short: "put back" | "empty it"): Statio
 function runSide(g: Game, f: Furniture, short: "put back" | "empty it", title: string): void {
   const acts = sideActs(g, f, short);
   if (acts.length === 1) { acts[0].run(); return; }
-  openMenu({ title: f.name, subtitle: title, items: acts.map((a) => ({ label: a.label, sub: a.sub, action: () => { closeAll(); g.bus.emit({ type: "MenuSound", sound: "tick" }); a.run(); } })) });
+  openActCards(g, f, title, acts);
+}
+
+/** Icons for station choices, by what they do. */
+const ACT_ICON: Record<string, string> = { "pick up": "🍽️", "take a serving": "🥣", pour: "☕", steep: "🍵", cook: "🔥", "put back": "↩️", "empty it": "🗑️" };
+
+/** A choice of things to do at a station, as cards: what it is, and where (which hob, how many left). */
+function openActCards(g: Game, f: Furniture, subtitle: string, acts: StationAct[]): void {
+  const st = { focus: 0 };
+  const run = (i: number) => { const a = acts[i]; if (!a) return; closeAll(); g.bus.emit({ type: "MenuSound", sound: "tick" }); a.run(); };
+  const build = (): MenuSpec => {
+    const cards: CardSpec[] = acts.map((a, i) => {
+      // A label may start with its own icon ("🍲 Take a serving of stew"); otherwise one by what it does.
+      const m = a.label.match(/^(\p{Extended_Pictographic}\uFE0F?)\s+(.*)$/u);
+      return { pick: String(i), icon: m ? m[1] : ACT_ICON[a.short] ?? "•", name: m ? m[2] : a.label, status: a.sub, focus: i === st.focus };
+    });
+    return {
+      title: f.name,
+      subtitle,
+      view: {
+        html: grid(cards, { cols: Math.min(4, cards.length) }),
+        onPick: (v) => run(Number(v)),
+        onKey: gridKeys(() => cards.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, run),
+      },
+      items: [],
+    };
+  };
+  openMenu(build());
 }
 
 /**
@@ -412,11 +440,7 @@ function useStation(g: Game, f: Furniture): void {
     g.say(job?.done ? "It's done, waiting for room on the shelf." : "Still cooking. Hold Space here to hurry it a little.");
     return;
   }
-  openMenu({
-    title: f.name,
-    subtitle: "What now?",
-    items: plan.choices.map((a) => ({ label: a.label, sub: a.sub, action: () => { closeAll(); g.bus.emit({ type: "MenuSound", sound: "tick" }); a.run(); } })),
-  });
+  openActCards(g, f, "What now?", plan.choices);
 }
 
 // ---------------------------------------------------------------------------

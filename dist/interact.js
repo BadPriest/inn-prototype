@@ -10,7 +10,8 @@ import { endDay, startNextDay, toggleInn } from "./day.js";
 import { compactDate, longDate } from "./calendar.js";
 import { gramophoneChanged, gramophoneWound, recordsReady, springLeft } from "./sound/gramophone.js";
 import { openRecipeScreen, openSteepScreen } from "./ui/cook.js";
-import { closeAll, openMenu, back } from "./ui/menu.js";
+import { closeAll, openMenu, replaceMenu, back } from "./ui/menu.js";
+import { grid, gridKeys } from "./ui/cards.js";
 import { openPieSafeScreen, openSnackScreen } from "./ui/larder.js";
 import { openBinScreen, openGarnishScreen, openHatchScreen, openOfferScreen, openSetDownScreen } from "./ui/trays.js";
 import { openBillOfFare as openBillOfFareScreen, openDeskScreen } from "./ui/desk.js";
@@ -442,7 +443,33 @@ function runSide(g, f, short, title) {
         acts[0].run();
         return;
     }
-    openMenu({ title: f.name, subtitle: title, items: acts.map((a) => ({ label: a.label, sub: a.sub, action: () => { closeAll(); g.bus.emit({ type: "MenuSound", sound: "tick" }); a.run(); } })) });
+    openActCards(g, f, title, acts);
+}
+/** Icons for station choices, by what they do. */
+const ACT_ICON = { "pick up": "🍽️", "take a serving": "🥣", pour: "☕", steep: "🍵", cook: "🔥", "put back": "↩️", "empty it": "🗑️" };
+/** A choice of things to do at a station, as cards: what it is, and where (which hob, how many left). */
+function openActCards(g, f, subtitle, acts) {
+    const st = { focus: 0 };
+    const run = (i) => { const a = acts[i]; if (!a)
+        return; closeAll(); g.bus.emit({ type: "MenuSound", sound: "tick" }); a.run(); };
+    const build = () => {
+        const cards = acts.map((a, i) => {
+            // A label may start with its own icon ("🍲 Take a serving of stew"); otherwise one by what it does.
+            const m = a.label.match(/^(\p{Extended_Pictographic}\uFE0F?)\s+(.*)$/u);
+            return { pick: String(i), icon: m ? m[1] : ACT_ICON[a.short] ?? "•", name: m ? m[2] : a.label, status: a.sub, focus: i === st.focus };
+        });
+        return {
+            title: f.name,
+            subtitle,
+            view: {
+                html: grid(cards, { cols: Math.min(4, cards.length) }),
+                onPick: (v) => run(Number(v)),
+                onKey: gridKeys(() => cards.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, run),
+            },
+            items: [],
+        };
+    };
+    openMenu(build());
 }
 /**
  * R (or Q): put something down. At the station a dish came from, it goes back there (into its pot, onto
@@ -489,11 +516,7 @@ function useStation(g, f) {
         g.say(job?.done ? "It's done, waiting for room on the shelf." : "Still cooking. Hold Space here to hurry it a little.");
         return;
     }
-    openMenu({
-        title: f.name,
-        subtitle: "What now?",
-        items: plan.choices.map((a) => ({ label: a.label, sub: a.sub, action: () => { closeAll(); g.bus.emit({ type: "MenuSound", sound: "tick" }); a.run(); } })),
-    });
+    openActCards(g, f, "What now?", plan.choices);
 }
 // ---------------------------------------------------------------------------
 // Journal: what happened, never the answer.
