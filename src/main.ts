@@ -11,7 +11,7 @@ import { openCalendar } from "./ui/calendar.js";
 import { newWeather } from "./weather.js";
 import { Game } from "./game.js";
 import { dist, type Vec } from "./world.js";
-import { simDelta, updateClock, load, beginDay, save } from "./day.js";
+import { simDelta, updateClock, load, beginDay, save, resetSave } from "./day.js";
 import { longDate, shortDate } from "./calendar.js";
 import { updateCrafting } from "./crafting.js";
 import { initTalk, updatePatrons } from "./patrons.js";
@@ -29,7 +29,7 @@ import { computeIsoView, drawIso, isoPick } from "./ui/render-iso.js";
 import { P, screenDir } from "./ui/proj.js";
 import { initPad, padActive, padGlyphs, pollPad } from "./gamepad.js";
 import { updateHud, initDebug, toggleDebug } from "./ui/hud.js";
-import { back, initMenus, menuKey, menuOpen } from "./ui/menu.js";
+import { askChoice, back, initMenus, menuKey, menuOpen } from "./ui/menu.js";
 import { initSound, isMuted, soundscape, toggleMute, unlockAudio } from "./sound.js";
 import { setBusVolume } from "./sound/engine.js";
 import { updateWinding } from "./sound/gramophone.js";
@@ -756,6 +756,7 @@ function openPause(): void {
         <button class="set-btn" data-pick="objectives">✅ Objectives <small>${g.showObjectives ? "shown" : "hidden"}</small></button>
         <button class="set-btn" data-pick="howto">❔ How to play</button>
         <button class="set-btn" data-pick="keys">⌨️ Keys and controls <small>H</small></button>
+        <button class="set-btn" data-pick="restart">🗑️ Start over <small>a new game: every day so far is forgotten</small></button>
       </div>`;
     } else if (pauseTab === "sound") {
       panel = `<div class="set-list">
@@ -783,6 +784,11 @@ function openPause(): void {
           if (k === "tab") { pauseTab = arg as PauseTab; redraw(); }
           else if (k === "objectives") { g.showObjectives = !g.showObjectives; redraw(); }
           else if (k === "keys") openKeys(true);
+          else if (k === "restart") askChoice({
+            title: "Start over?",
+            body: `<p>The inn, the purse, the journal and every regular you've met are forgotten, and a new game begins.</p><p class="muted">This can't be undone.</p>`,
+            yes: "Keep playing", no: "Start over", onYes: () => back(), onNo: () => { resetSave(); location.reload(); },
+          });
           else if (k === "howto") openMenu({ title: "How to play", body: welcomeBody(), items: [{ label: "Back", button: "secondary", action: () => back() }] });
           else if (k === "mute") { toggleMute(); redraw(); }
           else if (k === "iso") { toggleIso(); redraw(); }
@@ -902,14 +908,10 @@ if (g.location) {
       beginDay(g); // the morning again, at the chosen place
       const begin = (guided: boolean) => { if (guided) startWalkthrough(g); save(g); closeAll(); };
       closeAll();
-      openMenu({
+      askChoice({
         title: "Play the tutorial?",
-        modal: true,
         body: `<p>Nine small steps through your first morning: the bill of fare, a pot of stew, your first guest served, and a first buy. Each one puts a little money in the purse.</p><p class="muted">Or skip it and find your own way.</p>`,
-        items: [
-          { label: "Yes, show me", button: "primary", confirmSound: true, action: () => begin(true) },
-          { label: "No, skip it", button: "secondary", confirmSound: true, action: () => begin(false) },
-        ],
+        yes: "Yes, show me", no: "No, skip it", onYes: () => begin(true), onNo: () => begin(false),
       });
     });
   };

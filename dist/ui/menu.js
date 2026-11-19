@@ -29,6 +29,18 @@ export function openMenu(spec) {
     render();
 }
 /** Replace the current menu (for multi-step flows without growing the back stack). */
+/** A yes-or-no question in a modal: the main choice first, the other beside it. */
+export function askChoice(o) {
+    openMenu({
+        title: o.title,
+        modal: true,
+        body: o.body,
+        items: [
+            { label: o.yes, button: "primary", confirmSound: true, action: o.onYes },
+            { label: o.no, button: "secondary", confirmSound: true, action: o.onNo },
+        ],
+    });
+}
 export function replaceMenu(spec) {
     stack.pop();
     openMenu(spec);
