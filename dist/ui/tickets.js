@@ -20,7 +20,7 @@ function makeCard(o) {
     const el = document.createElement("div");
     el.className = "ticket pop";
     el.innerHTML = `<span class="tk-ic">${iconFor(o.recipeId, o.wantGarnish)}</span><span class="tk-label"></span>`
-        + `<div class="tk-ring"><div class="tk-plaque">${o.no}</div></div>`;
+        + `<div class="tk-ring"><div class="tk-plaque"><span>${o.no}</span></div></div>`;
     el.querySelector(".tk-label").textContent = o.label;
     el.title = o.label;
     return { el, ring: el.querySelector(".tk-ring"), born: performance.now() };

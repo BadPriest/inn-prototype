@@ -875,12 +875,15 @@ const PAUSE_TABS = [
     { id: "game", label: "▶ Game" }, { id: "sound", label: "🔊 Sound" }, { id: "display", label: "🔍 Display" },
 ];
 let pauseTab = "game";
+/** Which row of the pause screen the keys and controller are on: -1 is none (Enter resumes). */
+let pauseFocus = -1;
 function slider(key, icon, name, sub, value, min, max, step, shown) {
     return `<label class="set-row"><span class="set-name">${icon} ${name}<small>${sub}</small></span>
     <input type="range" min="${min}" max="${max}" step="${step}" value="${value}" data-set="${key}">
     <b class="set-val" data-val="${key}">${shown}</b></label>`;
 }
 function openPause() {
+    pauseFocus = -1;
     g.paused = true;
     g.bus.emit({ type: "Paused" });
     const build = () => {
@@ -921,6 +924,7 @@ function openPause() {
                     const [k, arg] = v.split(":");
                     if (k === "tab") {
                         pauseTab = arg;
+                        pauseFocus = -1;
                         redraw();
                     }
                     else if (k === "objectives") {
@@ -957,15 +961,58 @@ function openPause() {
                     }
                 },
                 onKey: (e) => {
-                    if (e.key !== "Tab")
-                        return false;
-                    e.preventDefault();
-                    const i = PAUSE_TABS.findIndex((t) => t.id === pauseTab);
-                    pauseTab = PAUSE_TABS[(i + (e.shiftKey ? -1 : 1) + PAUSE_TABS.length) % PAUSE_TABS.length].id;
-                    redraw();
-                    return true;
+                    const root = document.getElementById("menu");
+                    const rows = [...root.querySelectorAll(".set-list > *")];
+                    const row = rows[pauseFocus];
+                    const slider = row?.querySelector("input[type=range]");
+                    const show = () => rows.forEach((r, i) => r.classList.toggle("focus", i === pauseFocus));
+                    switch (e.key) {
+                        case "Tab": {
+                            e.preventDefault();
+                            const i = PAUSE_TABS.findIndex((t) => t.id === pauseTab);
+                            pauseTab = PAUSE_TABS[(i + (e.shiftKey ? -1 : 1) + PAUSE_TABS.length) % PAUSE_TABS.length].id;
+                            pauseFocus = -1;
+                            redraw();
+                            return true;
+                        }
+                        case "ArrowDown":
+                        case "s":
+                        case "S":
+                            pauseFocus = Math.min(rows.length - 1, pauseFocus + 1);
+                            show();
+                            return true;
+                        case "ArrowUp":
+                        case "w":
+                        case "W":
+                            pauseFocus = Math.max(-1, pauseFocus - 1);
+                            show();
+                            return true;
+                        case "ArrowLeft":
+                        case "ArrowRight":
+                        case "a":
+                        case "A":
+                        case "d":
+                        case "D": {
+                            if (!slider)
+                                return true;
+                            const dir = e.key === "ArrowLeft" || e.key.toLowerCase() === "a" ? -1 : 1;
+                            const v = Math.max(Number(slider.min), Math.min(Number(slider.max), Number(slider.value) + dir * Number(slider.step || 1)));
+                            slider.value = String(v);
+                            slider.dispatchEvent(new Event("input"));
+                            slider.dispatchEvent(new Event("change"));
+                            return true;
+                        }
+                        case " ":
+                        case "Enter":
+                            if (!row || slider)
+                                return e.key === " "; // nothing picked: Enter (□) resumes
+                            row.click();
+                            return true;
+                    }
+                    return false;
                 },
                 onMount: (root) => {
+                    root.querySelectorAll(".set-list > *").forEach((r, i) => r.classList.toggle("focus", i === pauseFocus));
                     root.querySelectorAll("input[data-set]").forEach((el) => {
                         const key = el.dataset.set;
                         const label = root.querySelector(`[data-val="${key}"]`);

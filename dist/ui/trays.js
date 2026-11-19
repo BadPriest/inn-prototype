@@ -1,12 +1,30 @@
 // Card screens for what's on your trays: garnishing a drink, offering something unasked, the scrap bin,
 // the kitchen hatch, and choosing which tray to set down. Same look and handling as cooking (cards.ts).
 import { have } from "../stock.js";
-import { garnishesFor } from "../data.js";
+import { garnishById, garnishesFor } from "../data.js";
 import { applyGarnish, garnishableDrinks, iconFor, pickupFromHatch, removeFromTray, serveUnasked, setTrayDown, takeFromHatch, trayItems, } from "../serving.js";
 import { closeAll, openMenu, replaceMenu } from "./menu.js";
 import { grid, gridKeys } from "./cards.js";
 import { resultPanel } from "./cook.js";
 /** A dish or drink as a card. */
+/** The open order each dish or drink would go to: the guest it was made for, else the oldest order for it not already taken. */
+function ordersFor(g, items) {
+    const out = new Map();
+    const taken = new Set();
+    const open = (it) => g.orders.filter((o) => o.open && o.recipeId === it.recipeId && !taken.has(o.id)).sort((a, b) => a.placedAt - b.placedAt);
+    for (const pass of [true, false])
+        for (const it of items) {
+            if (out.has(it))
+                continue;
+            const o = pass ? open(it).find((x) => x.patronId === it.ticket) : open(it)[0];
+            if (o) {
+                out.set(it, o);
+                taken.add(o.id);
+            }
+        }
+    return out;
+}
+const plaque = (no) => `<span class="plaque-sm"><span>${no}</span></span>`;
 function itemCard(it, pick, focus, extra = {}) {
     return {
         pick,
@@ -53,17 +71,32 @@ function garnishSpec(g, st) {
     const go = () => {
         if (!gar)
             return;
+        if (order) {
+            drink.ticket = order.patronId;
+            drink.ticketName = g.patron(order.patronId)?.name;
+        }
         applyGarnish(g, drink, gar.id);
         g.bus.emit({ type: "MenuSound", sound: "tick" });
         closeAll();
     };
-    const drinkCards = drinks.map((d, i) => itemCard(d, `d:${i}`, picks[st.focus] === `d:${i}`, { on: i === st.drink }));
+    const orders = ordersFor(g, drinks);
+    const order = orders.get(drink);
+    const asked = order?.wantGarnish;
+    const drinkCards = drinks.map((d, i) => {
+        const o = orders.get(d);
+        const who = o ? g.patron(o.patronId)?.name : undefined;
+        return itemCard(d, `d:${i}`, picks[st.focus] === `d:${i}`, {
+            on: i === st.drink,
+            fact: o ? `${plaque(o.no)}${who ?? ""}` : undefined,
+            status: o?.wantGarnish ? `asked for ${garnishById(o.wantGarnish)?.name.toLowerCase() ?? "a garnish"}` : d.ticketName && !o ? `for ${d.ticketName}` : undefined,
+        });
+    });
     const garnishCards = suits.map((x, i) => {
         const adds = x.tags.filter((t) => !drink.tags.includes(t));
         const left = have(g, x.id);
         return {
             pick: `g:${i}`, icon: x.icon, name: x.name, tags: x.tags, on: i === st.garnish, off: left < 1, focus: picks[st.focus] === `g:${i}`,
-            status: left < 1 ? "none in the pantry" : `${left} in the pantry`, tone: left < 1 ? "muted" : undefined,
+            status: x.id === asked ? `asked for · ${left} in the pantry` : left < 1 ? "none in the pantry" : `${left} in the pantry`, tone: x.id === asked ? "good" : left < 1 ? "muted" : undefined,
             detail: adds.length ? `Adds ${adds.join(" and ")} to the ${drink.name.toLowerCase()}.` : `Nothing new for the ${drink.name.toLowerCase()}.`,
             does: i === st.garnish ? "Take it off" : "Use this garnish",
         };
@@ -80,7 +113,7 @@ function garnishSpec(g, st) {
             pinned: resultPanel({
                 icon: iconFor(drink.recipeId, gar?.id), name: gar ? `${drink.name} with ${gar.name.toLowerCase()}` : drink.name,
                 tags: after, lit: after.filter((t) => !drink.tags.includes(t)), meta: gar ? "Garnished, ready to serve" : "Pick a garnish to see what it becomes",
-                forWho: drink.ticketName ? `For <b>${drink.ticketName}</b>` : undefined, empty: !gar,
+                forWho: order ? `${plaque(order.no)}For <b>${g.patron(order.patronId)?.name ?? "a guest"}</b>${asked ? `, who asked for ${garnishById(asked)?.name.toLowerCase() ?? "a garnish"}` : ""}` : drink.ticketName ? `For <b>${drink.ticketName}</b>` : undefined, empty: !gar,
             }),
             html,
             onPick: use,

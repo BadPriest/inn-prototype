@@ -417,8 +417,11 @@ export function drawPatronWords(ctx: CanvasRenderingContext2D, g: Game, p: Patro
     ctx.fillStyle = "#222";
     const digits = String(o.no).length;
     ctx.font = `700 ${Math.floor(r * (digits >= 3 ? PLAQUE_FONT * 0.72 : digits === 2 ? PLAQUE_FONT * 0.86 : PLAQUE_FONT))}px "Playfair Display", Georgia, serif`;
-    ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillText(String(o.no), x, lineY + 1);
+    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+    const m = ctx.measureText(String(o.no));
+    const gx = x - (m.actualBoundingBoxRight - m.actualBoundingBoxLeft) / 2;
+    const gy = lineY + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+    ctx.fillText(String(o.no), gx, gy);
     lineY -= ts * 0.62;
   }
   // Outcome marker (debug-visible state)
