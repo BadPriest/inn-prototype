@@ -21,6 +21,8 @@ import { initLight, updateLamps } from "./ui/light.js";
 import { updateFrontDoor } from "./door.js";
 import { cancelPour, updatePour } from "./serving.js";
 import { watchObjectives } from "./objectives.js";
+import { initWalkthrough, startWalkthrough, updateWalkthrough } from "./walkthrough.js";
+import { updateMenuGuide } from "./ui/quest.js";
 import { emptyHere, offerUnasked, putDownHere, cleanable, cleanStep, findTargets, targetName, forcedTurnIn, interact, openGarnishMenu, openJournal, promptFor, targetId, type Target } from "./interact.js";
 import { draw, computeView, type View } from "./ui/render.js";
 import { computeIsoView, drawIso, isoPick } from "./ui/render-iso.js";
@@ -53,6 +55,7 @@ initMenus(document.getElementById("menu")!, (modal) => { g.modal = modal; }, () 
 initDebug(g);
 initSound(g);
 initTalk(g);
+initWalkthrough(g);
 initLight(g);
 // For checking from the browser console (and screenshots): the game state.
 (window as unknown as Record<string, unknown>).innGame = g;
@@ -896,6 +899,7 @@ if (g.location) {
       buildRooms(g); // sound carries through this inn's rooms
       g.weather = newWeather(g.date.season, g.loc);
       g.log.length = 0;
+      startWalkthrough(g);
       beginDay(g); // the morning again, at the chosen place
       save(g);
       closeAll();
@@ -936,6 +940,8 @@ function frame(now: number): void {
   }
 
   watchTrays();
+  updateWalkthrough(g);
+  updateMenuGuide(g);
   watchObjectives(g);
   soundscape(g, realDt);
   view = settings.iso ? computeIsoView(canvas, g, 34, statusClearance(), zoom(), settings.rot ?? 0) : computeView(canvas, g, 22, statusClearance(), zoom());

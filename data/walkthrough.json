@@ -1,0 +1,14 @@
+{
+  "$schema": "./schemas/walkthrough.schema.json",
+  "steps": [
+    { "id": "desk", "text": "Go to your room and sit down at the desk.", "reward": 10 },
+    { "id": "bill", "text": "Open the bill of fare, put {dish} on it, and put it up.", "reward": 15 },
+    { "id": "cook", "text": "Go down to the kitchen and get a pot of {dish} going on the {station}.", "reward": 15 },
+    { "id": "open", "text": "Unbolt the front door. The inn is open.", "reward": 10 },
+    { "id": "greet", "text": "A {guest} has come in and sat down. Walk over and say hello.", "reward": 10 },
+    { "id": "make", "text": "They'd like {dish}. Ladle a bowl at the {station} once the pot's ready.", "reward": 15 },
+    { "id": "carry", "text": "Carry the {dish} over to the {guest}'s table.", "reward": 15 },
+    { "id": "eat", "text": "Paid! While the {guest} eats, watch their face: it says how the {dish} went down.", "reward": 20 },
+    { "id": "buy", "text": "Back at the desk, buy a {thing} under Equipment. The carter brings it in the morning.", "reward": 30 }
+  ]
+}

@@ -137,7 +137,7 @@ export function save(g) {
         const history = g.history.map((d, i) => (i < g.history.length - 14 ? { ...d, unmet: undefined } : d));
         localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, calendarStart: g.calendarStart, location: g.location, inn: g.inn, weather: g.weather, history, regulars, visitorNotes: g.visitorNotes,
             menu: [...g.menu], menuChosen: g.menuChosen,
-            layout: g.layout, mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives,
+            layout: g.layout, mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives, walkthroughStep: g.walkthrough?.step,
             purse: g.purse, priceLevel: g.priceLevel, onOrder: g.onOrder, toPlace: g.toPlace, stock: g.stock, slips: g.slips, lastSlips: g.lastSlips, deliveries: g.deliveries }));
     }
     catch { /* storage unavailable: carry on */ }
@@ -188,6 +188,7 @@ export function load(g) {
         g.upgrades = new Set((s.upgrades ?? []).map(currentEquipmentId).filter((id) => pieceById(id)));
         g.totalServed = s.totalServed ?? 0;
         g.showObjectives = s.showObjectives ?? true;
+        g.walkthrough = typeof s.walkthroughStep === "number" ? { step: s.walkthroughStep } : undefined;
         // Saves from before coin start with the new keeper's purse.
         if (typeof s.purse === "number")
             g.purse = s.purse;

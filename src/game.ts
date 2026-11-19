@@ -7,6 +7,7 @@ import { World, defaultLayout, type Placed, type Vec } from "./world.js";
 import { dateOf, randomStartSeason, type GameDate } from "./calendar.js";
 import { newWeather, type CameIn, type WeatherState } from "./weather.js";
 import type { Paper } from "./newspaper.js";
+import type { WalkthroughState } from "./walkthrough.js";
 import { TIME_WORDS, TUNING, timeOfDayAt, type Archetype, type ItemKind, type Line, type NeedId, type Regular, type SchemaId, type TasteSet, type TimeOfDay, type WeatherTaste, type Location, type LocationId, type MealId, MEALS, RECIPES, innOf, type Inn, type InnId } from "./data.js";
 
 export interface Item {
@@ -95,6 +96,7 @@ export interface Patron {
   lingering?: boolean; // done, waiting for the rest of their party
   lingerSince?: number;
   greeted?: boolean; // the keeper has said hello this visit
+  wants?: string; // the dish they came in for: their first order, while it's on the bill
   nextChatAt?: number;
   consuming?: { icon: string; kind: ItemKind; from: number; tags?: string[]; needs?: Record<NeedId, number> }; // what's in front of them
   marker?: { text: Outcome | string; until: number };
@@ -300,6 +302,7 @@ export class Game {
   upgrades = new Set<string>();
   totalServed = 0; // across all days
   showObjectives = true;
+  walkthrough?: WalkthroughState;
   cleaning: Cleaning | null = null;
   /** A drink being poured (at a tap, or a cup from the urn). Walking away stops it. */
   pouring: { id: number; from: string; recipeId?: string; at: { x: number; y: number }; progress: number; total: number } | null = null;

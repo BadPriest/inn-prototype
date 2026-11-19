@@ -10,6 +10,7 @@ import { emptyTastes } from "../game.js";
 import { resetSave } from "../day.js";
 import { iconFor, itemLabel, slotsUsed } from "../serving.js";
 import { objectives } from "../objectives.js";
+import { updateQuest } from "./quest.js";
 import { moneyHtml, PENCE_PER_CROWN } from "../money.js";
 import { carterArrives } from "../shop.js";
 const $ = (id) => document.getElementById(id);
@@ -72,6 +73,7 @@ export function updateHud(g, prompt) {
             : `<div class="muted">Empty.</div>`;
     $("log").innerHTML = g.log.slice(-9).reverse().map((l) => `<div${l.text.startsWith("⚠") ? ' style="color:#ff7a6a"' : ""}><span class="t">${g.clockText(l.at)}</span> ${l.text}</div>`).join("");
     updateObjectives(g);
+    updateQuest(g);
     if ($("debug").style.display !== "none")
         updateDebug(g);
 }
@@ -91,6 +93,25 @@ function updateStatus(g) {
         purse.dataset.v = String(g.purse);
         purse.innerHTML = moneyHtml(g.purse);
     }
+    showGain(g, el);
+}
+/** Money coming in: "+…" beside the purse. Coins arriving close together add up. */
+let lastPurse = null;
+let gain = 0;
+let gainTimer;
+function showGain(g, el) {
+    const before = lastPurse;
+    lastPurse = g.purse;
+    if (before === null || g.purse <= before)
+        return;
+    gain += g.purse - before;
+    const tag = el.querySelector(".st-gain");
+    tag.innerHTML = `+${moneyHtml(gain)}`;
+    tag.classList.remove("on");
+    void tag.offsetWidth;
+    tag.classList.add("on");
+    clearTimeout(gainTimer);
+    gainTimer = window.setTimeout(() => { tag.classList.remove("on"); gain = 0; }, 2200);
 }
 /** The optional morning checklist, so new players know where to start. */
 function updateObjectives(g) {

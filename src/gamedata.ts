@@ -138,3 +138,6 @@ export interface LocationData {
   text: { cardChips: string[]; card: string };
 }
 export interface LocationsData { locations: LocationData[] }
+
+export type WalkthroughStepId = "desk" | "bill" | "cook" | "open" | "greet" | "make" | "carry" | "eat" | "buy";
+export interface WalkthroughData { steps: { id: WalkthroughStepId; text: string; reward: number }[] }

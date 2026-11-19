@@ -13,6 +13,7 @@ import { emptyTastes } from "../game.js";
 import { resetSave } from "../day.js";
 import { iconFor, itemLabel, slotsUsed } from "../serving.js";
 import { objectives } from "../objectives.js";
+import { updateQuest } from "./quest.js";
 import { moneyHtml, PENCE_PER_CROWN } from "../money.js";
 import { carterArrives } from "../shop.js";
 
@@ -80,6 +81,7 @@ export function updateHud(g: Game, prompt: string): void {
   $("log").innerHTML = g.log.slice(-9).reverse().map((l) => `<div${l.text.startsWith("⚠") ? ' style="color:#ff7a6a"' : ""}><span class="t">${g.clockText(l.at)}</span> ${l.text}</div>`).join("");
 
   updateObjectives(g);
+  updateQuest(g);
   if ($("debug").style.display !== "none") updateDebug(g);
 }
 
@@ -95,6 +97,23 @@ function updateStatus(g: Game): void {
   // Redrawn only when the purse changes (it's HTML now: the coins).
   const purse = el.querySelector(".st-purse") as HTMLElement;
   if (purse.dataset.v !== String(g.purse)) { purse.dataset.v = String(g.purse); purse.innerHTML = moneyHtml(g.purse); }
+  showGain(g, el);
+}
+
+/** Money coming in: "+…" beside the purse. Coins arriving close together add up. */
+let lastPurse: number | null = null;
+let gain = 0;
+let gainTimer: number | undefined;
+function showGain(g: Game, el: HTMLElement): void {
+  const before = lastPurse;
+  lastPurse = g.purse;
+  if (before === null || g.purse <= before) return;
+  gain += g.purse - before;
+  const tag = el.querySelector(".st-gain") as HTMLElement;
+  tag.innerHTML = `+${moneyHtml(gain)}`;
+  tag.classList.remove("on"); void tag.offsetWidth; tag.classList.add("on");
+  clearTimeout(gainTimer);
+  gainTimer = window.setTimeout(() => { tag.classList.remove("on"); gain = 0; }, 2200);
 }
 
 /** The optional morning checklist, so new players know where to start. */

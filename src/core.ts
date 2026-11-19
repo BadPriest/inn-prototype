@@ -58,6 +58,7 @@ export type GameEvent =
   | { type: "ItemGarnished"; itemId: number }
   | { type: "ServeOutcome"; patronId: number; outcome: Outcome; score: number }
   | { type: "CoinPaid"; patronId: number; paid: number; tip: number; delight: boolean } // a guest pays us (pennies)
+  | { type: "Reward"; pence: number } // a walkthrough step done, and paid for
   | { type: "InnOpened" }
   | { type: "LastCall" }
   | { type: "InnClosed" }

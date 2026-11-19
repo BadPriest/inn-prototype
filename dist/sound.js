@@ -174,6 +174,10 @@ export function initSound(g) {
             case "Paper":
                 paper();
                 break;
+            case "Reward":
+                synth.moment();
+                setTimeout(() => play("coinsSilver", null), 300);
+                break;
             case "CoinPaid":
                 coin(e.paid, e.tip, e.delight);
                 break;

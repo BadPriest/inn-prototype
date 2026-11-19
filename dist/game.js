@@ -89,6 +89,7 @@ export class Game {
     upgrades = new Set();
     totalServed = 0; // across all days
     showObjectives = true;
+    walkthrough;
     cleaning = null;
     /** A drink being poured (at a tap, or a cup from the urn). Walking away stops it. */
     pouring = null;

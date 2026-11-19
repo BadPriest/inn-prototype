@@ -364,6 +364,10 @@ function placeOrder(g, p) {
     if (inspired) {
         kind = inspired.kind;
     }
+    const wanted = p.wants && g.billNow().has(p.wants) ? RECIPES.find((r) => r.id === p.wants) : undefined;
+    p.wants = undefined;
+    if (wanted)
+        kind = wanted.kind;
     const menu = offered(kind);
     if (!menu.length) {
         g.speak(p, g.pickLine(["Nothing on the board for me {now}.", "Is the kitchen closed?"]));
@@ -373,7 +377,7 @@ function placeOrder(g, p) {
     }
     const t = p.tastes[kind];
     // Mostly what sounds good to them, sometimes a risky order. A craving pulls hard.
-    const recipe = inspired ?? weightedPick(menu, (r) => {
+    const recipe = wanted ?? inspired ?? weightedPick(menu, (r) => {
         let w = Math.exp(0.7 * appeal(r.baseTags, t)) + 0.25;
         if (p.craving && (r.baseTags.includes(p.craving.tag) || r.options.some((o) => INGREDIENTS.find((i) => i.id === o)?.tags.includes(p.craving.tag))))
             w *= 2;

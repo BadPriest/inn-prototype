@@ -11,7 +11,7 @@ import { RECIPES, SNACKS, SOAKING, TUNING, PIE_SAFE_CAPACITY } from "../data.js"
 import { iconFor, TRAY_COLOUR, trayLook } from "../serving.js";
 import { drawLight, windowColor } from "./light.js";
 import { ISO, P, Pt, floorPath, turn, turnedSize, unproject, unturn } from "./proj.js";
-import { badge, drawCoinPops, drawDeskHint, drawPatronWords, drawSpeech, say } from "./render.js";
+import { badge, drawCoinPops, drawGuide, drawPatronWords, drawSpeech, say } from "./render.js";
 /** Height of the back walls, in tiles; every other wall is a low stub so you can see past it. */
 const TALL = 1.5;
 const LOW_WALL = 0.3;
@@ -315,7 +315,7 @@ export function drawIso(ctx, g, v, target, clickDest) {
     });
     if (g.keeperLine && g.minute < g.keeperLine.until)
         say(kh.x, kh.y - HEAD_R * ts - ts * 0.05, `“${g.keeperLine.text}”`, "#ffe08a");
-    drawDeskHint(ctx, g, v);
+    drawGuide(ctx, g, v);
     drawSpeech(ctx, ts);
     drawCoinPops(ctx, g, v); // over the speech, so the coin always reads
     const busy = g.cleaning ?? g.pouring ?? g.winding;

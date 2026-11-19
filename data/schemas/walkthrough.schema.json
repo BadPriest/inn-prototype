@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Walkthrough",
+  "description": "The guided first day of a new game: one objective at a time, each paying a reward when done. In text, {dish}, {station}, {guest} and {thing} are filled in by the game.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["steps"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "text", "reward"],
+        "properties": {
+          "id": { "enum": ["desk", "bill", "cook", "open", "greet", "make", "carry", "eat", "buy"], "description": "Which step: decides when it's done and what the guide points at." },
+          "text": { "type": "string" },
+          "reward": { "type": "number", "minimum": 0, "description": "Pence paid into the purse when the step is done." }
+        }
+      }
+    }
+  }
+}
