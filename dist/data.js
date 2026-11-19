@@ -8,7 +8,7 @@ export const MAP = [
     "#B~~d~w~#::#,,SS,R,O,,,,,,,,,PPPP#",
     "#B~~~~~~#::#,,,,,,,,,,,,,,,,,,,,,#",
     "#~~~~~~~#::#,,,,,,,,,,,,,,,,,,,,,#",
-    "o~~~~~~~D::#,,,,,,,,KK,,,,,,,,,,,#",
+    "o~~~~~~~D::#,,,,,,,,KKj,,,,,,,,,,#",
     "#~~~~~~~#::#,,,,,,,,,,,,,,,,,,,,,#",
     "#~~~~~~~#::#W,,,,,,,,,,,,,,,,,,,,#",
     "#########::#nDnnnnhnnnZnHnDnAnYnV#",
@@ -56,7 +56,8 @@ export const TILE_LEGEND = {
     c: { kind: "chair", floor: C.tap },
     t: { kind: "table", floor: C.tap, label: "", name: "Table", interact: "table" },
     "=": { kind: "counter", floor: C.staff, label: "", name: "Counter" },
-    g: { kind: "counter", floor: C.staff, label: "Gar", name: "Garnish spot", interact: "garnish" },
+    g: { kind: "counter", floor: C.staff, label: "Gar", name: "Garnish spot", interact: "garnish" }, // drinks, at the bar
+    j: { kind: "counter", floor: C.kitchen, label: "Gar", name: "Garnish board", interact: "garnish" }, // dishes, in the kitchen
     h: { kind: "furniture", floor: C.kitchen, label: "Hatch", name: "Kitchen hatch", interact: "hatch" },
     Z: { kind: "furniture", floor: C.staff, label: "Pies", name: "Pie safe", interact: "piesafe" },
     A: { kind: "furniture", floor: C.staff, label: "Ale", name: "Ale tap", interact: "tap" },
@@ -159,7 +160,7 @@ export const SMALL_MAP = [
     "#B~dw~#,,TT,PPP#rrrrr#",
     "#B~~~~#,,,,,,,,#rrrrr#",
     "#~~~~~#,,,,,,,,#rrrrr#",
-    "#~~~~~#W,,,,,,,#rrrrr#",
+    "#~~~~~#W,,,,,,j#rrrrr#",
     "###D###nDnHnAn##rrrrr#",
     "#.....#_______#......#",
     "#G....#==g=k=f#......#",

@@ -39,15 +39,16 @@ function itemCard(it, pick, focus, extra = {}) {
 }
 // ---------------------------------------------------------------------------
 // Garnish: choose the drink (if there's more than one), choose the garnish, see what it becomes.
-export function openGarnishScreen(g) {
-    if (!garnishableDrinks(g).length) {
-        g.say("Nothing on your trays takes a garnish.");
+export function openGarnishScreen(g, kind) {
+    if (!garnishableDrinks(g, kind).length) {
+        const other = garnishableDrinks(g, kind === "food" ? "drink" : "food").length;
+        g.say(other ? (kind === "food" ? "Drinks are garnished at the bar." : "Dishes are garnished in the kitchen, at the garnish board.") : `Nothing on your trays takes a garnish${kind === "food" ? " here: dishes only" : " here: drinks only"}.`);
         return;
     }
-    openMenu(garnishSpec(g, { drink: 0, garnish: -1, focus: 0 }));
+    openMenu(garnishSpec(g, { drink: 0, garnish: -1, focus: 0, kind }));
 }
 function garnishSpec(g, st) {
-    const drinks = garnishableDrinks(g);
+    const drinks = garnishableDrinks(g, st.kind);
     st.drink = Math.min(st.drink, drinks.length - 1);
     const drink = drinks[st.drink];
     const refresh = () => replaceMenu(garnishSpec(g, st));
@@ -107,7 +108,7 @@ function garnishSpec(g, st) {
     ${grid(garnishCards)}`;
     return {
         title: "🍋 Garnish",
-        subtitle: "At the counter · a little something on top",
+        subtitle: st.kind === "food" ? "At the garnish board · a little something on top" : "At the counter · a little something on top",
         flavour: "It changes how a dish or a drink lands, for better or worse.",
         view: {
             pinned: resultPanel({

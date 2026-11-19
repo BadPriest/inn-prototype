@@ -9,7 +9,7 @@ import { hasBackSpots, manageStoveSpec, openManageStove, stoveTabs } from "./ui/
 import { dist } from "./world.js";
 import { canPutBack, collectShelf, emptyPot, putBack, recipesFor, serveFromPot, fillUrn, breadCaseKeys, breadCaseWithRoom, storeBread, takeBatch } from "./crafting.js";
 import { tableKey } from "./patrons.js";
-import { servePatron, serveTable, iconFor, trayItems, pickUpTray, startPour, setTrayDown } from "./serving.js";
+import { garnishKindAt, servePatron, serveTable, iconFor, trayItems, pickUpTray, startPour, setTrayDown } from "./serving.js";
 import { endDay, startNextDay, toggleInn } from "./day.js";
 import { compactDate, longDate } from "./calendar.js";
 import { gramophoneChanged, gramophoneWound, recordsReady, springLeft } from "./sound/gramophone.js";
@@ -210,7 +210,7 @@ export function promptFor(g, t) {
             if (g.pouring)
                 return `Pouring… ${Math.round((g.pouring.progress / g.pouring.total) * 100)}%`;
             return `Space: pour ${RECIPES.find((r) => r.id === f.tap)?.name.toLowerCase()}`;
-        case "garnish": return "Space or E: garnish a drink";
+        case "garnish": return `Space or E: garnish a ${garnishKindAt(f.name) === "food" ? "dish" : "drink"}`;
         case "frontdoor": return g.open ? (g.lastCall ? "Space: bolt the door" : "Space: call last orders") : "Space: open the inn";
         case "fireplace": return g.fireLit ? "Space: put out the fire" : "Space: light the fire";
         case "bed": return "Space: turn in";
@@ -337,7 +337,7 @@ export function interact(g, t) {
             startPour(g, `tap:${f.tap}`, f.tap);
             return;
         case "garnish":
-            openGarnishMenu(g);
+            openGarnishMenu(g, f.name);
             return;
         case "frontdoor":
             toggleInn(g);
@@ -694,8 +694,8 @@ function visitorPage(g) {
 }
 // ---------------------------------------------------------------------------
 // Garnish menus (drinks only)
-export function openGarnishMenu(g) {
-    openGarnishScreen(g);
+export function openGarnishMenu(g, at) {
+    openGarnishScreen(g, garnishKindAt(at));
 }
 // ---------------------------------------------------------------------------
 // Turning in

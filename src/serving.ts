@@ -182,9 +182,13 @@ export function pour(g: Game, recipeId: string): void {
   else { if (r.boughtAs) addStock(g, r.boughtAs, 1); g.say("No room for a drink on your trays."); }
 }
 
-export function garnishableDrinks(g: Game): Item[] {
-  return trayItems(g).filter((i) => !i.garnish && !i.whole && garnishesFor(i.recipeId).length > 0);
+/** What on the trays could take a garnish: drinks at the bar's garnish spot, dishes at the kitchen's garnish board. */
+export function garnishableDrinks(g: Game, kind?: Item["kind"]): Item[] {
+  return trayItems(g).filter((i) => !i.garnish && !i.whole && (!kind || i.kind === kind) && garnishesFor(i.recipeId).length > 0);
 }
+
+/** The kind a garnish place is for: the kitchen's board does dishes, the bar's spot drinks. */
+export const garnishKindAt = (name: string): Item["kind"] => (name === "Garnish board" ? "food" : "drink");
 
 export function applyGarnish(g: Game, item: Item, garnishId: string): void {
   const gar = garnishById(garnishId)!;

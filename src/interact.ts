@@ -11,7 +11,7 @@ import { hasBackSpots, manageStoveSpec, openManageStove, stoveTabs } from "./ui/
 import { dist, type Furniture, type Slot } from "./world.js";
 import { canPutBack, collectShelf, emptyPot, putBack, recipesFor, returnSlice, startJob, makeItem, serveFromPot, takeSlice, ticketFor, fillUrn, breadCaseKeys, breadCaseWithRoom, storeBread, takeBatch } from "./crafting.js";
 import { tableKey } from "./patrons.js";
-import { applyGarnish, removeFromTray, servePatron, serveTable, garnishableDrinks, iconFor, itemLabel, serveUnasked, trayItems, pickupFromHatch, pickUpTray, startPour, setTrayDown, takeFromHatch } from "./serving.js";
+import { applyGarnish, garnishKindAt, removeFromTray, servePatron, serveTable, garnishableDrinks, iconFor, itemLabel, serveUnasked, trayItems, pickupFromHatch, pickUpTray, startPour, setTrayDown, takeFromHatch } from "./serving.js";
 import { endDay, startNextDay, toggleInn } from "./day.js";
 import { compactDate, longDate } from "./calendar.js";
 import { gramophoneChanged, gramophoneWound, recordsReady, springLeft } from "./sound/gramophone.js";
@@ -195,7 +195,7 @@ export function promptFor(g: Game, t: Target | null): string {
     case "hatch": return g.hatch.length ? `Space: choose from the hatch (${g.hatch.length})` : "The hatch is empty";
     case "tap": if (g.pouring) return `Pouring… ${Math.round((g.pouring.progress / g.pouring.total) * 100)}%`;
       return `Space: pour ${RECIPES.find((r) => r.id === f.tap)?.name.toLowerCase()}`;
-    case "garnish": return "Space or E: garnish a drink";
+    case "garnish": return `Space or E: garnish a ${garnishKindAt(f.name) === "food" ? "dish" : "drink"}`;
     case "frontdoor": return g.open ? (g.lastCall ? "Space: bolt the door" : "Space: call last orders") : "Space: open the inn";
     case "fireplace": return g.fireLit ? "Space: put out the fire" : "Space: light the fire";
     case "bed": return "Space: turn in";
@@ -264,7 +264,7 @@ export function interact(g: Game, t: Target | null): void {
     }
     case "bin": openBin(g); return;
     case "tap": startPour(g, `tap:${f.tap}`, f.tap); return;
-    case "garnish": openGarnishMenu(g); return;
+    case "garnish": openGarnishMenu(g, f.name); return;
     case "frontdoor": toggleInn(g); return;
     case "fireplace":
       g.fireLit = !g.fireLit;
@@ -576,8 +576,8 @@ function visitorPage(g: Game): void {
 // ---------------------------------------------------------------------------
 // Garnish menus (drinks only)
 
-export function openGarnishMenu(g: Game): void {
-  openGarnishScreen(g);
+export function openGarnishMenu(g: Game, at: string): void {
+  openGarnishScreen(g, garnishKindAt(at));
 }
 
 // ---------------------------------------------------------------------------

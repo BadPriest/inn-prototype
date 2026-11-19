@@ -135,7 +135,7 @@ window.addEventListener("keydown", (e) => {
       cyclePick(e.shiftKey ? -1 : 1);
       break;
     case "e":
-      if (target?.type === "furniture" && target.f.kind === "garnish") openGarnishMenu(g);
+      if (target?.type === "furniture" && target.f.kind === "garnish") openGarnishMenu(g, target.f.name);
       break;
     case "f":
       g.hurrying = true;

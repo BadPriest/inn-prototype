@@ -148,7 +148,7 @@ window.addEventListener("keydown", (e) => {
             break;
         case "e":
             if (target?.type === "furniture" && target.f.kind === "garnish")
-                openGarnishMenu(g);
+                openGarnishMenu(g, target.f.name);
             break;
         case "f":
             g.hurrying = true;
