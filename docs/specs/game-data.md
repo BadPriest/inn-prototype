@@ -1,6 +1,6 @@
 # Game data in files (inn#71)
 
-Nov 19, 2026. The game doesn't read these files yet; it switches over one area at a time. The files are in [data/](../../data/).
+Nov 19, 2026. The game reads economy, locations, equipment, dishes, ingredients, snacks and garnishes from these files. Suppliers and spoilage wait on supplies (#61) and shelf life (#63). The files are in [data/](../../data/).
 
 ## Goal
 
@@ -112,7 +112,16 @@ Working prices out means a vegetable stew sells for about half the price of a be
 - Spoilage profiles and what uses them: daily (milk, cream, fresh fish); bread; meat; greens (greens, berries, herbs); week (butter, soft cheese, opened cider); weeks (eggs, roots, apples, hard cheese); keeps (flour, oats, salt, tea, sealed kegs); openedKeg; cookedPot (stew, porridge, soup); cookedPlate (a plate left on the shelf); baked (pies, bread, cakes); brewed (a pot of tea or coffee).
 - Deliveries don't start ageing until the day after they arrive (journal, Nov 17).
 
+## How the game uses them now (Nov 19)
+
+- **Cooking:** what always goes in is listed and chosen for you (a role takes its cheapest ingredient: liquid is water); you choose the base and the extras. Only chosen ingredients add their tags; a dish's own tags stand for its fundamentals.
+- **Prices** are worked out per serving; the bill of fare shows "from" the cheapest way to make a dish. Day-old food sells at the stale stage's price factor.
+- **Needs:** each dish eases hunger, thirst and warmth by its `effects.needs`. How long a guest takes to eat still comes from the guest, not `effects.minutesToEat`.
+- **Not read yet:** units (until stock, #61), spoilage stages and profiles (#63), suppliers (#61, #62), onConsuming effects other than a snack's thirst (#74), seasons.craved for dishes.
+
 ## Open
+
+- **Tended single dishes come out dear** (fried fish, fish cakes, fried breakfast about 10d): the keeper's minutes at 0.2d each. `prepPerMinute.tended` is the knob.
 
 - **Margin and markup:** they are multiplied here, not added. Is that right?
 - **Water:** free and never runs out? The draft has it at 0d.
