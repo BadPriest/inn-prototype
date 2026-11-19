@@ -125,6 +125,7 @@ export function updateWalkthrough(g: Game): void {
   g.purse += s.reward;
   g.bus.emit({ type: "Reward", pence: s.reward });
   w.step++;
+  if (w.step >= STEPS.length) g.bus.emit({ type: "WalkthroughDone" });
 }
 
 /** The first guest: a traveller who's come in for the dish on the stove, and will wait for it. */

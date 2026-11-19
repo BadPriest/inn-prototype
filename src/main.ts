@@ -1004,6 +1004,7 @@ function frame(now: number): void {
 
   watchTrays();
   updateWalkthrough(g);
+  sayWalkthroughDone();
   watchSkills(g);
   updateMenuGuide(g);
   watchObjectives(g);
