@@ -11,7 +11,7 @@
       "ingredients": {
         "fundamental": [ { "role": "liquid", "units": 4 }, { "id": "salt", "units": 2 } ],
         "base": { "pick": [1, 1], "options": [
-          { "id": "beef", "units": 3 }, { "id": "fowl", "units": 1 }, { "id": "sausage", "units": 6 }, { "id": "mushroom", "units": 5 }, { "id": "roots", "units": 4 } ] },
+          { "id": "beef", "units": 3 }, { "id": "fowl", "units": 1 }, { "id": "sausage", "units": 6 }, { "id": "mushroom", "units": 5 }, { "id": "roots", "units": 4 }, { "id": "fish", "units": 3, "stages": ["fresh", "onTheTurn"] } ] },
         "optional": { "pick": [0, 2], "options": [
           { "id": "onion", "units": 2 }, { "id": "herbs", "units": 1 }, { "id": "pepper", "units": 2 }, { "id": "roots", "units": 2 }, { "id": "mushroom", "units": 2 } ] }
       },
@@ -59,7 +59,7 @@
       "ingredients": {
         "fundamental": [ { "role": "flour", "units": 2 }, { "role": "cookingFat", "units": 2 } ],
         "base": { "pick": [1, 1], "options": [
-          { "id": "apple", "units": 6 }, { "id": "berry", "units": 3 }, { "id": "mincedMeat", "units": 2 }, { "id": "cheese", "units": 2 } ] },
+          { "id": "apple", "units": 6 }, { "id": "berry", "units": 3 }, { "id": "mincedMeat", "units": 2 }, { "id": "cheese", "units": 2 }, { "id": "fish", "units": 3, "stages": ["fresh", "onTheTurn"] } ] },
         "optional": { "pick": [0, 1], "options": [
           { "id": "sugar", "units": 3 }, { "id": "onion", "units": 2 }, { "id": "nutmeg", "units": 1 }, { "id": "herbs", "units": 1 } ] }
       },
@@ -94,6 +94,277 @@
         "patronOrders": ["The fish, if it's fresh."],
         "patronPraises": ["Crisp as you like."],
         "patronComplaints": ["That fish has seen better days."]
+      }
+    },
+    {
+      "id": "soup",
+      "name": "Soup",
+      "icon": "🥣",
+      "container": "bowl",
+      "garnish": {
+        "pick": [
+          0,
+          1
+        ]
+      },
+      "traySlots": 2,
+      "pickUp": "ladle",
+      "meals": [
+        "lunch",
+        "dinner"
+      ],
+      "madeAt": {
+        "kinds": [
+          "stove"
+        ]
+      },
+      "tended": false,
+      "minutes": [
+        12,
+        3
+      ],
+      "batch": {
+        "servings": [
+          8,
+          1
+        ],
+        "calledWhenReady": "a pot of soup"
+      },
+      "tags": [
+        "warm",
+        "light"
+      ],
+      "ingredients": {
+        "fundamental": [
+          {
+            "role": "liquid",
+            "units": 5
+          },
+          {
+            "id": "salt",
+            "units": 2
+          }
+        ],
+        "base": {
+          "pick": [
+            1,
+            1
+          ],
+          "options": [
+            {
+              "id": "fish",
+              "units": 3,
+              "stages": [
+                "fresh",
+                "onTheTurn",
+                "stale"
+              ]
+            },
+            {
+              "id": "roots",
+              "units": 4
+            },
+            {
+              "id": "mushroom",
+              "units": 4
+            },
+            {
+              "id": "onion",
+              "units": 4
+            },
+            {
+              "id": "tomato",
+              "units": 4
+            }
+          ]
+        },
+        "optional": {
+          "pick": [
+            0,
+            2
+          ],
+          "options": [
+            {
+              "id": "milk",
+              "units": 2
+            },
+            {
+              "id": "herbs",
+              "units": 1
+            },
+            {
+              "id": "pepper",
+              "units": 1
+            },
+            {
+              "id": "bacon",
+              "units": 2
+            },
+            {
+              "id": "roots",
+              "units": 2
+            },
+            {
+              "id": "onion",
+              "units": 2
+            }
+          ]
+        }
+      },
+      "spoilage": "cookedPot",
+      "price": {},
+      "seasons": {
+        "craved": [
+          "autumn",
+          "winter"
+        ]
+      },
+      "effects": {
+        "needs": {
+          "hunger": 0.4,
+          "thirst": 0.15,
+          "warmth": 0.2
+        },
+        "minutesToEat": [
+          15,
+          4
+        ],
+        "mess": 1
+      },
+      "text": {
+        "craftingStation": "A pot on the back of the stove, whatever's to hand in it. With fish and a splash of milk, it's a chowder the dockhands swear by.",
+        "patronOrders": [
+          "A bowl of soup.",
+          "Is there chowder?"
+        ],
+        "patronPraises": [
+          "Warms you right through."
+        ],
+        "patronComplaints": [
+          "Watery, this."
+        ]
+      }
+    },
+    {
+      "id": "fishCakes",
+      "name": "Fish cakes",
+      "icon": "🍥",
+      "container": "plate",
+      "garnish": {
+        "pick": [
+          0,
+          1
+        ]
+      },
+      "traySlots": 2,
+      "pickUp": "take",
+      "meals": [
+        "lunch",
+        "dinner"
+      ],
+      "madeAt": {
+        "kinds": [
+          "griddle"
+        ]
+      },
+      "tended": true,
+      "minutes": [
+        6,
+        1.5
+      ],
+      "tags": [
+        "warm",
+        "crisp",
+        "briny"
+      ],
+      "ingredients": {
+        "fundamental": [
+          {
+            "id": "fish",
+            "units": 1,
+            "stages": [
+              "fresh",
+              "onTheTurn",
+              "stale"
+            ]
+          },
+          {
+            "id": "roots",
+            "units": 1
+          },
+          {
+            "role": "egg",
+            "units": 1
+          },
+          {
+            "role": "cookingFat",
+            "units": 1
+          }
+        ],
+        "base": {
+          "pick": [
+            0,
+            0
+          ],
+          "options": []
+        },
+        "optional": {
+          "pick": [
+            0,
+            2
+          ],
+          "options": [
+            {
+              "id": "crumb",
+              "units": 1
+            },
+            {
+              "id": "herbs",
+              "units": 1
+            },
+            {
+              "id": "zest",
+              "units": 1
+            },
+            {
+              "id": "pepper",
+              "units": 1
+            },
+            {
+              "id": "chives",
+              "units": 1
+            }
+          ]
+        }
+      },
+      "spoilage": "cookedPlate",
+      "price": {},
+      "seasons": {
+        "craved": []
+      },
+      "effects": {
+        "needs": {
+          "hunger": 0.4,
+          "thirst": 0.05,
+          "warmth": 0.1
+        },
+        "minutesToEat": [
+          14,
+          3
+        ],
+        "mess": 1
+      },
+      "text": {
+        "craftingStation": "Yesterday's catch mashed with potato, bound with an egg and fried golden. Stay with the pan.",
+        "patronOrders": [
+          "A couple of fish cakes."
+        ],
+        "patronPraises": [
+          "Crisp outside, soft in."
+        ],
+        "patronComplaints": [
+          "Falling apart, these."
+        ]
       }
     },
     {
