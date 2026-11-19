@@ -16,8 +16,8 @@ Design decisions live in [docs/design-session-journal.md](docs/design-session-jo
 
 ## How to play
 
-1. **Morning.** You wake in your room at 6:00. The newspaper on the desk has the forecast and the town's news. At the **desk** ("manage your business") you set the **bill of fare** (what's on the menu today), buy equipment, and arrange the kitchen. Until you've put up a bill of fare once, the desk glows and an arrow points to it.
-2. **Open up.** Light the fire, set out snacks if you like, and open the **front door**. The "Today" checklist on the side shows where to start.
+1. **Morning.** You wake in your room at 6:00. A new game offers a **tutorial**: a guided first day, one step at a time, each paying a little coin. The newspaper on the desk has the forecast and the town's news. At the **desk** ("manage your business") you set the **bill of fare** (what's on the menu today), order **supplies**, buy equipment, learn recipes in **Skills**, and arrange the kitchen. Until you've put up a bill of fare once, it's on a default (ale and cider), and an arrow points to the desk.
+2. **Open up.** Light the fire, set out snacks if you like, and open the **front door**. The card under the status card shows the next thing to do (the "Today" checklist on the side lists them all).
 3. **Take orders.** Guests sit at tables, on the benches, or at the counter, and order from your bill of fare. Each order becomes a **ticket** along the top of the screen. A matching numbered plaque floats over the guest. Its ring fills as their patience runs down.
 4. **Cook and pour.** Cook at the stoves, ovens and prep table, and choose ingredients as you go. Pour ale and cider at the barrels. Make coffee by the pot and tea by the kettle (or the urn). Some dishes are single servings made for one guest; stew, porridge, roasts and bread come by the pot or batch; pies go to the pie safe and are sliced to order. Finished dishes wait where they were made until you pick them up.
 5. **Carry and serve.** You have two trays, one in each hand. Walk to the guest and serve. Garnish drinks at the counter (lemon, honey, spice, mint). You can also offer someone something they didn't ask for, which is a gamble on their taste.
@@ -25,7 +25,7 @@ Design decisions live in [docs/design-session-journal.md](docs/design-session-jo
 7. **Keep the place nice.** Wipe tables, mop spills, keep the fire going and the lamps lit. Wind the gramophone for music.
 8. **Close and sleep.** Close the door when you're done, see out the last guests, and turn in. The next day starts with a new paper.
 
-Controls are listed in-game: press **H** (or the touchpad on a controller). A PS5 controller works in Chrome and Edge: left stick walks, ✕ uses, D-pad ↓ puts down (a dish back where it came from, or a tray; hold: empty a pot); in menus ✕ picks, □ confirms, ○ goes back. The keyboard and mouse basics:
+Controls are listed in-game: press **H** (or the touchpad on a controller). A PS5 controller works in Chrome and Edge: left stick walks, ✕ uses, D-pad ↓ puts down (a dish back where it came from, or a tray; hold: empty a pot), hold □ to hurry; in menus ✕ picks, □ presses the confirm button, ○ the negative one (or goes back). The keyboard and mouse basics:
 
 | | |
 | --- | --- |
@@ -33,7 +33,8 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 | Click a thing or person | go and use it |
 | WASD / arrows, Shift | walk, run |
 | Space | use what's in reach: serve, pick up, pour, cook (hold to hurry cooking or clean) |
-| Tab | pick between things in reach |
+| Tab | pick between things in reach, or one part of a stove (a hob, the kettle) |
+| F (hold) | hurry what's cooking where you are |
 | R (or Q) | put down: a dish back where you picked it up, or a tray on the nearest counter or table |
 | X | empty a pot, urn or kettle |
 | E · C | garnish · offer something unasked |
@@ -42,22 +43,24 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 
 ## What's in
 
-**Your day.** One time of day drives everything. The game has four calendar seasons of 28 days, weekdays and years. At the start you pick where the inn stands (town centre, dockside, mountainside, crossroads or hill country), which reshapes the year, the weather and who passes by. Then you pick your inn: a small tavern (two tables, a short bar, one hob, one barrel; the easiest start, and the one picked unless you choose otherwise) or the big tavern (six tables, a long bar, an oven; busy enough to need staff). A morning newspaper brings the forecast, market days and town news, and there's a calendar screen. The clock stops whenever you're at the desk or in a menu.
+**Your day.** One time of day drives everything. The game has four calendar seasons of 28 days, weekdays and years. At the start you pick where the inn stands (town centre, dockside, mountainside, crossroads or hill country), which reshapes the year, the weather and who passes by. Then you pick your inn: a small tavern (two tables, a short bar, a used two-hob stove, one barrel; the easiest start, and the one picked unless you choose otherwise) or the big tavern (six tables, a long bar, an oven; busy enough to need staff). A morning newspaper brings the forecast, market days and town news, and there's a calendar screen. The clock stops whenever you're at the desk or in a menu.
 
 **Guests.** There are four kinds of passers-by (dockworkers, scholars, travellers, farmhands) and six named regulars with their own schedules and roles (ten are planned). Guests have hunger, thirst and warmth, and orders grow from those needs. Their tastes are hidden, follow one of four schemas, and shift with the calendar season. They chat, talk about the weather, and react to what you serve. They wait with growing impatience and leave if left too long. Soaked guests seek the fire. When the rain stops, each guest decides whether to stay. You learn their names over time, and a journal keeps notes on regulars and visitors.
 
 **Food and drink.**
 - Breakfast: scrambled eggs, toast, a fried breakfast, porridge.
-- Mains: stew, fried fish, salad, pie, roast, bread.
+- Mains: stew, soup, fried fish, fish cakes, salad, pie, roast, bread, bread pudding.
 - Drinks: ale and cider on tap, coffee by the pot, tea by the cup or the urn, with garnishes.
 - Snacks in bowls on the tables and the counter: peanuts, olives, pickled eggs, crostini, bread and butter, cheese, pretzels, chestnuts, pickled onions, apple rings.
-- The bill of fare can be one all-day bill, or a bill per meal time. Each dish says where it's made (a pot on a hob, a pan, an oven, the kettle…). Dishes your kitchen can't make are greyed out, with what they need.
+- The bill of fare can be one all-day bill, or a bill per meal time. Each dish says where it's made (a pot on a hob, a pan, an oven, the kettle…). Dishes your kitchen can't make are greyed out, with what they need. Every card lists what a dish takes and how much of each is in the pantry.
+- **Recipes.** A new keeper knows porridge, soup, stew, tea and coffee. Every 8 guests served earn a point to spend on a new recipe in Skills at the desk.
+- **The pantry.** Cooking and pouring use stock. Order more at the desk in Supplies: a slip per supplier (what your bill uses first), sent for the carter or fetched yourself. You start with about four busy days' worth.
 
 **Coin.**
 - A purse in crowns, shillings and pence (10d = 1s, 10s = 1 crown), on the status card. You start with 2 crowns.
 - Guests always pay for what they ordered, when it's served. Tips follow how it went (a Delight tips well, Pleased a little) and build up over the visit; they're paid all at once when the guest leaves (half, if they walk out on an order). Unasked serves are on the house, though a Delight still tips.
-- Prices come from the dish and its ingredients and never inflate. One house-wide knob at the desk: Cheap, Fair or Dear, which also nudges how many come in.
-- Equipment and goods cost coin. Upkeep and supplies are next.
+- Prices are worked out from what goes in (ingredients, the cook's time, a margin) and never inflate. One house-wide knob at the desk: Cheap, Fair or Dear, which also nudges how many come in.
+- Equipment, goods and supplies cost coin. Upkeep is next.
 
 **The kitchen.**
 - Equipment to buy at the desk, for coin: order it and the carter brings it the next morning, or fetch it yourself while the inn's shut (you're out about an hour and a half). Delivered pieces wait to be placed; anything sells back for half. On offer: wood stoves with one or two hobs, a range stove (hob and oven), a bread oven that bakes two at once, a prep table, kettles, a copper kettle, an urn, coffee pots, ale and cider barrels, pie safes, wider trays, seasoned firewood.
@@ -106,7 +109,8 @@ The built `dist/` folder is committed, so a fresh clone runs with `npm start` wi
 
 | Path | What |
 | --- | --- |
-| `src/data.ts` | **All authored content and tuning**: the map, tags, ingredients, recipes, snacks, garnishes, equipment, archetypes, regulars, locations, weather, light, sound choices, pacing. Edit this to tune. |
+| `data/` | **Game data in JSON, checked by every build** (schemas in `data/schemas/`): dishes, ingredients, equipment, suppliers, locations, spoilage, economy, the tutorial's steps and rewards, and the recipe book (skills). Edit these to tune. |
+| `src/data.ts` | The rest of the authored content and tuning: the map, tags, archetypes, regulars, weather, light, sound choices, pacing |
 | `src/core.ts` | Organic randomness (centre + spread) and the event bus |
 | `src/world.ts` | Tiles, furniture, equipment placement, seats, pathfinding (8-direction A* with smoothing, routing round guests) |
 | `src/game.ts` | Shared state and types |
@@ -119,6 +123,9 @@ The built `dist/` folder is committed, so a fresh clone runs with `npm start` wi
 | `src/crafting.ts` | Stations and their slots, cooking, pots, shelves, putting back, emptying |
 | `src/serving.ts` | Trays, pickup, pouring, garnishing, delivery |
 | `src/objectives.ts` | The "Today" checklist |
+| `src/walkthrough.ts` | The tutorial: its steps, rewards, the first guest, and what the guide points at |
+| `src/skills.ts` | The recipe book and the points to learn more |
+| `src/stock.ts`, `src/supplies.ts` | The pantry, and slips to the suppliers |
 | `src/door.ts` | The front door |
 | `src/day.ts` | Clock, meal times, open and close, turning in, saving |
 | `src/interact.ts` | What Space (and R, X) do on each thing; crafting and journal menus |

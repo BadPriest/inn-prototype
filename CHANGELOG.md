@@ -6,7 +6,28 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
-## Build 112 · Nov 19, 2026 · not deployed
+## Build 113 · Nov 19, 2026 · deployed
+
+### Added
+- **A tutorial, if you want it.** A new game asks "Play the tutorial?". Yes gives a guided first day in nine steps: the desk, the bill of fare, a pot of stew, opening up, a first guest (a patient traveller who comes for your stew), serving them, and buying a coffee pot. One step at a time shows on a card under the status card; a gold arrow and a soft ring point at where to go, and a gold ring lights the card or button to press in menus. Each step pays 10–30d (1 crown 40 in all), so the coffee pot never touches your starting purse. Wording and rewards are in `data/walkthrough.json`.
+- **Objectives on screen.** Without the tutorial, the same card shows the next thing on today's checklist. A finished objective is stamped, shines gold and fades; its reward flies into the purse.
+- **Money coming in shows by the purse** ("+5d"); payments close together add up.
+- **A recipe book and Skills.** A new keeper knows porridge, soup, stew, tea and coffee (ale, cider and bought snacks need no recipe). Every 8 guests served earn a point; spend points on new recipes in **Skills** at the desk (1 point for simple dishes, 2 for bigger ones, 3 for the roast). Dishes you don't know say "learn it in Skills" on the bill of fare and don't show at the stove. Tuning in `data/skills.json`. Older saves know every recipe.
+- **The pantry runs out, and Supplies at the desk.** Cooking, pouring, steeping, garnishes and bought snacks use stock. A Supplies card has a slip per supplier: pencil packs on, take them off with −, then send it for the carter (a few pence a morning) or fetch it yourself while the inn's shut. Goods your bill of fare uses come first, lowest stock first, saying which dish each is for and turning amber when low. A new keeper starts with about four busy days' worth of everything.
+- **Start over** in the pause screen (Game tab), behind a confirm, so a controller can reset the save.
+- **More dishes and kitchen pieces**: soup, fish cakes, and fish as a base for stew and pie; kettles and coffee pots sit on a stove's back; a tea urn kept from the kettle; a bread and pastry case; pots, pans and knives with better tiers; trays with 4, 6 or 8 slots. Table snacks include crostini, roast chestnuts, bread and butter and a cheese board, and garnishes suit their drink or dish.
+- Debug: **Fill pantry** tops the pantry up to the starting stock.
+
+### Changed
+- **The isometric view is the default.** Top-down is still a press of V away.
+- **Dish cards list what they take**: what always goes in, the base choices and the extras, with how much of each is in the pantry (amber when short).
+- **Tab picks one part of a stove** (a hob, the kettle, the coffee pot), and Space works on just that part. **Hold F** (□ on a controller) to hurry what's cooking there; Space still hurries too.
+- **Controller in menus**: □ presses the confirm button and ○ the negative one (Not now, Keep playing), each marked with its glyph while the controller's in use.
+- **The small tavern starts with a used two-hob stove**, so porridge and stew can cook at once.
+- **Prices are worked out from what goes in** (ingredients, the cook's time, a margin), so dishes cost what their choices cost.
+- **Until you set the bill of fare**, waking says it's on its default (ale and cider), and so does the objective card.
+
+## Build 112 · Nov 19, 2026 · deployed with build 113
 
 ### Changed
 - **Everything on the bill costs 7% more.** Guests pay the exact amount, fractions of a penny and all, so it adds up over a day even on a 4d pint; the bill shows prices to the nearest penny (a roast now reads 10d, a fry-up 9d). One knob (`PRICE_MARKUP` in money.ts) for tuning.

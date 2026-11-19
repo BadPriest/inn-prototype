@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 19, 2026 · build 112 (111 deployed; 112 committed, not pushed) · https://inn-prototype.vercel.app
+Updated Nov 19, 2026 · build 113 (deployed) · https://inn-prototype.vercel.app
 
 History by build: [../CHANGELOG.md](../CHANGELOG.md). What the prototype is and how to play: [../README.md](../README.md).
 
@@ -26,7 +26,9 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
 
-## Built and deployed (Nov 19, builds 107–111)
+## Built and deployed (Nov 19, builds 107–113)
+
+- Builds 112–113: #71 game data in files (prices worked out from ingredients, +7% markup), isometric default, #61 supplies and a 4-day starting pantry, #75 tutorial with rewards and on-screen objectives, recipe book + Skills, dish cards list ingredients, Tab picks a stove part + F hurries, Start over, □/○ in menus, two-hob small tavern
 
 - Builds 108–111: UI pass 1 (rules in [specs/ui.md](specs/ui.md)): cards with a drawer when pointed at; desk tidied to two balanced rows; House prices its own screen; Equipment with an Upgrades tab and "You have n"; bill of fare with a pinned header, 7 + 7 dishes; newspaper headings; crafting screens on one template (recipe cards, a result panel on top, ingredient cards, one button), steeping and garnishing too; cards grow in place when pointed at; desk cards down to name + one line; station choices, snack bowls, pie safe, bin, hatch, unasked offer, tray set-down on the same template
 
@@ -88,11 +90,11 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 
 In build order. Each waits on the one it builds on.
 
-0. **#71 game data in files** (in progress): costs, prices, dishes, equipment, suppliers and locations in [data/](../data/), checked by every build ([spec](specs/game-data.md)). The game reads economy, locations, equipment (kettles on the stove, the urn kept from the kettle, the bread case, utensils, trays with slots), dishes with worked-out prices, table snacks and garnishes from it. New dishes: soup, fish cakes, fish stew and fish pie. Not deployed yet.
+0. **#71 game data in files** (in progress): costs, prices, dishes, equipment, suppliers and locations in [data/](../data/), checked by every build ([spec](specs/game-data.md)). The game reads economy, locations, equipment (kettles on the stove, the urn kept from the kettle, the bread case, utensils, trays with slots), dishes with worked-out prices, table snacks and garnishes from it. New dishes: soup, fish cakes, fish stew and fish pie. Deployed in build 113.
 
 1. ~~#58 coin~~ (built, build 101)
 2. ~~#59 equipment costs coin~~ (built, build 102; secondhand moved to #66) · #60 upkeep you can see (licence, fuel, light, sundries, wear)
-3. ~~#61 supplies~~ (built, not deployed): the pantry runs out; a Supplies card at the desk with a slip per supplier, sent for the carter or fetched yourself
+3. ~~#61 supplies~~ (built, build 113): the pantry runs out; a Supplies card at the desk with a slip per supplier, sent for the carter or fetched yourself
 4. #62 deliveries: the carter, crates by the kitchen door (feeds #41, day two) · #63 shelf life · #64 ready-made goods
 5. Any time: #65 hearth cooking (bake kettle) · #66 the tinker and breakdowns
 6. Later: #67 equipment character and cookware · #68 the catalogue · #69 ideas not yet tasks
