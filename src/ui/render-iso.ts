@@ -429,6 +429,10 @@ function drawReadables(ctx: CanvasRenderingContext2D, g: Game, v: View, byTile: 
         badge(ctx, sp.x + sw / 2, sp.y - ts * 0.2, String(pot.left), ts);
         if (slots.length > 1) { ctx.fillStyle = "#fff"; ctx.font = `${Math.floor(ts * 0.24)}px system-ui, sans-serif`; ctx.fillText(iconFor(pot.item.recipeId) || "🍲", sp.x, barY + ts * 0.32); }
       }
+      if (sl.gear && !job && !pot) {
+        ctx.fillStyle = "#fff"; ctx.font = `${Math.floor(ts * 0.26)}px system-ui, sans-serif`;
+        ctx.fillText(sl.gear.icon, sp.x, sp.y - ts * 0.1);
+      }
       const shelf = g.shelves.get(sl.id);
       if (shelf?.length) {
         // Finished dishes waiting: a warm outline on its top, the dishes held up over it.
@@ -442,6 +446,7 @@ function drawReadables(ctx: CanvasRenderingContext2D, g: Game, v: View, byTile: 
         shelf.forEach((it, i) => ctx.fillText(iconFor(it.recipeId, it.garnish) || "🍽", sp.x - w / 2 + i * ts * 0.42, sp.y - ts * 0.55));
       }
     });
+    if (f.kind === "urn") { const pot = g.pots.get(f.id); if (pot) badge(ctx, top.x + ts * 0.35, top.y - ts * 0.3, String(pot.left), ts); }
     if (f.kind === "piesafe" && g.pieSafe.length) {
       const safes = g.layout.filter((p) => p.type === "pieSafe").map((p) => p.uid);
       const i = Math.max(0, safes.indexOf(f.id)), cap = PIE_SAFE_CAPACITY;

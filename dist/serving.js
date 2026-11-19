@@ -16,21 +16,24 @@ export function iconFor(recipeId, garnish) {
     return r + gi;
 }
 export function itemLabel(i) {
+    if (i.whole && i.recipeId === "tea")
+        return `${iconFor(i.recipeId)} A pot of ${i.name.toLowerCase()} for the urn (${i.whole} cups)`;
     const base = i.whole ? `${iconFor(i.recipeId, i.garnish)} Whole ${i.name.charAt(0).toLowerCase()}${i.name.slice(1)} (${i.whole} slices)` : `${iconFor(i.recipeId, i.garnish)} ${i.name}`;
     return i.ticketName ? `${base} → ${i.ticketName}` : base;
 }
-export const slotsUsed = (t) => t.items.reduce((n, it) => n + traySlotsOf(it.recipeId), 0);
+const slotsOfItem = (it) => (it.whole ? Math.max(2, traySlotsOf(it.recipeId)) : traySlotsOf(it.recipeId));
+export const slotsUsed = (t) => t.items.reduce((n, it) => n + slotsOfItem(it), 0);
 /** What a tray carries, for how it's drawn. */
 export function trayLook(t) {
     const kinds = new Set(t.items.map((it) => it.kind));
     return kinds.size === 0 ? null : kinds.size > 1 ? "mixed" : kinds.has("food") ? "food" : "drink";
 }
 export const TRAY_COLOUR = { food: "#c9a46b", drink: "#8fb3c9", mixed: "#b3ab99" };
-const fits = (g, t, recipeId) => slotsUsed(t) + traySlotsOf(recipeId) <= g.traySlots;
+const fits = (g, t, slots) => slotsUsed(t) + slots <= g.traySlots;
 /** Put an item on a tray: the one already in use if it fits there, else the other. */
 export function addToTray(g, item) {
     const trays = [...g.keeper.trays].sort((a, b) => b.items.length - a.items.length);
-    const target = trays.find((t) => fits(g, t, item.recipeId));
+    const target = trays.find((t) => fits(g, t, slotsOfItem(item)));
     if (!target)
         return false;
     target.items.push(item);
@@ -128,7 +131,7 @@ export function pickUpTray(g, s) {
     g.say("You pick the tray back up.");
 }
 export function trayRoomFor(g, recipeId) {
-    return g.keeper.trays.some((t) => fits(g, t, recipeId));
+    return g.keeper.trays.some((t) => fits(g, t, traySlotsOf(recipeId)));
 }
 // Pouring takes a moment (the barrel's or urn's serveSeconds). The drink lands on a tray when it's done;
 // walking away stops it. `from` is "tap:<recipe>" or the id of a station holding a drink pot (the urn).

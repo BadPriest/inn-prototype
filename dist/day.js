@@ -1,8 +1,8 @@
 // The clock and the day cycle: open, last call, turn in, next morning. Days never end.
 import { carterArrives } from "./shop.js";
-import { MEALS, TUNING, currentEquipmentId, pieceById } from "./data.js";
+import { MEALS, TUNING, currentEquipmentId, pieceById, EQUIPMENT } from "./data.js";
 import { emptyStats } from "./game.js";
-import { defaultLayout } from "./world.js";
+import { defaultLayout, setOnStove } from "./world.js";
 import { callLastOrders, clearPatrons, scheduleRegulars, unlockRegulars } from "./patrons.js";
 import { ageFood, finishAllJobs } from "./crafting.js";
 import { closeAllStretches } from "./needs.js";
@@ -156,6 +156,12 @@ export function load(g) {
             g.setInn(s.inn);
         if (Array.isArray(s.layout) && s.layout.length) {
             g.layout = s.layout.map((p) => ({ ...p, type: currentEquipmentId(p.type) }));
+            // Saved when kettles and coffee pots stood on their own: they go on a stove now, or wait by the door.
+            for (const q of g.layout.filter((p) => !p.on && EQUIPMENT.find((e) => e.id === p.type)?.gear)) {
+                g.layout = g.layout.filter((p) => p !== q);
+                if (!setOnStove(q, g.layout))
+                    g.toPlace.push(q.type);
+            }
             // Saved before barrels could be bought: they were part of the inn then, so they stand where they were.
             if (g.inn === "medium" && !g.layout.some((p) => p.type === "aleBarrel" || p.type === "ciderBarrel")) {
                 for (const p of defaultLayout())
@@ -185,7 +191,7 @@ export function load(g) {
         if (s.priceLevel)
             g.priceLevel = s.priceLevel;
         g.onOrder = (s.onOrder ?? []).map(currentEquipmentId).filter((id) => pieceById(id));
-        g.toPlace = (s.toPlace ?? []).map(currentEquipmentId).filter((id) => pieceById(id));
+        g.toPlace = [...g.toPlace, ...(s.toPlace ?? []).map(currentEquipmentId).filter((id) => pieceById(id))];
         g.day = s.day ?? 1;
         g.calendarStart = s.calendarStart ?? 0;
         // Saves played before locations existed stand in the town centre; a brand-new save still has to pick.

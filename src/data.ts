@@ -47,7 +47,7 @@ export interface TileDef {
 
 export type InteractKind =
   | "bed" | "desk" | "wardrobe" | "station" | "hatch" | "tap" | "garnish"
-  | "frontdoor" | "fireplace" | "pantry" | "coats" | "table" | "piesafe" | "bin" | "snacks" | "gramophone";
+  | "frontdoor" | "fireplace" | "pantry" | "coats" | "table" | "piesafe" | "urn" | "bin" | "snacks" | "gramophone";
 
 const C = {
   wall: "#2a211d",
@@ -117,8 +117,11 @@ export interface Equipment {
   slots: EquipSlot[];
   blurb: string;
   craftingSpeed: number;
-  urn?: boolean;
-  kind?: "piesafe" | "tap";
+  /** Set on a stove's hot-drink slot rather than on the floor. */
+  gear?: boolean;
+  /** Hot-drink slots a stove has for gear. */
+  hotSlots?: number;
+  kind?: "piesafe" | "tap" | "urn";
   tap?: string;
   group: EquipGroup;
   fuel?: Fuel;
@@ -136,7 +139,7 @@ export const FUELS: Record<Fuel, { icon: string; name: string }> = { wood: { ico
 
 const HOT_DRINK_KINDS: StationKind[] = ["kettle", "coffee"];
 const isHotDrinkSlot = (s: EquipSlot) => s.kinds.every((k) => HOT_DRINK_KINDS.includes(k));
-const STORAGE_KIND: Record<string, Equipment["kind"]> = { pie: "piesafe", ale: "tap", cider: "tap" };
+const STORAGE_KIND: Record<string, Equipment["kind"]> = { pie: "piesafe", ale: "tap", cider: "tap", tea: "urn" };
 
 function placedPiece(e: EquipmentPiece): Equipment {
   const shape = e.shape ?? ["#"];
@@ -144,14 +147,14 @@ function placedPiece(e: EquipmentPiece): Equipment {
   const slots: EquipSlot[] =
     e.type === "crafting" ? (e.slots ?? []).filter((sl) => !isHotDrinkSlot(sl))
     : e.type === "gear" ? [{ name: e.name, kinds: e.usedIn ?? [] }]
-    : holds.includes("tea") ? [{ name: "Urn", kinds: ["kettle"] }]
     : [];
   const kind = STORAGE_KIND[holds[0] ?? ""];
   return {
     id: e.id, name: e.name, label: e.label ?? e.name, icon: e.icon,
     w: shape[0].length, h: shape.length, slots, blurb: e.text?.shopCard ?? "",
     craftingSpeed: e.craftingSpeed ?? 1,
-    urn: holds.includes("tea") || undefined,
+    gear: e.type === "gear" || undefined,
+    hotSlots: (e.slots ?? []).filter(isHotDrinkSlot).length || undefined,
     kind, tap: kind === "tap" ? holds[0] : undefined,
     group: e.shopTab, fuel: e.fuel,
   };
@@ -177,6 +180,7 @@ export function utensilFor(owned: Set<string>, kind: string): EquipmentPiece | u
   return line ? bestInLine(owned, line) : undefined;
 }
 export const PIE_SAFE_CAPACITY = pieceById("pieSafe")?.capacity?.batches ?? 4;
+export const URN_CAPACITY = pieceById("teaUrn")?.capacity?.servings ?? 8;
 
 const LEGACY_DISH_ID: Record<string, string> = { fish: "friedFish" };
 export const dishData = (recipeId: string) => DISHES_DATA.dishes.find((d) => d.id === (LEGACY_DISH_ID[recipeId] ?? recipeId));
@@ -342,7 +346,7 @@ export interface Recipe {
   minutes: Organic; // crafting time
   tended?: boolean; // only progresses while the keeper is at the station
   servings?: Organic; // made whole and served in portions: a pot of stew, a pie in slices
-  storedIn?: "piesafe"; // a whole one waits on the station; the keeper carries it to the pie safe, where it's sliced
+  storedIn?: "piesafe" | "urn"; // a whole one waits on the station; the keeper carries it to the pie safe, where it's sliced
   internal?: boolean; // made at a station but never ordered or put on the bill of fare (hot water for tea)
   batch?: string; // what a whole batch is called when it's ready ("a roast"); default: a pot of it
   icon: string;

@@ -3,16 +3,17 @@
 // order they were made for), pots on the station, whole pies in the pie safe. You pick them up there.
 // The hatch is for a hired cook, later.
 import { organic, uid } from "./core.js";
-import { INGREDIENTS, RECIPES, TUNING, utensilFor } from "./data.js";
+import { INGREDIENTS, RECIPES, TUNING, URN_CAPACITY, utensilFor } from "./data.js";
 import { dist } from "./world.js";
 import { addToTray, removeFromTray, trayItems } from "./serving.js";
-export function recipesFor(_g, slot) {
+export function recipesFor(g, slot) {
     // At a kettle, tea isn't made as a job: you boil the kettle, then steep cups from the hot water.
-    // An urn brews a whole urn of one tea instead.
+    // With an urn in the kitchen, the kettle can also brew a whole pot of one tea to keep hot in it.
     const tea = RECIPES.find((r) => r.id === "tea");
-    if (slot.f.equip?.urn)
-        return [urnTea(tea)];
-    return RECIPES.filter((r) => slot.kinds.includes(r.station) && r.id !== "tea");
+    const list = RECIPES.filter((r) => slot.kinds.includes(r.station) && r.id !== "tea");
+    if (slot.kinds.includes("kettle") && g.world.furniture.some((f) => f.kind === "urn"))
+        list.push(urnTea(tea));
+    return list;
 }
 /** The name of where something's made, for the log: "the stove (hob 2)". */
 export function slotName(slot) {
@@ -47,8 +48,8 @@ export function ticketFor(g, recipe) {
 }
 /** The tea urn: a batch version of tea, offered alongside the single cup once you have the upgrade. */
 export function urnTea(tea) {
-    return { ...tea, name: "Tea, a whole urn", servings: [8, 1], minutes: [tea.minutes[0] * 2.5, tea.minutes[1]],
-        blurb: "A whole urn, kept hot behind the counter and poured by the cup all day. One leaf for everyone who asks." };
+    return { ...tea, name: "Tea for the urn", servings: [URN_CAPACITY, 0], minutes: [tea.minutes[0] * 2.5, tea.minutes[1]], storedIn: "urn",
+        blurb: "A whole pot of one tea, carried to the urn and kept hot there, poured by the cup all day." };
 }
 /** How a job's recipe is made: as itself, or as a batch (the urn). */
 export function effectiveRecipe(_g, recipe, batch = false) {
@@ -60,9 +61,9 @@ export function startJob(g, slot, recipeIn, ingredients, ticket) {
     if (recipe.servings)
         ticket = null;
     let total = Math.max(1, organic(recipe.minutes));
-    total /= slot.f.equip?.craftingSpeed ?? 1;
+    total /= slot.speed ?? slot.f.equip?.craftingSpeed ?? 1;
     g.jobs.set(slot.id, { recipeId: recipe.id, ingredients, total, progress: 0, done: false, ticket: ticket?.id, ticketName: ticket?.name, batch });
-    const forWho = ticket ? ` for ${ticket.name}` : recipe.storedIn === "piesafe" ? " (a whole pie)" : recipe.servings ? " (a whole pot)" : "";
+    const forWho = ticket ? ` for ${ticket.name}` : recipe.storedIn === "piesafe" ? " (a whole pie)" : recipe.storedIn === "urn" ? "" : recipe.servings ? " (a whole pot)" : "";
     if (recipe.id === "water") {
         g.say("You put the kettle on.");
         return;
@@ -101,8 +102,8 @@ export function updateCrafting(g, simDt, target) {
 }
 function finish(g, fid, job, recipe) {
     job.item.madeDay = g.day;
-    // Whole pies wait on the oven's shelf like any dish; the keeper carries them to the pie safe.
-    if (recipe.storedIn === "piesafe")
+    // Whole pies and pots of tea for the urn wait on the shelf like any dish; the keeper carries them where they're kept.
+    if (recipe.storedIn)
         job.item.whole = Math.max(2, Math.round(organic(recipe.servings ?? [6, 1])));
     else if (recipe.servings) {
         const n = Math.max(2, Math.round(organic(recipe.servings))) + (utensilFor(g.upgrades, recipe.station)?.servingsBonus ?? 0);
@@ -381,7 +382,7 @@ export function finishAllJobs(g) {
         job.item.ticket = undefined;
         job.item.ticketName = undefined;
         job.item.madeDay = g.day;
-        if (recipe.storedIn === "piesafe") {
+        if (recipe.storedIn) {
             job.item.whole = Math.max(2, Math.round(organic(recipe.servings ?? [6, 1])));
             g.shelves.set(fid, [...(g.shelves.get(fid) ?? []), job.item]);
         }
@@ -398,4 +399,25 @@ export function finishAllJobs(g) {
         i.ticket = undefined;
         i.ticketName = undefined;
     }
+}
+/** Pour a pot of tea, carried from the kettle, into the urn. It tops up the same tea; another tea waits until the urn is empty. */
+export function fillUrn(g, urnId, item) {
+    const pot = g.pots.get(urnId);
+    if (pot && !sameDish(pot.item, item)) {
+        g.say(`The urn still has ${pot.item.name.toLowerCase()} in it.`);
+        return false;
+    }
+    if (pot && pot.left >= URN_CAPACITY) {
+        g.say("The urn is full.");
+        return false;
+    }
+    removeFromTray(g, item);
+    const cups = item.whole ?? URN_CAPACITY;
+    const tea = { ...item, whole: undefined };
+    if (pot)
+        pot.left = Math.min(URN_CAPACITY, pot.left + cups);
+    else
+        g.pots.set(urnId, { item: tea, left: Math.min(URN_CAPACITY, cups), total: URN_CAPACITY });
+    g.say(`The ${item.name.toLowerCase()} goes into the urn: ${g.pots.get(urnId).left} cups.`);
+    return true;
 }

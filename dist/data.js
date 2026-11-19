@@ -86,20 +86,20 @@ export const EQUIP_GROUPS = [
 export const FUELS = { wood: { icon: "🪵", name: "wood" } };
 const HOT_DRINK_KINDS = ["kettle", "coffee"];
 const isHotDrinkSlot = (s) => s.kinds.every((k) => HOT_DRINK_KINDS.includes(k));
-const STORAGE_KIND = { pie: "piesafe", ale: "tap", cider: "tap" };
+const STORAGE_KIND = { pie: "piesafe", ale: "tap", cider: "tap", tea: "urn" };
 function placedPiece(e) {
     const shape = e.shape ?? ["#"];
     const holds = e.holds ?? [];
     const slots = e.type === "crafting" ? (e.slots ?? []).filter((sl) => !isHotDrinkSlot(sl))
         : e.type === "gear" ? [{ name: e.name, kinds: e.usedIn ?? [] }]
-            : holds.includes("tea") ? [{ name: "Urn", kinds: ["kettle"] }]
-                : [];
+            : [];
     const kind = STORAGE_KIND[holds[0] ?? ""];
     return {
         id: e.id, name: e.name, label: e.label ?? e.name, icon: e.icon,
         w: shape[0].length, h: shape.length, slots, blurb: e.text?.shopCard ?? "",
         craftingSpeed: e.craftingSpeed ?? 1,
-        urn: holds.includes("tea") || undefined,
+        gear: e.type === "gear" || undefined,
+        hotSlots: (e.slots ?? []).filter(isHotDrinkSlot).length || undefined,
         kind, tap: kind === "tap" ? holds[0] : undefined,
         group: e.shopTab, fuel: e.fuel,
     };
@@ -123,6 +123,7 @@ export function utensilFor(owned, kind) {
     return line ? bestInLine(owned, line) : undefined;
 }
 export const PIE_SAFE_CAPACITY = pieceById("pieSafe")?.capacity?.batches ?? 4;
+export const URN_CAPACITY = pieceById("teaUrn")?.capacity?.servings ?? 8;
 const LEGACY_DISH_ID = { fish: "friedFish" };
 export const dishData = (recipeId) => DISHES_DATA.dishes.find((d) => d.id === (LEGACY_DISH_ID[recipeId] ?? recipeId));
 /** Tray slots one serving of this takes. */

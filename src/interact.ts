@@ -5,7 +5,7 @@ import { moneyHtml } from "./money.js";
 import { GARNISHES, GRAMOPHONE, INGREDIENTS, RECIPES, REGULARS, SNACKS, TUNING, UPGRADES, type Recipe } from "./data.js";
 import type { Game, Patron, SetDownTray, Spill } from "./game.js";
 import { dist, type Furniture, type Slot } from "./world.js";
-import { canPutBack, collectShelf, emptyPot, putBack, recipesFor, returnSlice, startJob, makeItem, serveFromPot, takeSlice, ticketFor } from "./crafting.js";
+import { canPutBack, collectShelf, emptyPot, putBack, recipesFor, returnSlice, startJob, makeItem, serveFromPot, takeSlice, ticketFor, fillUrn } from "./crafting.js";
 import { tableKey } from "./patrons.js";
 import { applyGarnish, removeFromTray, servePatron, serveTable, garnishableDrinks, iconFor, itemLabel, serveUnasked, trayItems, pickupFromHatch, pickUpTray, startPour, setTrayDown, takeFromHatch } from "./serving.js";
 import { endDay, startNextDay, toggleInn } from "./day.js";
@@ -160,6 +160,12 @@ export function promptFor(g: Game, t: Target | null): string {
     case "bin": return trayItems(g).length ? "Space: throw something away" : "Scrap bin";
     case "piesafe": return trayItems(g).some((i) => i.whole) ? "Space: put the pie away"
       : g.pieSafe.length ? `Space: take a slice (${g.pieSafe.map((p) => p.left).reduce((a, b) => a + b, 0)} slices)` : "The pie safe is empty";
+    case "urn": {
+      if (trayItems(g).some((i) => i.whole && i.recipeId === "tea")) return "Space: pour the pot into the urn";
+      if (g.pouring) return `Pouring… ${Math.round((g.pouring.progress / g.pouring.total) * 100)}%`;
+      const pot = g.pots.get(f.id);
+      return pot ? `Space: pour a cup of ${pot.item.name.toLowerCase()} (${pot.left} left)` : "The urn is empty: brew a pot for it at a kettle";
+    }
     case "hatch": return g.hatch.length ? `Space: choose from the hatch (${g.hatch.length})` : "The hatch is empty";
     case "tap": if (g.pouring) return `Pouring… ${Math.round((g.pouring.progress / g.pouring.total) * 100)}%`;
       return `Space: pour ${RECIPES.find((r) => r.id === f.tap)?.name.toLowerCase()}`;
@@ -206,6 +212,13 @@ export function interact(g: Game, t: Target | null): void {
     case "snacks": openSnackMenu(g, `${f.tiles[0].x},${f.tiles[0].y}`); return;
     case "hatch": openHatchMenu(g); return;
     case "piesafe": openPieSafe(g); return;
+    case "urn": {
+      const pot = trayItems(g).find((i) => i.whole && i.recipeId === "tea");
+      if (pot) { fillUrn(g, f.id, pot); return; }
+      if (g.pots.get(f.id)) { startPour(g, f.id); return; }
+      g.say("The urn is empty. Brew a pot of tea for it at a kettle.");
+      return;
+    }
     case "bin": openBin(g); return;
     case "tap": startPour(g, `tap:${f.tap}`, f.tap); return;
     case "garnish": openGarnishMenu(g); return;

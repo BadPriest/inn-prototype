@@ -3,7 +3,7 @@ import { organic } from "./core.js";
 import { moneyHtml } from "./money.js";
 import { GRAMOPHONE, RECIPES, REGULARS, TUNING } from "./data.js";
 import { dist } from "./world.js";
-import { canPutBack, collectShelf, emptyPot, putBack, serveFromPot } from "./crafting.js";
+import { canPutBack, collectShelf, emptyPot, putBack, serveFromPot, fillUrn } from "./crafting.js";
 import { tableKey } from "./patrons.js";
 import { servePatron, serveTable, iconFor, trayItems, pickUpTray, startPour, setTrayDown } from "./serving.js";
 import { endDay, startNextDay, toggleInn } from "./day.js";
@@ -168,6 +168,14 @@ export function promptFor(g, t) {
         case "bin": return trayItems(g).length ? "Space: throw something away" : "Scrap bin";
         case "piesafe": return trayItems(g).some((i) => i.whole) ? "Space: put the pie away"
             : g.pieSafe.length ? `Space: take a slice (${g.pieSafe.map((p) => p.left).reduce((a, b) => a + b, 0)} slices)` : "The pie safe is empty";
+        case "urn": {
+            if (trayItems(g).some((i) => i.whole && i.recipeId === "tea"))
+                return "Space: pour the pot into the urn";
+            if (g.pouring)
+                return `Pouring… ${Math.round((g.pouring.progress / g.pouring.total) * 100)}%`;
+            const pot = g.pots.get(f.id);
+            return pot ? `Space: pour a cup of ${pot.item.name.toLowerCase()} (${pot.left} left)` : "The urn is empty: brew a pot for it at a kettle";
+        }
         case "hatch": return g.hatch.length ? `Space: choose from the hatch (${g.hatch.length})` : "The hatch is empty";
         case "tap":
             if (g.pouring)
@@ -248,6 +256,19 @@ export function interact(g, t) {
         case "piesafe":
             openPieSafe(g);
             return;
+        case "urn": {
+            const pot = trayItems(g).find((i) => i.whole && i.recipeId === "tea");
+            if (pot) {
+                fillUrn(g, f.id, pot);
+                return;
+            }
+            if (g.pots.get(f.id)) {
+                startPour(g, f.id);
+                return;
+            }
+            g.say("The urn is empty. Brew a pot of tea for it at a kettle.");
+            return;
+        }
         case "bin":
             openBin(g);
             return;

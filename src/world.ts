@@ -18,10 +18,10 @@ export interface Tile {
 }
 
 /** A piece of equipment where it stands. `uid` is stable, so what's cooking on it moves with it. */
-export interface Placed { uid: string; type: string; x: number; y: number }
+export interface Placed { uid: string; type: string; x: number; y: number; on?: string }
 
 /** One place to cook on a piece of equipment: a hob, an oven, a kettle. Jobs, pots and shelves are keyed by its id. */
-export interface Slot { id: string; name: string; kinds: StationKind[]; f: Furniture }
+export interface Slot { id: string; name: string; kinds: StationKind[]; f: Furniture; speed?: number; gear?: Equipment }
 
 /** Anything the keeper can interact with on the map. */
 export interface Furniture {
@@ -98,7 +98,7 @@ export class World {
   private placeEquipment(placed: Placed[]): void {
     for (const p of placed) {
       const eq = EQUIPMENT.find((e) => e.id === p.type);
-      if (!eq) continue;
+      if (!eq || eq.gear) continue;
       const tiles: Vec[] = [];
       for (let dy = 0; dy < eq.h; dy++) for (let dx = 0; dx < eq.w; dx++) tiles.push({ x: p.x + dx, y: p.y + dy });
       if (!tiles.every((t) => this.tile(t.x, t.y))) continue;
@@ -124,6 +124,14 @@ export class World {
         this.slotIndex.set(slot.id, slot);
         return slot;
       });
+      // Kettles and coffee pots set on its hot-drink slots: each is a place to make something, keyed by the gear's own id.
+      for (const q of placed.filter((x) => x.on === p.uid).slice(0, eq.hotSlots ?? 0)) {
+        const gear = EQUIPMENT.find((e) => e.id === q.type && e.gear);
+        if (!gear) continue;
+        const slot: Slot = { id: q.uid, name: gear.name, kinds: gear.slots[0]?.kinds ?? [], f, speed: gear.craftingSpeed, gear };
+        this.slotIndex.set(slot.id, slot);
+        f.slots.push(slot);
+      }
       this.furniture.push(f);
     }
   }
@@ -132,6 +140,7 @@ export class World {
   canPlace(type: string, x: number, y: number, moving: string | null, layout: Placed[], keeper: Vec): boolean {
     const eq = EQUIPMENT.find((e) => e.id === type);
     if (!eq) return false;
+    if (eq.gear) return !!this.stoveWithRoom(x, y, moving, layout);
     const kx = Math.floor(keeper.x), ky = Math.floor(keeper.y);
     for (let dy = 0; dy < eq.h; dy++) for (let dx = 0; dx < eq.w; dx++) {
       const t = this.tile(x + dx, y + dy);
@@ -159,6 +168,16 @@ export class World {
     for (const f of trial.furniture) if (!trial.approachTiles(f).some(reached)) return false;
     for (const row of trial.tiles) for (const t of row) if ((t.def.kind === "door" || t.def.kind === "front") && !reached(t)) return false;
     return true;
+  }
+
+  /** The stove standing on this tile, if it has a free hot-drink slot (the gear being moved doesn't count). */
+  stoveWithRoom(x: number, y: number, moving: string | null, layout: Placed[]): Placed | undefined {
+    const uid = this.tile(x, y)?.equip;
+    const stove = layout.find((p) => p.uid === uid);
+    const eq = stove && EQUIPMENT.find((e) => e.id === stove.type);
+    if (!stove || !eq?.hotSlots) return undefined;
+    const used = layout.filter((p) => p.on === stove.uid && p.uid !== moving).length;
+    return used < eq.hotSlots ? stove : undefined;
   }
 
   tableAt(x: number, y: number): Table | undefined {
@@ -326,17 +345,32 @@ const baseMap = (map: string[]): string[] => map.map((row) => [...row].map((ch) 
 /** Where the equipment stands on a new game: wherever the inn's map puts it. */
 export function defaultLayout(inn: InnId = "medium"): Placed[] {
   const out: Placed[] = [];
+  const gear: Placed[] = [];
   const seen = new Set<string>();
   innOf(inn).map.forEach((row, y) => [...row].forEach((ch, x) => {
     const type = EQUIPMENT_OF_TILE[ch];
     if (!type || seen.has(`${x},${y}`)) return;
     const eq = EQUIPMENT.find((e) => e.id === type)!;
+    if (eq.gear) { gear.push({ uid: `eq-${ch}${x},${y}`, type, x, y }); return; }
     for (let dy = 0; dy < eq.h; dy++) for (let dx = 0; dx < eq.w; dx++) seen.add(`${x + dx},${y + dy}`);
     out.push({ uid: `eq-${ch}${x},${y}`, type, x, y });
   }));
+  for (const q of gear) setOnStove(q, out);
   return out;
 }
 
 export function dist(a: Vec, b: Vec): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+/** Set a kettle or coffee pot on the first stove with a free hot-drink slot. False if there's none. */
+export function setOnStove(q: Placed, layout: Placed[]): boolean {
+  for (const p of layout) {
+    const eq = EQUIPMENT.find((e) => e.id === p.type);
+    if (!eq?.hotSlots || layout.filter((x) => x.on === p.uid).length >= eq.hotSlots) continue;
+    q.on = p.uid; q.x = p.x; q.y = p.y;
+    if (!layout.includes(q)) layout.push(q);
+    return true;
+  }
+  return false;
 }

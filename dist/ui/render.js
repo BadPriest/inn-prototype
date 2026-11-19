@@ -173,6 +173,8 @@ export function draw(ctx, g, v, target, clickDest) {
             fill = "#6a5a3a";
         if (f.kind === "tap")
             fill = "#7a5530";
+        if (f.kind === "urn")
+            fill = "#5e6470";
         if (f.kind === "piesafe")
             fill = "#7a5a46";
         if (f.kind === "bin")
@@ -238,6 +240,11 @@ export function draw(ctx, g, v, target, clickDest) {
                     ctx.fillText(iconFor(pot.item.recipeId) || "🍲", sx + sw / 2, py + ph + ts * 0.45);
                 }
             }
+            if (sl.gear && !job && !pot) {
+                ctx.fillStyle = "#fff";
+                ctx.font = `${Math.floor(ts * 0.26)}px system-ui, sans-serif`;
+                ctx.fillText(sl.gear.icon, sx + sw / 2, py + ph * 0.3);
+            }
             // Finished dishes waiting: a warm outline and their icons, ready to pick up.
             const shelf = g.shelves.get(sl.id);
             if (shelf?.length) {
@@ -250,6 +257,11 @@ export function draw(ctx, g, v, target, clickDest) {
                 shelf.forEach((it, i) => ctx.fillText(iconFor(it.recipeId, it.garnish) || "🍽", sx + ts * 0.3 + i * ts * 0.42, py - ts * 0.18));
             }
         });
+        if (f.kind === "urn") {
+            const pot = g.pots.get(f.id);
+            if (pot)
+                badge(ctx, px + pw - 2, py + 2, String(pot.left), ts);
+        }
         if (f.kind === "piesafe" && g.pieSafe.length) {
             // Pie safes share the pies, filling in order: each shows the slices in its own share.
             const safes = g.layout.filter((p) => p.type === "pieSafe").map((p) => p.uid);
