@@ -71,7 +71,7 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 
 ## Built and deployed (Nov 15, build 87)
 
-- #52 isometric view (the end goal; top-down stays the default for now): V or Pause → Display switches; blocks drawn in code, people as pawns, low walls except at the back. Zoom in both views (wheel, pinch, [ ]); turn the isometric camera (, and .). The wheel no longer picks between things in reach: Tab does
+- #52 isometric view (the end goal, and the default view since build 113; top-down stays for a while): V or Pause → Display switches; blocks drawn in code, people as pawns, low walls except at the back. Zoom in both views (wheel, pinch, [ ]); turn the isometric camera (, and .). The wheel no longer picks between things in reach: Tab does
 - #51 the keeper walks round guests; tables are easier to tap on tablets (deployed in 86)
 
 ## Built and deployed (Nov 15, build 85)

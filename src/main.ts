@@ -645,6 +645,7 @@ type UiChoice = "auto" | number;
 interface Settings { ui?: UiChoice; cues?: number; atmosphere?: number; music?: boolean | number; iso?: boolean; zoomFlat?: number; zoomIso?: number; rot?: number }
 let settings: Settings = {};
 try { settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) ?? "{}") as Settings; } catch { /* defaults */ }
+settings.iso ??= true;
 let uiChoice: UiChoice = settings.ui ?? "auto";
 function saveSettings(): void {
   settings.ui = uiChoice;

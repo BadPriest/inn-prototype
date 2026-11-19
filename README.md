@@ -10,7 +10,7 @@ Playtest build: https://inn-prototype.vercel.app (password-protected). What chan
 - **Tastes are hidden and learned by watching.** Everyone has likes and dislikes you can't see. You learn them from how a dish lands: delight, pleased, fulfilled, unfinished, complaints. Your journal records what happened, never the answer. Guests come in four kinds, by how readable they are: open, reserved, unformed and veiled.
 - **The world drives what people want.** The time of day, the calendar season, the weather, and each guest's hunger, thirst and warmth decide what they order. Rain brings passers-by in and soaks them, and wet guests head for the fire.
 - **Believable as well as fun.** Anything that breaks the illusion of a living inn gets fixed, like guests saying "Evening" at breakfast.
-- **A prototype, not the game.** The finished game won't run in a browser. This one does so playtesters can open it anywhere. The final view will be isometric. Top-down is still the default here while the isometric view is being evaluated (press **V** to switch).
+- **A prototype, not the game.** The finished game won't run in a browser. This one does so playtesters can open it anywhere. The final view is isometric, and it's the default here. Top-down stays for a while (press **V** to switch).
 
 Design decisions live in [docs/design-session-journal.md](docs/design-session-journal.md) and [docs/design-session-journal_game-start_nov-15.md](docs/design-session-journal_game-start_nov-15.md); the sound design is in [docs/specs/sound.md](docs/specs/sound.md).
 
@@ -37,7 +37,7 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 | R (or Q) | put down: a dish back where you picked it up, or a tray on the nearest counter or table |
 | X | empty a pot, urn or kettle |
 | E · C | garnish · offer something unasked |
-| Wheel or [ ] · V · , . | zoom · isometric view · turn the camera |
+| Wheel or [ ] · V · , . | zoom · top-down view · turn the camera |
 | J · K · O · P · H | journal · calendar · objectives · pause and settings · all the keys |
 
 ## What's in
@@ -75,7 +75,7 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 **Sound.** Every action and event has a cue. Rain, wind, thunder, the street, the fire, the kettle and the stew all have their own sounds. The crowd's murmur follows the headcount, records play on the gramophone, and background music fills long silences. Volume sliders cover effects, music and background, and the sound fades in as the keeper wakes.
 
 **Screen and settings.**
-- Top-down or isometric view, with zoom and a turnable camera.
+- Isometric view (top-down with V), with zoom and a turnable camera.
 - Order tickets, readable speech plates, and a side panel with orders, trays and a log.
 - A UI size slider, touch controls with a toolbar, controller support (PS5 or similar), and a keys screen (H).
 - A debug view (`) for spawning guests and skipping time.

@@ -767,6 +767,7 @@ try {
     settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) ?? "{}");
 }
 catch { /* defaults */ }
+settings.iso ??= true;
 let uiChoice = settings.ui ?? "auto";
 function saveSettings() {
     settings.ui = uiChoice;
