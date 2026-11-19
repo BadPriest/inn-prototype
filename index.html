@@ -86,8 +86,8 @@
   .menu-item.sel { background:#4a3a2c; outline:1px solid var(--accent); }
   .menu-item.dis { opacity:.35; cursor:default; }
   .menu-hint { margin-top:10px; font-size:11px; color:var(--muted); }
-  .menu-subtitle { font:italic 13px Georgia, serif; color:#c9a24a; margin-top:2px; }
-  .menu.wide { max-width:min(700px, 94vw); }
+  .menu-subtitle { font:13px system-ui; color:#d9c39a; margin-top:3px; }
+  .menu.wide { max-width:min(820px, 94vw); }
   .menu-actions { display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; margin-top:12px; }
   .menu-btn { font:600 14px system-ui; padding:9px 18px; border-radius:8px; cursor:pointer; border:1px solid #5a4636; background:#3a2e26; color:var(--ink); display:flex; flex-direction:column; align-items:center; gap:1px; }
   .menu-btn .sub { font:400 11px system-ui; color:var(--muted); }
@@ -107,12 +107,14 @@
   .bf-tabs button small { font:10.5px system-ui; color:var(--muted); }
   .bf-tabs button.on { border-color:#ffd34d; background:#3a2c1c; }
   .bf-tabs button.live::after { content:"now"; font:700 9px system-ui; color:#9be27a; }
-  .bf-strip { position:relative; height:26px; margin:2px 0 24px; background:#1a1410; border:1px solid #3d3027; border-radius:6px; }
-  .bf-seg { position:absolute; top:2px; bottom:2px; background:#4a3826; border:1px solid #8a6a40; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:13px; cursor:pointer; box-sizing:border-box; }
+  .bf-strip { position:relative; height:18px; margin:2px 0 20px; background:#1a1410; border:1px solid #3d3027; border-radius:5px; }
+  .bf-seg { position:absolute; top:2px; bottom:2px; background:#4a3826; border:1px solid #8a6a40; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:11px; cursor:pointer; box-sizing:border-box; }
   .bf-seg.on { background:#6a5030; border-color:#ffd34d; }
   .bf-now { position:absolute; top:-3px; bottom:-3px; width:2px; background:#9be27a; }
-  .bf-tick { position:absolute; top:28px; transform:translateX(-50%); font:10px system-ui; color:var(--muted); }
-  .bf-times { font-size:13px; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  .bf-tick { position:absolute; top:19px; transform:translateX(-50%); font:10px system-ui; color:var(--muted); }
+  .bf-times { font-size:13px; margin-bottom:4px; display:flex; align-items:center; gap:6px; }
+  .bf-times.muted { color:var(--muted); font-size:12px; }
+  .icard .unit { font-weight:400; color:var(--muted); font-size:11px; }
   .bf-times button { border:1px solid #6b5338; border-radius:5px; padding:1px 8px; }
   .bf-times b { min-width:44px; text-align:center; }
   /* Settings on the pause screen: tabs, sliders, toggles. */
@@ -132,27 +134,58 @@
   .explain { font-size:12.5px; color:#d9cbb4; margin:0 0 10px; }
   .need { font-size:12px; color:var(--muted); margin:2px 0 8px; }
   .need b { color:var(--ink); }
-  /* Cards: the visual language for things you pick (ingredients now; more later). */
-  .cards { display:grid; grid-template-columns:repeat(auto-fill, 104px); justify-content:center; gap:8px; } /* fixed columns, centred: the same margin on both sides */
-  .icard { position:relative; border-radius:8px; border:2px solid #6b5338; background:linear-gradient(#3a2c22,#2a1f18); padding:8px 6px 7px; text-align:center; cursor:pointer; font:12.5px/1.15 Georgia, serif; color:var(--ink); transition:transform .08s, border-color .08s; user-select:none; }
-  .icard .ic { display:block; font-size:26px; line-height:1.2; margin-bottom:3px; }
+  /* Cards (src/ui/cards.ts): at rest, what you need to choose; with the cursor on it, it lifts and a drawer
+     adds the rest. Rows are centred, so a short last row sits balanced; every card in a grid is as tall
+     as the tallest (settleCards). */
+  .cards { --w:118px; display:flex; flex-wrap:wrap; justify-content:center; gap:10px; max-width:calc(var(--cols) * (var(--w) + 10px)); margin:0 auto; padding-bottom:4px; }
+  .cards.size-s { --w:96px; gap:8px; }
+  .cards.size-l { --w:150px; gap:12px; }
+  .icard { position:relative; width:var(--w); box-sizing:border-box; border-radius:9px; border:2px solid #6b5338; background:linear-gradient(#3a2c22,#2a1f18); text-align:center; cursor:pointer; font:13px/1.2 Georgia, serif; color:var(--ink); transition:transform .1s, border-color .1s, box-shadow .1s; user-select:none; display:flex; flex-direction:column; }
+  .icard .face { padding:10px 7px 9px; flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .icard .ic { display:block; font-size:28px; line-height:1.15; }
+  .icard .nm { font-size:13.5px; line-height:1.15; }
+  .icard .fact { font:600 12px system-ui; color:#efe3cf; }
+  .icard .status { font:11.5px system-ui; color:var(--muted); line-height:1.25; }
+  .icard .status.good { color:#9be27a; } .icard .status.warn { color:#ffb347; } .icard .status.muted { color:#7d6f60; }
+  .icard .where, .icard .note { font:11px system-ui; color:var(--muted); line-height:1.3; }
+  .icard .where { color:#e8c98a; }
+  .icard .chips { margin-top:auto; padding-top:4px; }
+  .icard:hover { border-color:#a8854a; }
+  .icard.on { border-color:#ffd34d; background:linear-gradient(#5a4428,#3a2c1c); }
+  .icard.on::after { content:"✓"; position:absolute; top:4px; right:7px; color:#ffd34d; font:700 14px system-ui; }
+  .icard.on .status { color:#ffe08a; }
+  .icard.off { opacity:.42; cursor:default; }
+  .icard.focus { outline:2px solid var(--accent); outline-offset:2px; }
+  .icard.focus, .icard.drawer:hover { transform:scale(1.07); z-index:4; box-shadow:0 8px 22px rgba(0,0,0,.55); }
+  .icard.off.focus, .icard.off.drawer:hover { opacity:.8; }
+  /* What you have: a quiet band across the foot (not gold: gold is for the main button). */
+  .icard.has { border-color:#7d8f6e; }
+  .icard .have { background:#3b4a35; color:#d6e8c8; font:600 11px system-ui; letter-spacing:.02em; padding:3px 4px 4px; border-radius:0 0 7px 7px; }
+  /* The drawer: the card's .more is copied into one floating .cardtip, under (or over) the card with the
+     cursor on it, outside the menu's scrolling part so it's never cut off (cards.ts settleCards). */
+  .icard .more { display:none; }
+  .cardtip { display:none; position:absolute; z-index:7; zoom:var(--ui, 1); background:#241a14; border:2px solid var(--accent); border-radius:9px; padding:7px 10px 8px; text-align:left; box-shadow:0 10px 24px rgba(0,0,0,.6); pointer-events:none; }
+  .cardtip.hover { border-color:#a8854a; }
+  .cardtip .detail, .icard .open .detail { font:12px/1.4 system-ui; color:#e3d3b8; }
+  .cardtip .flavour, .icard .open .flavour { font:italic 12px/1.4 Georgia, serif; color:#a8977f; margin-top:4px; }
+  .cardtip .does, .icard .open .does { font:600 11.5px system-ui; color:var(--accent); margin-top:5px; }
+  .icard .open { margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,.08); text-align:left; width:100%; }
+  .icard.warn { border-color:#ffb347; animation:warnpulse 1.4s ease-in-out infinite; }
+  @keyframes warnpulse { 50% { box-shadow:0 0 0 3px rgba(255,179,71,.45), 0 0 14px rgba(255,179,71,.5); } }
   @media (max-width: 820px) and (orientation: portrait) {
-    .cards { grid-template-columns:repeat(3, 1fr); gap:6px; }
-    .icard { padding:6px 4px; font-size:12px; }
+    .cards { --w:31%; gap:6px; }
     .icard .ic { font-size:22px; }
     .blurb { font-size:13px; }
     .dish { margin-top:8px; padding:8px; }
     .dish .ic { font-size:28px; }
   }
-  .icard .chips { margin-top:5px; }
-  .icard:hover { border-color:#a8854a; }
-  .icard.on { border-color:#ffd34d; background:linear-gradient(#5a4428,#3a2c1c); transform:translateY(-3px); box-shadow:0 4px 12px rgba(0,0,0,.45); }
-  .icard.on::after { content:"✓"; position:absolute; top:3px; right:6px; color:#ffd34d; font:700 13px system-ui; }
-  .icard.off { opacity:.4; cursor:default; }
-  /* Things you have (equipment): gold, with the count in the corner. */
-  .icard.owned { border-color:#c9a24a; background:linear-gradient(#4a3a26,#2e2318); }
-  .icard .have { position:absolute; top:-8px; left:-6px; background:#ffd34d; color:#1a1410; font:700 12px system-ui; border-radius:10px; padding:1px 7px; box-shadow:0 2px 5px rgba(0,0,0,.5); }
-  .icard.focus { outline:2px solid var(--accent); outline-offset:2px; }
+  /* Text kinds in a menu: the lead says what to do, flavour is quiet colour, never mixed in one paragraph. */
+  .menu-flavour { font:italic 13px/1.4 Georgia, serif; color:#a8977f; margin:-2px 0 10px; }
+  .menu-pinned { margin-bottom:8px; }
+  .lead { font-size:13px; color:#e3d3b8; margin:0 0 10px; }
+  .sec-h { margin:12px 0 6px; display:flex; align-items:baseline; gap:8px; border-bottom:1px solid var(--line); padding-bottom:3px; }
+  .sec-h h4 { margin:0; font:600 11px system-ui; letter-spacing:.08em; text-transform:uppercase; color:#cdbda4; }
+  .sec-h small { font:italic 12px Georgia, serif; color:var(--muted); }
   .chip { display:inline-block; font:10.5px system-ui; padding:1px 6px; margin:1px; border-radius:9px; background:#3a2e26; color:#cdbda4; border:1px solid #4d3c2e; }
   .chip.new { background:#5a4428; color:#ffe08a; border-color:#a8854a; }
   .dish { display:flex; gap:12px; align-items:center; margin-top:12px; padding:10px 12px; border-radius:10px; border:2px solid #c9a24a; background:linear-gradient(#3a2c22,#241a14); }
@@ -165,12 +198,7 @@
   .dish.slim .ic { font-size:28px; }
   .meter { height:6px; width:160px; background:#1a1410; border-radius:3px; margin-top:5px; overflow:hidden; }
   .meter span { display:block; height:100%; background:#e0b060; }
-  .icard .note { font:11px system-ui; color:var(--muted); margin-top:3px; line-height:1.3; }
-  .icard .where { font:11px system-ui; color:#e8c98a; margin-top:3px; }
-  .icard.warn { border-color:#ffb347; animation:warnpulse 1.4s ease-in-out infinite; }
-  @keyframes warnpulse { 50% { box-shadow:0 0 0 3px rgba(255,179,71,.45), 0 0 14px rgba(255,179,71,.5); } }
   .desk-warn { background:rgba(255,179,71,.12); border:1px solid rgba(255,179,71,.5); border-radius:8px; padding:8px 10px; margin:0 0 10px; font-size:13px; }
-  .icard.on .note { color:#ffe08a; }
   .pips { letter-spacing:1px; color:#e0b060; font-size:10px; }
   .aside { font:italic 12.5px Georgia, serif; color:#cdbda4; margin:10px 0 0; }
   table.summary { border-collapse:collapse; width:100%; }

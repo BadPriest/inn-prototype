@@ -11,27 +11,51 @@ export function openDeskScreen(g, openJournal) {
     const st = { focus: 0 };
     g.bus.emit({ type: "MenuSound", sound: "desk" }); // you sit down at the desk
     const build = () => {
+        const now = g.mealNow();
+        const known = g.regulars ? [...g.regulars.values()].filter((r) => r.visits > 0).length : 0;
+        // Two rows: today's running of the inn (bill, prices, paper, calendar), then the inn itself.
         const cards = [
             { pick: "fare", icon: "📜", name: "Bill of fare", warn: !g.menuChosen,
-                note: !g.menuChosen ? `⚠️ not set yet<br>guests get the default` : g.mealMode ? `meal times<br>${g.mealNow() ? `${MEALS.find((m) => m.id === g.mealNow().id).name} now` : "between meals now"}` : `what's on the menu<br>${g.menu.size} on today` },
-            { pick: "prices", icon: "🪙", name: "House prices", note: `${priceLevel(g).name}<br>${priceLevel(g).blurb}` },
-            { pick: "calendar", icon: "📅", name: "Calendar", note: `${g.date.seasonName} ${g.date.dayOfSeason}<br>the season ahead` },
-            { pick: "paper", icon: "📰", name: "Newspaper", note: g.paper?.read ? "read" : "today's, unread", on: !!g.paper && !g.paper.read },
-            { pick: "shop", icon: "🛒", name: "Equipment", note: g.onOrder.length ? `${g.onOrder.length} on order<br>for tomorrow morning` : "stoves, ovens, kettles<br>to buy" },
+                fact: !g.menuChosen ? "Not set" : `${g.mealMode ? g.billNow().size : g.menu.size} on the board`,
+                status: !g.menuChosen ? "guests get a default" : g.mealMode ? (now ? `${MEALS.find((m) => m.id === now.id).name} now` : "between meals") : "all day",
+                tone: !g.menuChosen ? "warn" : undefined,
+                detail: "What guests can order. They only order what's on it.",
+                does: "Choose dishes and drinks" },
+            { pick: "prices", icon: "🪙", name: "House prices",
+                fact: priceLevel(g).name, status: `ale ${fmtMoney(priceOfRecipe(g, "ale"))} a pint`,
+                detail: "How dear everything on the bill is. Cheaper brings a few more guests; dearer, a few fewer.",
+                does: "Choose a price level" },
+            { pick: "paper", icon: "📰", name: "Newspaper",
+                fact: g.paper ? "Today's" : "None yet", status: g.paper ? (g.paper.read ? "read" : "unread") : "it comes in the morning",
+                tone: g.paper && !g.paper.read ? "good" : "muted",
+                detail: "The weather forecast and the news around town.",
+                does: "Read today's paper" },
+            { pick: "calendar", icon: "📅", name: "Calendar",
+                fact: `${g.date.seasonName} ${g.date.dayOfSeason}`, status: g.date.weekday,
+                detail: "This season's days: the weather so far, market days, and when the next season begins.",
+                does: "See the season" },
+            { pick: "shop", icon: "🛒", name: "Equipment",
+                fact: moneyHtml(g.purse), status: g.onOrder.length ? `${g.onOrder.length} on order, for tomorrow` : "stoves, barrels, upgrades",
+                tone: g.onOrder.length ? "good" : undefined,
+                detail: "Buy kitchen equipment and upgrades. Order for the carter, or fetch it yourself while the inn's shut.",
+                does: "Open the shop" },
             { pick: "arrange", icon: "🛠", name: "Arrange the kitchen", warn: g.toPlace.length > 0,
-                note: g.toPlace.length ? `📦 ${g.toPlace.length} delivered,<br>waiting to be placed` : "move your stoves,<br>kettles and pots" },
-            { pick: "journal", icon: "📖", name: "Journal", note: g.journalUnread ? `${g.journalUnread} new` : "the people you've met", on: g.journalUnread > 0 },
+                fact: g.toPlace.length ? `📦 ${g.toPlace.length} to place` : `${g.layout.length} pieces`, status: g.toPlace.length ? "delivered, waiting" : "move, place, sell",
+                tone: g.toPlace.length ? "warn" : undefined,
+                detail: "Move your equipment, place what's been delivered, or sell a piece back for half. The clock stops while you do.",
+                does: "Leave the desk and start arranging" },
+            { pick: "journal", icon: "📖", name: "Journal",
+                fact: known ? `${known} known` : "No one yet", status: g.journalUnread ? `${g.journalUnread} new` : "the people you've met",
+                tone: g.journalUnread ? "good" : undefined,
+                detail: "Notes on the regulars and passing visitors you've served: what they said, what they liked.",
+                does: "Read the journal" },
         ].map((c, i) => ({ ...c, focus: i === st.focus }));
         const go = (v) => {
             if (v === "fare")
                 openBillOfFare(g);
             else if (v === "prices") {
-                // One house-wide knob: Cheap, Fair, Dear, round again.
-                const i = PRICE_LEVELS.findIndex((l) => l.id === g.priceLevel);
-                g.priceLevel = PRICE_LEVELS[(i + 1) % PRICE_LEVELS.length].id;
-                g.bus.emit({ type: "MenuSound", sound: "prices" });
-                g.say(`House prices: ${priceLevel(g).name.toLowerCase()} (${priceLevel(g).blurb}). A pint of ale is ${fmtMoney(priceOfRecipe(g, "ale"))}.`);
-                replaceMenu(build());
+                g.bus.emit({ type: "MenuSound", sound: "penClick" });
+                openHousePrices(g, () => replaceMenu(build()));
             }
             else if (v === "paper")
                 openNewspaper(g);
@@ -51,13 +75,49 @@ export function openDeskScreen(g, openJournal) {
         return {
             title: "🕯️ Desk",
             holdsClock: true,
-            subtitle: "Manage your business",
+            subtitle: "Run the inn: what's served, what it costs, the kitchen, the news",
             view: {
-                html: `<p class="explain">What's on the menu and what it costs, what's in the kitchen and where it stands, the news and the season ahead, and the people you've met. In the purse: <b>${moneyHtml(g.purse)}</b>.</p>`
-                    + (!g.menuChosen ? `<p class="desk-warn">⚠️ <b>You haven't set the bill of fare.</b> Guests are ordering from a default one. Choose what you're ready to make.</p>` : "")
-                    + grid(cards),
+                html: (!g.menuChosen ? `<p class="desk-warn">⚠️ <b>The bill of fare isn't set.</b> Guests are ordering from a default one.</p>` : "")
+                    + grid(cards, { cols: 4 }),
                 onPick: go,
                 onKey: gridKeys(() => cards.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, (i) => go(cards[i].pick)),
+            },
+            items: [],
+        };
+    };
+    openMenu(build());
+}
+/** House prices: one house-wide level, Cheap, Fair or Dear. Three cards, side by side. */
+function openHousePrices(g, changed) {
+    const st = { focus: Math.max(0, PRICE_LEVELS.findIndex((l) => l.id === g.priceLevel)) };
+    const ale = (factor) => fmtMoney(Math.max(1, Math.round(priceOfRecipe(g, "ale") / priceLevel(g).factor * factor)));
+    const FLOW = { cheap: "A few more guests come in", fair: "The usual number of guests", dear: "A few fewer guests come in" };
+    const build = () => {
+        const cards = PRICE_LEVELS.map((l, i) => ({
+            pick: l.id, icon: l.id === "cheap" ? "🪙" : l.id === "fair" ? "⚖️" : "💰", name: l.name,
+            fact: `ale ${ale(l.factor)} a pint`,
+            status: l.factor === 1 ? "what things are worth" : l.factor < 1 ? `${Math.round((1 - l.factor) * 100)}% off everything` : `${Math.round((l.factor - 1) * 100)}% on everything`,
+            detail: FLOW[l.id] + ".",
+            does: g.priceLevel === l.id ? "The price now" : `Set prices to ${l.name.toLowerCase()}`,
+            on: g.priceLevel === l.id, focus: i === st.focus,
+        }));
+        const pick = (id) => {
+            if (g.priceLevel !== id) {
+                g.priceLevel = id;
+                g.bus.emit({ type: "MenuSound", sound: "prices" });
+                g.say(`House prices: ${priceLevel(g).name.toLowerCase()}. A pint of ale is ${fmtMoney(priceOfRecipe(g, "ale"))}.`);
+            }
+            back();
+            changed();
+        };
+        return {
+            title: "🪙 House prices",
+            holdsClock: true,
+            subtitle: "One level for everything on the bill of fare",
+            view: {
+                html: grid(cards, { cols: 3, size: "l", open: true }),
+                onPick: pick,
+                onKey: gridKeys(() => cards.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, (i) => pick(cards[i].pick)),
             },
             items: [],
         };
@@ -170,47 +230,46 @@ export function openBillOfFare(g) {
             }
             back();
         };
-        const cards = list.map((r, i) => ({
-            pick: String(i),
-            icon: r.icon,
-            name: r.name,
-            note: !g.canMake(r.id) ? needs(r) : `${moneyHtml(priceOfRecipe(g, r.id))}${r.storedIn === "piesafe" ? " a slice" : r.servings ? " a serving" : ""} · ${set.has(r.id) ? "on the board · " : ""}${r.storedIn === "piesafe" ? "whole pies, sliced" : r.servings ? "by the pot" : r.station === "tap" ? "on tap" : `about ${r.minutes[0]} min`}`,
-            where: whereShort(r),
-            title: whereFull(r),
-            tags: r.baseTags,
-            on: set.has(r.id),
-            off: !g.canMake(r.id),
-            focus: i === st.focus,
-        }));
+        const cards = list.map((r, i) => {
+            const can = g.canMake(r.id), on = set.has(r.id);
+            const unit = r.storedIn === "piesafe" ? "a slice" : r.servings ? "a serving" : r.station === "tap" ? "a pint" : "";
+            const how = r.storedIn === "piesafe" ? "Baked whole, sold by the slice." : r.servings ? `Made by the pot: about ${r.servings[0]} servings, ~${r.minutes[0]} min.` : r.station === "tap" ? "Poured from the barrel." : `Made to order, ~${r.minutes[0]} min.`;
+            return {
+                pick: String(i), icon: r.icon, name: r.name,
+                fact: can ? `${moneyHtml(priceOfRecipe(g, r.id))}${unit ? ` <span class="unit">${unit}</span>` : ""}` : "",
+                status: can ? whereShort(r) : needs(r), tone: can ? undefined : "warn",
+                tags: r.baseTags, on, off: !can, focus: i === st.focus,
+                detail: `${how} ${whereFull(r)}.`,
+                does: !can ? "Buy what it needs in Equipment" : on ? "Take it off the board" : "Put it on the board",
+            };
+        });
         const modes = `<div class="bf-modes">
-      <button class="${g.mealMode ? "" : "on"}" data-pick="mode:all">All-day bill</button>
+      <button class="${g.mealMode ? "" : "on"}" data-pick="mode:all">All day</button>
       <button class="${g.mealMode ? "on" : ""}" data-pick="mode:meals">Meal times</button>
     </div>`;
-        let head;
-        if (!g.mealMode) {
-            head = `<p class="explain"><b>Pick what goes up on the board.</b> Guests only order what's on it, and they'll still order it after it runs out. Put up what you're ready to make; leave off what you'd rather not. Prices are <b>${priceLevel(g).name.toLowerCase()}</b> (House prices, at the desk); dearer ingredients add a penny or two.</p>`;
-        }
-        else {
+        let head = "";
+        if (g.mealMode) {
             const live = g.mealNow()?.id ?? "between";
             const tabs = `<div class="bf-tabs">${TABS.map((t) => {
                 const m = g.meals.find((x) => x.id === t);
                 const def = MEALS.find((x) => x.id === t);
-                const label = def && m ? `${def.icon} ${def.name}<small>${hourLabel(m.from)}–${hourLabel(m.to)}</small>` : `🍺 Between meals<small>drinks only</small>`;
+                const label = def && m ? `${def.icon} ${def.name}<small>${hourLabel(m.from)}–${hourLabel(m.to)}</small>` : `🍺 Between<small>drinks only</small>`;
                 return `<button class="${st.tab === t ? "on" : ""}${live === t ? " live" : ""}" data-pick="tab:${t}">${label}</button>`;
             }).join("")}</div>`;
             const m = meal();
             const times = m
-                ? `<div class="bf-times">Served from <button data-pick="from:-1">−</button><b>${hourLabel(m.from)}</b><button data-pick="from:1">+</button>
+                ? `<div class="bf-times">Served <button data-pick="from:-1">−</button><b>${hourLabel(m.from)}</b><button data-pick="from:1">+</button>
            to <button data-pick="to:-1">−</button><b>${hourLabel(m.to)}</b><button data-pick="to:1">+</button></div>`
-                : `<p class="explain">Between meals there's no food on the board: guests can have a drink (and the snacks on the tables). Someone who stays until a meal starts can order from it.</p>`;
+                : `<div class="bf-times muted">Drinks and the snacks on the tables only. Guests who stay can order when a meal starts.</div>`;
             head = `${tabs}${dayStrip(g, st.tab)}${times}`;
         }
         return {
             title: "📜 Bill of fare",
             holdsClock: true,
-            subtitle: g.mealMode ? "A bill for each meal; it carries over day to day." : "What's on the menu today?",
+            subtitle: g.mealMode ? "A bill for each meal. Guests order only what's on it." : "Guests order only what's on the board, all day.",
             view: {
-                html: `${modes}${head}${grid(cards)}`,
+                pinned: `${modes}${head}`,
+                html: grid(cards, { cols: 7, size: "s" }),
                 onPick: (v) => {
                     const [k, arg] = v.split(":");
                     if (k === "mode")
@@ -317,15 +376,17 @@ export function openShop(g) {
             const price = priceOfThing(it.id);
             const coming = onOrderCount(g, it.id);
             const short = price - g.purse;
-            const have = it.goods && (owned > 0 || coming > 0);
-            const status = it.goods
-                ? owned ? "yours" : coming ? "🛻 coming tomorrow" : short > 0 ? `short ${moneyHtml(short)}` : "buy"
-                : `${coming ? `🛻 ${coming} coming tomorrow · ` : ""}${short > 0 ? `short ${moneyHtml(short)}` : owned ? "buy another" : "buy"}`;
+            const done = it.goods && (owned > 0 || coming > 0); // an upgrade is bought once
+            const status = done ? (owned ? "Yours" : "🛻 coming tomorrow")
+                : coming ? `🛻 ${coming} coming tomorrow` : short > 0 ? `short ${moneyHtml(short)}` : owned ? "buy another" : "";
             return {
-                pick: String(i), icon: it.icon, name: it.name, focus: i === st.focus, owned: it.goods ? 0 : owned, on: !!have,
-                off: !have && short > 0,
+                pick: String(i), icon: it.icon, name: it.name, focus: i === st.focus,
+                fact: done ? "" : moneyHtml(price),
+                status, tone: done || coming ? "good" : short > 0 ? "warn" : undefined,
+                have: it.goods ? 0 : owned, on: done, off: !done && short > 0,
                 tags: fuel ? [`${fuel.icon} ${fuel.name}`] : undefined,
-                note: `${moneyHtml(price)}<br>${status}<br><span class="muted">${it.blurb}</span>`,
+                detail: it.blurb,
+                does: done ? (owned ? "You have this upgrade" : "It's on the carter's cart") : short > 0 ? `You need ${fmtMoney(short)} more` : owned ? "Buy another: order it or fetch it" : "Buy it: order it or fetch it",
             };
         });
         const tabs = `<div class="bf-tabs">${EQUIP_GROUPS.map((t) => {
@@ -334,10 +395,11 @@ export function openShop(g) {
         }).join("")}</div>`;
         return {
             title: "🛒 Equipment",
-            subtitle: `In the purse: ${fmtMoney(g.purse)}`,
+            subtitle: `${moneyHtml(g.purse)} in the purse · the carter brings orders next morning`,
             holdsClock: true,
             view: {
-                html: `${tabs}<p class="explain"><b>Pick something to buy.</b> In the purse: ${moneyHtml(g.purse)}. Order it and the carter brings it tomorrow morning, or fetch it yourself now while the inn's shut. Then place it (desk → Arrange the kitchen); you can move things any time, and sell them back for half. <b>Tab</b> switches lists.</p>${grid(cards)}`,
+                pinned: tabs,
+                html: grid(cards),
                 onPick: (v) => {
                     if (v.startsWith("tab:")) {
                         if (v.slice(4) !== shopTab)

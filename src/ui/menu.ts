@@ -1,5 +1,7 @@
 // Plain keyboard menus and dialogs. Arrows / Enter / Backspace / Esc, or the mouse.
 
+import { settleCards } from "./cards.js";
+
 export interface MenuItem {
   label: string;
   sub?: string;
@@ -15,6 +17,8 @@ export interface MenuItem {
 /** Custom content between the body and the items (cards, for instance), with its own clicks and keys. */
 export interface MenuView {
   html: string;
+  /** Stays in place above the scrolling part: tabs, a band of the day, a mode switch. */
+  pinned?: string;
   /** A click on an element inside the view that has a data-pick attribute. */
   onPick?: (value: string) => void;
   /** Keys the view wants (arrows over cards, say). Return true if handled. */
@@ -25,7 +29,8 @@ export interface MenuView {
 
 export interface MenuSpec {
   title: string;
-  subtitle?: string; // a second heading under the title
+  subtitle?: string; // one line under the title: what this screen is for
+  flavour?: string; // a quiet italic line of colour, kept apart from what you need to know
   body?: string; // optional HTML shown above the items
   view?: MenuView;
   items: MenuItem[];
@@ -166,7 +171,9 @@ function render(): void {
         <div class="menu-title">${s.title}${s.subtitle ? `<div class="menu-subtitle">${s.subtitle}</div>` : ""}</div>
         ${!isModal() ? `<button class="mbtn" data-act="close" aria-label="Close">✕</button>` : ""}
       </div>
+      ${s.flavour ? `<div class="menu-flavour">${s.flavour}</div>` : ""}
       ${s.body ? `<div class="menu-body">${s.body}</div>` : ""}
+      ${s.view?.pinned ? `<div class="menu-pinned">${s.view.pinned}</div>` : ""}
       ${s.view ? `<div class="menu-view">${s.view.html}</div>` : ""}
       ${listed ? `<div class="menu-items">${listed}</div>` : ""}
       ${buttons ? `<div class="menu-actions">${buttons}</div>` : ""}
@@ -176,6 +183,7 @@ function render(): void {
     const pick = s.view.onPick;
     root.querySelectorAll<HTMLElement>("[data-pick]").forEach((el) => { el.onclick = () => pick(el.dataset.pick!); });
   }
+  settleCards(root);
   const view = root.querySelector<HTMLElement>(".menu-view");
   if (view) {
     view.scrollTop = keepScroll;

@@ -129,7 +129,7 @@ export const EQUIP_GROUPS: { id: EquipGroup | "goods"; name: string; icon: strin
   { id: "cooking", name: "Cooking", icon: "🔥" },
   { id: "drinks", name: "Drinks", icon: "🍺" },
   { id: "storage", name: "Storage", icon: "🗄️" },
-  { id: "goods", name: "Supplies", icon: "📦" },
+  { id: "goods", name: "Upgrades", icon: "⭐" },
 ];
 export type Fuel = "wood";
 export const FUELS: Record<Fuel, { icon: string; name: string }> = { wood: { icon: "🪵", name: "wood" } };

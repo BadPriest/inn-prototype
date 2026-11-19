@@ -6,6 +6,18 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 108 · Nov 19, 2026 · deployed
+
+### Added
+- **Cards say more when you point at them.** With the cursor, controller or mouse on a card, it lifts and a panel beside it says what it is and what picking it does. At rest a card keeps to the essentials: name, one fact (a price, a count), its state, and tags for food.
+- **House prices has its own screen**: Cheap, Fair and Dear side by side, each with the price of a pint, how much it changes everything, and what it does to the number of guests. It used to step round silently on each press.
+
+### Changed
+- **The desk is tidier**: two balanced rows (bill of fare, prices, newspaper, calendar; then equipment, arranging, journal), every card the same height, each saying what's inside and how things stand ("Not set", "Fair · ale 4d a pint", "3 pieces"). The paragraph at the top is gone.
+- **Equipment**: "Supplies" is now **Upgrades** (wider trays, seasoned oak). The tabs stay in place while you scroll; cards show the price and one line of status; what you own has a "You have 1" band. The long instructions are down to one line.
+- **Bill of fare** is shorter: the mode switch, meal tabs, the band of the day and the meal's hours stay pinned at the top; the dishes sit in two even rows of seven, each with its price, where it's made and its tags. Dishes you can't make say what they need.
+- Newspaper sections have a heading with a note: "Weather · forecasts may be wrong".
+
 ## Build 107 · Nov 18, 2026 · deployed
 
 ### Added

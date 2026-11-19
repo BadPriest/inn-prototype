@@ -1,4 +1,5 @@
 // Plain keyboard menus and dialogs. Arrows / Enter / Backspace / Esc, or the mouse.
+import { settleCards } from "./cards.js";
 const stack = [];
 let root;
 let onModalChange = () => { };
@@ -140,7 +141,9 @@ function render() {
         <div class="menu-title">${s.title}${s.subtitle ? `<div class="menu-subtitle">${s.subtitle}</div>` : ""}</div>
         ${!isModal() ? `<button class="mbtn" data-act="close" aria-label="Close">✕</button>` : ""}
       </div>
+      ${s.flavour ? `<div class="menu-flavour">${s.flavour}</div>` : ""}
       ${s.body ? `<div class="menu-body">${s.body}</div>` : ""}
+      ${s.view?.pinned ? `<div class="menu-pinned">${s.view.pinned}</div>` : ""}
       ${s.view ? `<div class="menu-view">${s.view.html}</div>` : ""}
       ${listed ? `<div class="menu-items">${listed}</div>` : ""}
       ${buttons ? `<div class="menu-actions">${buttons}</div>` : ""}
@@ -150,6 +153,7 @@ function render() {
         const pick = s.view.onPick;
         root.querySelectorAll("[data-pick]").forEach((el) => { el.onclick = () => pick(el.dataset.pick); });
     }
+    settleCards(root);
     const view = root.querySelector(".menu-view");
     if (view) {
         view.scrollTop = keepScroll;

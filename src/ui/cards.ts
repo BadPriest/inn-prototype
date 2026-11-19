@@ -1,5 +1,12 @@
-// Cards: the visual language for things you pick (ingredients, snacks, pies, and more later).
+// Cards: the visual language for things you pick (dishes, ingredients, equipment, desk screens...).
 // Shared building blocks so every card screen looks and handles the same.
+//
+// A card has two sizes. At rest it shows what you need to choose: icon, name, one key fact, its state,
+// and tags where they matter (food). With the cursor on it (keys, controller, mouse) it lifts, and a
+// drawer under it adds the rest: what it is, and what picking it does. Text never mixes kinds:
+//   fact     what it is or costs (plain)            status   its state now (small, coloured by `tone`)
+//   detail   more about it, in the drawer           does     what picking it does, in the drawer
+//   flavour  a line of colour, in the drawer, italic and quiet
 
 export function chip(tag: string, highlight = false): string {
   return `<span class="chip ${highlight ? "new" : ""}">${tag}</span>`;
@@ -9,28 +16,102 @@ export interface CardSpec {
   pick: string; // value handed to the view's onPick
   icon: string;
   name: string;
+  fact?: string; // one key fact at rest: a price, a count, "6 on the board"
+  status?: string; // its state: "on the table now", "short 1s 4d"
+  tone?: "good" | "warn" | "muted"; // colours the status
   tags?: string[];
-  note?: string; // a small line under the name (slices left, "on the table now"...)
+  detail?: string; // the drawer: more about it
+  does?: string; // the drawer: what picking it does ("Opens the shop", "Takes it off the board")
+  flavour?: string; // the drawer: a quiet italic line
+  have?: number; // how many you have: a band across the foot, "You have n"
   on?: boolean; // chosen / current
   off?: boolean; // not available right now
   focus?: boolean; // keyboard focus
-  title?: string; // hover text
-  owned?: number; // how many you have: a gold border and a count in the corner
-  where?: string; // where it's made (the bill of fare)
   warn?: boolean; // needs your attention: a pulsing amber border
+  title?: string; // hover text
+  open?: boolean; // show the drawer's text on the face (a few big choices)
+  /** @deprecated older screens: a small line under the name. New cards use fact / status. */
+  note?: string;
+  /** @deprecated older screens: where a dish is made. New cards use fact. */
+  where?: string;
+  /** @deprecated use have */
+  owned?: number;
 }
 
 export function card(c: CardSpec): string {
-  return `<div class="icard ${c.on ? "on" : ""} ${c.off ? "off" : ""} ${c.focus ? "focus" : ""} ${c.owned ? "owned" : ""} ${c.warn ? "warn" : ""}" data-pick="${c.pick}"${c.title ? ` title="${c.title}"` : ""}>
-      ${c.owned ? `<span class="have">×${c.owned}</span>` : ""}<span class="ic">${c.icon}</span>${c.name}
-      ${c.where ? `<div class="where">${c.where}</div>` : ""}
-      ${c.note ? `<div class="note">${c.note}</div>` : ""}
-      ${c.tags?.length ? `<div class="chips">${c.tags.map((t) => chip(t)).join("")}</div>` : ""}
+  const open = !!c.open;
+  const have = c.have ?? c.owned ?? 0;
+  const extra = `${c.detail ? `<div class="detail">${c.detail}</div>` : ""}${c.flavour ? `<div class="flavour">${c.flavour}</div>` : ""}${c.does ? `<div class="does">${c.does}</div>` : ""}`;
+  // Open cards (a few big choices) show it all on the face; the rest keep it for the drawer.
+  const drawer = !open && (c.detail || c.does || c.flavour) ? `<div class="more">${extra}</div>` : "";
+  const cls = ["icard", c.on && "on", c.off && "off", c.focus && "focus", have && "has", c.warn && "warn", drawer && "drawer"].filter(Boolean).join(" ");
+  return `<div class="${cls}" data-pick="${c.pick}"${c.title ? ` title="${c.title}"` : ""}>
+      <div class="face">
+        <span class="ic">${c.icon}</span><span class="nm">${c.name}</span>
+        ${c.fact ? `<div class="fact">${c.fact}</div>` : ""}
+        ${c.where ? `<div class="where">${c.where}</div>` : ""}
+        ${c.status ? `<div class="status ${c.tone ?? ""}">${c.status}</div>` : ""}
+        ${c.note ? `<div class="note">${c.note}</div>` : ""}
+        ${c.tags?.length ? `<div class="chips">${c.tags.map((t) => chip(t)).join("")}</div>` : ""}
+        ${open && extra ? `<div class="open">${extra}</div>` : ""}
+      </div>
+      ${have ? `<div class="have">You have ${have}</div>` : ""}
+      ${drawer}
     </div>`;
 }
 
-export function grid(cards: CardSpec[]): string {
-  return `<div class="cards">${cards.map(card).join("")}</div>`;
+/**
+ * Cards in balanced rows: a fixed card width, rows centred (seven cards sit as four and three), every
+ * card the same height. `cols` caps the row; left out, it's picked from the count.
+ */
+export function grid(cards: CardSpec[], opts: { cols?: number; size?: "s" | "m" | "l"; open?: boolean } = {}): string {
+  const n = cards.length;
+  const cols = opts.cols ?? (n <= 4 ? n : n <= 6 ? 3 : n <= 8 ? 4 : n <= 10 ? 5 : 6);
+  return `<div class="cards size-${opts.size ?? "m"}" style="--cols:${Math.max(1, cols)}">${cards.map((c) => card({ ...c, open: c.open ?? opts.open })).join("")}</div>`;
+}
+
+/**
+ * After a menu is drawn: every card in a grid as tall as the tallest, and the drawer of the card under
+ * the cursor. The drawer floats over the menu (outside its scrolling part, so it's never cut off): below
+ * the card, or above it when there's no room below. The mouse shows the card it's over; otherwise the
+ * keyboard's.
+ */
+export function settleCards(root: HTMLElement): void {
+  root.querySelectorAll<HTMLElement>(".cards").forEach((g) => {
+    const cs = [...g.querySelectorAll<HTMLElement>(":scope > .icard")];
+    if (!cs.length) return;
+    cs.forEach((c) => { c.style.height = ""; });
+    const h = Math.max(...cs.map((c) => c.offsetHeight));
+    cs.forEach((c) => { c.style.height = `${h}px`; });
+  });
+  const tip = document.createElement("div");
+  tip.className = "cardtip";
+  root.appendChild(tip);
+  const focused = () => root.querySelector<HTMLElement>(".icard.focus");
+  const show = (c: HTMLElement | null, hover = false) => {
+    const more = c?.querySelector<HTMLElement>(".more");
+    if (!c || !more) { tip.style.display = "none"; return; }
+    tip.innerHTML = more.innerHTML;
+    tip.classList.toggle("hover", hover);
+    tip.style.display = "block";
+    const z = Number(getComputedStyle(document.documentElement).getPropertyValue("--ui")) || 1;
+    const r = c.getBoundingClientRect(), box = root.getBoundingClientRect();
+    const w = Math.max(r.width, 190 * z);
+    tip.style.width = `${w / z}px`;
+    const th = tip.getBoundingClientRect().height;
+    let left = r.left - box.left + r.width / 2 - w / 2;
+    left = Math.max(6, Math.min(box.width - w - 6, left));
+    let top = r.bottom - box.top + 4;
+    if (top + th > box.height - 6) top = r.top - box.top - th - 4;
+    tip.style.left = `${left / z}px`;
+    tip.style.top = `${Math.max(6, top) / z}px`;
+  };
+  root.querySelectorAll<HTMLElement>(".icard").forEach((c) => {
+    c.addEventListener("mouseenter", () => show(c, true));
+    c.addEventListener("mouseleave", () => show(focused()));
+  });
+  root.querySelector(".menu-view")?.addEventListener("scroll", () => show(focused()));
+  show(focused());
 }
 
 /** How many cards fit in a row right now (the grid wraps to the screen). */
@@ -52,11 +133,17 @@ export function gridKeys(count: () => number, focus: () => number, setFocus: (i:
     if (!n) return false;
     const cols = columns();
     const to = (i: number) => { setFocus((i + n) % n); return true; };
+    // Up and down stop at the edge rather than wrapping: a short last row has nothing below some cards.
+    const row = (by: number) => {
+      const i = focus() + by * cols;
+      if (i < 0 || i >= n) { const lastRow = Math.floor((n - 1) / cols) * cols; return to(by > 0 ? (focus() >= lastRow ? focus() : n - 1) : focus()); }
+      return to(i);
+    };
     switch (e.key) {
       case "ArrowLeft": case "a": case "A": return to(focus() - 1);
       case "ArrowRight": case "d": case "D": return to(focus() + 1);
-      case "ArrowUp": case "w": case "W": return to(focus() - cols);
-      case "ArrowDown": case "s": case "S": return to(focus() + cols);
+      case "ArrowUp": case "w": case "W": return row(-1);
+      case "ArrowDown": case "s": case "S": return row(1);
       case " ": case "Enter": use(focus()); return true;
     }
     return false;

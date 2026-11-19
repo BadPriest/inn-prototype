@@ -80,7 +80,7 @@ export const EQUIP_GROUPS = [
     { id: "cooking", name: "Cooking", icon: "🔥" },
     { id: "drinks", name: "Drinks", icon: "🍺" },
     { id: "storage", name: "Storage", icon: "🗄️" },
-    { id: "goods", name: "Supplies", icon: "📦" },
+    { id: "goods", name: "Upgrades", icon: "⭐" },
 ];
 export const FUELS = { wood: { icon: "🪵", name: "wood" } };
 const HOB = { name: "Hob", kinds: ["stove", "griddle"] }; // a pot or a pan
