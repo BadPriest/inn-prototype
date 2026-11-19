@@ -6,6 +6,11 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 112 · Nov 19, 2026 · not deployed
+
+### Changed
+- **Everything on the bill costs 7% more.** Guests pay the exact amount, fractions of a penny and all, so it adds up over a day even on a 4d pint; the bill shows prices to the nearest penny (a roast now reads 10d, a fry-up 9d). One knob (`PRICE_MARKUP` in money.ts) for tuning.
+
 ## Build 111 · Nov 19, 2026 · deployed
 
 ### Changed

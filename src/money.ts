@@ -70,14 +70,27 @@ export const PRICE_LEVELS: { id: PriceLevel; name: string; factor: number; flow:
 ];
 export const priceLevel = (g: Game) => PRICE_LEVELS.find((l) => l.id === g.priceLevel) ?? PRICE_LEVELS[1];
 
-/** What a dish on the bill sells for now (no ingredients chosen: the plain dish). */
-export function priceOfRecipe(g: Game, recipeId: string, options: string[] = [], garnished = false): number {
+/**
+ * Everything on the bill a little dearer than the table above: Bruno, Nov 19 (the goals felt far off). One
+ * knob for the whole house; it will move as the economy is tuned. Guests pay the exact amount, fractions of
+ * a penny and all, so a small change still adds up over a day; what the bill shows is rounded.
+ */
+export const PRICE_MARKUP = 1.07;
+
+/** What a dish sells for, exactly (fractions of a penny kept). */
+function exactPrice(g: Game, recipeId: string, options: string[], garnished: boolean): number {
   const base = (DISH_PRICE[recipeId] ?? 4) + options.reduce((a, o) => a + (INGREDIENT_EXTRA[o] ?? 0), 0) + (garnished ? GARNISH_EXTRA : 0);
-  return Math.max(1, Math.round(base * priceLevel(g).factor));
+  return Math.max(1, base * priceLevel(g).factor * PRICE_MARKUP);
 }
 
+/** What a dish on the bill sells for now, to the penny (no ingredients chosen: the plain dish). */
+export function priceOfRecipe(g: Game, recipeId: string, options: string[] = [], garnished = false): number {
+  return Math.round(exactPrice(g, recipeId, options, garnished));
+}
+
+/** What a guest pays for this dish: exact, so the markup counts even on a 4d pint. */
 export function priceOf(g: Game, item: Item): number {
-  return priceOfRecipe(g, item.recipeId, item.options ?? [], !!item.garnish);
+  return exactPrice(g, item.recipeId, item.options ?? [], !!item.garnish);
 }
 
 /** A tip, by how it went: a Delight tips well, Pleased a little, anything else nothing. Modest either way. */

@@ -177,6 +177,21 @@ Cast iron picks up a signature tag with use.
 
 ## Ideas to develop
 
+### Table snacks do more than make people thirsty (Nov 18)
+
+Snacks are a small, cheap lever with several effects. Salty snacks already make people thirsty. More effects, one or two per snack:
+
+- **Patience:** a snack a guest likes makes them more patient while they wait. It only works if they like it, so it rewards knowing your guests.
+- **Hunger:** some snacks whet the appetite, making food orders more likely.
+- **Coziness:** improves the room's feel for that table's guests only.
+- **Priming:** a snack changes how dishes at that table taste. A wedge of lime before something sweet makes it read as brighter; something salty softens a bitter ale. You can set a snack on purpose to prime a table for a dish, or to rescue a soup that isn't great.
+
+Priming must always be visible: the snack bowl shows its effect, and the dish shows the shifted tag (for example *sweet → bright*). Decided: priming lasts as long as the bowl has something in it. No wearing off, nothing to track: a filled bowl means every serve at that table is primed, an empty one means none. Proposed: it shifts or softens one tag per serve, never more. Ties to Spec 2 scoring and to room feel.
+
+### How snacks are bought
+
+Open. Proposed: snacks come from the general store by the jar or sack (bulk is the natural way to buy them), with the odd bundle as a special. One jar fills many bowls, and dry snacks keep, so they never spoil on you. Fresh ones (lime wedges, pickled eggs once opened) follow the shelf-life rules.
+
 ### Leftovers always go somewhere
 
 The keeper's supper (may refill a card), the stock pot, pies, a day-old basket sold at closing, the inn dog, hens and the pig bin, compost for a kitchen garden, preserving (salt, pickle, smoke, jam) until the icebox. Forget the bin and the room smells: it hits the room's feel, not your purse. Needs its own session on how reuse is implemented.
