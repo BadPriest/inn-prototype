@@ -59,7 +59,7 @@
       "ingredients": {
         "fundamental": [ { "role": "flour", "units": 2 }, { "role": "cookingFat", "units": 2 } ],
         "base": { "pick": [1, 1], "options": [
-          { "id": "apple", "units": 6 }, { "id": "berry", "units": 3 }, { "id": "beef", "units": 2 }, { "id": "cheese", "units": 2 } ] },
+          { "id": "apple", "units": 6 }, { "id": "berry", "units": 3 }, { "id": "mincedMeat", "units": 2 }, { "id": "cheese", "units": 2 } ] },
         "optional": { "pick": [0, 1], "options": [
           { "id": "sugar", "units": 3 }, { "id": "onion", "units": 2 }, { "id": "nutmeg", "units": 1 }, { "id": "herbs", "units": 1 } ] }
       },
@@ -152,7 +152,7 @@
       "tags": ["warm", "mild"],
       "ingredients": {
         "fundamental": [ { "id": "water", "units": 1 } ],
-        "base": { "pick": [1, 1], "options": [ { "id": "mint", "units": 1 }, { "id": "black", "units": 1 } ] },
+        "base": { "pick": [1, 1], "options": [ { "id": "mint", "units": 1 }, { "id": "chamomile", "units": 1 }, { "id": "black", "units": 1 }, { "id": "smokedLeaf", "units": 1 } ] },
         "optional": { "pick": [0, 1], "options": [ { "id": "milk", "units": 0.2 }, { "id": "honey", "units": 1 }, { "id": "sugar", "units": 1 } ] }
       },
       "spoilage": "brewed",
@@ -192,6 +192,685 @@
         "patronOrders": ["A cider.", "Something with apples in it."],
         "patronPraises": ["Sharp and sweet, lovely."],
         "patronComplaints": ["Gone flat, this."]
+      }
+    },
+    {
+      "id": "salad",
+      "name": "Salad",
+      "icon": "🥗",
+      "container": "plate",
+      "traySlots": 2,
+      "pickUp": "take",
+      "meals": [
+        "lunch",
+        "dinner"
+      ],
+      "madeAt": {
+        "kinds": [
+          "prep"
+        ]
+      },
+      "tended": false,
+      "minutes": [
+        4,
+        1
+      ],
+      "tags": [
+        "cold",
+        "light"
+      ],
+      "ingredients": {
+        "fundamental": [
+          {
+            "id": "greens",
+            "units": 2
+          }
+        ],
+        "base": {
+          "pick": [
+            1,
+            1
+          ],
+          "options": [
+            {
+              "id": "apple",
+              "units": 1
+            },
+            {
+              "id": "cheese",
+              "units": 1
+            },
+            {
+              "id": "herring",
+              "units": 1
+            },
+            {
+              "id": "radish",
+              "units": 1
+            }
+          ]
+        },
+        "optional": {
+          "pick": [
+            0,
+            1
+          ],
+          "options": [
+            {
+              "id": "walnut",
+              "units": 1
+            },
+            {
+              "id": "herbs",
+              "units": 1
+            },
+            {
+              "id": "radish",
+              "units": 1
+            },
+            {
+              "id": "apple",
+              "units": 1
+            }
+          ]
+        }
+      },
+      "spoilage": "greens",
+      "price": {},
+      "seasons": {
+        "craved": [
+          "summer"
+        ]
+      },
+      "effects": {
+        "needs": {
+          "hunger": 0.35,
+          "thirst": 0.05,
+          "warmth": 0
+        },
+        "minutesToEat": [
+          12,
+          3
+        ],
+        "mess": 0
+      },
+      "text": {
+        "craftingStation": "Cold and crisp, put together by hand at the prep table. Quick to make, and easy to get just right.",
+        "patronOrders": [
+          "Something light. The salad?"
+        ],
+        "patronPraises": [
+          "Crisp as anything."
+        ],
+        "patronComplaints": [
+          "Bit limp, this."
+        ]
+      }
+    },
+    {
+      "id": "scrambled",
+      "name": "Scrambled eggs",
+      "icon": "🍳",
+      "container": "plate",
+      "traySlots": 2,
+      "pickUp": "take",
+      "meals": [
+        "breakfast"
+      ],
+      "madeAt": {
+        "kinds": [
+          "griddle"
+        ]
+      },
+      "tended": true,
+      "minutes": [
+        4,
+        1
+      ],
+      "tags": [
+        "warm",
+        "mild"
+      ],
+      "ingredients": {
+        "fundamental": [
+          {
+            "id": "egg",
+            "units": 3
+          },
+          {
+            "role": "cookingFat",
+            "units": 1
+          }
+        ],
+        "base": {
+          "pick": [
+            0,
+            0
+          ],
+          "options": []
+        },
+        "optional": {
+          "pick": [
+            0,
+            1
+          ],
+          "options": [
+            {
+              "id": "chives",
+              "units": 1
+            },
+            {
+              "id": "cheese",
+              "units": 1
+            },
+            {
+              "id": "bacon",
+              "units": 2
+            },
+            {
+              "id": "mushroom",
+              "units": 1
+            },
+            {
+              "id": "pepper",
+              "units": 1
+            }
+          ]
+        }
+      },
+      "spoilage": "cookedPlate",
+      "price": {},
+      "seasons": {
+        "craved": []
+      },
+      "effects": {
+        "needs": {
+          "hunger": 0.4,
+          "thirst": 0,
+          "warmth": 0.1
+        },
+        "minutesToEat": [
+          12,
+          3
+        ],
+        "mess": 1
+      },
+      "text": {
+        "craftingStation": "Beaten, into a buttered pan, stirred slow until they just set. Stay with them; they turn rubbery the moment you look away.",
+        "patronOrders": [
+          "Eggs, please. Scrambled."
+        ],
+        "patronPraises": [
+          "Soft as a cloud."
+        ],
+        "patronComplaints": [
+          "Rubbery."
+        ]
+      }
+    },
+    {
+      "id": "toast",
+      "name": "Toast",
+      "icon": "🍞",
+      "container": "plate",
+      "traySlots": 1,
+      "pickUp": "take",
+      "meals": [
+        "breakfast"
+      ],
+      "madeAt": {
+        "kinds": [
+          "griddle"
+        ]
+      },
+      "tended": true,
+      "minutes": [
+        3,
+        0.8
+      ],
+      "tags": [
+        "warm",
+        "crisp"
+      ],
+      "ingredients": {
+        "fundamental": [
+          {
+            "role": "bread",
+            "units": 1,
+            "stages": [
+              "fresh",
+              "onTheTurn",
+              "stale"
+            ]
+          }
+        ],
+        "base": {
+          "pick": [
+            0,
+            0
+          ],
+          "options": []
+        },
+        "optional": {
+          "pick": [
+            0,
+            1
+          ],
+          "options": [
+            {
+              "id": "butter",
+              "units": 1
+            },
+            {
+              "id": "honey",
+              "units": 1
+            },
+            {
+              "id": "berry",
+              "units": 1
+            },
+            {
+              "id": "cheese",
+              "units": 1
+            },
+            {
+              "id": "herring",
+              "units": 1
+            }
+          ]
+        }
+      },
+      "spoilage": "cookedPlate",
+      "price": {},
+      "seasons": {
+        "craved": []
+      },
+      "effects": {
+        "needs": {
+          "hunger": 0.2,
+          "thirst": 0,
+          "warmth": 0.05
+        },
+        "minutesToEat": [
+          8,
+          2
+        ],
+        "mess": 1
+      },
+      "text": {
+        "craftingStation": "Thick slices from the baker's loaf, browned in the pan. Quick, cheap, and nobody's ever sorry to see it.",
+        "patronOrders": [
+          "A round of toast."
+        ],
+        "patronPraises": [
+          "Just right."
+        ],
+        "patronComplaints": [
+          "Burnt."
+        ]
+      }
+    },
+    {
+      "id": "fryup",
+      "name": "Fried breakfast",
+      "icon": "🥓",
+      "container": "plate",
+      "traySlots": 2,
+      "pickUp": "take",
+      "meals": [
+        "breakfast",
+        "lunch"
+      ],
+      "madeAt": {
+        "kinds": [
+          "griddle"
+        ]
+      },
+      "tended": true,
+      "minutes": [
+        7,
+        1.5
+      ],
+      "tags": [
+        "warm",
+        "hearty",
+        "savoury"
+      ],
+      "ingredients": {
+        "fundamental": [
+          {
+            "role": "cookingFat",
+            "units": 2
+          },
+          {
+            "id": "egg",
+            "units": 2
+          }
+        ],
+        "base": {
+          "pick": [
+            1,
+            1
+          ],
+          "options": [
+            {
+              "id": "bacon",
+              "units": 3
+            },
+            {
+              "id": "sausage",
+              "units": 3
+            }
+          ]
+        },
+        "optional": {
+          "pick": [
+            0,
+            2
+          ],
+          "options": [
+            {
+              "id": "mushroom",
+              "units": 1
+            },
+            {
+              "id": "tomato",
+              "units": 1
+            },
+            {
+              "id": "crumb",
+              "units": 1
+            },
+            {
+              "id": "sausage",
+              "units": 2
+            },
+            {
+              "id": "bacon",
+              "units": 2
+            }
+          ]
+        }
+      },
+      "spoilage": "cookedPlate",
+      "price": {},
+      "seasons": {
+        "craved": [
+          "winter"
+        ]
+      },
+      "effects": {
+        "needs": {
+          "hunger": 0.6,
+          "thirst": 0.05,
+          "warmth": 0.15
+        },
+        "minutesToEat": [
+          20,
+          5
+        ],
+        "mess": 2
+      },
+      "text": {
+        "craftingStation": "The working breakfast: whatever's in the larder, fried in one pan and piled on one plate. Sets anyone up till noon.",
+        "patronOrders": [
+          "The full breakfast, if you're doing it."
+        ],
+        "patronPraises": [
+          "That'll see me through."
+        ],
+        "patronComplaints": [
+          "Swimming in grease."
+        ]
+      }
+    },
+    {
+      "id": "roast",
+      "name": "Roast",
+      "icon": "🍖",
+      "container": "plate",
+      "traySlots": 2,
+      "pickUp": "slice",
+      "meals": [
+        "lunch",
+        "dinner"
+      ],
+      "madeAt": {
+        "kinds": [
+          "oven"
+        ]
+      },
+      "tended": false,
+      "minutes": [
+        26,
+        4
+      ],
+      "batch": {
+        "servings": [
+          9,
+          1.5
+        ],
+        "calledWhenReady": "a roast"
+      },
+      "tags": [
+        "warm",
+        "hearty",
+        "rich"
+      ],
+      "ingredients": {
+        "fundamental": [
+          {
+            "role": "cookingFat",
+            "units": 2
+          },
+          {
+            "id": "salt",
+            "units": 2
+          }
+        ],
+        "base": {
+          "pick": [
+            1,
+            1
+          ],
+          "options": [
+            {
+              "id": "beef",
+              "units": 6
+            },
+            {
+              "id": "pork",
+              "units": 6
+            },
+            {
+              "id": "lamb",
+              "units": 6
+            },
+            {
+              "id": "fowl",
+              "units": 2
+            }
+          ]
+        },
+        "optional": {
+          "pick": [
+            0,
+            2
+          ],
+          "options": [
+            {
+              "id": "roots",
+              "units": 4
+            },
+            {
+              "id": "herbs",
+              "units": 1
+            },
+            {
+              "id": "apple",
+              "units": 3
+            },
+            {
+              "id": "onion",
+              "units": 3
+            }
+          ]
+        }
+      },
+      "spoilage": "cookedPot",
+      "price": {},
+      "seasons": {
+        "craved": [
+          "autumn",
+          "winter"
+        ]
+      },
+      "effects": {
+        "needs": {
+          "hunger": 0.6,
+          "thirst": 0,
+          "warmth": 0.2
+        },
+        "minutesToEat": [
+          25,
+          5
+        ],
+        "mess": 1
+      },
+      "text": {
+        "craftingStation": "A whole joint in the oven, an afternoon's work, carved to order until the bone's bare. The oven's taken while it lasts.",
+        "patronOrders": [
+          "A plate of the roast."
+        ],
+        "patronPraises": [
+          "Carved thick, lovely."
+        ],
+        "patronComplaints": [
+          "Dry as a bone."
+        ]
+      }
+    },
+    {
+      "id": "coffee",
+      "name": "Coffee",
+      "icon": "☕",
+      "container": "cup",
+      "garnish": {
+        "pick": [
+          0,
+          1
+        ]
+      },
+      "traySlots": 1,
+      "pickUp": "pour",
+      "meals": [
+        "breakfast",
+        "lunch",
+        "between"
+      ],
+      "madeAt": {
+        "kinds": [
+          "coffee"
+        ]
+      },
+      "tended": false,
+      "minutes": [
+        8,
+        2
+      ],
+      "batch": {
+        "servings": [
+          7,
+          1
+        ],
+        "calledWhenReady": "a pot of coffee"
+      },
+      "tags": [
+        "warm",
+        "rich"
+      ],
+      "ingredients": {
+        "fundamental": [
+          {
+            "id": "water",
+            "units": 2
+          }
+        ],
+        "base": {
+          "pick": [
+            1,
+            1
+          ],
+          "options": [
+            {
+              "id": "lightRoast",
+              "units": 1
+            },
+            {
+              "id": "darkRoast",
+              "units": 1
+            },
+            {
+              "id": "chicory",
+              "units": 1
+            },
+            {
+              "id": "spicedBlend",
+              "units": 1
+            }
+          ]
+        },
+        "optional": {
+          "pick": [
+            0,
+            1
+          ],
+          "options": [
+            {
+              "id": "milk",
+              "units": 1
+            },
+            {
+              "id": "sugar",
+              "units": 2
+            },
+            {
+              "id": "honey",
+              "units": 2
+            }
+          ]
+        }
+      },
+      "spoilage": "brewed",
+      "price": {},
+      "seasons": {
+        "craved": [
+          "winter"
+        ]
+      },
+      "effects": {
+        "needs": {
+          "hunger": 0,
+          "thirst": 0.4,
+          "warmth": 0.2
+        },
+        "minutesToEat": [
+          15,
+          4
+        ],
+        "mess": 0
+      },
+      "text": {
+        "craftingStation": "A whole pot at a time, poured by the cup until it's gone. The beans decide what kind of morning it is.",
+        "patronOrders": [
+          "Coffee, black as you like."
+        ],
+        "patronPraises": [
+          "That's woken me up."
+        ],
+        "patronComplaints": [
+          "Bitter as a winter's night."
+        ]
       }
     },
     {
