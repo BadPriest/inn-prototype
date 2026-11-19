@@ -1151,6 +1151,7 @@
       "seasons": { "craved": [] },
       "effects": { "onConsuming": [ { "thirst": 0.12, "shown": "Makes them thirsty" } ] },
       "text": {
+        "snackBowl": "Roasted and well salted. Nothing sends people to the bar faster.",
         "patronPraises": ["These peanuts are lovely.", "You spoil us."],
         "patronComplaints": ["Not one for peanuts, me."]
       }
@@ -1169,6 +1170,7 @@
       "seasons": { "craved": [] },
       "effects": { "onConsuming": [ { "hunger": 0.05, "shown": "Whets the appetite" } ] },
       "text": {
+        "snackBowl": "Little toasts rubbed with garlic and a slick of oil. Gone before you've turned round.",
         "craftingStation": "Little toasts rubbed with garlic and a slick of oil. Gone before you've turned round.",
         "patronPraises": ["Gone before you've turned round, these."],
         "patronComplaints": ["Bit hard on the teeth."]
@@ -1188,6 +1190,7 @@
       "seasons": { "craved": [] },
       "effects": { "onConsuming": [ { "patience": 0.2, "shown": "Keeps them happy while they wait" } ] },
       "text": {
+        "snackBowl": "Split and roasted by the fire, still warm in the paper.",
         "craftingStation": "Split and roasted, still warm in the paper.",
         "patronPraises": ["Smells like winter, these."],
         "patronComplaints": ["Burnt my fingers."]
@@ -1200,6 +1203,7 @@
       "seasons": { "craved": [] },
       "effects": { "onConsuming": [ { "flipTag": { "from": "sweet", "to": "bright" }, "shown": "Sweet tastes bright" } ] },
       "text": {
+        "snackBowl": "Small, sharp and vinegary, from the crock under the counter.",
         "patronPraises": ["Sharp! Just how I like them."],
         "patronComplaints": ["Could do without the onions."]
       }
@@ -1211,6 +1215,7 @@
       "seasons": { "craved": [] },
       "effects": { "onConsuming": [ { "thirst": 0.1, "shown": "Makes them thirsty" } ] },
       "text": {
+        "snackBowl": "Brined and glossy, for those who like a sharp edge.",
         "patronPraises": ["Brined just right, these."],
         "patronComplaints": ["Too sharp for me, olives."]
       }
@@ -1222,6 +1227,7 @@
       "seasons": { "craved": [] },
       "effects": { "onConsuming": [ { "hunger": 0.04, "shown": "Whets the appetite" } ] },
       "text": {
+        "snackBowl": "From the big jar on the counter. An acquired taste, fondly acquired.",
         "patronPraises": ["Fondly acquired, this taste."],
         "patronComplaints": ["Can't abide a pickled egg."]
       }
@@ -1233,6 +1239,7 @@
       "seasons": { "craved": [] },
       "effects": { "onConsuming": [ { "thirst": 0.12, "shown": "Makes them thirsty" } ] },
       "text": {
+        "snackBowl": "Knotted, baked dark, crusted with salt. Thirsty work.",
         "patronPraises": ["Thirsty work, these."],
         "patronComplaints": ["Too salty by half."]
       }
@@ -1244,6 +1251,7 @@
       "seasons": { "craved": [] },
       "effects": { "onConsuming": [ { "patience": 0.1, "shown": "Keeps them happy while they wait" } ] },
       "text": {
+        "snackBowl": "Chewy, sweet, and gentle on the thirst.",
         "patronPraises": ["Chewy and sweet, lovely."],
         "patronComplaints": ["Bit dry, these."]
       }
@@ -1262,6 +1270,7 @@
       "seasons": { "craved": [] },
       "effects": { "onConsuming": [ { "openness": 0.05, "shown": "Puts them at ease" } ] },
       "text": {
+        "snackBowl": "Thick slices and a pat of butter. Nobody says no to it.",
         "craftingStation": "Thick slices and a pat of butter. Nobody says no to it.",
         "patronPraises": ["Nobody says no to bread and butter."],
         "patronComplaints": ["Stale, this bread."]
@@ -1281,6 +1290,7 @@
       "seasons": { "craved": [] },
       "effects": { "onConsuming": [ { "flipTag": { "from": "bitter", "to": "rich" }, "shown": "Bitter tastes rich" } ] },
       "text": {
+        "snackBowl": "A hard cheese, a soft one and something blue, cut into cubes.",
         "craftingStation": "A hard cheese, a soft one and something blue, cut into cubes.",
         "patronPraises": ["Now that's a cheese board."],
         "patronComplaints": ["Too strong, that blue."]

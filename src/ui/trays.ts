@@ -1,7 +1,7 @@
 // Card screens for what's on your trays: garnishing a drink, offering something unasked, the scrap bin,
 // the kitchen hatch, and choosing which tray to set down. Same look and handling as cooking (cards.ts).
 
-import { GARNISHES } from "../data.js";
+import { garnishesFor } from "../data.js";
 import type { Game, Item, Patron } from "../game.js";
 import {
   applyGarnish, garnishableDrinks, iconFor, pickupFromHatch, removeFromTray, serveUnasked, setTrayDown, takeFromHatch, trayItems,
@@ -28,7 +28,7 @@ function itemCard(it: Item, pick: string, focus: boolean, extra: Partial<CardSpe
 // Garnish: choose the drink (if there's more than one), choose the garnish, see what it becomes.
 
 export function openGarnishScreen(g: Game): void {
-  if (!garnishableDrinks(g).length) { g.say("No ungarnished drinks on your trays."); return; }
+  if (!garnishableDrinks(g).length) { g.say("Nothing on your trays takes a garnish."); return; }
   openMenu(garnishSpec(g, { drink: 0, garnish: -1, focus: 0 }));
 }
 
@@ -41,7 +41,9 @@ function garnishSpec(g: Game, st: GarnishState): MenuSpec {
   const refresh = () => replaceMenu(garnishSpec(g, st));
   // One list for the keyboard: the drinks (when there's a choice), then the garnishes.
   const showDrinks = drinks.length > 1;
-  const picks = [...(showDrinks ? drinks.map((_, i) => `d:${i}`) : []), ...GARNISHES.map((_, i) => `g:${i}`)];
+  const suits = garnishesFor(drink.recipeId);
+  if (st.garnish >= suits.length) st.garnish = -1;
+  const picks = [...(showDrinks ? drinks.map((_, i) => `d:${i}`) : []), ...suits.map((_, i) => `g:${i}`)];
   const use = (v: string) => {
     const [k, n] = v.split(":");
     if (k === "d") st.drink = Number(n);
@@ -49,7 +51,7 @@ function garnishSpec(g: Game, st: GarnishState): MenuSpec {
     st.focus = Math.max(0, picks.indexOf(v));
     refresh();
   };
-  const gar = GARNISHES[st.garnish];
+  const gar = suits[st.garnish];
   const after = gar ? [...new Set([...drink.tags, ...gar.tags])] : drink.tags;
   const go = () => {
     if (!gar) return;
@@ -58,7 +60,7 @@ function garnishSpec(g: Game, st: GarnishState): MenuSpec {
     closeAll();
   };
   const drinkCards = drinks.map((d, i) => itemCard(d, `d:${i}`, picks[st.focus] === `d:${i}`, { on: i === st.drink }));
-  const garnishCards: CardSpec[] = GARNISHES.map((x, i) => {
+  const garnishCards: CardSpec[] = suits.map((x, i) => {
     const adds = x.tags.filter((t) => !drink.tags.includes(t));
     return {
       pick: `g:${i}`, icon: x.icon, name: x.name, tags: x.tags, on: i === st.garnish, focus: picks[st.focus] === `g:${i}`,
@@ -67,13 +69,13 @@ function garnishSpec(g: Game, st: GarnishState): MenuSpec {
     };
   });
   const html = `
-    ${showDrinks ? `<div class="sec-h"><h4>Drink</h4><small>which one</small></div>${grid(drinkCards)}` : ""}
+    ${showDrinks ? `<div class="sec-h"><h4>On your trays</h4><small>which one</small></div>${grid(drinkCards)}` : ""}
     <div class="sec-h"><h4>Garnish</h4><small>choose one</small></div>
     ${grid(garnishCards)}`;
   return {
-    title: "🍋 Garnish a drink",
-    subtitle: "At the counter · a little something on the rim",
-    flavour: "It changes how a drink lands, for better or worse.",
+    title: "🍋 Garnish",
+    subtitle: "At the counter · a little something on top",
+    flavour: "It changes how a dish or a drink lands, for better or worse.",
     view: {
       pinned: resultPanel({
         icon: iconFor(drink.recipeId, gar?.id), name: gar ? `${drink.name} with ${gar.name.toLowerCase()}` : drink.name,

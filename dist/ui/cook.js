@@ -44,25 +44,31 @@ function makesOf(r, f) {
 }
 // ---------------------------------------------------------------------------
 // Choose what to make
+let recipeTab = "dishes";
 export function openRecipeScreen(g, slot) {
     const recipes = recipesFor(g, slot);
     const waiting = (r) => g.orders.filter((o) => o.open && o.recipeId === r.id).length;
-    // What guests are waiting for comes first.
-    const list = [...recipes].sort((a, b) => waiting(b) - waiting(a));
-    if (list.length === 1) {
-        openCookScreen(g, slot, list[0]);
+    const hasSnacks = recipes.some((r) => r.tableSnack) && recipes.some((r) => !r.tableSnack);
+    if (!hasSnacks)
+        recipeTab = recipes.some((r) => !r.tableSnack) ? "dishes" : "snacks";
+    if (recipes.length === 1) {
+        openCookScreen(g, slot, recipes[0]);
         return;
     }
     const st = { focus: 0 };
     const build = () => {
+        // What guests are waiting for comes first.
+        const list = recipes.filter((r) => !!r.tableSnack === (recipeTab === "snacks")).sort((a, b) => waiting(b) - waiting(a));
+        const switchTab = () => { recipeTab = recipeTab === "dishes" ? "snacks" : "dishes"; st.focus = 0; g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); replaceMenu(build()); };
+        const tabs = hasSnacks ? `<div class="bf-tabs">${["dishes", "snacks"].map((t) => `<button class="${recipeTab === t ? "on" : ""}" data-pick="tab:${t}">${t === "dishes" ? "🍲 Dishes" : "🥜 Table snacks"}</button>`).join("")}</div>` : undefined;
         const cards = list.map((r, i) => {
             const n = waiting(r);
             const onBoard = g.billNow().has(r.id);
             return {
                 pick: String(i), icon: r.icon, name: r.name, focus: i === st.focus,
                 fact: timeOf(r),
-                status: n ? `${n} waiting` : r.internal ? "" : onBoard ? "on the board" : "not on the board",
-                tone: n ? "good" : onBoard || r.internal ? undefined : "muted",
+                status: n ? `${n} waiting` : r.internal ? "" : r.tableSnack ? "for the tables" : onBoard ? "on the board" : "not on the board",
+                tone: n ? "good" : onBoard || r.internal || r.tableSnack ? undefined : "muted",
                 tags: r.baseTags,
                 detail: `${makesOf(r, slot)}. ${choiceText(r)}.${r.fundamental.length ? ` Always in it: ${alwaysIn(r)}.` : ""}`,
                 flavour: r.blurb,
@@ -75,9 +81,21 @@ export function openRecipeScreen(g, slot) {
             title: `${slot.f.name}${(slot.f.slots?.length ?? 1) > 1 ? `: ${slot.name.toLowerCase()}` : ""}`,
             subtitle: "What will you make?",
             view: {
+                pinned: tabs,
                 html: grid(cards),
-                onPick: (v) => pick(Number(v)),
-                onKey: gridKeys(() => cards.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, pick),
+                onPick: (v) => { if (v.startsWith("tab:")) {
+                    if (v.slice(4) !== recipeTab)
+                        switchTab();
+                    return;
+                } pick(Number(v)); },
+                onKey: (e) => {
+                    if (hasSnacks && e.key === "Tab") {
+                        e.preventDefault();
+                        switchTab();
+                        return true;
+                    }
+                    return gridKeys(() => cards.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, pick)(e);
+                },
             },
             items: [],
         };

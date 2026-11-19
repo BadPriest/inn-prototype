@@ -104,7 +104,7 @@ export function updateNeeds(g, simDt) {
         const bowlKey = g.bowlKeyFor(seat);
         const bowl = bowlKey ? g.bowls.get(bowlKey) : undefined;
         if (bowl && bowl.left > 0)
-            n.thirst += (SNACKS.find((x) => x.id === bowl.snack)?.thirsty ?? 0) * NEEDS.snackThirstPerHour * hours;
+            n.thirst += (SNACKS.find((x) => x.id === bowl.snack)?.thirstPerHour ?? 0) * hours;
         // Eating or drinking: the serving's worth, spread over the time it takes.
         if (p.state === "consuming" && p.consuming) {
             const span = Math.max(1, p.consumeUntil - p.consuming.from);

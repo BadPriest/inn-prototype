@@ -1,6 +1,6 @@
 // Trays, pickup, pouring, garnishing and delivery.
 
-import { GARNISHES, RECIPES, TUNING, currentDishId, pieceById, traySlotsOf } from "./data.js";
+import { RECIPES, TUNING, currentDishId, garnishById, garnishesFor, pieceById, traySlotsOf } from "./data.js";
 
 const needsOf = (recipeId: string) => RECIPES.find((r) => r.id === currentDishId(recipeId))?.needs;
 import { makeItem, serveFromPot, steepTea } from "./crafting.js";
@@ -18,7 +18,7 @@ export function trayItems(g: Game): Item[] {
 /** The icon for a dish or drink, plus its garnish if it has one. */
 export function iconFor(recipeId: string, garnish?: string): string {
   const r = RECIPES.find((x) => x.id === recipeId)?.icon ?? (recipeId === "bowl" ? "🥣" : "");
-  const gi = garnish ? GARNISHES.find((x) => x.id === garnish)?.icon ?? "" : "";
+  const gi = garnishById(garnish)?.icon ?? "";
   return r + gi;
 }
 
@@ -178,11 +178,11 @@ export function pour(g: Game, recipeId: string): void {
 }
 
 export function garnishableDrinks(g: Game): Item[] {
-  return trayItems(g).filter((i) => i.kind === "drink" && !i.garnish);
+  return trayItems(g).filter((i) => !i.garnish && !i.whole && garnishesFor(i.recipeId).length > 0);
 }
 
 export function applyGarnish(g: Game, item: Item, garnishId: string): void {
-  const gar = GARNISHES.find((x) => x.id === garnishId)!;
+  const gar = garnishById(garnishId)!;
   item.garnish = gar.id;
   item.tags = [...new Set([...item.tags, ...gar.tags])];
   item.name = `${item.name} with ${gar.name.toLowerCase()}`;

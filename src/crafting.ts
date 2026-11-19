@@ -221,6 +221,7 @@ export function ageFood(g: Game): void {
   for (const sd of g.setDown) sd.tray.items = sd.tray.items.filter(keep);
   g.setDown = g.setDown.filter((sd) => sd.tray.items.length);
   for (const [fid, pot] of g.pots) {
+    if (RECIPES.find((r) => r.id === pot.item.recipeId)?.tableSnack) continue;
     if (pot.item.tags.includes(TUNING.staleTag)) { g.pots.delete(fid); tossed++; } else stale(pot.item);
   }
   if (tossed) g.say(`Food older than a day went to the hens (${tossed}).`);

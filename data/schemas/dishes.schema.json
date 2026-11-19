@@ -119,6 +119,7 @@
           "type": "object", "additionalProperties": false,
           "properties": {
             "craftingStation": { "type": "string" },
+            "snackBowl": { "type": "string", "description": "Table snack: the line in the snack bowl menu." },
             "journal": { "type": "string" },
             "patronOrders": { "$ref": "common.schema.json#/definitions/lines" },
             "patronPraises": { "$ref": "common.schema.json#/definitions/lines" },

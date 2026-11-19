@@ -365,6 +365,8 @@ function slotActs(g: Game, sl: Slot, many: boolean): StationAct[] {
   if (pot) {
     const name = pot.item.name.toLowerCase();
     if (pot.item.recipeId === "water") acts.push({ label: "🍵 Steep a cup of tea", sub: `${where}hot water for ${pot.left} more`, short: "steep", main: true, run: () => openSteepScreen(g, sl) });
+    else if (RECIPES.find((r) => r.id === pot.item.recipeId)?.tableSnack) acts.push({ label: `${iconFor(pot.item.recipeId) || "🥣"} ${pot.left} bowl${pot.left === 1 ? "" : "s"} of ${name} for the tables`, sub: `${where}set them out at a table`, short: "for the tables", main: true,
+      run: () => g.say(`The ${name} waits here: set it out from a table or the counter.`) });
     else acts.push({
       label: `${iconFor(pot.item.recipeId) || "🍲"} ${pot.item.kind === "drink" ? "Pour a cup of" : "Take a serving of"} ${name}`, sub: `${where}${pot.left} left`,
       short: pot.item.kind === "drink" ? "pour" : "take a serving", main: true,

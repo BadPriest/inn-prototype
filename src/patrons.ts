@@ -1,7 +1,7 @@
 // Patrons: arrivals, walking, ordering, waiting, eating, mess and leaving.
 
 import { chance, organic, pick, uid, weightedPick } from "./core.js";
-import { ARCHETYPES, CHATTER, NAMES, GARNISHES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING, SHELTER, SEASONAL_TASTES, MARKET, SPECIFIC_ORDERS, type NeedId, type Archetype, type ItemKind, type Regular } from "./data.js";
+import { ARCHETYPES, CHATTER, NAMES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING, SHELTER, SEASONAL_TASTES, MARKET, SPECIFIC_ORDERS, type NeedId, type Archetype, type ItemKind, type Regular, garnishesFor, garnishById } from "./data.js";
 import type { Game, Group, Order, Patron, RegularState } from "./game.js";
 import { emptyTastes } from "./game.js";
 import { appeal, prepareVisit, tagScore } from "./tastes.js";
@@ -380,13 +380,14 @@ function placeOrder(g: Game, p: Patron): void {
     return w;
   })!;
   let wantGarnish: string | undefined;
-  if (kind === "drink" && chance(p.garnishAsk)) {
-    const gar = weightedPick(GARNISHES, (x) => Math.max(0, tagScore(x.tags, t).score) + 0.2 + (p.craving && x.tags.includes(p.craving.tag) ? 2 : 0));
+  const suits = garnishesFor(recipe.id);
+  if (suits.length && chance(p.garnishAsk)) {
+    const gar = weightedPick(suits, (x) => Math.max(0, tagScore(x.tags, t).score) + 0.2 + (p.craving && x.tags.includes(p.craving.tag) ? 2 : 0));
     wantGarnish = gar?.id;
   }
   const wantOption = namedOption(g, p, recipe);
   const opt = INGREDIENTS.find((x) => x.id === wantOption);
-  const garName = GARNISHES.find((x) => x.id === wantGarnish)?.name.toLowerCase();
+  const garName = garnishById(wantGarnish)?.name.toLowerCase();
   const named = opt ? (recipe.id === "tea" ? `${opt.name} tea` : `${recipe.name}, ${opt.name.toLowerCase()}`) : recipe.name;
   const o: Order = {
     id: uid(), patronId: p.id, recipeId: recipe.id, wantGarnish, wantOption,
@@ -771,7 +772,7 @@ function nibble(g: Game, p: Patron, simDt: number): void {
       g.journal(p, hitLove ? `kept reaching for the ${name}.` : `didn't touch the ${name}.`, "note");
       return;
     }
-    const line = hitLove ? pick([`Oh, ${name}. You spoil us.`, `These ${name} are lovely.`]) : pick([`Not one for ${name}, me.`, `Could do without the ${name}.`]);
+    const line = hitLove ? pick(snack.praise.length ? snack.praise : [`Oh, ${name}. You spoil us.`]) : pick(snack.complaints.length ? snack.complaints : [`Not one for ${name}, me.`]);
     g.speak(p, line);
     g.journal(p, `about the ${name}: “${line}”`, "said");
   }

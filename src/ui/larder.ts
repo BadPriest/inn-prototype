@@ -1,7 +1,7 @@
 // Card screens for what's already made: the snack bowl on a table, and the pie safe.
 // Same template as cooking (docs/specs/ui.md): what's there now pinned on top, then cards to pick.
 
-import { SNACKS } from "../data.js";
+import { SNACKS, type Snack } from "../data.js";
 import type { Game } from "../game.js";
 import { returnSlice, storePie, takeSlice } from "../crafting.js";
 import { trayItems, trayRoomFor } from "../serving.js";
@@ -10,7 +10,18 @@ import { grid, gridKeys, type CardSpec } from "./cards.js";
 import { resultPanel } from "./cook.js";
 
 // ---------------------------------------------------------------------------
-// Snacks: a complimentary bowl on a table. Pick a card to set it out, top it up, or swap it.
+// Snacks: a complimentary bowl on a table. Pick a card to set it out; an empty bowl can be filled again.
+
+const EMPTY_BOWL = 0.15;
+const STATION_WORDS: Record<string, string> = { prep: "prep table", griddle: "stove", stove: "stove", oven: "oven" };
+
+/** Where a bowl of this would come from now: a batch made at a station first, else bought ready. */
+function sourceOf(g: Game, sn: Snack): { label: string; pot?: { left: number }; potId?: string } | undefined {
+  for (const [potId, pot] of g.pots) {
+    if (pot.item.recipeId === sn.id && pot.left > 0) return { label: `${pot.left} bowl${pot.left === 1 ? "" : "s"} made`, pot, potId };
+  }
+  return sn.boughtAs ? { label: "from the larder" } : undefined;
+}
 
 export function openSnackScreen(g: Game, key: string): void {
   const bowl = g.bowls.get(key);
@@ -24,22 +35,32 @@ function snackSpec(g: Game, key: string, st: { focus: number }): MenuSpec {
   const where = g.world.tile(kx, ky)?.def.interact === "snacks" ? "counter" : "table";
   const current = SNACKS.find((x) => x.id === bowl?.snack);
   const refresh = () => replaceMenu(snackSpec(g, key, st));
+  const empty = !bowl || bowl.left < EMPTY_BOWL;
   const setOut = (i: number) => {
     const sn = SNACKS[i];
-    const topUp = bowl?.snack === sn.id;
+    if (!empty) { g.say(`The ${current?.name.toLowerCase()} isn't finished yet: fill the bowl once it's empty.`); return; }
+    const from = sourceOf(g, sn);
+    if (!from) { g.say(`There's no ${sn.name.toLowerCase()} ready. Make a batch first.`); return; }
+    if (from.pot) {
+      from.pot.left--;
+      if (from.pot.left <= 0) g.pots.delete(from.potId!);
+    }
+    const again = bowl?.snack === sn.id;
     g.bowls.set(key, { snack: sn.id, left: 1 });
-    g.say(topUp ? `You top up the ${sn.name.toLowerCase()}.` : `You set out a bowl of ${sn.name.toLowerCase()}.`);
+    g.say(again ? `You fill the bowl with ${sn.name.toLowerCase()} again.` : `You set out a bowl of ${sn.name.toLowerCase()}.`);
     g.bus.emit({ type: "MenuSound", sound: "tick" });
     closeAll();
   };
   const cards: CardSpec[] = SNACKS.map((sn, i) => {
     const here = bowl?.snack === sn.id;
+    const from = sourceOf(g, sn);
+    const off = !from || !empty;
     return {
-      pick: String(i), icon: sn.icon, name: sn.name, tags: sn.tags, on: here, focus: i === st.focus,
-      status: here ? (bowl!.left < 0.15 ? "empty: top it up" : `on the ${where} now`) : sn.thirsty >= 0.25 ? "makes them thirsty" : "easy on the throat",
-      tone: here && bowl!.left < 0.15 ? "warn" : here ? "good" : undefined,
-      detail: sn.blurb,
-      does: here ? "Top it up" : bowl ? `Swap the ${current?.name.toLowerCase()} for this` : "Set out a bowl",
+      pick: String(i), icon: sn.icon, name: sn.name, tags: sn.tags, on: here, off, focus: i === st.focus,
+      status: here ? (empty ? "empty: fill it again" : `on the ${where} now`) : from ? from.label : `make a batch at the ${STATION_WORDS[sn.madeAt ?? "prep"]}`,
+      tone: here && empty ? "warn" : here ? "good" : from ? undefined : "muted",
+      detail: [sn.blurb, sn.thirstPerHour > 0 ? "Makes them thirsty." : ""].filter(Boolean).join(" "),
+      does: !empty ? "The bowl isn't empty yet" : !from ? "None ready: make a batch first" : here ? "Fill it again" : "Set out a bowl",
     };
   });
   const pct = bowl ? Math.round(bowl.left * 100) : 0;
@@ -52,7 +73,7 @@ function snackSpec(g: Game, key: string, st: { focus: number }): MenuSpec {
     subtitle: `On the house${where === "counter" ? ", for the stools beside it" : ""} · salty ones make guests thirsty, and thirsty guests order drinks`,
     view: {
       pinned: now,
-      html: `<div class="sec-h"><h4>Snacks</h4><small>${bowl ? "top up or swap" : "choose one"}</small></div>${grid(cards)}`,
+      html: `<div class="sec-h"><h4>Snacks</h4><small>${empty ? "choose one" : "the bowl can be filled once it's empty"}</small></div>${grid(cards)}`,
       onPick: (v) => setOut(Number(v)),
       onKey: gridKeys(() => SNACKS.length, () => st.focus, (i) => { st.focus = i; refresh(); }, setOut),
     },

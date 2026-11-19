@@ -47,7 +47,7 @@ export interface DishData {
     mess?: number;
     onConsuming?: DishEffect[];
   };
-  text?: { craftingStation?: string; journal?: string; patronOrders?: string[]; patronPraises?: string[]; patronComplaints?: string[] };
+  text?: { craftingStation?: string; snackBowl?: string; journal?: string; patronOrders?: string[]; patronPraises?: string[]; patronComplaints?: string[] };
 }
 export interface DishesData { dishes: DishData[] }
 

@@ -133,7 +133,7 @@ function openHousePrices(g, changed) {
 // Two modes: one all-day bill (the default), or meal times, where each meal has its own bill (a tab
 // each) and between meals there are only drinks. Bills carry over from day to day.
 /** What can go on the bill of fare (not the kettle's hot water). */
-const MENU = RECIPES.filter((r) => !r.internal);
+const MENU = RECIPES.filter((r) => !r.internal && !r.tableSnack);
 const DRINKS = MENU.filter((r) => r.kind === "drink");
 const TABS = [...MEALS.map((m) => m.id), "between"];
 const DAY_FROM = TUNING.dayStartHour, DAY_TO = TUNING.dayStartHour + TUNING.dayLengthMinutes / 60;

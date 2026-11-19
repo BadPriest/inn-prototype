@@ -4,7 +4,7 @@
 //   score         how a serve scores (the veiled add noise here)
 //   afterServe    what a strong reaction changes (locks, breakthroughs, opening up)
 import { chance, pick, weightedPick } from "./core.js";
-import { GARNISHES, SCHEMA_TUNING, SEASONAL_TASTES, SPECIFIC_ORDERS, TASTE_POOL, TUNING } from "./data.js";
+import { SCHEMA_TUNING, SEASONAL_TASTES, SPECIFIC_ORDERS, TASTE_POOL, TUNING, garnishById } from "./data.js";
 import { emptyTastes } from "./game.js";
 export function tagScore(tags, t) {
     const s = TUNING.scoring;
@@ -182,7 +182,7 @@ export function judge(g, p, item, order) {
         outcome = "COMPLAINS";
     else
         outcome = "UNFINISHED";
-    const g2 = GARNISHES.find((x) => x.id === order?.wantGarnish);
+    const g2 = garnishById(order?.wantGarnish);
     let line = "";
     if (p.schema === "reserved") {
         line = outcome === "DELIGHT" ? "…Thank you." : "";

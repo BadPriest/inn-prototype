@@ -35,7 +35,7 @@
     { "id": "pepper",    "name": "Pepper",         "icon": "🌶️", "unit": "pinch", "worth": 0.2, "tags": ["fiery"],               "roles": ["garnish"],             "spoilage": "keeps" , "garnishFor": ["bowl", "plate"] },
     { "id": "apple",     "name": "Apple",          "icon": "🍎", "unit": "apple", "worth": 0.3, "tags": ["sweet", "crisp"],      "roles": [],             "spoilage": "weeks", "seasons": ["autumn", "winter"] },
     { "id": "berry",     "name": "Berries",        "icon": "🫐", "unit": "punnet","worth": 0.8, "tags": ["tart"],                "roles": [],             "spoilage": "greens", "seasons": ["summer"] },
-    { "id": "honey",     "name": "Honey",          "icon": "🍯", "unit": "spoon", "worth": 0.4, "tags": ["sweet"],               "roles": ["garnish"],             "spoilage": "keeps" , "garnishFor": ["cup", "bowl"] },
+    { "id": "honey",     "name": "Honey",          "icon": "🍯", "unit": "spoon", "worth": 0.4, "tags": ["sweet"],               "roles": ["garnish"],             "spoilage": "keeps" , "garnishFor": ["cup"] },
     { "id": "walnut",    "name": "Walnut",         "icon": "🌰", "unit": "handful","worth": 0.5,"tags": ["earthy", "crisp"],     "roles": [],             "spoilage": "keeps", "seasons": ["autumn"] },
     { "id": "cheese",    "name": "Cheese & onion", "icon": "🧀", "unit": "wedge", "worth": 1,   "tags": ["savoury"],             "roles": [],             "spoilage": "weeks" },
     { "id": "crumb",     "name": "Breadcrumb",     "icon": "🍞", "unit": "handful","worth": 0.2,"tags": ["crisp"],               "roles": [],             "spoilage": "keeps" },

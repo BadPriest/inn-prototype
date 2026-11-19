@@ -5,7 +5,7 @@
 //   afterServe    what a strong reaction changes (locks, breakthroughs, opening up)
 
 import { chance, pick, weightedPick, type Outcome } from "./core.js";
-import { GARNISHES, SCHEMA_TUNING, SEASONAL_TASTES, SPECIFIC_ORDERS, TASTE_POOL, TUNING, type CalendarSeasonId, type ItemKind, type Regular, type SchemaId, type TasteSet } from "./data.js";
+import { SCHEMA_TUNING, SEASONAL_TASTES, SPECIFIC_ORDERS, TASTE_POOL, TUNING, type CalendarSeasonId, type ItemKind, type Regular, type SchemaId, type TasteSet, garnishById } from "./data.js";
 import { emptyTastes, type Game, type Item, type Order, type Patron, type RegularState, type Tastes } from "./game.js";
 
 export function tagScore(tags: string[], t: TasteSet): { score: number; hitLove: boolean } {
@@ -182,7 +182,7 @@ export function judge(g: Game, p: Patron, item: Item, order: Order | null): Verd
   else if (score <= -2 && p.fussiness >= 0.45 && p.schema !== "reserved") outcome = "COMPLAINS";
   else outcome = "UNFINISHED";
 
-  const g2 = GARNISHES.find((x) => x.id === order?.wantGarnish);
+  const g2 = garnishById(order?.wantGarnish);
   let line = "";
   if (p.schema === "reserved") {
     line = outcome === "DELIGHT" ? "…Thank you." : "";

@@ -126,7 +126,7 @@ function openHousePrices(g: Game, changed: () => void): void {
 // each) and between meals there are only drinks. Bills carry over from day to day.
 
 /** What can go on the bill of fare (not the kettle's hot water). */
-const MENU = RECIPES.filter((r) => !r.internal);
+const MENU = RECIPES.filter((r) => !r.internal && !r.tableSnack);
 const DRINKS = MENU.filter((r) => r.kind === "drink");
 
 type Tab = MealId | "between";

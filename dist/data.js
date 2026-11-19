@@ -229,7 +229,7 @@ function recipeOf(d) {
         servings: d.batch?.servings,
         storedIn: d.batch?.storedIn === "pieSafe" ? "piesafe" : undefined,
         batch: d.batch?.calledWhenReady,
-        needs, boughtAs: d.boughtAs,
+        needs, boughtAs: d.boughtAs, tableSnack: d.tableSnack,
     };
 }
 /** Hot water for tea: a step at the kettle, not a dish. */
@@ -239,28 +239,25 @@ const BOIL_THE_KETTLE = {
     blurb: "Boil the kettle once, then steep a cup at a time, each with the leaf its drinker likes, until the water's gone.",
     minutes: [4, 1], servings: [3, 0.8],
 };
-export const RECIPES = [...DISHES_DATA.dishes.filter((d) => !d.tableSnack).map(recipeOf), BOIL_THE_KETTLE];
+export const RECIPES = [...DISHES_DATA.dishes.filter((d) => !d.tableSnack || d.madeAt).map(recipeOf), BOIL_THE_KETTLE];
 /** Dish ids from before the game data files, as old saves have them. */
 export const LEGACY_DISH_ID = { fish: "friedFish" };
 export const currentDishId = (id) => LEGACY_DISH_ID[id] ?? id;
-export const SNACKS = [
-    { id: "peanuts", name: "Salted peanuts", icon: "🥜", tags: ["salty", "crisp"], thirsty: 0.3, blurb: "Roasted and well salted. Nothing sends people to the bar faster." },
-    { id: "olives", name: "Olives", icon: "🫒", tags: ["briny", "salty"], thirsty: 0.25, blurb: "Brined and glossy, for those who like a sharp edge." },
-    { id: "eggs", name: "Pickled eggs", icon: "🥚", tags: ["tart", "savoury"], thirsty: 0.1, blurb: "From the big jar on the counter. An acquired taste, fondly acquired." },
-    { id: "crostini", name: "Crostini", icon: "🥖", tags: ["crisp", "savoury"], thirsty: 0.15, blurb: "Little toasts rubbed with garlic and a slick of oil. Gone before you've turned round." },
-    { id: "breadbutter", name: "Bread & butter", icon: "🍞", tags: ["homely", "rich"], thirsty: 0.05, blurb: "Thick slices and a pat of butter. Nobody says no to it." },
-    { id: "cheese", name: "Cheese board", icon: "🧀", tags: ["rich", "savoury"], thirsty: 0.15, blurb: "A hard cheese, a soft one and something blue, cut into cubes." },
-    { id: "pretzels", name: "Pretzels", icon: "🥨", tags: ["salty", "crisp"], thirsty: 0.3, blurb: "Knotted, baked dark, crusted with salt. Thirsty work." },
-    { id: "chestnuts", name: "Roast chestnuts", icon: "🌰", tags: ["earthy", "sweet"], thirsty: 0.05, blurb: "Split and roasted by the fire, still warm in the paper." },
-    { id: "onions", name: "Pickled onions", icon: "🧅", tags: ["tart", "fiery"], thirsty: 0.15, blurb: "Small, sharp and vinegary, from the crock under the counter." },
-    { id: "apples", name: "Dried apple rings", icon: "🍎", tags: ["sweet", "crisp"], thirsty: 0.05, blurb: "Chewy, sweet, and gentle on the thirst." },
-];
-export const GARNISHES = [
-    { id: "lemon", icon: "🍋", name: "Lemon", tags: ["bright", "tart"] },
-    { id: "honey", icon: "🍯", name: "Honey", tags: ["sweet"] },
-    { id: "spice", icon: "🌶️", name: "Spice", tags: ["warm", "fiery"] },
-    { id: "sprig", icon: "🌿", name: "Mint sprig", tags: ["fragrant"] },
-];
+export const SNACKS = DISHES_DATA.dishes.filter((d) => d.tableSnack).map((d) => ({
+    id: d.id, name: d.name, icon: d.icon, tags: d.tags, blurb: d.text?.snackBowl,
+    thirstPerHour: (d.effects?.onConsuming ?? []).reduce((a, e) => a + (e.thirst ?? 0), 0),
+    boughtAs: d.boughtAs, madeAt: d.madeAt?.kinds[0],
+    praise: d.text?.patronPraises ?? [], complaints: d.text?.patronComplaints ?? [],
+}));
+export const GARNISHES = INGREDIENTS_DATA.ingredients.filter((x) => x.roles.includes("garnish"))
+    .map((x) => ({ id: x.id, name: x.name, icon: x.icon, tags: x.tags, garnishFor: x.garnishFor ?? [] }));
+const LEGACY_GARNISH_ID = { sprig: "mint" };
+export const garnishById = (id) => (id ? GARNISHES.find((x) => x.id === (LEGACY_GARNISH_ID[id] ?? id)) : undefined);
+/** Can this dish take a garnish, and which ones suit it? */
+export function garnishesFor(recipeId) {
+    const d = DISHES_DATA.dishes.find((x) => x.id === currentDishId(recipeId));
+    return d?.garnish ? GARNISHES.filter((x) => x.garnishFor.includes(d.container)) : [];
+}
 export const ARCHETYPES = [
     { id: "dock", openness: 0.45, name: "Dockworker", color: "#b5651d", weight: 3,
         weather: { love: [], dislike: ["stormy", "cold"] },

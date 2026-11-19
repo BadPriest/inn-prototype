@@ -266,6 +266,8 @@ export function ageFood(g) {
         sd.tray.items = sd.tray.items.filter(keep);
     g.setDown = g.setDown.filter((sd) => sd.tray.items.length);
     for (const [fid, pot] of g.pots) {
+        if (RECIPES.find((r) => r.id === pot.item.recipeId)?.tableSnack)
+            continue;
         if (pot.item.tags.includes(TUNING.staleTag)) {
             g.pots.delete(fid);
             tossed++;
