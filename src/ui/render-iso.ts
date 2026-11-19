@@ -296,7 +296,19 @@ export function drawIso(ctx: CanvasRenderingContext2D, g: Game, v: View, target:
     const foot = P(v, p.pos.x, p.pos.y);
     drawPatronWords(ctx, g, p, foot.x, foot.y - ts * 0.55, ts);
   }
-  const kh = P(v, k.pos.x, k.pos.y, HEAD_Z);
+  const kf = P(v, k.pos.x, k.pos.y), kh = P(v, k.pos.x, k.pos.y, HEAD_Z);
+  // Trays: one per arm, shown only with something on them.
+  k.trays.forEach((tray, i) => {
+    if (!tray.items.length) return;
+    const side = i === 0 ? -1 : 1;
+    const w = tray.items.length * ts * 0.32 + ts * 0.08;
+    const tx = kf.x + side * (ts * 0.32) + (side < 0 ? -w : 0), ty = kf.y - ts * 0.5;
+    ctx.fillStyle = TRAY_COLOUR[trayLook(tray) ?? "mixed"];
+    ctx.fillRect(tx, ty, w, ts * 0.38);
+    ctx.font = `${Math.floor(ts * 0.3)}px system-ui, sans-serif`;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    tray.items.forEach((it, j) => ctx.fillText(iconFor(it.recipeId, it.garnish) || "🥣", tx + ts * 0.2 + j * ts * 0.32, ty + ts * 0.2));
+  });
   if (g.keeperLine && g.minute < g.keeperLine.until) say(kh.x, kh.y - HEAD_R * ts - ts * 0.05, `“${g.keeperLine.text}”`, "#ffe08a");
   drawLevelUp(ctx, g, v);
   drawGuide(ctx, g, v);

@@ -387,6 +387,20 @@ export function draw(ctx, g, v, target, clickDest) {
     drawLight(ctx, g, (x, y) => ({ x: X(x), y: Y(y) }), ts);
     for (const p of g.patrons)
         drawPatron(ctx, g, p, X, Y, ts, "words");
+    // Trays: one per arm, shown only with something on them.
+    k.trays.forEach((tray, i) => {
+        if (!tray.items.length)
+            return;
+        const side = i === 0 ? -1 : 1;
+        const w = tray.items.length * ts * 0.32 + ts * 0.08;
+        const tx = X(k.pos.x) + side * (ts * 0.4) + (side < 0 ? -w : 0), ty = Y(k.pos.y) + ts * 0.1;
+        ctx.fillStyle = TRAY_COLOUR[trayLook(tray) ?? "mixed"];
+        ctx.fillRect(tx, ty, w, ts * 0.38);
+        ctx.font = `${Math.floor(ts * 0.3)}px system-ui, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        tray.items.forEach((it, j) => ctx.fillText(iconFor(it.recipeId, it.garnish) || "🥣", tx + ts * 0.2 + j * ts * 0.32, ty + ts * 0.2));
+    });
     if (g.keeperLine && g.minute < g.keeperLine.until) {
         speech.push({ x: X(k.pos.x), anchor: Y(k.pos.y) - ts * 0.38, text: `“${g.keeperLine.text}”`, color: "#ffe08a" });
     }
