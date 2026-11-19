@@ -57,6 +57,10 @@ export class Game {
     onOrder = [];
     /** The pantry: units of each ingredient. */
     stock = startingPantry();
+    /** Pencilled slips on the desk, one per supplier (item id -> packs); the last one sent to each; what's coming. */
+    slips = {};
+    lastSlips = {};
+    deliveries = [];
     /** Delivered pieces waiting to be placed in the kitchen (equipment ids). */
     toPlace = [];
     nextArrivalAt = 0;

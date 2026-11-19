@@ -268,6 +268,10 @@ export class Game {
   onOrder: string[] = [];
   /** The pantry: units of each ingredient. */
   stock: Record<string, number> = startingPantry();
+  /** Pencilled slips on the desk, one per supplier (item id -> packs); the last one sent to each; what's coming. */
+  slips: Record<string, Record<string, number>> = {};
+  lastSlips: Record<string, Record<string, number>> = {};
+  deliveries: { supplierId: string; day: number; slip: Record<string, number> }[] = [];
   /** Delivered pieces waiting to be placed in the kitchen (equipment ids). */
   toPlace: string[] = [];
   nextArrivalAt = 0;

@@ -7,6 +7,7 @@ import { startArranging } from "./arrange.js";
 import { grid, gridKeys, type CardSpec } from "./cards.js";
 import { openNewspaper } from "./newspaper.js";
 import { openCalendar } from "./calendar.js";
+import { openSupplies } from "./supplies.js";
 import { canFetch, fetchThing, FETCH_MINUTES, hasOrBetter, onOrderCount, orderThing, priceOfThing, SELL_BACK_SHARE_WORDS, toPlaceCount } from "../shop.js";
 import { fmtMoney, moneyHtml, priceLevel, priceOfRecipe, PRICE_LEVELS } from "../money.js";
 
@@ -38,6 +39,12 @@ export function openDeskScreen(g: Game, openJournal: () => void): void {
         fact: `${g.date.seasonName} ${g.date.dayOfSeason}`,
         detail: `${g.date.weekday}. This season's days: the weather so far, market days, and when the next season begins.`,
         does: "See the season" },
+      { pick: "supplies", icon: "🧺", name: "Supplies",
+        fact: g.deliveries.length ? `🛻 ${g.deliveries.length} coming` : Object.values(g.slips).some((x) => Object.values(x).some(Boolean)) ? "A slip pencilled" : undefined,
+        status: g.deliveries.length ? undefined : "Order what the pantry needs.",
+        tone: g.deliveries.length ? "good" : undefined,
+        detail: "A slip for each supplier: pencil in what you need, then send it for the carter to bring, or fetch it yourself while the inn's shut.",
+        does: "Open the slips" },
       { pick: "shop", icon: "🛒", name: "Equipment",
         fact: g.onOrder.length ? `${g.onOrder.length} on order` : undefined,
         status: g.onOrder.length ? undefined : "Kitchen equipment and upgrades to buy.",
@@ -63,6 +70,7 @@ export function openDeskScreen(g: Game, openJournal: () => void): void {
       else if (v === "paper") openNewspaper(g);
       else if (v === "calendar") openCalendar(g);
       else if (v === "shop") { g.bus.emit({ type: "MenuSound", sound: "penClick" }); openShop(g); }
+      else if (v === "supplies") { g.bus.emit({ type: "MenuSound", sound: "penClick" }); openSupplies(g); }
       else if (v === "arrange") { closeAll(); startArranging(g); }
       else openJournal();
     };

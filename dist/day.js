@@ -1,5 +1,6 @@
 // The clock and the day cycle: open, last call, turn in, next morning. Days never end.
 import { carterArrives } from "./shop.js";
+import { deliveriesArrive } from "./supplies.js";
 import { MEALS, TUNING, currentEquipmentId, pieceById, EQUIPMENT, currentDishId, RECIPES } from "./data.js";
 import { emptyStats } from "./game.js";
 import { defaultLayout, setOnStove } from "./world.js";
@@ -110,6 +111,7 @@ export function startNextDay(g) {
     }
     beginDay(g);
     carterArrives(g); // yesterday's orders
+    deliveriesArrive(g);
     g.bus.emit({ type: "DayStarted", day: g.day });
     save(g);
 }
@@ -136,7 +138,7 @@ export function save(g) {
         localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, calendarStart: g.calendarStart, location: g.location, inn: g.inn, weather: g.weather, history, regulars, visitorNotes: g.visitorNotes,
             menu: [...g.menu], menuChosen: g.menuChosen,
             layout: g.layout, mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives,
-            purse: g.purse, priceLevel: g.priceLevel, onOrder: g.onOrder, toPlace: g.toPlace, stock: g.stock }));
+            purse: g.purse, priceLevel: g.priceLevel, onOrder: g.onOrder, toPlace: g.toPlace, stock: g.stock, slips: g.slips, lastSlips: g.lastSlips, deliveries: g.deliveries }));
     }
     catch { /* storage unavailable: carry on */ }
 }
@@ -194,6 +196,9 @@ export function load(g) {
         // Saved before the pantry counted anything: it starts as a new keeper's.
         if (s.stock)
             g.stock = s.stock;
+        g.slips = s.slips ?? {};
+        g.lastSlips = s.lastSlips ?? {};
+        g.deliveries = s.deliveries ?? [];
         g.onOrder = (s.onOrder ?? []).map(currentEquipmentId).filter((id) => pieceById(id));
         g.toPlace = [...g.toPlace, ...(s.toPlace ?? []).map(currentEquipmentId).filter((id) => pieceById(id))];
         g.day = s.day ?? 1;
