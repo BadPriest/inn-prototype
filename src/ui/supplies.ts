@@ -61,7 +61,7 @@ export function openSupplies(g: Game): void {
         <span class="ic">📝</span>
         <div class="dish-body">
           <div class="nm">Slip for ${s.name}${s.people[0] ? ` <small>(${s.people[0]})</small>` : ""}</div>
-          <div class="meta">${onSlip.length ? onSlip.map((l) => `${slip[l.item]} × ${l.pack.name} of ${ing(l.item).name.toLowerCase()}`).join(", ") : "Nothing pencilled in yet"}${onSlip.length ? ` · ${moneyHtml(total)}` : ""}</div>
+          <div class="meta slip-lines">${onSlip.length ? onSlip.map((l) => `<span class="slip-line">${slip[l.item]} × ${l.pack.name} of ${ing(l.item).name.toLowerCase()} <button class="ghost slip-minus" data-pick="minus:${lines.indexOf(l)}" title="Take one off">−</button></span>`).join(" ") : "Nothing pencilled in yet"}${onSlip.length ? ` · ${moneyHtml(total)}` : ""}</div>
           <div class="meta">${terms}</div>
         </div>
       </div>`;
@@ -72,6 +72,7 @@ export function openSupplies(g: Game): void {
         button: "primary", disabled: day === undefined || g.purse < total, action: () => { if (sendSlip(g, s)) { g.bus.emit({ type: "MenuSound", sound: "coins" }); refresh(); } } });
       if (s.distanceInMinutes !== undefined) items.push({ label: `🚶 Fetch it yourself: ${fmtMoney(total)}`, sub: canFetchFrom(g, s) ? `you're out ${s.distanceInMinutes} min; no carter's fee` : "only while the inn is shut and empty, and they're open",
         disabled: !canFetchFrom(g, s) || g.purse < total, action: () => { if (fetchSlip(g, s)) { g.bus.emit({ type: "MenuSound", sound: "coins" }); closeAll(); } } });
+      for (const l of onSlip) items.push({ label: `− ${l.pack.name} of ${ing(l.item).name.toLowerCase()}`, sub: `${slip[l.item]} on the slip`, button: "secondary", action: () => change(lines.indexOf(l), -1) });
       items.push({ label: "Tear it up", button: "secondary", action: () => { g.slips[s.id] = {}; g.bus.emit({ type: "MenuSound", sound: "paperClose" }); refresh(); } });
     } else if (!slipEmpty(g.lastSlips[s.id])) {
       items.push({ label: "Copy last slip", sub: "the same again", action: () => { g.slips[s.id] = { ...g.lastSlips[s.id] }; refresh(); } });
@@ -84,7 +85,7 @@ export function openSupplies(g: Game): void {
       view: {
         pinned,
         html: grid(cards),
-        onPick: (v) => { if (v.startsWith("tab:")) { const i = Number(v.slice(4)); if (i !== tab) { tab = i; st.focus = 0; g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); refresh(); } return; } change(Number(v), 1); },
+        onPick: (v) => { if (v.startsWith("minus:")) { change(Number(v.slice(6)), -1); return; } if (v.startsWith("tab:")) { const i = Number(v.slice(4)); if (i !== tab) { tab = i; st.focus = 0; g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); refresh(); } return; } change(Number(v), 1); },
         onKey: (e) => {
           if (e.key === "Tab") { e.preventDefault(); switchTab(e.shiftKey ? -1 : 1); return true; }
           if (e.key === "-" || e.key === "Delete") { change(st.focus, -1); return true; }

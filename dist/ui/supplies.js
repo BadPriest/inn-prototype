@@ -53,7 +53,7 @@ export function openSupplies(g) {
         <span class="ic">📝</span>
         <div class="dish-body">
           <div class="nm">Slip for ${s.name}${s.people[0] ? ` <small>(${s.people[0]})</small>` : ""}</div>
-          <div class="meta">${onSlip.length ? onSlip.map((l) => `${slip[l.item]} × ${l.pack.name} of ${ing(l.item).name.toLowerCase()}`).join(", ") : "Nothing pencilled in yet"}${onSlip.length ? ` · ${moneyHtml(total)}` : ""}</div>
+          <div class="meta slip-lines">${onSlip.length ? onSlip.map((l) => `<span class="slip-line">${slip[l.item]} × ${l.pack.name} of ${ing(l.item).name.toLowerCase()} <button class="ghost slip-minus" data-pick="minus:${lines.indexOf(l)}" title="Take one off">−</button></span>`).join(" ") : "Nothing pencilled in yet"}${onSlip.length ? ` · ${moneyHtml(total)}` : ""}</div>
           <div class="meta">${terms}</div>
         </div>
       </div>`;
@@ -70,6 +70,8 @@ export function openSupplies(g) {
                         g.bus.emit({ type: "MenuSound", sound: "coins" });
                         closeAll();
                     } } });
+            for (const l of onSlip)
+                items.push({ label: `− ${l.pack.name} of ${ing(l.item).name.toLowerCase()}`, sub: `${slip[l.item]} on the slip`, button: "secondary", action: () => change(lines.indexOf(l), -1) });
             items.push({ label: "Tear it up", button: "secondary", action: () => { g.slips[s.id] = {}; g.bus.emit({ type: "MenuSound", sound: "paperClose" }); refresh(); } });
         }
         else if (!slipEmpty(g.lastSlips[s.id])) {
@@ -82,7 +84,10 @@ export function openSupplies(g) {
             view: {
                 pinned,
                 html: grid(cards),
-                onPick: (v) => { if (v.startsWith("tab:")) {
+                onPick: (v) => { if (v.startsWith("minus:")) {
+                    change(Number(v.slice(6)), -1);
+                    return;
+                } if (v.startsWith("tab:")) {
                     const i = Number(v.slice(4));
                     if (i !== tab) {
                         tab = i;

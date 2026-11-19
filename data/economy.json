@@ -22,7 +22,7 @@
   },
 
   "startingPurse": 200,
-  "startingPantry": {"ale": 72, "cider": 36, "black": 20, "mint": 10, "chamomile": 10, "oats": 7, "milk": 8, "salt": 60, "lard": 10, "butter": 10, "flour": 14, "loaf": 6, "egg": 12, "beef": 6, "sausage": 6, "roots": 10, "onion": 6, "herbs": 4, "apple": 10, "cheese": 4, "saltedPeanuts": 10, "darkRoast": 3, "sugar": 20, "honey": 10, "lemon": 6, "pepper": 20},
+  "startingPantry": {"ale": 72, "cider": 36, "black": 20, "mint": 10, "chamomile": 10, "smokedLeaf": 6, "darkRoast": 3, "lightRoast": 2, "milk": 16, "oats": 8, "salt": 60, "sugar": 20, "honey": 15, "lard": 20, "butter": 12, "egg": 24, "loaf": 6, "flour": 20, "crumb": 5, "beef": 12, "sausage": 12, "bacon": 15, "fowl": 2, "mincedMeat": 4, "pork": 6, "fish": 6, "herring": 4, "roots": 20, "onion": 12, "mushroom": 10, "tomato": 6, "greens": 6, "radish": 4, "herbs": 6, "chives": 4, "pepper": 20, "nutmeg": 5, "zest": 3, "lemon": 6, "apple": 15, "berry": 3, "walnut": 5, "cheese": 8, "saltedPeanuts": 10, "pretzels": 10},
 
   "deliveryFee": 3,
 
