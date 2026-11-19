@@ -6,6 +6,12 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 110 · Nov 19, 2026 · deployed
+
+### Changed
+- **Cards grow when you point at them.** The card under the cursor, controller or mouse grows in place (a quick animation) and its description and what picking it does fade in inside it. This replaces the small panel that used to pop up beside it.
+- **Desk cards are down to a name and one line**: the state ("Not set", "Fair", "Unread", "Autumn 1") or, with nothing to report, what's inside ("Information about patrons you served."). The rest shows when a card grows. The newspaper card is now "Today's Newspaper".
+
 ## Build 109 · Nov 19, 2026 · deployed
 
 ### Changed

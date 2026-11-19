@@ -2,11 +2,11 @@
 // Shared building blocks so every card screen looks and handles the same.
 //
 // A card has two sizes. At rest it shows what you need to choose: icon, name, one key fact, its state,
-// and tags where they matter (food). With the cursor on it (keys, controller, mouse) it lifts, and a
-// drawer under it adds the rest: what it is, and what picking it does. Text never mixes kinds:
+// and tags where they matter (food). With the cursor on it (keys, controller, mouse) it grows in place,
+// animated, and the rest fades in inside it: what it is, and what picking it does. Text never mixes kinds:
 //   fact     what it is or costs (plain)            status   its state now (small, coloured by `tone`)
-//   detail   more about it, in the drawer           does     what picking it does, in the drawer
-//   flavour  a line of colour, in the drawer, italic and quiet
+//   detail   more about it, when grown              does     what picking it does, when grown
+//   flavour  a line of colour, when grown, italic and quiet
 
 export function chip(tag: string, highlight = false): string {
   return `<span class="chip ${highlight ? "new" : ""}">${tag}</span>`;
@@ -44,7 +44,7 @@ export function card(c: CardSpec): string {
   const extra = `${c.detail ? `<div class="detail">${c.detail}</div>` : ""}${c.flavour ? `<div class="flavour">${c.flavour}</div>` : ""}${c.does ? `<div class="does">${c.does}</div>` : ""}`;
   // Open cards (a few big choices) show it all on the face; the rest keep it for the drawer.
   const drawer = !open && (c.detail || c.does || c.flavour) ? `<div class="more">${extra}</div>` : "";
-  const cls = ["icard", c.on && "on", c.off && "off", c.focus && "focus", have && "has", c.warn && "warn", drawer && "drawer"].filter(Boolean).join(" ");
+  const cls = ["icard", c.on && "on", c.off && "off", c.focus && "focus", have && "has", c.warn && "warn", drawer && "drawer", open && "isopen"].filter(Boolean).join(" ");
   return `<div class="${cls}" data-pick="${c.pick}"${c.title ? ` title="${c.title}"` : ""}>
       <div class="face">
         <span class="ic">${c.icon}</span><span class="nm">${c.name}</span>
@@ -71,10 +71,10 @@ export function grid(cards: CardSpec[], opts: { cols?: number; size?: "s" | "m" 
 }
 
 /**
- * After a menu is drawn: every card in a grid as tall as the tallest, and the drawer of the card under
- * the cursor. The drawer floats over the menu (outside its scrolling part, so it's never cut off): below
- * the card, or above it when there's no room below. The mouse shows the card it's over; otherwise the
- * keyboard's.
+ * After a menu is drawn: every card in a grid as tall as the tallest, and the card under the cursor grown.
+ * The grown card is a copy laid over the menu (outside its scrolling part, so it's never cut off): it
+ * starts at the card's own size and place and grows around it, kept on screen, and its extra text fades
+ * in. The mouse grows the card it's over; otherwise the keyboard's card is grown.
  */
 export function settleCards(root: HTMLElement): void {
   root.querySelectorAll<HTMLElement>(".cards").forEach((g) => {
@@ -84,33 +84,48 @@ export function settleCards(root: HTMLElement): void {
     const h = Math.max(...cs.map((c) => c.offsetHeight));
     cs.forEach((c) => { c.style.height = `${h}px`; });
   });
-  const tip = document.createElement("div");
-  tip.className = "cardtip";
-  root.appendChild(tip);
+  let zoom: HTMLElement | null = null;
+  let shown: HTMLElement | null = null;
   const focused = () => root.querySelector<HTMLElement>(".icard.focus");
-  const show = (c: HTMLElement | null, hover = false) => {
+  const show = (c: HTMLElement | null, animate = true) => {
     const more = c?.querySelector<HTMLElement>(".more");
-    if (!c || !more) { tip.style.display = "none"; return; }
-    tip.innerHTML = more.innerHTML;
-    tip.classList.toggle("hover", hover);
-    tip.style.display = "block";
+    if (!c || !more) { zoom?.remove(); zoom = null; shown = null; return; }
+    if (c === shown && animate) return;
+    zoom?.remove();
+    shown = c;
     const z = Number(getComputedStyle(document.documentElement).getPropertyValue("--ui")) || 1;
     const r = c.getBoundingClientRect(), box = root.getBoundingClientRect();
-    const w = Math.max(r.width, 190 * z);
-    tip.style.width = `${w / z}px`;
-    const th = tip.getBoundingClientRect().height;
-    let left = r.left - box.left + r.width / 2 - w / 2;
-    left = Math.max(6, Math.min(box.width - w - 6, left));
-    let top = r.bottom - box.top + 4;
-    if (top + th > box.height - 6) top = r.top - box.top - th - 4;
-    tip.style.left = `${left / z}px`;
-    tip.style.top = `${Math.max(6, top) / z}px`;
+    const el = document.createElement("div");
+    el.className = `${c.className} zoomed`;
+    el.dataset.pick = c.dataset.pick;
+    el.innerHTML = `${c.querySelector(".face")?.outerHTML ?? ""}<div class="open">${more.innerHTML}</div>${c.querySelector(".have")?.outerHTML ?? ""}`;
+    root.appendChild(el);
+    zoom = el;
+    // Where it ends up: wider, as tall as its text needs, centred on the card and kept on screen.
+    const w = Math.max(r.width * 1.45, 210 * z);
+    el.style.width = `${w / z}px`;
+    el.style.height = "auto";
+    const h = Math.max(el.getBoundingClientRect().height, r.height * 1.12);
+    const left = Math.max(6, Math.min(box.width - w - 6, r.left - box.left + r.width / 2 - w / 2));
+    const top = Math.max(6, Math.min(box.height - h - 6, r.top - box.top + r.height / 2 - h / 2));
+    const place = (x: number, y: number, ww: number, hh: number) => {
+      el.style.left = `${x / z}px`; el.style.top = `${y / z}px`; el.style.width = `${ww / z}px`; el.style.height = `${hh / z}px`;
+    };
+    if (!animate) { place(left, top, w, h); el.classList.add("grown"); return; }
+    place(r.left - box.left, r.top - box.top, r.width, r.height); // from the card itself...
+    void el.offsetWidth;
+    el.classList.add("grown");
+    place(left, top, w, h); // ...to its grown size
+    el.addEventListener("click", () => c.click());
+    el.addEventListener("mouseleave", (e) => {
+      const to = (e.relatedTarget as HTMLElement | null)?.closest?.(".cards .icard") as HTMLElement | null;
+      show(to ?? focused());
+    });
   };
-  root.querySelectorAll<HTMLElement>(".icard").forEach((c) => {
-    c.addEventListener("mouseenter", () => show(c, true));
-    c.addEventListener("mouseleave", () => show(focused()));
+  root.querySelectorAll<HTMLElement>(".cards .icard").forEach((c) => {
+    c.addEventListener("mouseenter", () => show(c));
   });
-  root.querySelector(".menu-view")?.addEventListener("scroll", () => show(focused()));
+  root.querySelector(".menu-view")?.addEventListener("scroll", () => { const c = shown; shown = null; show(c, false); });
   show(focused());
 }
 

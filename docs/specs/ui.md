@@ -9,8 +9,8 @@ Code: `src/ui/menu.ts` (the frame), `src/ui/cards.ts` (cards), styles in `index.
 | Kind | What it is | Where it goes |
 | --- | --- | --- |
 | **Fact** | What something is, costs or does | The card face; a section heading |
-| **Instruction** | What pressing something does | The button's label and sub-line, the card drawer's last line, the hint bar. Never a paragraph |
-| **Flavour** | Colour, voice | One italic quiet line: the menu's `flavour`, or the card drawer. Never inside a fact |
+| **Instruction** | What pressing something does | The button's label and sub-line, the grown card's last line, the hint bar. Never a paragraph |
+| **Flavour** | Colour, voice | One italic quiet line: the menu's `flavour`, or the grown card. Never inside a fact |
 
 - No explanation paragraphs. What they taught moves to the subtitle, the card or the button.
 - A screen's **subtitle** says, in one line, what the screen is for ("One level for everything on the bill of fare").
@@ -19,8 +19,9 @@ Code: `src/ui/menu.ts` (the frame), `src/ui/cards.ts` (cards), styles in `index.
 ## Cards: two sizes
 
 - **At rest:** icon, name, one key `fact` (a price, a count), one `status` line (coloured by `tone`: good, warn, muted), and `tags` where they matter (food always shows its tags).
-- **With the cursor on it** (keys, controller, mouse): it lifts, and a drawer floats under it (over it if there's no room) with `detail`, `flavour` and `does`. `does` is what picking it does, in a few words ("Put it on the board", "You need 1s more").
-- **A few big choices** (House prices' three levels): `grid(..., { open: true })` shows the drawer's text on the face.
+- **With the cursor on it** (keys, controller, mouse): the card itself grows in place, animated (a copy over the menu, so it's never cut off, kept on screen), and `detail`, `flavour` and `does` fade in inside it. `does` is what picking it does, in a few words ("Put it on the board", "You need 1s more"). No separate tooltip or drawer.
+- **Desk-style cards** (screens that open other screens): at rest, just the name and one line: the state ("Not set", "Fair", "Unread", "Spring 1") or, when there's no state, what's inside ("Information about patrons you served."). Nothing more until it grows.
+- **A few big choices** (House prices' three levels): `grid(..., { open: true })` shows the extra text on the face; those cards don't grow.
 - **What you have:** `have: n` puts a quiet green band across the foot, "You have n". Not gold: gold belongs to the main button.
 - **Not available:** `off`, dimmed, with the reason as its status ("needs an oven") and the way to fix it in `does`.
 
@@ -39,7 +40,7 @@ In-world menus confirm with the pen tick; out-of-world choices with the piano (s
 
 Desk, House prices (its own screen now), Equipment (Upgrades tab: trays and seasoned oak), Bill of fare, Newspaper headings.
 
-Crafting, on one template (`src/ui/cook.ts`): choosing what to make is recipe cards (time, how many waiting, on the board or not, tags; the drawer says what one go makes and carries the blurb); building the dish pins a **result panel** on top (`resultPanel()`: the dish as it will come out, the tags the choices add lit), then the ingredient cards (the drawer says what each adds), then one main button whose sub-line says what's missing or who it's for (Cook, Bake or Boil). Steeping tea and garnishing a drink use the same panel and cards.
+Crafting, on one template (`src/ui/cook.ts`): choosing what to make is recipe cards (time, how many waiting, on the board or not, tags; grown, it says what one go makes and carries the blurb); building the dish pins a **result panel** on top (`resultPanel()`: the dish as it will come out, the tags the choices add lit), then the ingredient cards (grown, each says what it adds), then one main button whose sub-line says what's missing or who it's for (Cook, Bake or Boil). Steeping tea and garnishing a drink use the same panel and cards.
 
 ## To do
 
