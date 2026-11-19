@@ -1,25 +1,5 @@
 {
-  "_about": "Every piece of kitchen and bar equipment. Money is in pence.",
-  "_fields": {
-    "type": "crafting: things are made at it. storage: finished things are kept and served from it. gear: set on a crafting slot of a listed kind, where it shows. utensil: never placed; a crafting slot of a listed kind uses the best one owned. tray: carried by the keeper, one in each hand; the best one owned counts.",
-    "label": "Drawn on the piece in the kitchen.",
-    "shape": "Crafting and storage: tiles it covers, as rows: # covered, . empty.",
-    "shopTab": "Shop tab it is listed in.",
-    "price": "Shop price.",
-    "text.shopCard": "Line on the shop card.",
-    "slots": "Crafting: places to cook, each taking dishes of the listed station kinds.",
-    "line": "Gear, utensils, trays: the upgrade line it belongs to.",
-    "tier": "Its place in the line; higher is better.",
-    "craftingSpeed": "Crafting, gear, utensils: speed multiplier; 1 is normal.",
-    "usedIn": "Gear, utensils: slot kinds it is used in.",
-    "servingsBonus": "Utensil: servings added to each batch made with it.",
-    "traySlots": "Tray: slots on one tray.",
-    "fuel": "Crafting: what it burns.",
-    "holds": "Storage: dish ids it keeps.",
-    "capacity.batches": "Storage: whole batches it keeps.",
-    "capacity.servings": "Storage: servings it keeps. No capacity: no limit.",
-    "serveSeconds": "Storage: real seconds to take out one serving: [centre, spread]. Absent: instant."
-  },
+  "$schema": "./schemas/equipment.schema.json",
 
   "equipment": [
     { "id": "woodStove", "name": "Wood stove", "icon": "🔥", "type": "crafting", "label": "Stove",

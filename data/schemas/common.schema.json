@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "id": { "type": "string", "pattern": "^[a-z][a-zA-Z]*$", "description": "lowerCamelCase letters only. Never changes once used: saves refer to it." },
+    "organic": { "type": "array", "items": [ { "type": "number", "minimum": 0 }, { "type": "number", "minimum": 0 } ], "minItems": 2, "maxItems": 2, "description": "[centre, spread]." },
+    "pence": { "type": "number", "minimum": 0, "description": "Pence." },
+    "season": { "enum": ["spring", "summer", "autumn", "winter"] },
+    "weekday": { "enum": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] },
+    "stationKind": { "enum": ["stove", "griddle", "oven", "kettle", "coffee", "prep"] },
+    "container": { "enum": ["cup", "glass", "bowl", "plate", "table"] },
+    "tags": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "lines": { "type": "array", "items": { "type": "string" } },
+    "hours": { "type": "array", "items": [ { "type": "number", "minimum": 0, "maximum": 24 }, { "type": "number", "minimum": 0, "maximum": 24 } ], "minItems": 2, "maxItems": 2, "description": "[from, to], clock hours." },
+    "stageEffect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["addTags", "removeTags", "priceFactor", "tastePenalty"],
+      "properties": {
+        "addTags": { "$ref": "#/definitions/tags" },
+        "removeTags": { "$ref": "#/definitions/tags" },
+        "priceFactor": { "type": "number", "minimum": 0, "description": "Multiplier on the price while in this stage." },
+        "tastePenalty": { "type": "number", "description": "Added to how much guests like it." },
+        "unservable": { "type": "boolean", "description": "Can't be served or cooked with." }
+      }
+    },
+    "partialStageEffect": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "addTags": { "$ref": "#/definitions/tags" },
+        "removeTags": { "$ref": "#/definitions/tags" },
+        "priceFactor": { "type": "number", "minimum": 0 },
+        "tastePenalty": { "type": "number" },
+        "unservable": { "type": "boolean" }
+      }
+    },
+    "deliveryDays": {
+      "description": "Days the carter brings their orders, or daily.",
+      "oneOf": [ { "const": "daily" }, { "type": "array", "items": { "$ref": "#/definitions/weekday" }, "uniqueItems": true, "minItems": 1 } ]
+    },
+    "inventoryLine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["item"],
+      "properties": {
+        "item": { "type": "string", "description": "Ingredient or equipment id." },
+        "pack": {
+          "type": "object", "additionalProperties": false, "required": ["units", "name"],
+          "properties": {
+            "units": { "type": "number", "exclusiveMinimum": 0, "description": "Units of the item in one pack." },
+            "name": { "type": "string", "description": "What one pack is called on the slip." }
+          }
+        }
+      }
+    }
+  }
+}

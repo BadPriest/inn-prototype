@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Suppliers",
+  "description": "Every supplier. Money is in pence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["suppliers"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "suppliers": { "type": "array", "items": { "$ref": "#/definitions/supplier" } }
+  },
+  "definitions": {
+    "supplier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "icon", "people", "inventory"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/definitions/id" },
+        "name": { "type": "string" },
+        "icon": { "type": "string" },
+        "people": { "type": "array", "items": { "type": "string" }, "description": "Who you meet when you fetch an order yourself; the first signs the slip." },
+        "inventory": { "type": "array", "items": { "$ref": "common.schema.json#/definitions/inventoryLine" }, "description": "What can go on their order slip." },
+        "priceFactor": { "type": "number", "exclusiveMinimum": 0, "description": "Multiplier on an item's worth. Pack price: worth x units x priceFactor x economy.json suppliers.priceFactor. Equipment: its price x priceFactor." },
+        "deliveryDays": { "$ref": "common.schema.json#/definitions/deliveryDays", "description": "Absent: they don't deliver." },
+        "orderBy": { "type": "number", "minimum": 0, "maximum": 24, "description": "Hour a slip must go in by to make the next delivery day." },
+        "distanceInMinutes": { "type": "number", "minimum": 0, "description": "Game minutes away from the tavern to fetch an order yourself, there and back. Absent: can't be fetched." },
+        "openHours": { "$ref": "common.schema.json#/definitions/hours", "description": "Hours they can be fetched from." }
+      }
+    }
+  }
+}

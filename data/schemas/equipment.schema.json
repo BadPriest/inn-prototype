@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Equipment",
+  "description": "Every piece of kitchen and bar equipment, gear, utensil and tray.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["equipment"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "equipment": { "type": "array", "items": { "$ref": "#/definitions/piece" } }
+  },
+  "definitions": {
+    "piece": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "icon", "type", "shopTab", "price"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/definitions/id" },
+        "name": { "type": "string" },
+        "icon": { "type": "string" },
+        "type": { "enum": ["crafting", "storage", "gear", "utensil", "tray"], "description": "crafting: things are made at it. storage: finished things are kept and served from it. gear: set on a crafting slot of a listed kind, where it shows. utensil: never placed; a crafting slot of a listed kind uses the best one owned. tray: carried by the keeper, one in each hand; the best one owned counts." },
+        "label": { "type": "string", "description": "Drawn on the piece in the kitchen." },
+        "shape": { "type": "array", "items": { "type": "string", "pattern": "^[#.]+$" }, "minItems": 1, "description": "Tiles it covers, as rows: # covered, . empty." },
+        "shopTab": { "enum": ["cooking", "drinks", "storage", "serving"] },
+        "price": { "$ref": "common.schema.json#/definitions/pence", "description": "Shop price." },
+        "line": { "type": "string", "description": "The upgrade line it belongs to." },
+        "tier": { "type": "integer", "minimum": 1, "description": "Its place in the line; higher is better." },
+        "slots": {
+          "type": "array", "minItems": 1, "description": "Places to cook.",
+          "items": {
+            "type": "object", "additionalProperties": false, "required": ["name", "kinds"],
+            "properties": {
+              "name": { "type": "string" },
+              "kinds": { "type": "array", "items": { "$ref": "common.schema.json#/definitions/stationKind" }, "minItems": 1, "description": "Station kinds it takes." }
+            }
+          }
+        },
+        "craftingSpeed": { "type": "number", "exclusiveMinimum": 0, "description": "Speed multiplier; 1 is normal." },
+        "fuel": { "enum": ["wood"], "description": "What it burns." },
+        "usedIn": { "type": "array", "items": { "$ref": "common.schema.json#/definitions/stationKind" }, "minItems": 1, "description": "Slot kinds it is used in." },
+        "servingsBonus": { "type": "number", "minimum": 0, "description": "Servings added to each batch made with it." },
+        "holds": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "Dish ids it keeps." },
+        "capacity": {
+          "type": "object", "additionalProperties": false, "minProperties": 1, "maxProperties": 1,
+          "description": "Absent: no limit.",
+          "properties": {
+            "batches": { "type": "integer", "minimum": 1, "description": "Whole batches it keeps." },
+            "servings": { "type": "integer", "minimum": 1, "description": "Servings it keeps." }
+          }
+        },
+        "serveSeconds": { "$ref": "common.schema.json#/definitions/organic", "description": "Real seconds to take out one serving: [centre, spread]. Absent: instant." },
+        "traySlots": { "type": "integer", "minimum": 1, "description": "Slots on one tray." },
+        "text": {
+          "type": "object", "additionalProperties": false,
+          "properties": { "shopCard": { "type": "string" } }
+        }
+      },
+      "allOf": [
+        { "if": { "properties": { "type": { "const": "crafting" } } }, "then": { "required": ["label", "shape", "slots", "craftingSpeed"] } },
+        { "if": { "properties": { "type": { "const": "storage" } } }, "then": { "required": ["label", "shape", "holds"] } },
+        { "if": { "properties": { "type": { "enum": ["gear", "utensil"] } } }, "then": { "required": ["usedIn", "line", "tier"] } },
+        { "if": { "properties": { "type": { "const": "tray" } } }, "then": { "required": ["traySlots", "line", "tier"] } }
+      ]
+    }
+  }
+}

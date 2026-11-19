@@ -1,20 +1,5 @@
 {
-  "_about": "Every starting location.",
-  "_fields": {
-    "seasonDays": "Days in spring, summer, autumn, winter; they sum to 112.",
-    "rainWeight": "Above 1: more rain, and it lingers. Below 1: less.",
-    "stormWeight": "How often a storm breaks, against the season's own odds.",
-    "cold.seasons": "Seasons that are cold all day.",
-    "cold.nights": "Seasons with cold nights.",
-    "traffic": "Passing traffic, times the hour's flow.",
-    "shelter": "How much rain drives passers-by indoors.",
-    "visitorWeights": "Archetype id: times its usual weight.",
-    "marketDay": "Weekday of the market, busier at midday. Absent: no market.",
-    "streetSound": "Sound id heard through the open door.",
-    "suppliers": "Suppliers at this location. Any supplier field given here overrides the one in suppliers.json, here only.",
-    "text.cardChips": "Short chips on its card.",
-    "text.card": "Line on its card."
-  },
+  "$schema": "./schemas/locations.schema.json",
 
   "locations": [
     { "id": "town", "name": "Town centre", "icon": "🏘️",

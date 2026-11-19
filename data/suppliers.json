@@ -1,17 +1,5 @@
 {
-  "_about": "Every supplier. Money is in pence.",
-  "_fields": {
-    "people": "Who you meet when you fetch an order yourself; the first signs the slip.",
-    "inventory": "What can go on their order slip.",
-    "inventory.item": "Ingredient or equipment id.",
-    "inventory.pack.units": "Units of the item in one pack.",
-    "inventory.pack.name": "What one pack is called on the slip.",
-    "priceFactor": "Multiplier on an item's worth. Pack price: worth x units x priceFactor x economy.json suppliers.priceFactor. Equipment: its price x priceFactor.",
-    "deliveryDays": "Days the carter brings their orders, or daily. Absent: they don't deliver.",
-    "orderBy": "Hour a slip must go in by to make the next delivery day.",
-    "distanceInMinutes": "Game minutes away from the tavern to fetch an order yourself, there and back. Absent: can't be fetched.",
-    "openHours": "Hours they can be fetched from: [from, to]."
-  },
+  "$schema": "./schemas/suppliers.schema.json",
 
   "suppliers": [
     { "id": "farm", "name": "Hollin's Farm", "icon": "🐄",

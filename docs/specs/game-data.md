@@ -1,26 +1,29 @@
 # Game data in files (inn#71)
 
-Draft, Nov 19, 2026. The game doesn't read these files yet. The drafts are in [game-data/](game-data/).
+Nov 19, 2026. The game doesn't read these files yet; it switches over one area at a time. The files are in [data/](../../data/).
 
 ## Goal
 
 Costs, prices, spoilage and as much of the economy as possible are kept in JSON files that can be edited without touching code. Each edit takes a rebuild and a reload. Ids must never change once saves depend on them.
 
-## Notes inside the files
+## Editing the files
 
-`_about` and `_fields` say what a field holds, and nothing else. Plans, reasons, status and examples go in this spec, the Kanzo ticket or a journal.
+- Edit the files in `data/` in VS Code. Each one points to its schema in `data/schemas/`, so hovering a field shows what it holds, field names autocomplete, and mistakes are underlined as you type.
+- The files hold data only. What each field means is in the schemas; plans, reasons and status go in this spec, the Kanzo ticket or a journal.
+- `node tools/gamedata.mjs` (also run by every build) checks each file against its schema and the files against each other: unknown ingredients, suppliers or equipment, duplicate ids, ids that aren't camelCase, impossible picks, seasons that don't add up to 112 days. It refuses to build until they're fixed, then writes `src/gamedata.gen.ts` for the game.
+- After an edit, rebuild and reload.
 
 ## Files
 
 | File | Holds | Status |
 | --- | --- | --- |
-| [economy.json](game-data/economy.json) | price formula knobs (markup, margin, prep per minute, per serving), house levels, tips, purse, sell-back | draft |
-| [spoilage.json](game-data/spoilage.json) | stage effects (fresh, on the turn, stale, spoiled) and named profiles (daily, bread, meat, cooked pot…) | draft |
-| [ingredients.json](game-data/ingredients.json) | each ingredient: unit, worth, tags, roles, spoilage, seasons | draft, about 35 of them |
-| [dishes.json](game-data/dishes.json) | each dish, drink and table snack | draft: 9 dishes and drinks, 10 table snacks |
-| [equipment.json](game-data/equipment.json) | crafting pieces, storage, gear, utensils, trays | draft: 5 crafting, 5 storage, 4 gear, 6 utensils, 3 trays |
-| [suppliers.json](game-data/suppliers.json) | who sells what in what packs, price factor, delivery days and cut-off, fetching it yourself | draft, 9 suppliers |
-| [locations.json](game-data/locations.json) | starting locations: calendar, weather, traffic, visitors, and their suppliers with overrides | draft, all 5 |
+| [economy.json](../../data/economy.json) | price formula knobs (markup, margin, prep per minute, per serving), house levels, tips, purse, sell-back | draft |
+| [spoilage.json](../../data/spoilage.json) | stage effects (fresh, on the turn, stale, spoiled) and named profiles (daily, bread, meat, cooked pot…) | draft |
+| [ingredients.json](../../data/ingredients.json) | each ingredient: unit, worth, tags, roles, spoilage, seasons | draft, about 35 of them |
+| [dishes.json](../../data/dishes.json) | each dish, drink and table snack | draft: 9 dishes and drinks, 10 table snacks |
+| [equipment.json](../../data/equipment.json) | crafting pieces, storage, gear, utensils, trays | draft: 5 crafting, 5 storage, 4 gear, 6 utensils, 3 trays |
+| [suppliers.json](../../data/suppliers.json) | who sells what in what packs, price factor, delivery days and cut-off, fetching it yourself | draft, 9 suppliers |
+| [locations.json](../../data/locations.json) | starting locations: calendar, weather, traffic, visitors, and their suppliers with overrides | draft, all 5 |
 | supplies.json | fuel, candles and lamp oil, sundries: things used up that aren't food | with #60 |
 
 ## Decisions (Bruno, Nov 19)
@@ -81,7 +84,7 @@ Costs, prices, spoilage and as much of the economy as possible are kept in JSON 
 
 ## What the drafts work out to
 
-These come from [game-data/](game-data/) at Fair. Each dish shows its cheapest and dearest choice of ingredients.
+These come from [data/](../../data/) at Fair. Each dish shows its cheapest and dearest choice of ingredients.
 
 | Dish | Cheapest | Dearest | Today |
 | --- | --- | --- | --- |

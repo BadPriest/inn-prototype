@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Ingredients",
+  "description": "Every ingredient.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["roles", "ingredients"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "roles": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Role id: what it means. A dish's 'role' use takes any ingredient with that role." },
+    "ingredients": { "type": "array", "items": { "$ref": "#/definitions/ingredient" } }
+  },
+  "definitions": {
+    "ingredient": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "icon", "unit", "worth", "tags", "roles", "spoilage"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/definitions/id" },
+        "name": { "type": "string" },
+        "icon": { "type": "string" },
+        "unit": { "type": "string", "description": "What one unit is called." },
+        "worth": { "$ref": "common.schema.json#/definitions/pence", "description": "Pence per unit, used to work out dish prices." },
+        "tags": { "$ref": "common.schema.json#/definitions/tags" },
+        "roles": { "type": "array", "items": { "type": "string" }, "uniqueItems": true, "description": "Roles it fills." },
+        "garnishFor": { "type": "array", "items": { "$ref": "common.schema.json#/definitions/container" }, "uniqueItems": true, "description": "Containers it can garnish." },
+        "spoilage": { "type": "string", "description": "Profile id in spoilage.json." },
+        "onceOpened": { "type": "string", "description": "Profile id it follows once opened." },
+        "spoilageOverrides": { "type": "object", "additionalProperties": { "$ref": "common.schema.json#/definitions/partialStageEffect" }, "description": "Stage id: effects for this ingredient." },
+        "seasons": { "type": "array", "items": { "$ref": "common.schema.json#/definitions/season" }, "uniqueItems": true, "description": "When it can be had. Absent: all year." }
+      }
+    }
+  }
+}

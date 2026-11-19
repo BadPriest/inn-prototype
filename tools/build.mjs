@@ -1,4 +1,4 @@
-// Build the prototype: stamp the build number, compile TypeScript, then make standalone.html.
+// Build the prototype: stamp the build number, check the game data, compile TypeScript, then make standalone.html.
 // Usage: node tools/build.mjs [--no-bump]     (or: npm run build [-- --no-bump])
 //   --no-bump  keep the current build number and date
 import { execSync } from "node:child_process";
@@ -19,9 +19,12 @@ if (bump) {
   writeFileSync(p("src/version.ts"), `export const BUILD = "build ${n} · ${date}";\n`);
 }
 
-// 2. Compile (uses the local TypeScript if installed, else npx)
+// 2. Check data/*.json and write src/gamedata.gen.ts from it
+execSync(`node ${JSON.stringify(p("tools/gamedata.mjs"))}`, { cwd: root, stdio: "inherit" });
+
+// 3. Compile (uses the local TypeScript if installed, else npx)
 execSync("npx --yes tsc -p .", { cwd: root, stdio: "inherit" });
 
-// 3. standalone.html
+// 4. standalone.html
 execSync(`node ${JSON.stringify(p("tools/standalone.mjs"))}`, { cwd: root, stdio: "inherit" });
 console.log(`Built: build ${n}`);

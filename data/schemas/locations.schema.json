@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Locations",
+  "description": "Every starting location.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["locations"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "locations": { "type": "array", "items": { "$ref": "#/definitions/location" } }
+  },
+  "definitions": {
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "icon", "seasonDays", "rainWeight", "stormWeight", "traffic", "shelter", "visitorWeights", "streetSound", "suppliers", "text"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/definitions/id" },
+        "name": { "type": "string" },
+        "icon": { "type": "string" },
+        "seasonDays": { "type": "array", "items": { "type": "integer", "minimum": 1 }, "minItems": 4, "maxItems": 4, "description": "Days in spring, summer, autumn, winter; they sum to 112." },
+        "rainWeight": { "type": "number", "exclusiveMinimum": 0, "description": "Above 1: more rain, and it lingers. Below 1: less." },
+        "stormWeight": { "type": "number", "minimum": 0, "description": "How often a storm breaks, against the season's own odds." },
+        "cold": {
+          "type": "object", "additionalProperties": false, "required": ["seasons", "nights"],
+          "properties": {
+            "seasons": { "type": "array", "items": { "$ref": "common.schema.json#/definitions/season" }, "description": "Seasons that are cold all day." },
+            "nights": { "type": "array", "items": { "$ref": "common.schema.json#/definitions/season" }, "description": "Seasons with cold nights." }
+          }
+        },
+        "traffic": { "type": "number", "minimum": 0, "description": "Passing traffic, times the hour's flow." },
+        "shelter": { "type": "number", "minimum": 0, "description": "How much rain drives passers-by indoors." },
+        "visitorWeights": { "type": "object", "additionalProperties": { "type": "number", "minimum": 0 }, "description": "Archetype id: times its usual weight." },
+        "marketDay": { "enum": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], "description": "Weekday of the market, busier at midday. Absent: no market." },
+        "streetSound": { "enum": ["streetTown", "streetCountry"], "description": "Sound heard through the open door." },
+        "suppliers": {
+          "type": "array",
+          "description": "Suppliers at this location. Any field given here overrides the supplier's own, here only.",
+          "items": {
+            "type": "object", "additionalProperties": false, "required": ["id"],
+            "properties": {
+              "id": { "type": "string", "description": "Supplier id." },
+              "priceFactor": { "type": "number", "exclusiveMinimum": 0 },
+              "deliveryDays": { "$ref": "common.schema.json#/definitions/deliveryDays" },
+              "orderBy": { "type": "number", "minimum": 0, "maximum": 24 },
+              "distanceInMinutes": { "type": "number", "minimum": 0 },
+              "openHours": { "$ref": "common.schema.json#/definitions/hours" },
+              "inventory": { "type": "array", "items": { "$ref": "common.schema.json#/definitions/inventoryLine" } }
+            }
+          }
+        },
+        "text": {
+          "type": "object", "additionalProperties": false, "required": ["cardChips", "card"],
+          "properties": {
+            "cardChips": { "type": "array", "items": { "type": "string" }, "description": "Short chips on its card." },
+            "card": { "type": "string", "description": "Line on its card." }
+          }
+        }
+      }
+    }
+  }
+}

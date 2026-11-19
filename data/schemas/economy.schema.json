@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Economy",
+  "description": "Values used to work out prices and payments. Money is in pence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["price", "houseLevels", "tips", "startingPurse", "deliveryFee", "sellBackShare", "fetchMinutes", "suppliers"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "price": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["markup", "margin", "prepPerMinute", "perTraySlot", "roundShownTo"],
+      "description": "Worked-out price = (ingredient cost + prep cost + perTraySlot x tray slots) x (1 + margin) x (1 + markup) x house level x staleness factor. A dish's price.fixed replaces the worked-out part.",
+      "properties": {
+        "markup": { "type": "number", "minimum": 0, "description": "Fraction added to every worked-out price." },
+        "margin": { "type": "number", "minimum": 0, "description": "Fraction added on top of cost." },
+        "prepPerMinute": {
+          "type": "object", "additionalProperties": false, "required": ["tended", "untended"],
+          "description": "Pence per minute of cooking. Split across the servings of a batch.",
+          "properties": { "tended": { "type": "number", "minimum": 0 }, "untended": { "type": "number", "minimum": 0 } }
+        },
+        "perTraySlot": { "$ref": "common.schema.json#/definitions/pence", "description": "Added to each serving per tray slot it takes." },
+        "roundShownTo": { "type": "number", "exclusiveMinimum": 0, "description": "Shown prices are rounded to this many pence; the exact amount is paid." }
+      }
+    },
+    "houseLevels": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["id", "factor", "flow"],
+        "properties": {
+          "id": { "enum": ["cheap", "fair", "dear"] },
+          "factor": { "type": "number", "exclusiveMinimum": 0, "description": "Multiplier on every price." },
+          "flow": { "type": "number", "exclusiveMinimum": 0, "description": "Multiplier on how many come in." }
+        }
+      }
+    },
+    "tips": {
+      "type": "object", "additionalProperties": false, "required": ["delight", "pleased", "walkoutShare"],
+      "properties": {
+        "delight": { "$ref": "#/definitions/tip" },
+        "pleased": { "$ref": "#/definitions/tip" },
+        "walkoutShare": { "type": "number", "minimum": 0, "maximum": 1, "description": "Share of the tip a guest who walks out still pays." }
+      }
+    },
+    "startingPurse": { "$ref": "common.schema.json#/definitions/pence" },
+    "deliveryFee": { "$ref": "common.schema.json#/definitions/pence", "description": "What the carter charges each morning he brings orders, however many." },
+    "sellBackShare": { "type": "number", "minimum": 0, "maximum": 1, "description": "Share of the price paid back when selling equipment." },
+    "fetchMinutes": { "type": "number", "minimum": 0, "description": "Game minutes away when fetching equipment yourself." },
+    "suppliers": {
+      "type": "object", "additionalProperties": false, "required": ["priceFactor"],
+      "properties": { "priceFactor": { "type": "number", "exclusiveMinimum": 0, "description": "Multiplier on every supplier's prices." } }
+    }
+  },
+  "definitions": {
+    "tip": {
+      "type": "object", "additionalProperties": false, "required": ["share", "atLeast"],
+      "properties": {
+        "share": { "type": "number", "minimum": 0, "description": "Share of the price." },
+        "atLeast": { "$ref": "common.schema.json#/definitions/pence" }
+      }
+    }
+  }
+}

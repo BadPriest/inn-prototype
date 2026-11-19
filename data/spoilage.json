@@ -1,5 +1,5 @@
 {
-  "_about": "Spoilage stages and profiles. A profile's stages are game days until each starts. Default stage names: fresh, onTheTurn, stale, spoiled. A profile may name its own stages and give their effects in its stageEffects, which also override the defaults.",
+  "$schema": "./schemas/spoilage.schema.json",
 
   "stageEffects": {
     "fresh":       { "addTags": ["fresh"],   "removeTags": [],        "priceFactor": 1.0, "tastePenalty": 0 },

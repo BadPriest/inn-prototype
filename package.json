@@ -11,6 +11,7 @@
     "deploy": "node tools/deploy.mjs"
   },
   "devDependencies": {
+    "ajv": "^8.20.0",
     "typescript": "^5.6.0"
   }
 }

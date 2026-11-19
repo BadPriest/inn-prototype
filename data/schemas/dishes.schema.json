@@ -1,0 +1,131 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Dishes",
+  "description": "Every dish, drink and table snack. Ingredient units are per batch.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["dishes"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "dishes": { "type": "array", "items": { "$ref": "#/definitions/dish" } }
+  },
+  "definitions": {
+    "use": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["units"],
+      "oneOf": [ { "required": ["id"] }, { "required": ["role"] } ],
+      "description": "An ingredient a dish uses: by id, or any ingredient with that role.",
+      "properties": {
+        "id": { "type": "string", "description": "Ingredient id." },
+        "role": { "type": "string", "description": "Any ingredient with this role." },
+        "units": { "type": "number", "exclusiveMinimum": 0, "description": "Units per batch." },
+        "stages": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "Spoilage stages accepted. Absent: any but spoiled." }
+      }
+    },
+    "group": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pick", "options"],
+      "properties": {
+        "pick": { "type": "array", "items": [ { "type": "integer", "minimum": 0 }, { "type": "integer", "minimum": 0 } ], "minItems": 2, "maxItems": 2, "description": "[min, max] the player picks." },
+        "options": { "type": "array", "items": { "$ref": "#/definitions/use" } }
+      }
+    },
+    "effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "openness": { "type": "number", "description": "Added to the guest's openness." },
+        "patience": { "type": "number", "description": "Added to how long the guest waits before giving up, as a share (0.2 = a fifth longer)." },
+        "hunger": { "type": "number", "description": "Added to how fast the guest's hunger rises, per game hour." },
+        "thirst": { "type": "number", "description": "Added to how fast the guest's thirst rises, per game hour." },
+        "flipTag": {
+          "type": "object", "additionalProperties": false, "required": ["from", "to"],
+          "description": "On dishes served to the guest, tag 'from' counts as 'to'.",
+          "properties": { "from": { "type": "string" }, "to": { "type": "string" } }
+        },
+        "shown": { "type": "string", "description": "Line on the dish's card. Absent: hidden." }
+      }
+    },
+    "dish": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "icon", "container", "traySlots", "pickUp", "meals", "tags"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/definitions/id" },
+        "name": { "type": "string" },
+        "icon": { "type": "string" },
+        "tableSnack": { "type": "boolean", "description": "Set in a bowl on a table, on the house. Guests don't ask for it; it doesn't spoil. A bowl is refilled only once it's empty. Guests whose tastes match its tags eat from it; its onConsuming effects reach them while the bowl isn't empty." },
+        "container": { "$ref": "common.schema.json#/definitions/container", "description": "What one serving is served in; table for a table snack." },
+        "boughtAs": { "type": "string", "description": "Ingredient id it can be bought as, ready to serve straight from stock." },
+        "garnish": {
+          "type": "object", "additionalProperties": false, "required": ["pick"],
+          "description": "Takes a garnish at the garnish spot once made. Offered: ingredients whose garnishFor includes its container.",
+          "properties": { "pick": { "$ref": "#/definitions/group/properties/pick" } }
+        },
+        "traySlots": { "type": "integer", "minimum": 1, "description": "Tray slots one serving takes." },
+        "pickUp": { "enum": ["ladle", "pour", "slice", "take"], "description": "How it is taken from the station or storage." },
+        "meals": { "type": "array", "items": { "enum": ["breakfast", "lunch", "dinner", "between"] }, "uniqueItems": true, "description": "Meal times it is served at; between: between meals." },
+        "madeAt": {
+          "type": "object", "additionalProperties": false, "required": ["kinds"],
+          "description": "Absent: not made in the kitchen; served straight from stock.",
+          "properties": { "kinds": { "type": "array", "items": { "$ref": "common.schema.json#/definitions/stationKind" }, "minItems": 1, "description": "Station kinds it is made at." } }
+        },
+        "tended": { "type": "boolean", "description": "Cooks only while the keeper stays at the station." },
+        "minutes": { "$ref": "common.schema.json#/definitions/organic", "description": "Cooking time in game minutes: [centre, spread]." },
+        "batch": {
+          "type": "object", "additionalProperties": false, "required": ["servings"],
+          "description": "Made whole and served in portions. Absent: made one at a time.",
+          "properties": {
+            "servings": { "$ref": "common.schema.json#/definitions/organic", "description": "Servings in one batch: [centre, spread]." },
+            "calledWhenReady": { "type": "string", "description": "Name of the finished batch." },
+            "storedIn": { "type": "string", "description": "Equipment id the finished batch is kept in." }
+          }
+        },
+        "tags": { "$ref": "common.schema.json#/definitions/tags", "description": "Tags the dish has before ingredients." },
+        "ingredients": {
+          "type": "object", "additionalProperties": false, "required": ["fundamental", "base", "optional"],
+          "description": "What it is made from. Absent: only bought ready.",
+          "properties": {
+            "fundamental": { "type": "array", "items": { "$ref": "#/definitions/use" }, "description": "All required." },
+            "base": { "$ref": "#/definitions/group", "description": "What the dish is built around." },
+            "optional": { "$ref": "#/definitions/group", "description": "What makes it better." }
+          }
+        },
+        "spoilage": { "type": "string", "description": "Profile id in spoilage.json. Absent: doesn't spoil." },
+        "price": {
+          "type": "object", "additionalProperties": false,
+          "properties": { "fixed": { "$ref": "common.schema.json#/definitions/pence", "description": "Price at Fair, before markup. Absent: worked out from economy.json." } }
+        },
+        "seasons": {
+          "type": "object", "additionalProperties": false,
+          "properties": { "craved": { "type": "array", "items": { "$ref": "common.schema.json#/definitions/season" }, "uniqueItems": true, "description": "Seasons when guests want it more." } }
+        },
+        "effects": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "needs": {
+              "type": "object", "additionalProperties": false, "description": "How much one serving eases each need.",
+              "properties": { "hunger": { "type": "number" }, "thirst": { "type": "number" }, "warmth": { "type": "number" } }
+            },
+            "minutesToEat": { "$ref": "common.schema.json#/definitions/organic", "description": "Game minutes to eat or drink: [centre, spread]." },
+            "mess": { "type": "number", "minimum": 0, "description": "Mess left on the table." },
+            "onConsuming": { "type": "array", "items": { "$ref": "#/definitions/effect" }, "description": "Effects on whoever has it, for the rest of the visit." }
+          }
+        },
+        "text": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "craftingStation": { "type": "string" },
+            "journal": { "type": "string" },
+            "patronOrders": { "$ref": "common.schema.json#/definitions/lines" },
+            "patronPraises": { "$ref": "common.schema.json#/definitions/lines" },
+            "patronComplaints": { "$ref": "common.schema.json#/definitions/lines" }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "_about": "Every ingredient. worth: pence per unit, used to work out dish prices. roles: the fundamental roles it fills. garnishFor: containers it can garnish. seasons: when it can be had; absent means all year. spoilage: profile id in spoilage.json; onceOpened: profile once opened. spoilageOverrides: stage effects for this ingredient.",
+  "$schema": "./schemas/ingredients.schema.json",
 
   "roles": {
     "liquid":     "What a soup, stew or porridge is cooked in",

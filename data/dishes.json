@@ -1,43 +1,10 @@
 {
-  "_about": "Every dish and drink. Ingredient units are per batch.",
-  "_fields": {
-    "container": "What one serving is served in: cup, glass, bowl, plate; table for a table snack.",
-    "boughtAs": "Ingredient id it can be bought as, ready to serve straight from stock.",
-    "garnish": "Takes a garnish at the garnish spot once made; pick is [min, max]. The garnishes offered are the ingredients whose garnishFor includes its container.",
-    "traySlots": "Tray slots one serving takes.",
-    "pickUp": "How it is taken from the station: ladle, pour, slice, take.",
-    "meals": "Meal times it is served at.",
-    "madeAt.kinds": "Station kinds it is made at. No madeAt: not made in anywhere.",
-    "tended": "Cooks only while the keeper stays at the station.",
-    "minutes": "Cooking time in game minutes: [centre, spread].",
-    "batch.servings": "Servings in one batch: [centre, spread].",
-    "batch.calledWhenReady": "Name of the finished batch.",
-    "batch.storedIn": "Equipment the finished batch is kept in.",
-    "tableSnack": "Set in a bowl on a table, on the house. Guests don't ask for it; it doesn't spoil. A bowl is refilled only once it's empty. Each guest's tastes are scored against its tags: those who like it eat from it, those who don't leave it alone. Its onConsuming effects reach guests eating from it while the bowl isn't empty.",
-    "tags": "Tags the dish has before ingredients.",
-    "ingredient use": "{ id or role, units per batch, stages }. A role takes any ingredient with that role. stages: spoilage stages accepted; absent: any but spoiled.",
-    "ingredients": "What it is made from. Absent: only bought ready.",
-    "ingredients.fundamental": "Ingredient uses, all required.",
-    "ingredients.base": "{ pick: [min, max], options: ingredient uses }.",
-    "ingredients.optional": "{ pick: [min, max], options: ingredient uses }.",
-    "spoilage": "Profile id in spoilage.json. Absent: doesn't spoil.",
-    "price.fixed": "Price in pence at Fair, before markup. Absent: worked out from economy.json.",
-    "seasons.craved": "Seasons when guests want it more.",
-    "effects.needs": "How much one serving eases each need.",
-    "effects.minutesToEat": "Game minutes to eat or drink: [centre, spread].",
-    "effects.mess": "Mess left on the table.",
-    "effects.onConsuming": "Effects on whoever has it, for the rest of the visit. shown: the line on the dish's card; absent: hidden.",
-    "effects.onConsuming.openness": "Added to the guest's openness.",
-    "effects.onConsuming.patience": "Added to how long the guest waits before giving up, as a share (0.2 = a fifth longer).",
-    "effects.onConsuming.hunger": "Added to how fast the guest's hunger rises, per game hour.",
-    "effects.onConsuming.thirst": "Added to how fast the guest's thirst rises, per game hour.",
-    "effects.onConsuming.flipTag": "{ from, to }: on dishes served to the guest, tag 'from' counts as 'to'."
-  },
+  "$schema": "./schemas/dishes.schema.json",
 
   "dishes": [
     {
       "id": "stew", "name": "Stew", "icon": "🍲",
-      "container": "bowl", "garnish": { "pick": [0, 1] }, "traySlots": 2, "pickUp": "ladle", "meals": ["lunch", "supper"],
+      "container": "bowl", "garnish": { "pick": [0, 1] }, "traySlots": 2, "pickUp": "ladle", "meals": ["lunch", "dinner"],
       "madeAt": { "kinds": ["stove"] }, "tended": false, "minutes": [14, 3],
       "batch": { "servings": [7, 1], "calledWhenReady": "a pot of stew" },
       "tags": ["warm", "hearty"],
@@ -85,9 +52,9 @@
     },
     {
       "id": "pie", "name": "Pie", "icon": "🥧",
-      "container": "plate", "traySlots": 2, "pickUp": "slice", "meals": ["lunch", "supper"],
+      "container": "plate", "traySlots": 2, "pickUp": "slice", "meals": ["lunch", "dinner"],
       "madeAt": { "kinds": ["oven"] }, "tended": false, "minutes": [20, 4],
-      "batch": { "servings": [6, 1], "calledWhenReady": "a pie", "storedIn": "piesafe" },
+      "batch": { "servings": [6, 1], "calledWhenReady": "a pie", "storedIn": "pieSafe" },
       "tags": ["warm", "homely"],
       "ingredients": {
         "fundamental": [ { "role": "flour", "units": 2 }, { "role": "cookingFat", "units": 2 } ],
@@ -109,7 +76,7 @@
     },
     {
       "id": "friedFish", "name": "Fried fish", "icon": "🐟",
-      "container": "plate", "garnish": { "pick": [0, 1] }, "traySlots": 2, "pickUp": "take", "meals": ["lunch", "supper"],
+      "container": "plate", "garnish": { "pick": [0, 1] }, "traySlots": 2, "pickUp": "take", "meals": ["lunch", "dinner"],
       "madeAt": { "kinds": ["griddle"] }, "tended": true, "minutes": [6, 1.5],
       "tags": ["warm", "briny"],
       "ingredients": {
@@ -131,7 +98,7 @@
     },
     {
       "id": "bread", "name": "Bread", "icon": "🍞",
-      "container": "plate", "traySlots": 1, "pickUp": "slice", "meals": ["breakfast", "lunch", "supper"],
+      "container": "plate", "traySlots": 1, "pickUp": "slice", "meals": ["breakfast", "lunch", "dinner"],
       "madeAt": { "kinds": ["oven"] }, "tended": false, "minutes": [18, 3],
       "batch": { "servings": [8, 1], "calledWhenReady": "a batch of bread" },
       "tags": ["warm", "homely"],
@@ -154,7 +121,7 @@
     },
     {
       "id": "breadPudding", "name": "Bread pudding", "icon": "🍮",
-      "container": "bowl", "traySlots": 2, "pickUp": "slice", "meals": ["supper"],
+      "container": "bowl", "traySlots": 2, "pickUp": "slice", "meals": ["dinner"],
       "madeAt": { "kinds": ["oven"] }, "tended": false, "minutes": [16, 3],
       "batch": { "servings": [6, 1], "calledWhenReady": "a bread pudding" },
       "tags": ["warm", "sweet", "homely"],
@@ -180,7 +147,7 @@
     },
     {
       "id": "tea", "name": "Tea", "icon": "🍵",
-      "container": "cup", "garnish": { "pick": [0, 1] }, "traySlots": 1, "pickUp": "pour", "meals": ["breakfast", "lunch", "supper", "between"],
+      "container": "cup", "garnish": { "pick": [0, 1] }, "traySlots": 1, "pickUp": "pour", "meals": ["breakfast", "lunch", "dinner", "between"],
       "madeAt": { "kinds": ["kettle"] }, "tended": false, "minutes": [3, 1],
       "tags": ["warm", "mild"],
       "ingredients": {
@@ -201,13 +168,8 @@
     },
     {
       "id": "ale", "name": "Ale", "icon": "🍺",
-      "container": "glass", "garnish": { "pick": [0, 1] }, "traySlots": 1, "pickUp": "pour", "meals": ["lunch", "supper", "between"],
+      "container": "glass", "boughtAs": "ale", "garnish": { "pick": [0, 1] }, "traySlots": 1, "pickUp": "pour", "meals": ["lunch", "dinner", "between"],
       "tags": ["cold", "bitter", "hearty"],
-      "ingredients": {
-        "fundamental": [ { "id": "ale", "units": 1 } ],
-        "base": { "pick": [0, 0], "options": [] },
-        "optional": { "pick": [0, 0], "options": [] }
-      },
       "spoilage": "openedKeg",
       "price": {},
       "seasons": { "craved": ["summer"] },
@@ -220,13 +182,8 @@
     },
     {
       "id": "cider", "name": "Cider", "icon": "🍏",
-      "container": "glass", "garnish": { "pick": [0, 1] }, "traySlots": 1, "pickUp": "pour", "meals": ["lunch", "supper", "between"],
+      "container": "glass", "boughtAs": "cider", "garnish": { "pick": [0, 1] }, "traySlots": 1, "pickUp": "pour", "meals": ["lunch", "dinner", "between"],
       "tags": ["cold", "crisp", "sweet"],
-      "ingredients": {
-        "fundamental": [ { "id": "cider", "units": 1 } ],
-        "base": { "pick": [0, 0], "options": [] },
-        "optional": { "pick": [0, 0], "options": [] }
-      },
       "spoilage": "openedKeg",
       "price": {},
       "seasons": { "craved": ["summer", "autumn"] },
@@ -239,7 +196,7 @@
     },
     {
       "id": "saltedPeanuts", "name": "Salted peanuts", "icon": "🥜", "tableSnack": true,
-      "container": "table", "boughtAs": "saltedPeanuts", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "supper", "between"],
+      "container": "table", "boughtAs": "saltedPeanuts", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "dinner", "between"],
       "tags": ["salty", "crisp"],
       "seasons": { "craved": [] },
       "effects": { "onConsuming": [ { "thirst": 0.12, "shown": "Makes them thirsty" } ] },
@@ -250,7 +207,7 @@
     },
     {
       "id": "crostini", "name": "Crostini", "icon": "🥖", "tableSnack": true,
-      "container": "table", "boughtAs": "bakedCrostini", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "supper", "between"],
+      "container": "table", "boughtAs": "bakedCrostini", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "dinner", "between"],
       "madeAt": { "kinds": ["griddle"] }, "tended": false, "minutes": [3, 0.5],
       "batch": { "servings": [6, 0], "calledWhenReady": "a batch of crostini" },
       "tags": ["crisp", "savoury"],
@@ -269,7 +226,7 @@
     },
     {
       "id": "roastChestnuts", "name": "Roast chestnuts", "icon": "🌰", "tableSnack": true,
-      "container": "table", "boughtAs": "roastedChestnuts", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "supper", "between"],
+      "container": "table", "boughtAs": "roastedChestnuts", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "dinner", "between"],
       "madeAt": { "kinds": ["griddle"] }, "tended": false, "minutes": [4, 1],
       "batch": { "servings": [6, 0], "calledWhenReady": "a batch of roast chestnuts" },
       "tags": ["earthy", "sweet", "warm"],
@@ -288,7 +245,7 @@
     },
     {
       "id": "pickledOnionBowl", "name": "Pickled onions", "icon": "🧅", "tableSnack": true,
-      "container": "table", "boughtAs": "pickledOnions", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "supper", "between"],
+      "container": "table", "boughtAs": "pickledOnions", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "dinner", "between"],
       "tags": ["tart", "fiery"],
       "seasons": { "craved": [] },
       "effects": { "onConsuming": [ { "flipTag": { "from": "sweet", "to": "bright" }, "shown": "Sweet tastes bright" } ] },
@@ -299,7 +256,7 @@
     },
     {
       "id": "olives", "name": "Olives", "icon": "🫒", "tableSnack": true,
-      "container": "table", "boughtAs": "olives", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "supper", "between"],
+      "container": "table", "boughtAs": "olives", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "dinner", "between"],
       "tags": ["briny", "salty"],
       "seasons": { "craved": [] },
       "effects": { "onConsuming": [ { "thirst": 0.1, "shown": "Makes them thirsty" } ] },
@@ -310,7 +267,7 @@
     },
     {
       "id": "pickledEggs", "name": "Pickled eggs", "icon": "🥚", "tableSnack": true,
-      "container": "table", "boughtAs": "pickledEggs", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "supper", "between"],
+      "container": "table", "boughtAs": "pickledEggs", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "dinner", "between"],
       "tags": ["tart", "savoury"],
       "seasons": { "craved": [] },
       "effects": { "onConsuming": [ { "hunger": 0.04, "shown": "Whets the appetite" } ] },
@@ -321,7 +278,7 @@
     },
     {
       "id": "pretzels", "name": "Pretzels", "icon": "🥨", "tableSnack": true,
-      "container": "table", "boughtAs": "pretzels", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "supper", "between"],
+      "container": "table", "boughtAs": "pretzels", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "dinner", "between"],
       "tags": ["salty", "crisp"],
       "seasons": { "craved": [] },
       "effects": { "onConsuming": [ { "thirst": 0.12, "shown": "Makes them thirsty" } ] },
@@ -332,7 +289,7 @@
     },
     {
       "id": "appleRings", "name": "Dried apple rings", "icon": "🍎", "tableSnack": true,
-      "container": "table", "boughtAs": "appleRings", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "supper", "between"],
+      "container": "table", "boughtAs": "appleRings", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "dinner", "between"],
       "tags": ["sweet", "crisp"],
       "seasons": { "craved": [] },
       "effects": { "onConsuming": [ { "patience": 0.1, "shown": "Keeps them happy while they wait" } ] },
@@ -343,7 +300,7 @@
     },
     {
       "id": "breadAndButter", "name": "Bread and butter", "icon": "🍞", "tableSnack": true,
-      "container": "table", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "supper", "between"],
+      "container": "table", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "dinner", "between"],
       "madeAt": { "kinds": ["prep"] }, "tended": false, "minutes": [1, 0.3],
       "batch": { "servings": [6, 0], "calledWhenReady": "a batch of bread and butter" },
       "tags": ["homely", "rich"],
@@ -362,7 +319,7 @@
     },
     {
       "id": "cheeseBoard", "name": "Cheese board", "icon": "🧀", "tableSnack": true,
-      "container": "table", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "supper", "between"],
+      "container": "table", "traySlots": 1, "pickUp": "take", "meals": ["breakfast", "lunch", "dinner", "between"],
       "madeAt": { "kinds": ["prep"] }, "tended": false, "minutes": [2, 0.5],
       "batch": { "servings": [6, 0], "calledWhenReady": "a batch of cheese board" },
       "tags": ["rich", "savoury"],
