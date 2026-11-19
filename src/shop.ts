@@ -9,6 +9,7 @@
 import { EQUIPMENT, GOODS, TUNING } from "./data.js";
 import type { Game } from "./game.js";
 import { spend } from "./money.js";
+import { ECONOMY_DATA } from "./gamedata.gen.js";
 
 /** What each piece and each good costs new, in pennies. Placeholders, tuned to the session's pacing targets. */
 export const SHOP_PRICE: Record<string, number> = {
@@ -18,10 +19,9 @@ export const SHOP_PRICE: Record<string, number> = {
   trays: 100, firewood: 50,
 };
 export const priceOfThing = (id: string): number => SHOP_PRICE[id] ?? 100;
-/** Selling back: half what it costs new. */
-export const sellBackPrice = (id: string): number => Math.floor(priceOfThing(id) / 2);
-/** Fetching it yourself: how long you're out (game minutes). */
-export const FETCH_MINUTES = 90;
+export const sellBackPrice = (id: string): number => Math.floor(priceOfThing(id) * ECONOMY_DATA.sellBackShare);
+export const FETCH_MINUTES = ECONOMY_DATA.fetchMinutes;
+export const SELL_BACK_SHARE_WORDS = ECONOMY_DATA.sellBackShare === 0.5 ? "half" : `${Math.round(ECONOMY_DATA.sellBackShare * 100)}% of`;
 
 const nameOf = (id: string) => (EQUIPMENT.find((e) => e.id === id) ?? GOODS.find((x) => x.id === id))?.name ?? id;
 const isGoods = (id: string) => GOODS.some((x) => x.id === id);
@@ -69,7 +69,6 @@ export function carterArrives(g: Game): void {
   g.say(`🛻 The carter's been: ${list}.${place}`);
 }
 
-/** Sell a piece back for half its price. */
 export function sellBack(g: Game, id: string): number {
   const back = sellBackPrice(id);
   g.purse += back;

@@ -1,5 +1,6 @@
 // Wiring: input, the main loop, and the order systems run in.
 
+import { SELL_BACK_SHARE_WORDS } from "./shop.js";
 import { TUNING, type LocationId } from "./data.js";
 import { openInnPicker, openLocationPicker } from "./ui/location.js";
 import { buildRooms } from "./sound/engine.js";
@@ -834,7 +835,7 @@ const KEYS: { group: string; rows: [string, string][] }[] = [
   ] },
   { group: "Arranging the kitchen", rows: [
     ["Click", "pick up a piece, then click where it goes"], ["B", "buy something else"], ["A", "another of what you just placed"],
-    ["Delete", "sell the piece in hand (half its price)"], ["Esc", "put it back · finish"],
+    ["Delete", `sell the piece in hand (${SELL_BACK_SHARE_WORDS} its price)`], ["Esc", "put it back · finish"],
   ] },
   { group: "Looking", rows: [
     ["Wheel / pinch / [ ]", "zoom"], ["V", "top-down or isometric"], [", .", "turn the isometric camera"],

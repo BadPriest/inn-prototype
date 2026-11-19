@@ -7,7 +7,7 @@ import { startArranging } from "./arrange.js";
 import { grid, gridKeys, type CardSpec } from "./cards.js";
 import { openNewspaper } from "./newspaper.js";
 import { openCalendar } from "./calendar.js";
-import { canFetch, fetchThing, FETCH_MINUTES, onOrderCount, orderThing, priceOfThing, toPlaceCount } from "../shop.js";
+import { canFetch, fetchThing, FETCH_MINUTES, onOrderCount, orderThing, priceOfThing, SELL_BACK_SHARE_WORDS, toPlaceCount } from "../shop.js";
 import { fmtMoney, moneyHtml, priceLevel, priceOfRecipe, PRICE_LEVELS } from "../money.js";
 
 export function openDeskScreen(g: Game, openJournal: () => void): void {
@@ -48,7 +48,7 @@ export function openDeskScreen(g: Game, openJournal: () => void): void {
         fact: g.toPlace.length ? `📦 ${g.toPlace.length} to place` : undefined,
         status: g.toPlace.length ? undefined : "Move, place and sell back equipment.",
         tone: g.toPlace.length ? "warn" : undefined,
-        detail: "Place what's been delivered, move what you have, or sell a piece back for half. The clock stops while you do.",
+        detail: `Place what's been delivered, move what you have, or sell a piece back for ${SELL_BACK_SHARE_WORDS} its price. The clock stops while you do.`,
         does: "Leave the desk and start arranging" },
       { pick: "journal", icon: "📖", name: "Journal",
         fact: g.journalUnread ? `${g.journalUnread} new` : undefined,

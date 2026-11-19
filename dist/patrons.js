@@ -6,7 +6,7 @@ import { appeal, prepareVisit, tagScore } from "./tastes.js";
 import { arrivalNeeds, closeAllStretches } from "./needs.js";
 import { cameIn, weatherTags } from "./weather.js";
 import { marketDay } from "./newspaper.js";
-import { halveTips, payTips, priceLevel } from "./money.js";
+import { cutTipsForWalkout, payTips, priceLevel } from "./money.js";
 import { dist } from "./world.js";
 function clamp01(n) {
     return Math.max(0, Math.min(1, n));
@@ -498,7 +498,7 @@ export function startLeaving(g, p, early = false) {
     }
     // Tips are paid on the way out; walking out on an order, half of it.
     if (early)
-        halveTips(p);
+        cutTipsForWalkout(p);
     payTips(g, p);
     if (early) {
         p.leftEarly = true;

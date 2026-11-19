@@ -6,12 +6,12 @@
 
 import type { Outcome } from "./core.js";
 import type { Game, Item, Patron } from "./game.js";
+import { ECONOMY_DATA } from "./gamedata.gen.js";
 
 /** All money is counted in pennies. */
 export const PENCE_PER_SHILLING = 10;
 export const PENCE_PER_CROWN = 100;
-/** What a new keeper starts with: about two crowns (a week's restock and one small buy). */
-export const STARTING_PURSE = 2 * PENCE_PER_CROWN;
+export const STARTING_PURSE = ECONOMY_DATA.startingPurse;
 
 /** 247 → "2 cr 4s 7d". Zero parts are left out; nothing at all is "0d". */
 export function fmtMoney(pence: number): string {
@@ -63,19 +63,19 @@ const INGREDIENT_EXTRA: Record<string, number> = { beef: 1, sausage: 1, meat: 1,
 const GARNISH_EXTRA = 1;
 
 export type PriceLevel = "cheap" | "fair" | "dear";
-export const PRICE_LEVELS: { id: PriceLevel; name: string; factor: number; flow: number; blurb: string }[] = [
-  { id: "cheap", name: "Cheap", factor: 0.75, flow: 1.1, blurb: "a quarter off everything; a few more come in" },
-  { id: "fair", name: "Fair", factor: 1, flow: 1, blurb: "what things are worth" },
-  { id: "dear", name: "Dear", factor: 1.3, flow: 0.9, blurb: "a bit more on everything; a few fewer come in" },
-];
-export const priceLevel = (g: Game) => PRICE_LEVELS.find((l) => l.id === g.priceLevel) ?? PRICE_LEVELS[1];
+const LEVEL_NAMES: Record<PriceLevel, string> = { cheap: "Cheap", fair: "Fair", dear: "Dear" };
+function levelBlurb(factor: number, flow: number): string {
+  const pct = Math.round(Math.abs(factor - 1) * 100);
+  const crowd = flow > 1 ? "; a few more come in" : flow < 1 ? "; a few fewer come in" : "";
+  if (factor < 1) return `${pct}% off everything${crowd}`;
+  if (factor > 1) return `${pct}% on everything${crowd}`;
+  return `what things are worth${crowd}`;
+}
+export const PRICE_LEVELS: { id: PriceLevel; name: string; factor: number; flow: number; blurb: string }[] =
+  ECONOMY_DATA.houseLevels.map((l) => ({ ...l, name: LEVEL_NAMES[l.id], blurb: levelBlurb(l.factor, l.flow) }));
+export const priceLevel = (g: Game) => PRICE_LEVELS.find((l) => l.id === g.priceLevel) ?? PRICE_LEVELS.find((l) => l.id === "fair")!;
 
-/**
- * Everything on the bill a little dearer than the table above: Bruno, Nov 19 (the goals felt far off). One
- * knob for the whole house; it will move as the economy is tuned. Guests pay the exact amount, fractions of
- * a penny and all, so a small change still adds up over a day; what the bill shows is rounded.
- */
-export const PRICE_MARKUP = 1.07;
+export const PRICE_MARKUP = 1 + ECONOMY_DATA.price.markup;
 
 /** What a dish sells for, exactly (fractions of a penny kept). */
 function exactPrice(g: Game, recipeId: string, options: string[], garnished: boolean): number {
@@ -95,9 +95,8 @@ export function priceOf(g: Game, item: Item): number {
 
 /** A tip, by how it went: a Delight tips well, Pleased a little, anything else nothing. Modest either way. */
 export function tipFor(outcome: Outcome, price: number): number {
-  if (outcome === "DELIGHT") return Math.max(2, Math.round(price * 0.5));
-  if (outcome === "PLEASED") return Math.max(1, Math.round(price * 0.15));
-  return 0;
+  const rule = outcome === "DELIGHT" ? ECONOMY_DATA.tips.delight : outcome === "PLEASED" ? ECONOMY_DATA.tips.pleased : null;
+  return rule ? Math.max(rule.atLeast, Math.round(price * rule.share)) : 0;
 }
 
 /**
@@ -125,9 +124,8 @@ export function payTips(g: Game, p: Patron, shown = true): void {
   g.bus.emit({ type: "CoinPaid", patronId: p.id, paid: 0, tip, delight: !!p.tipDelight });
 }
 
-/** Walking out on an order: they still leave half the tip they'd built up (well served all evening, one thing went wrong). */
-export function halveTips(p: Patron): void {
-  p.tipOwed = Math.floor((p.tipOwed ?? 0) / 2);
+export function cutTipsForWalkout(p: Patron): void {
+  p.tipOwed = Math.floor((p.tipOwed ?? 0) * ECONOMY_DATA.tips.walkoutShare);
 }
 
 /** Spend from the purse (equipment, upkeep, supplies: later tasks). False if there isn't enough. */

@@ -8,7 +8,7 @@ import { appeal, prepareVisit, tagScore } from "./tastes.js";
 import { arrivalNeeds, closeAllStretches } from "./needs.js";
 import { cameIn, weatherTags } from "./weather.js";
 import { marketDay } from "./newspaper.js";
-import { halveTips, payTips, priceLevel } from "./money.js";
+import { cutTipsForWalkout, payTips, priceLevel } from "./money.js";
 import { dist, type Seat, type Table, type Vec } from "./world.js";
 
 
@@ -486,7 +486,7 @@ export function startLeaving(g: Game, p: Patron, early = false): void {
     g.stats.leftUnserved++;
   }
   // Tips are paid on the way out; walking out on an order, half of it.
-  if (early) halveTips(p);
+  if (early) cutTipsForWalkout(p);
   payTips(g, p);
   if (early) {
     p.leftEarly = true;
