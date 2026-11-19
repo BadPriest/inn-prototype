@@ -9,3 +9,6 @@ assets/sounds/music/
 
 # Never commit or deploy account recovery codes
 *recovery-codes*
+
+# The single-file game: built by npm run build (and by Vercel on each deploy), too big to keep in git
+standalone.html

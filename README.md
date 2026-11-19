@@ -82,7 +82,7 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 
 ## Run it
 
-**Easiest: double-click `standalone.html`.** Everything is packed into that one file. No install, no server. Good for sending to playtesters.
+**Easiest: double-click `standalone.html`.** Everything is packed into that one file. No install, no server. Good for sending to playtesters. It isn't kept in git (it's ~50 MB with the music): make it with `npm run build`, or download it from the playtest site at `/standalone.html`.
 
 **From the source** (needs [Node.js](https://nodejs.org)):
 
@@ -100,7 +100,7 @@ Other commands:
 | `npm start` | Serves the folder without rebuilding |
 | `npm run deploy` | Builds, then deploys to Vercel production. Pushing to `main` deploys too. The site is password-protected via `middleware.js`; the password is the `SITE_PASSWORD` env var on Vercel. Add `-- --no-bump` to keep the build number |
 
-The built `dist/` folder and `standalone.html` are committed, so a fresh clone runs without building. Rebuild after changing anything in `src/`.
+The built `dist/` folder is committed, so a fresh clone runs with `npm start` without building; `standalone.html` isn't (Vercel builds its own on each deploy). Rebuild after changing anything in `src/`.
 
 ## Where things are
 
