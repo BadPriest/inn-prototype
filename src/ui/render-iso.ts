@@ -275,9 +275,13 @@ export function drawIso(ctx: CanvasRenderingContext2D, g: Game, v: View, target:
   items.push({
     d: depth(v, k.pos), pri: 1, draw: () => {
       personBody(ctx, v, k.pos, "#f2e2c2", 1, 0, 0);
-      const eye = P(v, k.pos.x + k.facing.x * 0.16, k.pos.y + k.facing.y * 0.16, HEAD_Z);
-      ctx.fillStyle = "#2a1d14";
-      ctx.beginPath(); ctx.arc(eye.x, eye.y, ts * 0.07, 0, Math.PI * 2); ctx.fill();
+      // Two eyes on the side of the head that faces where they're looking; none when that's away from us.
+      const f = k.facing, side = { x: -f.y * 0.085, y: f.x * 0.085 };
+      const toward = depth(v, { x: k.pos.x + f.x, y: k.pos.y + f.y }) - depth(v, k.pos);
+      if (toward > -0.35) {
+        const at = (s: number) => P(v, k.pos.x + f.x * 0.17 + side.x * s, k.pos.y + f.y * 0.17 + side.y * s, HEAD_Z);
+        drawEyes(ctx, at(-1), at(1), ts);
+      }
     },
   });
   items.sort((a, b) => a.d - b.d || a.pri - b.pri);

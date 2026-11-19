@@ -312,7 +312,11 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
   ctx.beginPath(); ctx.arc(X(k.pos.x), Y(k.pos.y), ts * 0.36, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   ctx.lineWidth = 1;
   ctx.fillStyle = "#2a1d14";
-  ctx.beginPath(); ctx.arc(X(k.pos.x + k.facing.x * 0.22), Y(k.pos.y + k.facing.y * 0.22), ts * 0.07, 0, Math.PI * 2); ctx.fill();
+  {
+    const f = k.facing, side = { x: -f.y * 0.11, y: f.x * 0.11 };
+    const at = (s: number) => ({ x: X(k.pos.x + f.x * 0.2 + side.x * s), y: Y(k.pos.y + f.y * 0.2 + side.y * s) });
+    drawEyes(ctx, at(-1), at(1), ts);
+  }
 
   drawLight(ctx, g, (x, y) => ({ x: X(x), y: Y(y) }), ts);
   for (const p of g.patrons) drawPatron(ctx, g, p, X, Y, ts, "words");
