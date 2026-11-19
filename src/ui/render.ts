@@ -3,7 +3,7 @@ import { breadCaseKeys } from "../crafting.js";
 
 import { RECIPES, SNACKS, SOAKING, TUNING, PIE_SAFE_CAPACITY } from "../data.js";
 import type { Game, Patron } from "../game.js";
-import type { Target } from "../interact.js";
+import { spotOf, type Target } from "../interact.js";
 import { iconFor, TRAY_COLOUR, trayLook } from "../serving.js";
 import { drawLight } from "./light.js";
 import { RING_TRACK, ringColor } from "./tickets.js";
@@ -271,10 +271,18 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
     if (target.type === "furniture") {
       for (const t of target.f.tiles) ctx.strokeRect(X(t.x) + 1, Y(t.y) + 1, ts - 2, ts - 2);
     } else {
-      const c = target.type === "patron" ? target.p.pos : target.type === "tray" ? { x: target.t.x + 0.5, y: target.t.y + 0.5 } : { x: target.s.x + 0.5, y: target.s.y + 0.5 };
+      const c = target.type === "patron" ? target.p.pos : spotOf(target)!;
       ctx.beginPath(); ctx.arc(X(c.x), Y(c.y), ts * 0.48, 0, Math.PI * 2); ctx.stroke();
     }
     ctx.lineWidth = 1;
+  }
+
+  // The carter's crates, on the floor until unpacked.
+  for (const cr of g.crates) {
+    ctx.fillStyle = "#a8743f"; ctx.fillRect(X(cr.x) + ts * 0.15, Y(cr.y) + ts * 0.15, ts * 0.7, ts * 0.7);
+    ctx.strokeStyle = "#5a3a1a"; ctx.lineWidth = 2; ctx.strokeRect(X(cr.x) + ts * 0.15, Y(cr.y) + ts * 0.15, ts * 0.7, ts * 0.7); ctx.lineWidth = 1;
+    ctx.font = `${Math.floor(ts * 0.42)}px system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("📦", X(cr.x) + ts / 2, Y(cr.y) + ts / 2);
   }
 
   // Trays set down on counters and tables

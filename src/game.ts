@@ -225,6 +225,8 @@ export function emptyTastes(): Tastes {
 export interface LogLine { at: number; text: string }
 
 export interface Spill { id: number; x: number; y: number }
+/** Supplies the carter left, on the floor by the pantry, until they're unpacked. */
+export interface Crate { id: number; x: number; y: number; lines: { item: string; units: number }[]; got: string[] }
 
 export interface Cleaning { targetId: string; progress: number; total: number }
 
@@ -289,6 +291,7 @@ export class Game {
   pieSafe: WholePie[] = [];
   dirt = new Map<string, number>(); // table key "x,y" -> dirt units
   spills: Spill[] = [];
+  crates: Crate[] = [];
   setDown: SetDownTray[] = [];
   groups: Group[] = [];
   reservations = new Map<string, number>(); // table key -> group id waiting for it

@@ -10,7 +10,7 @@ import { breadCaseKeys } from "../crafting.js";
 
 import { RECIPES, SNACKS, SOAKING, TUNING, PIE_SAFE_CAPACITY } from "../data.js";
 import type { Game } from "../game.js";
-import type { Target } from "../interact.js";
+import { spotOf, type Target } from "../interact.js";
 import { iconFor, TRAY_COLOUR, trayLook } from "../serving.js";
 import type { Furniture, Tile, Vec } from "../world.js";
 import { drawLight, windowColor } from "./light.js";
@@ -471,6 +471,16 @@ function drawReadables(ctx: CanvasRenderingContext2D, g: Game, v: View, byTile: 
     ctx.globalAlpha = 1;
   }
 
+  // The carter's crates, on the floor until unpacked.
+  for (const cr of g.crates) {
+    drawBox(ctx, v, { x0: cr.x + 0.18, x1: cr.x + 0.82, y0: cr.y + 0.18, y1: cr.y + 0.82, z: 0.42, color: "#a8743f", faceU: true, faceW: true });
+    const top = P(v, cr.x + 0.5, cr.y + 0.5, 0.42);
+    ctx.strokeStyle = "rgba(60,35,15,0.8)"; ctx.lineWidth = Math.max(1, ts * 0.03);
+    ctx.beginPath(); ctx.moveTo(top.x - ts * 0.28, top.y); ctx.lineTo(top.x + ts * 0.28, top.y); ctx.stroke(); ctx.lineWidth = 1;
+    ctx.font = `${Math.floor(ts * 0.3)}px system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("📦", top.x, top.y - ts * 0.32);
+  }
+
   // Trays set down on counters and tables.
   for (const sd of g.setDown) {
     const z = zAt(sd.x, sd.y);
@@ -488,7 +498,7 @@ function drawReadables(ctx: CanvasRenderingContext2D, g: Game, v: View, byTile: 
     if (target.type === "furniture") {
       for (const t of target.f.tiles) { floorPath(ctx, v, t.x, t.y, 1, 1, 0.04, zAt(t.x, t.y)); ctx.stroke(); }
     } else {
-      const c = target.type === "patron" ? target.p.pos : target.type === "tray" ? { x: target.t.x + 0.5, y: target.t.y + 0.5 } : { x: target.s.x + 0.5, y: target.s.y + 0.5 };
+      const c = target.type === "patron" ? target.p.pos : spotOf(target)!;
       const z = target.type === "tray" ? zAt(target.t.x, target.t.y) : 0;
       const q = P(v, c.x, c.y, z);
       ctx.beginPath(); ctx.ellipse(q.x, q.y, ts * 0.5, ts * 0.25, 0, 0, Math.PI * 2); ctx.stroke();

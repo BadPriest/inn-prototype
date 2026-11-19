@@ -249,6 +249,13 @@ function clickAt(p: Vec, slop = 0): boolean {
     if (spot) go(spot, `tray:${sd.id}`);
     return true;
   }
+  const cr = g.crates.find((c) => c.x === tx && c.y === ty);
+  if (cr) {
+    if (dist(g.keeper.pos, { x: tx + 0.5, y: ty + 0.5 }) <= 1.4) { use({ type: "crate", c: cr }); return true; }
+    const spot = nearestReachable({ x: tx + 0.5, y: ty + 0.5 }, 1.3);
+    if (spot) go(spot, `crate:${cr.id}`);
+    return true;
+  }
   const sp = g.spills.find((s) => s.x === tx && s.y === ty);
   if (sp) {
     if (dist(g.keeper.pos, { x: tx + 0.5, y: ty + 0.5 }) > 1.1) walkTo({ x: tx, y: ty }, null);
@@ -528,12 +535,13 @@ function inReach(t: Target): boolean {
   const k = g.keeper.pos;
   if (t.type === "patron") return dist(t.p.pos, k) <= 2.3;
   if (t.type === "tray") return dist({ x: t.t.x + 0.5, y: t.t.y + 0.5 }, k) <= 1.5;
+  if (t.type === "crate") return dist({ x: t.c.x + 0.5, y: t.c.y + 0.5 }, k) <= 1.4;
   if (t.type === "spill") return dist({ x: t.s.x + 0.5, y: t.s.y + 0.5 }, k) <= 1.2;
   return t.f.tiles.some((tt) => dist({ x: tt.x + 0.5, y: tt.y + 0.5 }, k) <= 1.45);
 }
 
 function targetPos(t: Target): Vec {
-  return t.type === "patron" ? t.p.pos : t.type === "furniture" ? t.f.center : t.type === "tray" ? { x: t.t.x + 0.5, y: t.t.y + 0.5 } : { x: t.s.x + 0.5, y: t.s.y + 0.5 };
+  return t.type === "patron" ? t.p.pos : t.type === "furniture" ? t.f.center : spotOf(t)!;
 }
 
 /** Arrived (or close enough): face the thing and use it. */
@@ -627,6 +635,10 @@ function resolveTarget(id: string): Target | null {
   if (id.startsWith("spill:")) {
     const sp = g.spills.find((x) => x.id === Number(id.slice(6)));
     return sp ? { type: "spill", s: sp } : null;
+  }
+  if (id.startsWith("crate:")) {
+    const c = g.crates.find((x) => x.id === Number(id.slice(6)));
+    return c ? { type: "crate", c } : null;
   }
   if (id.startsWith("tray:")) {
     const t = g.setDown.find((x) => x.id === Number(id.slice(5)));
