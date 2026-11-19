@@ -27,6 +27,7 @@ export function updateQuest(g: Game): void {
   if (shown && h?.key !== shown.key && g.showObjectives && wasDone(g, shown.key)) {
     busy = true;
     el.classList.add("done");
+    stamp(el);
     if (shown.reward) flyCoins(el.querySelector(".q-reward") ?? el);
     setTimeout(() => { busy = false; shown = null; el.classList.remove("done"); el.classList.add("hidden"); }, 1300);
     return;
@@ -34,10 +35,21 @@ export function updateQuest(g: Game): void {
   shown = null;
   if (!h) { el.classList.add("hidden"); return; }
   shown = { key: h.key, reward: h.reward, text: h.text };
-  el.innerHTML = `<div class="q-kicker">${h.kicker}</div><div class="q-text">${h.text}</div>${h.reward ? `<div class="q-reward">+${moneyHtml(h.reward)}</div>` : ""}<div class="q-stamp">✓</div>`;
+  el.innerHTML = `<div class="q-kicker">${h.kicker}</div><div class="q-text">${h.text}</div>${h.reward ? `<div class="q-reward">+${moneyHtml(h.reward)}</div>` : ""}`;
   el.classList.remove("hidden", "enter");
   void el.offsetWidth;
   el.classList.add("enter");
+}
+
+/** Done: a ✓ slides out from behind the card's right edge, clear of the text, and fades with it. */
+function stamp(card: HTMLElement): void {
+  const s = document.createElement("div");
+  s.className = "q-stamp";
+  s.textContent = "✓";
+  s.style.left = `${card.offsetLeft + card.offsetWidth - 40}px`;
+  s.style.top = `${card.offsetTop + card.offsetHeight / 2 - 19}px`;
+  card.after(s);
+  setTimeout(() => s.remove(), 1300);
 }
 
 /** A few coins from the card to the purse. */
