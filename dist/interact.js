@@ -12,7 +12,7 @@ import { gramophoneChanged, gramophoneWound, recordsReady, springLeft } from "./
 import { openRecipeScreen, openSteepScreen } from "./ui/cook.js";
 import { closeAll, openMenu, replaceMenu, back } from "./ui/menu.js";
 import { grid, gridKeys } from "./ui/cards.js";
-import { openPieSafeScreen, openSnackScreen } from "./ui/larder.js";
+import { openPieSafeScreen, openSnackScreen, openPantryScreen } from "./ui/larder.js";
 import { openBinScreen, openGarnishScreen, openHatchScreen, openOfferScreen, openSetDownScreen } from "./ui/trays.js";
 import { openBillOfFare as openBillOfFareScreen, openDeskScreen } from "./ui/desk.js";
 export function targetId(t) {
@@ -100,7 +100,7 @@ export function findTargets(g) {
         consider({ type: "tray", t }, { x: t.x + 0.45, y: t.y + 0.45 }, 1.5);
     found.sort((a, b) => a.s - b.s);
     // Uninteresting furniture (walls of the room, as it were) doesn't crowd the choice.
-    const quiet = new Set(["wardrobe", "coats", "pantry"]);
+    const quiet = new Set(["wardrobe", "coats"]);
     return found.map((x) => x.t).filter((t, i) => i === 0 || !(t.type === "furniture" && quiet.has(t.f.kind)));
 }
 /** The thing the keeper would interact with right now. */
@@ -325,7 +325,7 @@ export function interact(g, t) {
             g.say("Your good coat, your other coat.");
             return;
         case "pantry":
-            g.say("Shelves of everything you need. It never runs out (for now).");
+            openPantryScreen(g);
             return;
         case "coats":
             g.say("Pegs, waiting for coats.");

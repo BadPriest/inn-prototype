@@ -1,5 +1,6 @@
 // Card screens for what's on your trays: garnishing a drink, offering something unasked, the scrap bin,
 // the kitchen hatch, and choosing which tray to set down. Same look and handling as cooking (cards.ts).
+import { have } from "../stock.js";
 import { garnishesFor } from "../data.js";
 import { applyGarnish, garnishableDrinks, iconFor, pickupFromHatch, removeFromTray, serveUnasked, setTrayDown, takeFromHatch, trayItems, } from "../serving.js";
 import { closeAll, openMenu, replaceMenu } from "./menu.js";
@@ -42,7 +43,7 @@ function garnishSpec(g, st) {
         const [k, n] = v.split(":");
         if (k === "d")
             st.drink = Number(n);
-        else
+        else if (have(g, suits[Number(n)]?.id ?? "") >= 1)
             st.garnish = st.garnish === Number(n) ? -1 : Number(n);
         st.focus = Math.max(0, picks.indexOf(v));
         refresh();
@@ -59,8 +60,10 @@ function garnishSpec(g, st) {
     const drinkCards = drinks.map((d, i) => itemCard(d, `d:${i}`, picks[st.focus] === `d:${i}`, { on: i === st.drink }));
     const garnishCards = suits.map((x, i) => {
         const adds = x.tags.filter((t) => !drink.tags.includes(t));
+        const left = have(g, x.id);
         return {
-            pick: `g:${i}`, icon: x.icon, name: x.name, tags: x.tags, on: i === st.garnish, focus: picks[st.focus] === `g:${i}`,
+            pick: `g:${i}`, icon: x.icon, name: x.name, tags: x.tags, on: i === st.garnish, off: left < 1, focus: picks[st.focus] === `g:${i}`,
+            status: left < 1 ? "none in the pantry" : `${left} in the pantry`, tone: left < 1 ? "muted" : undefined,
             detail: adds.length ? `Adds ${adds.join(" and ")} to the ${drink.name.toLowerCase()}.` : `Nothing new for the ${drink.name.toLowerCase()}.`,
             does: i === st.garnish ? "Take it off" : "Use this garnish",
         };

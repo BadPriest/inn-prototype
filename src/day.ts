@@ -132,7 +132,7 @@ export function save(g: Game): void {
     localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, calendarStart: g.calendarStart, location: g.location, inn: g.inn, weather: g.weather, history, regulars, visitorNotes: g.visitorNotes,
       menu: [...g.menu], menuChosen: g.menuChosen,
       layout: g.layout, mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives,
-      purse: g.purse, priceLevel: g.priceLevel, onOrder: g.onOrder, toPlace: g.toPlace }));
+      purse: g.purse, priceLevel: g.priceLevel, onOrder: g.onOrder, toPlace: g.toPlace, stock: g.stock }));
   } catch { /* storage unavailable: carry on */ }
 }
 
@@ -142,7 +142,7 @@ export function load(g: Game): void {
     if (!raw) { save(g); return; } // a new save: keep the calendar season it starts in, even before day 1 ends
     const s = JSON.parse(raw) as { day: number; calendarStart?: number; location?: Game["location"]; inn?: Game["inn"]; weather?: WeatherState; history: DayStats[]; regulars?: RegularState[]; visitorNotes?: Game["visitorNotes"];
       menu?: string[]; menuChosen?: boolean; layout?: Game["layout"]; mealMode?: boolean; meals?: unknown; betweenMenu?: string[]; upgrades?: string[]; totalServed?: number; showObjectives?: boolean;
-      purse?: number; priceLevel?: Game["priceLevel"]; onOrder?: string[]; toPlace?: string[] };
+      purse?: number; priceLevel?: Game["priceLevel"]; onOrder?: string[]; toPlace?: string[]; stock?: Record<string, number> };
     const dishes = (ids: string[]) => new Set(ids.map(currentDishId).filter((id) => RECIPES.some((r) => r.id === id)));
     if (s.menu) g.menu = dishes(s.menu);
     g.menuChosen = !!s.menuChosen;
@@ -173,6 +173,8 @@ export function load(g: Game): void {
     // Saves from before coin start with the new keeper's purse.
     if (typeof s.purse === "number") g.purse = s.purse;
     if (s.priceLevel) g.priceLevel = s.priceLevel;
+    // Saved before the pantry counted anything: it starts as a new keeper's.
+    if (s.stock) g.stock = s.stock;
     g.onOrder = (s.onOrder ?? []).map(currentEquipmentId).filter((id) => pieceById(id));
     g.toPlace = [...g.toPlace, ...(s.toPlace ?? []).map(currentEquipmentId).filter((id) => pieceById(id))];
     g.day = s.day ?? 1;

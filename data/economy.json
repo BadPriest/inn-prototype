@@ -22,6 +22,7 @@
   },
 
   "startingPurse": 200,
+  "startingPantry": {"ale": 72, "cider": 36, "black": 20, "mint": 10, "chamomile": 10, "oats": 7, "milk": 8, "salt": 60, "lard": 10, "butter": 10, "flour": 14, "loaf": 6, "egg": 12, "beef": 6, "sausage": 6, "roots": 10, "onion": 6, "herbs": 4, "apple": 10, "cheese": 4, "saltedPeanuts": 10, "darkRoast": 3, "sugar": 20, "honey": 10, "lemon": 6, "pepper": 20},
 
   "deliveryFee": 3,
 

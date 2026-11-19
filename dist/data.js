@@ -205,12 +205,12 @@ export const INNS = [
 ];
 /** An inn by id. Saves from before there was a choice are in the big tavern. */
 export const innOf = (id) => INNS.find((i) => i.id === (id ?? "medium")) ?? INNS[0];
-export const INGREDIENTS = INGREDIENTS_DATA.ingredients.map((x) => ({ id: x.id, name: x.name, icon: x.icon, tags: x.tags, worth: x.worth, roles: x.roles }));
+export const INGREDIENTS = INGREDIENTS_DATA.ingredients.map((x) => ({ id: x.id, name: x.name, icon: x.icon, tags: x.tags, worth: x.worth, roles: x.roles, unit: x.unit }));
 const ingredientById = (id) => INGREDIENTS.find((x) => x.id === id);
 /** The cheapest ingredient that fills a role (a liquid: water). */
 export const defaultForRole = (role) => INGREDIENTS.filter((x) => x.roles.includes(role)).sort((a, b) => a.worth - b.worth)[0];
 const NO_CHOICE = { pick: [0, 0], options: [] };
-const resolveUse = (u) => ({ id: u.id ?? defaultForRole(u.role)?.id ?? "", units: u.units });
+const resolveUse = (u) => ({ id: u.id ?? defaultForRole(u.role)?.id ?? "", units: u.units, role: u.role });
 function recipeOf(d) {
     const needs = { hunger: d.effects?.needs?.hunger ?? 0, thirst: d.effects?.needs?.thirst ?? 0, warmth: d.effects?.needs?.warmth ?? 0 };
     const base = d.ingredients ? { pick: d.ingredients.base.pick, options: d.ingredients.base.options.map(resolveUse) } : NO_CHOICE;

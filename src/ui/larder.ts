@@ -1,7 +1,8 @@
 // Card screens for what's already made: the snack bowl on a table, and the pie safe.
 // Same template as cooking (docs/specs/ui.md): what's there now pinned on top, then cards to pick.
 
-import { SNACKS, type Snack } from "../data.js";
+import { amount, have, takeStock } from "../stock.js";
+import { SNACKS, type Snack, INGREDIENTS } from "../data.js";
 import type { Game } from "../game.js";
 import { returnSlice, storePie, takeSlice } from "../crafting.js";
 import { trayItems, trayRoomFor } from "../serving.js";
@@ -16,11 +17,12 @@ const EMPTY_BOWL = 0.15;
 const STATION_WORDS: Record<string, string> = { prep: "prep table", griddle: "stove", stove: "stove", oven: "oven" };
 
 /** Where a bowl of this would come from now: a batch made at a station first, else bought ready. */
-function sourceOf(g: Game, sn: Snack): { label: string; pot?: { left: number }; potId?: string } | undefined {
+function sourceOf(g: Game, sn: Snack): { label: string; pot?: { left: number }; potId?: string; bought?: string } | undefined {
   for (const [potId, pot] of g.pots) {
     if (pot.item.recipeId === sn.id && pot.left > 0) return { label: `${pot.left} bowl${pot.left === 1 ? "" : "s"} made`, pot, potId };
   }
-  return sn.boughtAs ? { label: "from the larder" } : undefined;
+  if (sn.boughtAs && have(g, sn.boughtAs) >= 1) return { label: `${Math.floor(have(g, sn.boughtAs))} in the pantry`, bought: sn.boughtAs };
+  return undefined;
 }
 
 export function openSnackScreen(g: Game, key: string): void {
@@ -44,7 +46,7 @@ function snackSpec(g: Game, key: string, st: { focus: number }): MenuSpec {
     if (from.pot) {
       from.pot.left--;
       if (from.pot.left <= 0) g.pots.delete(from.potId!);
-    }
+    } else if (from.bought) takeStock(g, [{ id: from.bought, units: 1 }]);
     const again = bowl?.snack === sn.id;
     g.bowls.set(key, { snack: sn.id, left: 1 });
     g.say(again ? `You fill the bowl with ${sn.name.toLowerCase()} again.` : `You set out a bowl of ${sn.name.toLowerCase()}.`);
@@ -57,10 +59,10 @@ function snackSpec(g: Game, key: string, st: { focus: number }): MenuSpec {
     const off = !from || !empty;
     return {
       pick: String(i), icon: sn.icon, name: sn.name, tags: sn.tags, on: here, off, focus: i === st.focus,
-      status: here ? (empty ? "empty: fill it again" : `on the ${where} now`) : from ? from.label : `make a batch at the ${STATION_WORDS[sn.madeAt ?? "prep"]}`,
+      status: here && !empty ? `on the ${where} now` : from ? from.label : sn.madeAt ? `make a batch at the ${STATION_WORDS[sn.madeAt]}` : "none in the pantry",
       tone: here && empty ? "warn" : here ? "good" : from ? undefined : "muted",
       detail: [sn.blurb, sn.thirstPerHour > 0 ? "Makes them thirsty." : ""].filter(Boolean).join(" "),
-      does: !empty ? "The bowl isn't empty yet" : !from ? "None ready: make a batch first" : here ? "Fill it again" : "Set out a bowl",
+      does: !empty ? "The bowl isn't empty yet" : !from ? (sn.madeAt ? "None ready: make a batch first" : "None left: order more at the desk") : here ? "Fill it again" : "Set out a bowl",
     };
   });
   const pct = bowl ? Math.round(bowl.left * 100) : 0;
@@ -154,4 +156,30 @@ function pieSpec(g: Game, st: { focus: number }): MenuSpec {
     },
     items: [],
   };
+}
+
+// ---------------------------------------------------------------------------
+// The pantry: what's in stock.
+
+export function openPantryScreen(g: Game): void {
+  const st = { focus: 0 };
+  const build = (): MenuSpec => {
+    const inStock = INGREDIENTS.filter((x) => x.worth > 0 && (g.stock[x.id] ?? 0) > 0.001);
+    const cards: CardSpec[] = inStock.map((x, i) => ({
+      pick: x.id, icon: x.icon, name: x.name, tags: x.tags, focus: i === st.focus,
+      fact: amount(x.id, g.stock[x.id] ?? 0),
+      detail: `${amount(x.id, g.stock[x.id] ?? 0)} on the shelves.`,
+    }));
+    return {
+      title: "🧺 Pantry",
+      subtitle: inStock.length ? "What's on the shelves · order more at the desk (Supplies)" : "The shelves are bare · order supplies at the desk",
+      view: {
+        html: cards.length ? grid(cards) : `<div class="muted">Nothing left. Water from the pump is always there.</div>`,
+        onPick: () => undefined,
+        onKey: gridKeys(() => cards.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, () => undefined),
+      },
+      items: [],
+    };
+  };
+  openMenu(build());
 }

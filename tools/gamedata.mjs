@@ -120,6 +120,8 @@ for (const s of suppliers.suppliers) {
   if (s.distanceInMinutes !== undefined && !s.openHours) fail("suppliers", `${s.id} can be fetched but has no openHours`);
 }
 
+for (const id of Object.keys(data.economy.startingPantry)) if (!ingredientIds.has(id)) fail("economy", `startingPantry has "${id}", which isn't in ingredients.json`);
+
 for (const l of locations.locations) {
   const days = l.seasonDays.reduce((a, b) => a + b, 0);
   if (days !== 112) fail("locations", `${l.id} season days add up to ${days}, not 112`);

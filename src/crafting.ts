@@ -3,6 +3,7 @@
 // order they were made for), pots on the station, whole pies in the pie safe. You pick them up there.
 // The hatch is for a hired cook, later.
 
+import { describeUses, have, nameOf, shortOf, takeStock, usesOf } from "./stock.js";
 import { organic, uid } from "./core.js";
 import { BREAD_CASE_BATCHES, INGREDIENTS, RECIPES, TUNING, URN_CAPACITY, utensilFor, type Recipe } from "./data.js";
 import type { Game, Item, Job } from "./game.js";
@@ -57,16 +58,21 @@ export function effectiveRecipe(_g: Game, recipe: Recipe, batch = false): Recipe
   return batch && recipe.id === "tea" ? urnTea(recipe) : recipe;
 }
 
-export function startJob(g: Game, slot: Slot, recipeIn: Recipe, ingredients: string[], ticket: { id: number; name: string } | null): void {
+export function startJob(g: Game, slot: Slot, recipeIn: Recipe, ingredients: string[], ticket: { id: number; name: string } | null): boolean {
   const batch = recipeIn.id === "tea" && !!recipeIn.servings;
   const recipe = effectiveRecipe(g, RECIPES.find((r) => r.id === recipeIn.id)!, batch);
+  const uses = usesOf(g, recipe, ingredients);
+  const short = shortOf(g, uses);
+  if (short.length) { g.say(`Not enough in the pantry: short ${describeUses(short)}.`); return false; }
+  takeStock(g, uses);
   if (recipe.servings) ticket = null;
   let total = Math.max(1, organic(recipe.minutes));
   total /= slot.speed ?? slot.f.equip?.craftingSpeed ?? 1;
   g.jobs.set(slot.id, { recipeId: recipe.id, ingredients, total, progress: 0, done: false, ticket: ticket?.id, ticketName: ticket?.name, batch });
   const forWho = ticket ? ` for ${ticket.name}` : recipe.storedIn === "piesafe" ? " (a whole pie)" : recipe.storedIn === "urn" ? "" : recipe.batch ? ` (${recipe.batch})` : recipe.servings ? " (a whole pot)" : "";
-  if (recipe.id === "water") { g.say("You put the kettle on."); return; }
+  if (recipe.id === "water") { g.say("You put the kettle on."); return true; }
   g.say(`Started ${recipe.name.toLowerCase()}${forWho} at the ${slotName(slot)}${recipe.tended ? ". Stay with it" : ""}.`);
+  return true;
 }
 
 export function keeperNear(g: Game, f: Furniture, range = 1.5): boolean {
@@ -242,7 +248,9 @@ export function steepTea(g: Game, fid: string, leaf: string): void {
   const o = waiting.find((x) => x.wantOption === leaf) ?? waiting.find((x) => !x.wantOption) ?? waiting[0];
   const p = o ? g.patron(o.patronId) : undefined;
   if (p) { item.ticket = p.id; item.ticketName = p.name; }
+  if (have(g, leaf) < 1) { g.say(`There's no ${nameOf(leaf).toLowerCase()} left in the pantry.`); return; }
   if (!addToTray(g, item)) { g.say("No room on your trays."); return; }
+  takeStock(g, [{ id: leaf, units: 1 }]);
   g.stats.crafted++;
   water.left--;
   g.say(`${item.name}${p ? ` for ${p.name}` : ""} (${water.left} cup${water.left === 1 ? "" : "s"} of hot water left).`);

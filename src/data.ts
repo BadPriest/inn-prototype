@@ -293,9 +293,9 @@ export const innOf = (id: InnId | undefined): Inn => INNS.find((i) => i.id === (
 
 export type StationKind = "stove" | "griddle" | "oven" | "kettle" | "coffee" | "prep";
 
-export interface Ingredient { id: string; name: string; icon: string; tags: string[]; worth: number; roles: string[] }
+export interface Ingredient { id: string; name: string; icon: string; tags: string[]; worth: number; roles: string[]; unit: string }
 
-export const INGREDIENTS: Ingredient[] = INGREDIENTS_DATA.ingredients.map((x) => ({ id: x.id, name: x.name, icon: x.icon, tags: x.tags, worth: x.worth, roles: x.roles }));
+export const INGREDIENTS: Ingredient[] = INGREDIENTS_DATA.ingredients.map((x) => ({ id: x.id, name: x.name, icon: x.icon, tags: x.tags, worth: x.worth, roles: x.roles, unit: x.unit }));
 const ingredientById = (id: string) => INGREDIENTS.find((x) => x.id === id);
 /** The cheapest ingredient that fills a role (a liquid: water). */
 export const defaultForRole = (role: string) => INGREDIENTS.filter((x) => x.roles.includes(role)).sort((a, b) => a.worth - b.worth)[0];
@@ -311,7 +311,7 @@ export interface Recipe {
   station: StationKind | "tap";
   baseTags: string[];
   /** Always in it, chosen for you: the dish's fundamentals ("liquid" filled by water). */
-  fundamental: { id: string; units: number }[];
+  fundamental: { id: string; units: number; role?: string }[];
   base: IngredientChoice;
   optional: IngredientChoice;
   /** Every ingredient the player could choose, base and optional. */
@@ -331,7 +331,7 @@ export interface Recipe {
 }
 
 const NO_CHOICE: IngredientChoice = { pick: [0, 0], options: [] };
-const resolveUse = (u: { id?: string; role?: string; units: number }) => ({ id: u.id ?? defaultForRole(u.role!)?.id ?? "", units: u.units });
+const resolveUse = (u: { id?: string; role?: string; units: number }) => ({ id: u.id ?? defaultForRole(u.role!)?.id ?? "", units: u.units, role: u.role });
 
 function recipeOf(d: DishData): Recipe {
   const needs = { hunger: d.effects?.needs?.hunger ?? 0, thirst: d.effects?.needs?.thirst ?? 0, warmth: d.effects?.needs?.warmth ?? 0 };

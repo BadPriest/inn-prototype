@@ -2,6 +2,7 @@
 // What you make waits where you made it: single servings on the station's shelf (labelled for the
 // order they were made for), pots on the station, whole pies in the pie safe. You pick them up there.
 // The hatch is for a hired cook, later.
+import { describeUses, have, nameOf, shortOf, takeStock, usesOf } from "./stock.js";
 import { organic, uid } from "./core.js";
 import { BREAD_CASE_BATCHES, INGREDIENTS, RECIPES, TUNING, URN_CAPACITY, utensilFor } from "./data.js";
 import { dist } from "./world.js";
@@ -58,6 +59,13 @@ export function effectiveRecipe(_g, recipe, batch = false) {
 export function startJob(g, slot, recipeIn, ingredients, ticket) {
     const batch = recipeIn.id === "tea" && !!recipeIn.servings;
     const recipe = effectiveRecipe(g, RECIPES.find((r) => r.id === recipeIn.id), batch);
+    const uses = usesOf(g, recipe, ingredients);
+    const short = shortOf(g, uses);
+    if (short.length) {
+        g.say(`Not enough in the pantry: short ${describeUses(short)}.`);
+        return false;
+    }
+    takeStock(g, uses);
     if (recipe.servings)
         ticket = null;
     let total = Math.max(1, organic(recipe.minutes));
@@ -66,9 +74,10 @@ export function startJob(g, slot, recipeIn, ingredients, ticket) {
     const forWho = ticket ? ` for ${ticket.name}` : recipe.storedIn === "piesafe" ? " (a whole pie)" : recipe.storedIn === "urn" ? "" : recipe.batch ? ` (${recipe.batch})` : recipe.servings ? " (a whole pot)" : "";
     if (recipe.id === "water") {
         g.say("You put the kettle on.");
-        return;
+        return true;
     }
     g.say(`Started ${recipe.name.toLowerCase()}${forWho} at the ${slotName(slot)}${recipe.tended ? ". Stay with it" : ""}.`);
+    return true;
 }
 export function keeperNear(g, f, range = 1.5) {
     return f.tiles.some((t) => dist(g.keeper.pos, { x: t.x + 0.5, y: t.y + 0.5 }) <= range);
@@ -297,10 +306,15 @@ export function steepTea(g, fid, leaf) {
         item.ticket = p.id;
         item.ticketName = p.name;
     }
+    if (have(g, leaf) < 1) {
+        g.say(`There's no ${nameOf(leaf).toLowerCase()} left in the pantry.`);
+        return;
+    }
     if (!addToTray(g, item)) {
         g.say("No room on your trays.");
         return;
     }
+    takeStock(g, [{ id: leaf, units: 1 }]);
     g.stats.crafted++;
     water.left--;
     g.say(`${item.name}${p ? ` for ${p.name}` : ""} (${water.left} cup${water.left === 1 ? "" : "s"} of hot water left).`);

@@ -1,6 +1,7 @@
 // The shared game state. Systems read and change it; the UI only reads it.
 import { EventBus } from "./core.js";
 import { STARTING_PURSE } from "./money.js";
+import { startingPantry } from "./stock.js";
 import { World, defaultLayout } from "./world.js";
 import { dateOf, randomStartSeason } from "./calendar.js";
 import { newWeather } from "./weather.js";
@@ -54,6 +55,8 @@ export class Game {
     coinPops = [];
     /** Bought, coming with the carter tomorrow morning (equipment and goods ids). */
     onOrder = [];
+    /** The pantry: units of each ingredient. */
+    stock = startingPantry();
     /** Delivered pieces waiting to be placed in the kitchen (equipment ids). */
     toPlace = [];
     nextArrivalAt = 0;

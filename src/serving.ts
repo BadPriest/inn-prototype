@@ -1,5 +1,6 @@
 // Trays, pickup, pouring, garnishing and delivery.
 
+import { addStock, have, takeStock } from "./stock.js";
 import { RECIPES, TUNING, currentDishId, garnishById, garnishesFor, pieceById, traySlotsOf } from "./data.js";
 
 const needsOf = (recipeId: string) => RECIPES.find((r) => r.id === currentDishId(recipeId))?.needs;
@@ -136,6 +137,8 @@ export function startPour(g: Game, from: string, recipeId?: string): void {
   const tap = from.startsWith("tap:");
   const drink = recipeId ?? g.pots.get(from)?.item.recipeId ?? "tea";
   if (!trayRoomFor(g, drink)) { g.say("No room for a drink on your trays."); return; }
+  const bought = tap ? RECIPES.find((r) => r.id === drink)?.boughtAs : undefined;
+  if (bought && have(g, bought) < 1) { g.say(`The ${drink} barrel is dry. Order more at the desk.`); return; }
   const piece = tap ? pieceById(g.world.furniture.find((f) => f.tap === drink)?.equip?.id ?? "") : pieceById(g.world.slot(from)?.f.equip?.id ?? "");
   const seconds = piece?.serveSeconds ?? pieceById(tap ? "aleBarrel" : "teaUrn")?.serveSeconds ?? [2, 0.2];
   g.pouring = { id: uid(), from, recipeId, at: { ...g.keeper.pos }, progress: 0, total: organic(seconds) };
@@ -172,9 +175,10 @@ export function updatePour(g: Game, realDt: number): void {
 
 export function pour(g: Game, recipeId: string): void {
   const r = RECIPES.find((x) => x.id === recipeId)!;
+  if (r.boughtAs && !takeStock(g, [{ id: r.boughtAs, units: 1 }])) { g.say(`The ${r.name.toLowerCase()} barrel is dry.`); return; }
   const item = makeItem(r, []);
   if (addToTray(g, item)) g.say(`Poured ${r.name.toLowerCase()}.`);
-  else g.say("No room for a drink on your trays.");
+  else { if (r.boughtAs) addStock(g, r.boughtAs, 1); g.say("No room for a drink on your trays."); }
 }
 
 export function garnishableDrinks(g: Game): Item[] {
@@ -183,6 +187,7 @@ export function garnishableDrinks(g: Game): Item[] {
 
 export function applyGarnish(g: Game, item: Item, garnishId: string): void {
   const gar = garnishById(garnishId)!;
+  if (!takeStock(g, [{ id: gar.id, units: 1 }])) { g.say(`There's no ${gar.name.toLowerCase()} left in the pantry.`); return; }
   item.garnish = gar.id;
   item.tags = [...new Set([...item.tags, ...gar.tags])];
   item.name = `${item.name} with ${gar.name.toLowerCase()}`;

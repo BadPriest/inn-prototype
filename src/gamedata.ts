@@ -77,6 +77,7 @@ export interface EconomyData {
   houseLevels: { id: "cheap" | "fair" | "dear"; factor: number; flow: number }[];
   tips: { delight: { share: number; atLeast: Pence }; pleased: { share: number; atLeast: Pence }; walkoutShare: number };
   startingPurse: Pence;
+  startingPantry: Record<string, number>;
   deliveryFee: Pence;
   sellBackShare: number;
   fetchMinutes: number;

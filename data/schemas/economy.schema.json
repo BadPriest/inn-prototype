@@ -4,7 +4,7 @@
   "description": "Values used to work out prices and payments. Money is in pence.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["price", "houseLevels", "tips", "startingPurse", "deliveryFee", "sellBackShare", "fetchMinutes", "suppliers"],
+  "required": ["price", "houseLevels", "tips", "startingPurse", "startingPantry", "deliveryFee", "sellBackShare", "fetchMinutes", "suppliers"],
   "properties": {
     "$schema": { "type": "string" },
     "price": {
@@ -44,6 +44,7 @@
       }
     },
     "startingPurse": { "$ref": "common.schema.json#/definitions/pence" },
+    "startingPantry": { "type": "object", "additionalProperties": { "type": "number", "minimum": 0 }, "description": "Ingredient id: units a new keeper starts with." },
     "deliveryFee": { "$ref": "common.schema.json#/definitions/pence", "description": "What the carter charges each morning he brings orders, however many." },
     "sellBackShare": { "type": "number", "minimum": 0, "maximum": 1, "description": "Share of the price paid back when selling equipment." },
     "fetchMinutes": { "type": "number", "minimum": 0, "description": "Game minutes away when fetching equipment yourself." },

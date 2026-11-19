@@ -2,6 +2,7 @@
 
 import { EventBus, type Outcome } from "./core.js";
 import { STARTING_PURSE, type PriceLevel } from "./money.js";
+import { startingPantry } from "./stock.js";
 import { World, defaultLayout, type Placed, type Vec } from "./world.js";
 import { dateOf, randomStartSeason, type GameDate } from "./calendar.js";
 import { newWeather, type CameIn, type WeatherState } from "./weather.js";
@@ -265,6 +266,8 @@ export class Game {
   coinPops: { x: number; y: number; paid: number; tip: number; at: number }[] = [];
   /** Bought, coming with the carter tomorrow morning (equipment and goods ids). */
   onOrder: string[] = [];
+  /** The pantry: units of each ingredient. */
+  stock: Record<string, number> = startingPantry();
   /** Delivered pieces waiting to be placed in the kitchen (equipment ids). */
   toPlace: string[] = [];
   nextArrivalAt = 0;

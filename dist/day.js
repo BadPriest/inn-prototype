@@ -136,7 +136,7 @@ export function save(g) {
         localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, calendarStart: g.calendarStart, location: g.location, inn: g.inn, weather: g.weather, history, regulars, visitorNotes: g.visitorNotes,
             menu: [...g.menu], menuChosen: g.menuChosen,
             layout: g.layout, mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives,
-            purse: g.purse, priceLevel: g.priceLevel, onOrder: g.onOrder, toPlace: g.toPlace }));
+            purse: g.purse, priceLevel: g.priceLevel, onOrder: g.onOrder, toPlace: g.toPlace, stock: g.stock }));
     }
     catch { /* storage unavailable: carry on */ }
 }
@@ -191,6 +191,9 @@ export function load(g) {
             g.purse = s.purse;
         if (s.priceLevel)
             g.priceLevel = s.priceLevel;
+        // Saved before the pantry counted anything: it starts as a new keeper's.
+        if (s.stock)
+            g.stock = s.stock;
         g.onOrder = (s.onOrder ?? []).map(currentEquipmentId).filter((id) => pieceById(id));
         g.toPlace = [...g.toPlace, ...(s.toPlace ?? []).map(currentEquipmentId).filter((id) => pieceById(id))];
         g.day = s.day ?? 1;
