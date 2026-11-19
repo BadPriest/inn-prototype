@@ -1,4 +1,5 @@
 // Trays, pickup, pouring, garnishing and delivery.
+import { flipTags, servedEffects, showFlip } from "./snacks.js";
 import { useSundries } from "./upkeep.js";
 import { addStock, have, takeStock } from "./stock.js";
 import { RECIPES, TUNING, currentDishId, garnishById, garnishesFor, pieceById, traySlotsOf } from "./data.js";
@@ -228,10 +229,18 @@ export function applyGarnish(g, item, garnishId) {
     g.bus.emit({ type: "ItemGarnished", itemId: item.id });
     g.say(`${item.name}.`);
 }
+/** Judged as they taste it: a bowl on their table may flip a tag (shown over their head). Its own effects reach them too. */
+function judgeWithBowl(g, p, item, order) {
+    const { tags, flips } = flipTags(g, p, item.tags);
+    if (flips.length)
+        showFlip(g, p, flips[0].from, flips[0].to);
+    servedEffects(p, item.recipeId);
+    return judge(g, p, flips.length ? { ...item, tags } : item, order);
+}
 /** The unasked-serve card: give a patron something they didn't order. Never fulfils an order. */
 export function serveUnasked(g, p, item) {
     removeFromTray(g, item);
-    const v = judge(g, p, item, null);
+    const v = judgeWithBowl(g, p, item, null);
     p.marker = { text: v.outcome, until: g.minute + TUNING.outcomeShowMinutes };
     if (v.line)
         g.speak(p, v.line, 1, true);
@@ -283,7 +292,7 @@ export function deliverTo(g, p, quiet = false, extra = []) {
     removeFromTray(g, item);
     order.open = false;
     g.bus.emit({ type: "OrderFulfilled", orderId: order.id });
-    const v = judge(g, p, item, order);
+    const v = judgeWithBowl(g, p, item, order);
     p.state = "consuming";
     const [c, s] = p.consumeTime;
     const base = c + (Math.random() - 0.5) * s;

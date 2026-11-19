@@ -62,7 +62,8 @@ function snackSpec(g: Game, key: string, st: { focus: number }): MenuSpec {
       pick: String(i), icon: sn.icon, name: sn.name, tags: sn.tags, on: here, off, focus: i === st.focus,
       status: here && !empty ? `on the ${where} now` : from ? from.label : sn.madeAt ? `make a batch at the ${STATION_WORDS[sn.madeAt]}` : "none in the pantry",
       tone: here && empty ? "warn" : here ? "good" : from ? undefined : "muted",
-      detail: [sn.blurb, sn.thirstPerHour > 0 ? "Makes them thirsty." : ""].filter(Boolean).join(" "),
+      detail: [sn.blurb, ...sn.effects.map((e) => e.shown).filter(Boolean).map((t) => `<div class="eff">✦ ${t}</div>`)].filter(Boolean).join(" "),
+      fact: sn.effects.find((e) => e.shown)?.shown,
       does: !empty ? "The bowl isn't empty yet" : !from ? (sn.madeAt ? "None ready: make a batch first" : "None left: order more at the desk") : here ? "Fill it again" : "Set out a bowl",
     };
   });

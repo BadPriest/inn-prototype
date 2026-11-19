@@ -1,12 +1,13 @@
 // Trays, pickup, pouring, garnishing and delivery.
 
+import { flipTags, servedEffects, showFlip } from "./snacks.js";
 import { useSundries } from "./upkeep.js";
 import { addStock, have, takeStock } from "./stock.js";
 import { RECIPES, TUNING, currentDishId, garnishById, garnishesFor, pieceById, traySlotsOf } from "./data.js";
 
 const needsOf = (recipeId: string) => RECIPES.find((r) => r.id === currentDishId(recipeId))?.needs;
 import { makeItem, serveFromPot, steepTea } from "./crafting.js";
-import type { Game, Item, Patron, SetDownTray, Tray } from "./game.js";
+import type { Game, Item, Order, Patron, SetDownTray, Tray } from "./game.js";
 import { dist } from "./world.js";
 import { organic, uid } from "./core.js";
 import { afterServe, describeReaction, judge } from "./tastes.js";
@@ -202,10 +203,18 @@ export function applyGarnish(g: Game, item: Item, garnishId: string): void {
   g.say(`${item.name}.`);
 }
 
+/** Judged as they taste it: a bowl on their table may flip a tag (shown over their head). Its own effects reach them too. */
+function judgeWithBowl(g: Game, p: Patron, item: Item, order: Order | null) {
+  const { tags, flips } = flipTags(g, p, item.tags);
+  if (flips.length) showFlip(g, p, flips[0].from, flips[0].to);
+  servedEffects(p, item.recipeId);
+  return judge(g, p, flips.length ? { ...item, tags } : item, order);
+}
+
 /** The unasked-serve card: give a patron something they didn't order. Never fulfils an order. */
 export function serveUnasked(g: Game, p: Patron, item: Item): void {
   removeFromTray(g, item);
-  const v = judge(g, p, item, null);
+  const v = judgeWithBowl(g, p, item, null);
   p.marker = { text: v.outcome, until: g.minute + TUNING.outcomeShowMinutes };
   if (v.line) g.speak(p, v.line, 1, true);
   else if (v.outcome === "DELIGHT") g.speak(p, "For me? Oh!", 1, true);
@@ -250,7 +259,7 @@ export function deliverTo(g: Game, p: Patron, quiet = false, extra: Item[] = [])
   removeFromTray(g, item);
   order.open = false;
   g.bus.emit({ type: "OrderFulfilled", orderId: order.id });
-  const v = judge(g, p, item, order);
+  const v = judgeWithBowl(g, p, item, order);
   p.state = "consuming";
   const [c, s] = p.consumeTime;
   const base = c + (Math.random() - 0.5) * s;

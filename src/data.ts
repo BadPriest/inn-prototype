@@ -1,6 +1,7 @@
 // ALL AUTHORED CONTENT LIVES HERE. Edit freely: no code changes needed.
 // Times are in game minutes. [centre, spread] pairs are organic values.
 
+import type { DishEffect } from "./gamedata.js";
 import type { Organic } from "./core.js";
 import { DISHES_DATA, EQUIPMENT_DATA, INGREDIENTS_DATA, LOCATIONS_DATA } from "./gamedata.gen.js";
 import type { Container, DishData, EquipmentPiece } from "./gamedata.js";
@@ -376,6 +377,8 @@ export interface Snack {
   id: string; name: string; icon: string; tags: string[]; blurb?: string;
   /** Added to the thirst of each guest eating from it, per game hour. */
   thirstPerHour: number;
+  /** What it does to whoever eats from it (patience, hunger, thirst, openness, a tag flip), each with the line its card shows. */
+  effects: DishEffect[];
   /** The ingredient it comes ready as, if it can be bought. */
   boughtAs?: string;
   /** The station kind it's made at, if it can be made. */
@@ -387,6 +390,7 @@ export interface Snack {
 export const SNACKS: Snack[] = DISHES_DATA.dishes.filter((d) => d.tableSnack).map((d) => ({
   id: d.id, name: d.name, icon: d.icon, tags: d.tags, blurb: d.text?.snackBowl,
   thirstPerHour: (d.effects?.onConsuming ?? []).reduce((a, e) => a + (e.thirst ?? 0), 0),
+  effects: d.effects?.onConsuming ?? [],
   boughtAs: d.boughtAs, madeAt: d.madeAt?.kinds[0],
   praise: d.text?.patronPraises ?? [], complaints: d.text?.patronComplaints ?? [],
 }));

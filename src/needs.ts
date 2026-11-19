@@ -4,6 +4,7 @@
 // patron spends with a need unmet is logged, with its length and what was going on meanwhile, so the
 // logs tell us what mood must react to. Shown in the debug view.
 
+import { bowlNeeds } from "./snacks.js";
 import { organic } from "./core.js";
 import { NEED_IDS, NEEDS, RECIPES, SNACKS, SOAKING, type NeedId, type NeedLevels } from "./data.js";
 import type { Game, Patron, UnmetStretch } from "./game.js";
@@ -96,7 +97,7 @@ export function updateNeeds(g: Game, simDt: number): void {
     const seat = g.world.seats.find((s) => s.id === p.seatId);
     const bowlKey = g.bowlKeyFor(seat);
     const bowl = bowlKey ? g.bowls.get(bowlKey) : undefined;
-    if (bowl && bowl.left > 0) n.thirst += (SNACKS.find((x) => x.id === bowl.snack)?.thirstPerHour ?? 0) * hours;
+    if (bowl && bowl.left > 0) { const bn = bowlNeeds(g, p); n.thirst += bn.thirst * hours; n.hunger += bn.hunger * hours; }
     // Eating or drinking: the serving's worth, spread over the time it takes.
     if (p.state === "consuming" && p.consuming) {
       const span = Math.max(1, p.consumeUntil - p.consuming.from);

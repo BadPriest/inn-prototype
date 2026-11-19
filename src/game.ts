@@ -95,6 +95,8 @@ export interface Patron {
   nextThinkAt: number;
   ordersPlaced: number;
   snackNoted?: boolean; // said something about the snack bowl this visit
+  flipShown?: boolean; // the bowl's tag flip has shown over their head this visit
+  opennessBonus?: number; // from what they've drunk this visit (ale loosens tongues)
   inspiredBy?: { recipeId: string; from: string }; // saw someone delighted by this
   inspiredTimes?: number; // how many times they've been swayed this visit
   hadRecipes?: string[]; // what they've ordered this visit
@@ -300,6 +302,8 @@ export class Game {
   dirt = new Map<string, number>(); // table key "x,y" -> dirt units
   spills: Spill[] = [];
   crates: Crate[] = [];
+  /** Tag flips showing over guests' heads: the old tag turning over to the new (performance.now() start). */
+  tagFlips: { patronId: number; from: string; to: string; at: number }[] = [];
   coat = "slate"; // the keeper's coat, chosen at the wardrobe
   under = "linen"; // what shows under it: the head
   newGear: string[] = []; // kettles, coffee pots, Dutch ovens the carter brought, not yet set on a stove

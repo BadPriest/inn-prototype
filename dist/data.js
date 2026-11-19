@@ -248,6 +248,7 @@ export const currentDishId = (id) => LEGACY_DISH_ID[id] ?? id;
 export const SNACKS = DISHES_DATA.dishes.filter((d) => d.tableSnack).map((d) => ({
     id: d.id, name: d.name, icon: d.icon, tags: d.tags, blurb: d.text?.snackBowl,
     thirstPerHour: (d.effects?.onConsuming ?? []).reduce((a, e) => a + (e.thirst ?? 0), 0),
+    effects: d.effects?.onConsuming ?? [],
     boughtAs: d.boughtAs, madeAt: d.madeAt?.kinds[0],
     praise: d.text?.patronPraises ?? [], complaints: d.text?.patronComplaints ?? [],
 }));

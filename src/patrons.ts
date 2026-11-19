@@ -1,5 +1,6 @@
 // Patrons: arrivals, walking, ordering, waiting, eating, mess and leaving.
 
+import { opennessOf, patienceOf, showFlip } from "./snacks.js";
 import { chance, organic, pick, uid, weightedPick } from "./core.js";
 import { ARCHETYPES, CHATTER, NAMES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING, SHELTER, SEASONAL_TASTES, MARKET, SPECIFIC_ORDERS, type NeedId, type Archetype, type ItemKind, type Regular, garnishesFor, garnishById } from "./data.js";
 import type { Game, Group, Order, Patron, RegularState } from "./game.js";
@@ -128,7 +129,7 @@ export function maybeIntroduce(g: Game, p: Patron): void {
   if (def && st) {
     if (st.familiarity < (NAMES.learnAt[def.schema] ?? 0)) return;
     st.nameKnown = true;
-  } else if (!chance(p.archetype?.openness ?? 0.4)) return;
+  } else if (!chance(opennessOf(g, p, p.archetype?.openness ?? 0.4))) return;
   const role = p.name;
   p.name = p.trueName;
   const lines = p.schema === "reserved" ? NAMES.reservedLines : NAMES.lines;
@@ -473,9 +474,10 @@ const secondWait = (p: Patron) => (isFussy(p) ? 0.4 : 1);
  */
 export function walkoutProgress(g: Game, p: Patron): number | null {
   if (p.state !== "waiting") return null;
-  const total = p.patience * (1 + secondWait(p));
-  const leftNow = p.waitedSince + p.patience - g.minute;
-  const left = p.remindedOnce ? leftNow : leftNow + p.patience * secondWait(p);
+  const patience = patienceOf(g, p);
+  const total = patience * (1 + secondWait(p));
+  const leftNow = p.waitedSince + patience - g.minute;
+  const left = p.remindedOnce ? leftNow : leftNow + patience * secondWait(p);
   return Math.max(0, Math.min(1, 1 - left / total));
 }
 
@@ -768,6 +770,9 @@ function nibble(g: Game, p: Patron, simDt: number): void {
   const snack = SNACKS.find((x) => x.id === bowl.snack)!;
   const { score, hitLove } = tagScore(snack.tags, p.tastes.food);
   if (score >= 0) bowl.left = Math.max(0, bowl.left - (TUNING.bowlEatenPerHour / 60) * simDt * (hitLove ? 1.8 : 1));
+  // The first taste of a bowl that changes how things taste: shown over their head.
+  const flip = score >= 0 ? snack.effects.find((e) => e.flipTag)?.flipTag : undefined;
+  if (flip && !p.flipShown) { p.flipShown = true; showFlip(g, p, flip.from, flip.to); }
   if (!p.snackNoted && (hitLove || score < 0) && chance(TUNING.bowlCommentChance * simDt / 20)) {
     p.snackNoted = true;
     const name = snack.name.toLowerCase();
@@ -852,11 +857,11 @@ export function updatePatrons(g: Game, simDt: number): void {
         break;
       case "waiting": {
         const fussy = isFussy(p);
-        if (g.minute - p.waitedSince > p.patience) {
+        if (g.minute - p.waitedSince > patienceOf(g, p)) {
           const o = g.order(p.orderId);
           if (!p.remindedOnce) {
             p.remindedOnce = true;
-            p.waitedSince = g.minute - p.patience * (1 - secondWait(p));
+            p.waitedSince = g.minute - patienceOf(g, p) * (1 - secondWait(p));
             if (p.schema !== "reserved") {
               const nudge = fussy ? "Is anyone coming?" : `Still hoping for that ${o?.label.toLowerCase() ?? "order"}.`;
               g.speak(p, nudge, 1, true);

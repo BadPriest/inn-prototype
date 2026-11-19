@@ -79,6 +79,8 @@ export class Game {
     dirt = new Map(); // table key "x,y" -> dirt units
     spills = [];
     crates = [];
+    /** Tag flips showing over guests' heads: the old tag turning over to the new (performance.now() start). */
+    tagFlips = [];
     coat = "slate"; // the keeper's coat, chosen at the wardrobe
     under = "linen"; // what shows under it: the head
     newGear = []; // kettles, coffee pots, Dutch ovens the carter brought, not yet set on a stove

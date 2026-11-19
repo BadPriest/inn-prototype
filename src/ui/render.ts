@@ -359,6 +359,7 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
   drawLevelUp(ctx, g, v);
   drawGuide(ctx, g, v);
   drawSpeech(ctx, ts);
+  drawTagFlips(ctx, g, (p) => ({ x: X(p.pos.x), y: Y(p.pos.y) }), ts);
   drawCoinPops(ctx, g, v); // over the speech, so the coin always reads
 
   const busy = g.cleaning ?? g.pouring ?? g.winding;
@@ -694,6 +695,47 @@ export function crateCounts(g: Game): Map<string, number> {
   const m = new Map<string, number>();
   for (const c of g.crates) m.set(`${c.x},${c.y}`, (m.get(`${c.x},${c.y}`) ?? 0) + 1);
   return m;
+}
+
+/**
+ * A snack bowl flipping a tag (inn#74): over the guest's head, a pill with the old tag pops up, turns
+ * over like a card to show the new one, sits a moment, then floats off. `headOf`: where a guest's head
+ * is on screen.
+ */
+const FLIP_MS = 2600;
+export function drawTagFlips(ctx: CanvasRenderingContext2D, g: Game, headOf: (p: Patron) => { x: number; y: number } | null, ts: number): void {
+  const now = performance.now();
+  g.tagFlips = g.tagFlips.filter((f) => now - f.at < FLIP_MS);
+  for (const f of g.tagFlips) {
+    const p = g.patrons.find((x) => x.id === f.patronId);
+    const head = p && headOf(p);
+    if (!head) continue;
+    const t = now - f.at;
+    // Pop in with a little overshoot; turn over between 750 and 1150 ms; float up and fade at the end.
+    const pop = t < 320 ? (() => { const k = t / 320; return 1 + 2.2 * (k - 1) ** 3 + 1.2 * (k - 1) ** 2; })() : 1;
+    const turn = Math.min(1, Math.max(0, (t - 750) / 400));
+    const face = turn < 0.5 ? f.from : f.to;
+    const sx = Math.abs(Math.cos(turn * Math.PI));
+    const out = Math.max(0, (t - 2100) / 500);
+    // Beside the head (above it is the reaction and what they say).
+    ctx.font = `700 ${Math.max(12, Math.floor(ts * 0.3))}px system-ui, sans-serif`;
+    const w = Math.max(ctx.measureText(f.from).width, ctx.measureText(f.to).width) + ts * 0.4, h = Math.max(18, ts * 0.44);
+    const x = head.x + ts * 0.45 + w / 2;
+    const y = head.y - out * ts * 0.4 - (turn >= 1 ? Math.sin((t - 1150) / 180) * ts * 0.02 : 0);
+    ctx.save();
+    ctx.globalAlpha = 1 - out;
+    ctx.translate(x, y);
+    ctx.scale(Math.max(0.02, sx) * pop, pop);
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    const isNew = turn >= 0.5;
+    ctx.fillStyle = isNew ? "#ffd34d" : "#f4efe4";
+    ctx.strokeStyle = isNew ? "#7a5a10" : "#5a4636"; ctx.lineWidth = Math.max(1.5, ts * 0.04);
+    ctx.shadowColor = isNew ? "rgba(255,211,77,0.7)" : "rgba(0,0,0,0.4)"; ctx.shadowBlur = ts * 0.15;
+    roundRect(ctx, -w / 2, -h / 2, w, h, h / 2); ctx.fill(); ctx.shadowBlur = 0; ctx.stroke();
+    ctx.fillStyle = isNew ? "#3a2504" : "#3a2e26";
+    ctx.fillText(face, 0, 1);
+    ctx.restore();
+  }
 }
 
 export function badge(ctx: CanvasRenderingContext2D, x: number, y: number, text: string, ts: number): void {

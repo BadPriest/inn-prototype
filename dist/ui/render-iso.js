@@ -16,7 +16,7 @@ import { drawLevelUp } from "./levelup.js";
 import { coatColor, eyeColor, underColor } from "./wardrobe.js";
 import { gaitOf, keeperGait } from "../sound/footsteps.js";
 import { ISO, P, Pt, floorPath, turn, turnedSize, unproject, unturn } from "./proj.js";
-import { badge, barLabel, crateCounts, drawEyes, busyWord, jobWord, drawCoinPops, drawGuide, drawPatronWords, drawSpeech, say } from "./render.js";
+import { badge, barLabel, drawTagFlips, crateCounts, drawEyes, busyWord, jobWord, drawCoinPops, drawGuide, drawPatronWords, drawSpeech, say } from "./render.js";
 /** Height of the back walls, in tiles; every other wall is a low stub so you can see past it. */
 const TALL = 1.5;
 const LOW_WALL = 0.3;
@@ -343,6 +343,7 @@ export function drawIso(ctx, g, v, target, clickDest) {
     drawLevelUp(ctx, g, v);
     drawGuide(ctx, g, v);
     drawSpeech(ctx, ts);
+    drawTagFlips(ctx, g, (p) => P(v, p.pos.x, p.pos.y, HEAD_Z), ts);
     drawCoinPops(ctx, g, v); // over the speech, so the coin always reads
     const busy = g.cleaning ?? g.pouring ?? g.winding;
     if (busy) {
@@ -558,6 +559,7 @@ function drawReadables(ctx, g, v, byTile, target) {
     // The woodpile by the hearth: how many logs are left.
     for (const f of g.world.furniture.filter((x) => x.kind === "fireplace")) {
         const c = P(v, f.center.x, f.center.y, 1.1);
+        c.y -= ts * 0.45;
         const logs = Math.floor(have(g, "firewood"));
         ctx.font = `600 ${Math.floor(ts * 0.26)}px system-ui, sans-serif`;
         ctx.textAlign = "center";
