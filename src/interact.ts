@@ -7,6 +7,7 @@ import { GARNISHES, GRAMOPHONE, INGREDIENTS, RECIPES, REGULARS, SNACKS, TUNING, 
 import type { Crate, Game, Patron, SetDownTray, Spill } from "./game.js";
 import { unpackCrate } from "./supplies.js";
 import { openWardrobe } from "./ui/wardrobe.js";
+import { hasBackSpots, manageStoveSpec, openManageStove, stoveTabs } from "./ui/stove.js";
 import { dist, type Furniture, type Slot } from "./world.js";
 import { canPutBack, collectShelf, emptyPot, putBack, recipesFor, returnSlice, startJob, makeItem, serveFromPot, takeSlice, ticketFor, fillUrn, breadCaseKeys, breadCaseWithRoom, storeBread, takeBatch } from "./crafting.js";
 import { tableKey } from "./patrons.js";
@@ -440,6 +441,17 @@ const ACT_ICON: Record<string, string> = { "pick up": "🍽️", "take a serving
 function openActCards(g: Game, f: Furniture, subtitle: string, acts: StationAct[]): void {
   const st = { focus: 0 };
   const run = (i: number) => { const a = acts[i]; if (!a) return; closeAll(); g.bus.emit({ type: "MenuSound", sound: "tick" }); a.run(); };
+  // A stove with back spots: Use, and Manage stove.
+  const manage = hasBackSpots(f);
+  const own = [{ id: "use", name: "🔥 Use" }];
+  const leave = () => {
+    back();
+    const fresh = g.world.furniture.find((x) => x.id === f.id);
+    if (!fresh) return;
+    const choices = stationPlan(g, fresh).choices;
+    if (choices.length) openActCards(g, fresh, subtitle, choices); else openManageStove(g, fresh.id);
+  };
+  const showManage = () => { g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); replaceMenu(manageStoveSpec(g, f.id, stoveTabs(own, "manage"), ["use", "manage"], leave)); };
   const build = (): MenuSpec => {
     const cards: CardSpec[] = acts.map((a, i) => {
       // A label may start with its own icon ("🍲 Take a serving of stew"); otherwise one by what it does.
@@ -450,9 +462,13 @@ function openActCards(g: Game, f: Furniture, subtitle: string, acts: StationAct[
       title: f.name,
       subtitle,
       view: {
+        pinned: manage ? stoveTabs(own, "use") : undefined,
         html: grid(cards, { cols: Math.min(4, cards.length) }),
-        onPick: (v) => run(Number(v)),
-        onKey: gridKeys(() => cards.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, run),
+        onPick: (v) => { if (v === "tab:manage") { showManage(); return; } if (v.startsWith("tab:")) return; run(Number(v)); },
+        onKey: (e) => {
+          if (manage && e.key === "Tab") { e.preventDefault(); showManage(); return true; }
+          return gridKeys(() => cards.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, run)(e);
+        },
       },
       items: [],
     };
@@ -504,6 +520,7 @@ function useStation(g: Game, f: Furniture): void {
   const plan = stationPlan(g, f);
   if (plan.direct) { plan.direct.run(); return; }
   if (!plan.choices.length) {
+    if (hasBackSpots(f)) { openManageStove(g, f.id); return; }
     const job = (f.slots ?? []).map((sl) => g.jobs.get(sl.id)).find(Boolean);
     g.say(job?.done ? "It's done, waiting for room on the shelf." : "Still cooking. Hold F here to hurry it a little.");
     return;

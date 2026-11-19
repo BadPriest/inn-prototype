@@ -77,6 +77,7 @@ export class Game {
     spills = [];
     crates = [];
     coat = "linen"; // the keeper's coat, chosen at the wardrobe
+    newGear = []; // kettles, coffee pots, Dutch ovens the carter brought, not yet set on a stove
     setDown = [];
     groups = [];
     reservations = new Map(); // table key -> group id waiting for it

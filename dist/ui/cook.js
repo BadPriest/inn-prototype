@@ -8,7 +8,8 @@ import { amount, describeUses, have, shortOf, usesOf } from "../stock.js";
 import { INGREDIENTS, RECIPES } from "../data.js";
 import { startPour } from "../serving.js";
 import { makeItem, recipesFor, slotName, startJob, ticketFor } from "../crafting.js";
-import { closeAll, openMenu, replaceMenu } from "./menu.js";
+import { back, closeAll, openMenu, replaceMenu } from "./menu.js";
+import { hasBackSpots, manageStoveSpec, stoveTabs } from "./stove.js";
 import { chip, grid, gridKeys } from "./cards.js";
 const ingName = (id) => INGREDIENTS.find((x) => x.id === id)?.name.toLowerCase() ?? id;
 /** What always goes in: "water, salt". */
@@ -66,16 +67,29 @@ export function openRecipeScreen(g, slot) {
     const hasSnacks = recipes.some((r) => r.tableSnack) && recipes.some((r) => !r.tableSnack);
     if (!hasSnacks)
         recipeTab = recipes.some((r) => !r.tableSnack) ? "dishes" : "snacks";
-    if (recipes.length === 1) {
+    const manage = hasBackSpots(slot.f);
+    if (recipes.length === 1 && !manage) {
         openCookScreen(g, slot, recipes[0]);
         return;
     }
     const st = { focus: 0 };
+    const own = hasSnacks ? [{ id: "dishes", name: "🍲 Dishes" }, { id: "snacks", name: "🥜 Table snacks" }] : [{ id: "cook", name: "🔥 Cook" }];
+    const order = [...own.map((t) => t.id), "manage"];
+    /** Back from Manage stove: the stove may have changed, so the screen opens afresh on that tab. */
+    const leave = (tab) => {
+        if (tab === "dishes" || tab === "snacks")
+            recipeTab = tab;
+        back();
+        const fresh = g.world.furniture.flatMap((x) => x.slots ?? []).find((s) => s.id === slot.id);
+        if (fresh)
+            openRecipeScreen(g, fresh);
+    };
+    const showManage = () => { g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); replaceMenu(manageStoveSpec(g, slot.f.id, stoveTabs(own, "manage"), order, leave)); };
     const build = () => {
         // What guests are waiting for comes first.
         const list = recipes.filter((r) => !!r.tableSnack === (recipeTab === "snacks")).sort((a, b) => waiting(b) - waiting(a));
         const switchTab = () => { recipeTab = recipeTab === "dishes" ? "snacks" : "dishes"; st.focus = 0; g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); replaceMenu(build()); };
-        const tabs = hasSnacks ? `<div class="bf-tabs">${["dishes", "snacks"].map((t) => `<button class="${recipeTab === t ? "on" : ""}" data-pick="tab:${t}">${t === "dishes" ? "🍲 Dishes" : "🥜 Table snacks"}</button>`).join("")}</div>` : undefined;
+        const tabs = manage ? stoveTabs(own, hasSnacks ? recipeTab : "cook") : hasSnacks ? `<div class="bf-tabs">${["dishes", "snacks"].map((t) => `<button class="${recipeTab === t ? "on" : ""}" data-pick="tab:${t}">${t === "dishes" ? "🍲 Dishes" : "🥜 Table snacks"}</button>`).join("")}</div>` : undefined;
         const cards = list.map((r, i) => {
             const n = waiting(r);
             const onBoard = g.billNow().has(r.id);
@@ -98,12 +112,29 @@ export function openRecipeScreen(g, slot) {
             view: {
                 pinned: tabs,
                 html: grid(cards),
-                onPick: (v) => { if (v.startsWith("tab:")) {
-                    if (v.slice(4) !== recipeTab)
-                        switchTab();
-                    return;
-                } pick(Number(v)); },
+                onPick: (v) => {
+                    if (v === "tab:manage") {
+                        showManage();
+                        return;
+                    }
+                    if (v.startsWith("tab:")) {
+                        if (hasSnacks && v.slice(4) !== recipeTab)
+                            switchTab();
+                        return;
+                    }
+                    pick(Number(v));
+                },
                 onKey: (e) => {
+                    if (manage && e.key === "Tab") {
+                        e.preventDefault();
+                        const i = order.indexOf(hasSnacks ? recipeTab : "cook");
+                        const next = order[(i + (e.shiftKey ? -1 : 1) + order.length) % order.length];
+                        if (next === "manage")
+                            showManage();
+                        else
+                            switchTab();
+                        return true;
+                    }
                     if (hasSnacks && e.key === "Tab") {
                         e.preventDefault();
                         switchTab();

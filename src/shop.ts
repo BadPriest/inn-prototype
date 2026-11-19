@@ -65,7 +65,9 @@ export function carterArrives(g: Game): void {
   g.onOrder = [];
   for (const id of came) receive(g, id);
   const list = came.map((id) => nameOf(id).toLowerCase()).join(", ");
-  const place = came.some((id) => !isCarried(id)) ? " Place it from the desk: Arrange the kitchen." : "";
+  const gear = came.filter((id) => pieceById(id)?.type === "gear");
+  g.newGear.push(...gear);
+  const place = came.some((id) => !isCarried(id) && !gear.includes(id)) ? " Place it from the desk: Arrange the kitchen." : gear.length ? " Set it on a stove from the stove's Manage stove tab." : "";
   g.say(`🛻 The carter's been: ${list}.${place}`);
 }
 

@@ -1,7 +1,7 @@
 // The "Today" checklist: what to do before opening. The HUD shows it; ticking an item off
 // is announced (a Paper event), so the sound of a pen tick can follow.
 
-import { DEFAULT_MENU, RECIPES, SNACKS } from "./data.js";
+import { DEFAULT_MENU, RECIPES, SNACKS, lowerName, pieceById } from "./data.js";
 import type { Game } from "./game.js";
 import { stockOf } from "./crafting.js";
 import { currentStep, stepText, STEPS } from "./walkthrough.js";
@@ -15,12 +15,15 @@ export function objectives(g: Game): Objective[] {
   const bigText = big.length
     ? `Get the pots going in the kitchen: ${big.map((r) => `${r.icon} ${r.name.toLowerCase()}${stockOf(g, r.id) ? " ✓" : ""}`).join(", ")}`
     : "Get the pots going in the kitchen (nothing on the bill needs one today)";
+  const bigPieces = g.toPlace.filter((id) => pieceById(id)?.type !== "gear");
+  const newGear = g.newGear.filter((id) => g.toPlace.includes(id));
   return [
     { id: "bill", text: g.menuChosen ? "Sit at the desk in your room and set today's bill of fare" : `The bill of fare is on its default (${defaultBill()}). Sit at the desk in your room and set your own`, done: g.menuChosen },
     { id: "pots", text: bigText, done: big.every((r) => stockOf(g, r.id) > 0) },
     { id: "snacks", text: `Put a bowl of something out on the tables ${SNACKS.map((x) => x.icon).join("")}`, done: [...g.bowls.values()].some((b) => b.left > 0), optional: true },
     { id: "open", text: "Unbolt the front door and open the inn", done: g.open },
-    ...(g.toPlace.length ? [{ id: "place", text: `The carter left ${g.toPlace.length === 1 ? "something" : `${g.toPlace.length} things`}: place ${g.toPlace.length === 1 ? "it" : "them"} from the desk, under Arrange the kitchen`, done: false, optional: true }] : []),
+    ...(bigPieces.length ? [{ id: "place", text: `The carter left ${bigPieces.length === 1 ? "something" : `${bigPieces.length} things`}: place ${bigPieces.length === 1 ? "it" : "them"} from the desk, under Arrange the kitchen`, done: false, optional: true }] : []),
+    ...(newGear.length ? [{ id: "gear", text: `Set the new ${newGear.map((id) => lowerName(pieceById(id)!.name)).join(" and the ")} on the stove: its Manage stove tab`, done: false, optional: true }] : []),
   ];
 }
 

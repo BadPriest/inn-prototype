@@ -142,6 +142,9 @@ function setGearDown(g, tx, ty) {
         const i = g.toPlace.indexOf(h.type);
         if (i >= 0)
             g.toPlace.splice(i, 1);
+        const n = g.newGear.indexOf(h.type);
+        if (n >= 0)
+            g.newGear.splice(n, 1);
     }
     else {
         const placed = g.layout.find((x) => x.uid === h.uid);

@@ -130,6 +130,8 @@ function setGearDown(g: Game, tx: number, ty: number): void {
     g.layout.push({ uid: h.uid, type: h.type, x: stove.x, y: stove.y, on: stove.uid });
     const i = g.toPlace.indexOf(h.type);
     if (i >= 0) g.toPlace.splice(i, 1);
+    const n = g.newGear.indexOf(h.type);
+    if (n >= 0) g.newGear.splice(n, 1);
   } else {
     const placed = g.layout.find((x) => x.uid === h.uid)!;
     Object.assign(placed, { x: stove.x, y: stove.y, on: stove.uid });

@@ -847,6 +847,8 @@ export const TICKETS = {
 // ---------------------------------------------------------------------------
 // The bill of fare: what's on today. Set at the desk.
 export const DEFAULT_MENU = ["ale", "cider"];
+/** A name in the middle of a sentence: lower case, except a proper name ("Dutch oven"). */
+export const lowerName = (name) => (name.startsWith("Dutch ") ? name : name.toLowerCase());
 export const MEALS = [
     { id: "breakfast", name: "Breakfast", icon: "🍳", from: 7, to: 10 },
     { id: "lunch", name: "Lunch", icon: "🥪", from: 12, to: 14 },

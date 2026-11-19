@@ -293,6 +293,7 @@ export class Game {
   spills: Spill[] = [];
   crates: Crate[] = [];
   coat = "linen"; // the keeper's coat, chosen at the wardrobe
+  newGear: string[] = []; // kettles, coffee pots, Dutch ovens the carter brought, not yet set on a stove
   setDown: SetDownTray[] = [];
   groups: Group[] = [];
   reservations = new Map<string, number>(); // table key -> group id waiting for it

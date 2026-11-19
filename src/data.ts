@@ -1162,6 +1162,9 @@ export const TICKETS = {
 // The bill of fare: what's on today. Set at the desk.
 export const DEFAULT_MENU = ["ale", "cider"];
 
+/** A name in the middle of a sentence: lower case, except a proper name ("Dutch oven"). */
+export const lowerName = (name: string): string => (name.startsWith("Dutch ") ? name : name.toLowerCase());
+
 // Meal times: an advanced way to run the bill of fare. Off by default (one all-day bill).
 // Hours are clock hours from the morning; past midnight keeps counting (25 = 1 AM).
 export type MealId = "breakfast" | "lunch" | "dinner";

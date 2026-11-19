@@ -2,7 +2,7 @@
 // and a first buy. Each step pays its reward (data/walkthrough.json). The guide points at where to go,
 // in the room and in the menus.
 import { WALKTHROUGH_DATA } from "./gamedata.gen.js";
-import { ARCHETYPES, EQUIPMENT, RECIPES, pieceById } from "./data.js";
+import { ARCHETYPES, EQUIPMENT, RECIPES, lowerName, pieceById } from "./data.js";
 import { recipesFor, stockOf } from "./crafting.js";
 import { spawnPatron } from "./patrons.js";
 export const STEPS = WALKTHROUGH_DATA.steps;
@@ -144,8 +144,12 @@ export function worldGuide(g) {
             return { at: { x: crate.x + 0.5, y: crate.y + 0.5 }, z: 0.9, size: 0.8, label: "📦 Unpack supplies" };
         if (!deskGuide)
             return null;
-        if (g.toPlace.length)
+        if (g.toPlace.some((id) => pieceById(id)?.type !== "gear"))
             return { ...deskGuide, label: "🛠 Place new equipment" };
+        const gear = g.newGear.find((id) => g.toPlace.includes(id));
+        const stove = gear ? g.world.furniture.find((f) => (f.equip?.hotSlots ?? 0) > 0) : undefined;
+        if (gear && stove)
+            return { at: stove.center, z: 1.1, size: Math.max(1, stove.tiles.length * 0.6), label: `🔧 Set out the ${lowerName(pieceById(gear).name)}` };
         return g.newSkills ? { ...deskGuide, label: "✦ New skills available" } : null;
     }
     const dish = dishOf(g, w);
@@ -166,9 +170,13 @@ export function worldGuide(g) {
 export function menuGuide(g, title, root) {
     const w = g.walkthrough, s = currentStep(g);
     if (!w || !s) {
+        const gear = g.newGear.find((id) => g.toPlace.includes(id));
+        const stove = gear ? g.world.furniture.find((f) => (f.equip?.hotSlots ?? 0) > 0) : undefined;
+        if (gear && stove && title.startsWith(stove.name))
+            return [{ sel: `[data-pick="spare:${gear}"]` }, { sel: '[data-pick="tab:manage"]' }];
         if (title !== "🕯️ Desk")
             return [];
-        return [...(g.toPlace.length ? [{ sel: '[data-pick="arrange"]' }] : []), ...(g.newSkills ? [{ sel: '[data-pick="skills"]' }] : [])];
+        return [...(g.toPlace.some((id) => pieceById(id)?.type !== "gear") ? [{ sel: '[data-pick="arrange"]' }] : []), ...(g.newSkills ? [{ sel: '[data-pick="skills"]' }] : [])];
     }
     const dish = dishOf(g, w);
     const slot = slotFor(g, dish?.id);
