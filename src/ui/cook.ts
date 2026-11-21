@@ -7,7 +7,7 @@
 
 import { amount, describeUses, have, optionStages, previewTaken, shortOf, stageName, stagesInPantry, usesOf } from "../stock.js";
 import type { StageEffect } from "../gamedata.js";
-import { INGREDIENTS, RECIPES, type Recipe } from "../data.js";
+import { INGREDIENTS, RECIPES, defaultForRole, type Recipe } from "../data.js";
 import { startPour } from "../serving.js";
 import type { Game } from "../game.js";
 import type { Slot } from "../world.js";
@@ -49,6 +49,14 @@ export function ingredientsHtml(g: Game, r: Recipe): string {
   ].filter(Boolean);
   if (!rows.length && r.boughtAs) rows.push(`<div><b>Bought in:</b> ${one(r.boughtAs, 1)}</div>`);
   return rows.length ? `<div class="ings">${rows.join("")}</div>` : "";
+}
+
+/** What always goes in, as icons (a role, like the liquid, shows its plainest). */
+const fundamentalIcons = (r: Recipe): string => r.fundamental.map((u) => INGREDIENTS.find((x) => x.id === u.id)?.icon ?? (u.role ? defaultForRole(u.role)?.icon : "") ?? "").join("");
+/** Under a recipe card's name: how long, whether you stay with it, how much it makes. */
+function cardTime(r: Recipe): string {
+  const serves = r.storedIn === "piesafe" ? `${r.servings?.[0] ?? 6} slices` : r.servings ? `${r.servings[0]} servings` : "1 serving";
+  return [`~${Math.round(r.minutes[0])} min`, r.tended ? "tended" : "", r.id === "water" ? "" : serves].filter(Boolean).join(" · ");
 }
 
 /** The base choices as icons, for a card's face. */
@@ -108,15 +116,20 @@ export function openRecipeScreen(g: Game, slot: Slot): void {
     const cards: CardSpec[] = list.map((r, i) => {
       const n = waiting(r);
       const onBoard = g.billNow().has(r.id);
+      const extras = r.optional.pick[1];
+      const lines = [
+        r.fundamental.length ? `<div class="icons" title="Always in it">${fundamentalIcons(r)}</div>` : "",
+        r.base.options.length ? `<div class="icons" title="Base: choose ${r.base.pick[0] === r.base.pick[1] ? r.base.pick[0] : `${r.base.pick[0]}–${r.base.pick[1]}`}">${baseIcons(r)}</div>` : "",
+        extras ? `<div class="extras">+ up to ${extras} extra${extras === 1 ? "" : "s"}</div>` : "",
+        r.internal ? "" : `<div class="menu-state ${n ? "good" : onBoard || r.tableSnack ? "" : "muted"}">${n ? `${n} waiting · ` : ""}${r.tableSnack ? "for the tables" : onBoard ? "on the menu" : "not on the menu"}</div>`,
+        r.blurb ? `<div class="flav">${r.blurb}</div>` : "",
+      ].filter(Boolean).join("");
       return {
         pick: String(i), icon: r.icon, name: r.name, focus: i === st.focus,
-        fact: `${timeOf(r)}${r.base.options.length ? ` · ${baseIcons(r)}` : ""}`,
-        status: n ? `${n} waiting` : r.internal ? "" : r.tableSnack ? "for the tables" : onBoard ? "on the board" : "not on the board",
-        tone: n ? "good" : onBoard || r.internal || r.tableSnack ? undefined : "muted",
+        sub: cardTime(r),
+        body: lines,
         tags: r.baseTags,
         detail: `${makesOf(r, slot)}.${ingredientsHtml(g, r)}`,
-        flavour: r.blurb,
-        does: "Choose its ingredients",
       };
     });
     const pick = (i: number) => { const r = list[i]; if (r) openCookScreen(g, slot, r); };

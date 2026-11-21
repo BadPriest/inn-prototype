@@ -71,16 +71,17 @@ export function card(c) {
     const extra = `${c.detail ? `<div class="detail">${c.detail}</div>` : ""}${c.flavour ? `<div class="flavour">${c.flavour}</div>` : ""}${c.does ? `<div class="does">${c.does}</div>` : ""}`;
     // Open cards (a few big choices) show it all on the face; the rest keep it for the drawer.
     const drawer = !open && (c.detail || c.does || c.flavour) ? `<div class="more">${extra}</div>` : "";
-    const cls = ["icard", c.on && "on", c.off && "off", c.focus && "focus", have && "has", c.warn && "warn", drawer && "drawer", open && "isopen", c.band && "banded", c.under?.length && "deck", c.count && "counted"].filter(Boolean).join(" ");
+    const cls = ["icard", c.on && "on", c.off && "off", c.focus && "focus", have && "has", c.warn && "warn", drawer && "drawer", open && "isopen", c.sub && "subbed", c.band && "banded", c.under?.length && "deck", c.count && "counted"].filter(Boolean).join(" ");
     return `<div class="${cls}" data-pick="${c.pick}"${c.title ? ` title="${c.title}"` : ""}>
       ${underCards(c.under ?? [])}${c.on && !c.count ? `<i class="seal">✓</i>` : ""}
       ${c.band ? bandHtml(c.band) : ""}
       <div class="face">
-        <span class="ic">${c.icon}</span><span class="nm">${c.name}</span>
+        <span class="ic">${c.icon}</span><span class="nm">${c.name}</span>${c.sub ? `<div class="sub">${c.sub}</div>` : ""}
         ${c.fact ? `<div class="fact">${c.fact}</div>` : ""}
         ${c.where ? `<div class="where">${c.where}</div>` : ""}
         ${c.status ? `<div class="status ${c.tone ?? ""}">${c.status}</div>` : ""}
         ${c.note ? `<div class="note">${c.note}</div>` : ""}
+        ${c.body ? `<div class="body">${c.body}</div>` : ""}
         ${c.tags?.length ? `<div class="chips">${c.tags.map((t) => chip(t)).join("")}</div>` : ""}
         ${open && extra ? `<div class="open">${extra}</div>` : ""}
       </div>
@@ -140,13 +141,14 @@ export function settleCards(root) {
         does?.remove();
         const back = box2.innerHTML.trim();
         el.innerHTML = `${[...c.querySelectorAll(".uc")].map((u) => u.outerHTML).join("")}<div class="flipper">
-        <div class="side front">${c.querySelector(".band")?.outerHTML ?? ""}${c.querySelector(".face")?.outerHTML ?? ""}${does ? `<div class="open" style="border:none;margin:0;padding:0 10px 6px">${does.outerHTML}</div>` : ""}${back ? `<div class="turn">${padActive() ? "R3" : "F or right-click"}: <b>turn it over</b></div>` : ""}${c.querySelector(".have")?.outerHTML ?? ""}${c.querySelector(".count")?.outerHTML ?? ""}</div>
+        <div class="side front">${c.querySelector(".band")?.outerHTML ?? ""}${c.querySelector(".face")?.outerHTML ?? ""}${does ? `<div class="open" style="border:none;margin:0;padding:0 10px 6px">${does.outerHTML}</div>` : ""}${c.querySelector(".have")?.outerHTML ?? ""}${c.querySelector(".count")?.outerHTML ?? ""}</div>
         ${back ? `<div class="side back"><div class="bk-name">${c.querySelector(".nm")?.innerHTML ?? ""}</div><div class="open">${back}</div></div>` : ""}
-      </div>`;
+      </div>${back ? `<button class="flip-tab" title="Turn it over (F, right-click)"><span class="fa">↻</span><span class="fk">${padActive() ? "R3" : "F"}</span><span class="fw">flip</span></button>` : ""}`;
         if (back && turned === c.dataset.pick)
             el.classList.add("flipped");
         else
             turned = null;
+        el.querySelector(".flip-tab")?.addEventListener("click", (e) => { e.stopPropagation(); flipCard(); });
         root.appendChild(el);
         zoom = el;
         // Where it ends up: wider, as tall as its text needs, centred on the card and kept on screen.
@@ -180,6 +182,7 @@ export function settleCards(root) {
             (twin ?? c).click();
         });
         el.addEventListener("mouseleave", (e) => {
+            turned = null; // put down: it lies face up again
             const to = e.relatedTarget?.closest?.(".cards .icard");
             show(to ?? focused());
         });

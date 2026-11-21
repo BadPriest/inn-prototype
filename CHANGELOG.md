@@ -10,9 +10,13 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ### Changed
 - **The stack of stages is real cards.** The older stages of an ingredient sit as cards behind the top one, each peeking out above it, slightly turned, with its band's colour showing (amber on the turn, rust stale). Turning the top card over leaves them where they are.
+- **Recipe cards say it all on their face**: the picture, the name, then "~14 min · tended · 7 servings" over a rule; what always goes in as icons; the base choices as icons; "+ up to 2 extras"; on the menu or not (and who's waiting); the dish's flavour line; its tags at the foot. "Choose its ingredients" is gone. The back holds how it's made and what's in the pantry.
+- **A flip tab instead of key hints**: the card picked up has a small ↻ tab just off its corner showing the key (F, or R3 on a controller) and "flip"; click it, right-click or press the key to turn the card over. The hint line no longer mentions it.
+- **Cards lie flat until you tilt them**: no tilt by default; the sheen sits in the middle until the pointer or the right stick moves it.
 
 ### Fixed
 - **A card's back is centred**: the name and the text panel sit in the middle of the card, not off to one side.
+- **A turned card turns back** to its face when you move away from it.
 
 ## Build 117 · Nov 21, 2026 · deployed
 

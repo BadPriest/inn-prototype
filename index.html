@@ -177,17 +177,25 @@
   .icard .uc.b-fresh { --band:#79c062; } .icard .uc.b-past { --band:#e2b445; } .icard .uc.b-cost { --band:#cf6442; }
   .icard.deck { margin-top:10px; }
   .icard:hover, .icard.focus { --lift:-5px; --sheen:1; z-index:2; box-shadow:0 12px 18px rgba(0,0,0,.55); }
-  .icard.focus { --rx:6deg; box-shadow:0 0 0 2px var(--accent), 0 0 14px rgba(255,211,77,.45), 0 14px 20px rgba(0,0,0,.55); }
+  .icard.focus { box-shadow:0 0 0 2px var(--accent), 0 0 14px rgba(255,211,77,.45), 0 14px 20px rgba(0,0,0,.55); }
   .icard.on { --stock-bg:radial-gradient(130% 90% at 30% 0%, #fff6dc 0%, #f4e2b4 55%, #e8cf92 100%); --frame:#c08a1a; }
   .icard .seal { position:absolute; top:-7px; right:-7px; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font:700 13px system-ui; font-style:normal;
     color:#fff4d6; background:radial-gradient(circle at 35% 30%, #d9474a, #8e1c22); box-shadow:0 2px 4px rgba(0,0,0,.5), inset 0 0 0 2px rgba(255,255,255,.15); z-index:3; }
   .icard.has { --frame:#6f8a55; }
   .icard::after { content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; opacity:var(--sheen, 0); transition:opacity .25s;
-    background:radial-gradient(60% 45% at var(--mx, 50%) var(--my, 0%), rgba(255,255,255,.55), rgba(255,255,255,0) 70%), linear-gradient(115deg, rgba(255,255,255,0) 35%, rgba(255,255,255,.18) 50%, rgba(255,255,255,0) 65%); mix-blend-mode:soft-light; }
+    background:radial-gradient(60% 45% at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,.55), rgba(255,255,255,0) 70%), linear-gradient(115deg, rgba(255,255,255,0) 35%, rgba(255,255,255,.18) 50%, rgba(255,255,255,0) 65%); mix-blend-mode:soft-light; }
   .icard .face { padding:9px 8px 8px; flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; }
   .icard .ic { display:flex; align-items:center; justify-content:center; width:100%; height:calc(var(--w) * 0.48); box-sizing:border-box; font-size:34px; line-height:1;
     border-radius:5px; background:radial-gradient(90% 90% at 50% 35%, #4a3828, #22170f); box-shadow:inset 0 0 0 1px #6b5030, inset 0 0 0 2px rgba(255,236,200,.18), inset 0 3px 8px rgba(0,0,0,.6); margin-bottom:3px; }
   .icard .nm { font:600 13px/1.15 Georgia, serif; letter-spacing:.01em; color:var(--ink-card); padding-bottom:3px; border-bottom:1px solid rgba(154,122,80,.45); width:88%; }
+  .icard .sub { font:11px system-ui; color:var(--sub); padding:1px 0 4px; border-bottom:1px solid rgba(154,122,80,.45); width:88%; }
+  .icard.subbed .nm { border-bottom:none; padding-bottom:0; }
+  .icard .body { display:flex; flex-direction:column; align-items:center; gap:2px; width:100%; margin-top:3px; }
+  .icard .body .icons { font-size:15px; line-height:1.25; letter-spacing:1px; }
+  .icard .body .extras { font:11px system-ui; color:var(--sub); }
+  .icard .body .menu-state { font:600 11px system-ui; color:var(--ink-card); margin-top:1px; }
+  .icard .body .menu-state.good { color:#3c7426; } .icard .body .menu-state.muted { color:#8e7d68; font-weight:400; }
+  .icard .body .flav { font:italic 11.5px/1.35 Georgia, serif; color:#6c5844; margin-top:4px; padding:0 2px; }
   .icard .fact { font:600 12px system-ui; color:var(--ink-card); margin-top:2px; }
   .icard .unit { font-weight:400; color:var(--sub); font-size:11px; }
   .icard .status { font:11.5px/1.25 system-ui; color:var(--sub); }
@@ -233,13 +241,17 @@
     box-shadow:inset 0 0 0 5px transparent, inset 0 0 0 6px rgba(154,122,80,.6), 0 18px 34px rgba(0,0,0,.65); }
   .icard.zoomed.on .side.front { background:radial-gradient(130% 90% at 30% 0%, #fff6dc 0%, #f4e2b4 55%, #e8cf92 100%); }
   .icard.zoomed.focus .side { box-shadow:inset 0 0 0 6px rgba(154,122,80,.6), 0 0 0 2px var(--accent), 0 18px 34px rgba(0,0,0,.65); }
-  .icard.zoomed .side::after { content:""; position:absolute; inset:0; pointer-events:none; background:radial-gradient(60% 45% at var(--mx, 50%) var(--my, 0%), rgba(255,255,255,.5), rgba(255,255,255,0) 70%); mix-blend-mode:soft-light; }
+  .icard.zoomed .side::after { content:""; position:absolute; inset:0; pointer-events:none; background:radial-gradient(60% 45% at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,.5), rgba(255,255,255,0) 70%); mix-blend-mode:soft-light; }
   .icard.zoomed .side.back { transform:rotateY(180deg); padding:14px; box-sizing:border-box; justify-content:center; align-items:center; }
   .icard.zoomed .side.back { background:repeating-linear-gradient(45deg, rgba(154,122,80,.16) 0 1.5px, transparent 1.5px 9px), repeating-linear-gradient(-45deg, rgba(154,122,80,.16) 0 1.5px, transparent 1.5px 9px), radial-gradient(130% 90% at 30% 0%, var(--stock-hi) 0%, var(--stock) 55%, var(--stock-lo) 100%); }
   .icard.zoomed .side.back .open { position:relative; margin:0; width:auto; align-self:stretch; padding:8px 8px 6px; border-top:none; background:rgba(251,244,228,.85); border-radius:6px; box-shadow:inset 0 0 0 1px rgba(154,122,80,.45); }
   .icard.zoomed .side.back .bk-name { position:relative; font:600 13px Georgia, serif; text-align:center; margin:2px 0 4px; color:var(--ink-card); }
-  .icard.zoomed .turn { font:10.5px system-ui; color:var(--sub); text-align:center; padding:0 6px 7px; }
-  .icard.zoomed .turn b { color:var(--ink-card); font-weight:600; }
+  .icard.zoomed .flip-tab { position:absolute; right:-14px; bottom:-14px; z-index:6; width:42px; height:42px; border-radius:50%; padding:0; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0;
+    background:radial-gradient(circle at 35% 30%, #4a3826, #23170e); color:#ffd34d; border:2px solid #c9a24a; box-shadow:0 4px 10px rgba(0,0,0,.6); transition:transform .15s; }
+  .icard.zoomed .flip-tab:hover { transform:scale(1.08) rotate(-15deg); }
+  .icard.zoomed .flip-tab .fa { font:700 16px/1 system-ui; }
+  .icard.zoomed .flip-tab .fk { font:700 10px/1.1 system-ui; color:#fff2cc; }
+  .icard.zoomed .flip-tab .fw { font:8px/1 system-ui; color:#c9a24a; letter-spacing:.05em; text-transform:uppercase; }
   .icard.zoomed.off .side.front .face { filter:grayscale(.75) brightness(.8); }
   .icard.zoomed .ic { font-size:40px; height:84px; }
   .icard.warn:not(.zoomed) { animation:warnpulse 1.4s ease-in-out infinite; }

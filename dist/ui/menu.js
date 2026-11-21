@@ -241,8 +241,8 @@ function render() {
     const s = top.spec;
     const onlyButtons = s.items.length > 0 && s.items.every((it) => it.button);
     const hint = padActive()
-        ? padGlyphs(s.view ? `D-pad choose · Space picks${s.view.html.includes('class="more"') ? " · R3 turns a card over" : ""}${s.view.keys ? ` · ${s.view.keys}` : ""}${s.items.some((it) => it.button === "primary") ? " · □ confirms" : ""} · ○ back` : `D-pad choose · Space confirms${s.modal && stack.length === 1 ? "" : " · ○ back"}`)
-        : s.view ? `Arrows choose · Space picks${s.view.html.includes('class="more"') ? " · F turns a card over" : ""}${s.view.keys ? ` · ${s.view.keys}` : ""} · Enter confirms · Backspace back · Esc close`
+        ? padGlyphs(s.view ? `D-pad choose · Space picks${s.view.keys ? ` · ${s.view.keys}` : ""}${s.items.some((it) => it.button === "primary") ? " · □ confirms" : ""} · ○ back` : `D-pad choose · Space confirms${s.modal && stack.length === 1 ? "" : " · ○ back"}`)
+        : s.view ? `Arrows choose · Space picks${s.view.keys ? ` · ${s.view.keys}` : ""} · Enter confirms · Backspace back · Esc close`
             : s.modal && stack.length === 1 ? `${onlyButtons ? "←→" : "↑↓"} choose · Enter confirm` : "↑↓ choose · Enter confirm · Backspace back · Esc close";
     const row = (it, i) => `
           <div class="menu-item ${i === top.index && (!s.view || top.inItems) ? "sel" : ""} ${it.disabled ? "dis" : ""}" data-i="${i}">
