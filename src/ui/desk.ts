@@ -44,7 +44,7 @@ export function openDeskScreen(g: Game, openJournal: () => void): void {
       { pick: "prices", icon: "🪙", name: "House Prices",
         fact: `Set to: ${level.name}`,
         status: `${level.blurb[0].toUpperCase()}${level.blurb.slice(1)} · ale ${fmtMoney(priceOfRecipe(g, "ale"))} a pint`,
-        body: `<div class="desc">Cheaper brings a few more guests; dearer, a few fewer.</div>`,
+        body: `<div class="desc">Cheaper brings a few more guests; dearer, fewer.</div>`,
         cta: "Choose a price level" },
       { pick: "paper", icon: "📰", name: "Today's Newspaper",
         fact: !g.paper ? "None yet" : g.paper.read ? "Read" : "Unread",
@@ -123,7 +123,7 @@ export function openDeskScreen(g: Game, openJournal: () => void): void {
 function openHousePrices(g: Game, changed: () => void): void {
   const st = { focus: Math.max(0, PRICE_LEVELS.findIndex((l) => l.id === g.priceLevel)) };
   const ale = (factor: number) => fmtMoney(Math.max(1, Math.round(priceOfRecipe(g, "ale") / priceLevel(g).factor * factor)));
-  const FLOW = { cheap: "A few more guests come in", fair: "The usual number of guests", dear: "A few fewer guests come in" } as const;
+  const FLOW = { cheap: "A few more guests come in", fair: "The usual number of guests", dear: "Fewer guests come in" } as const;
   const build = (): MenuSpec => {
     const cards: CardSpec[] = PRICE_LEVELS.map((l, i) => ({
       pick: l.id, icon: l.id === "cheap" ? "🪙" : l.id === "fair" ? "⚖️" : "💰", name: l.name,

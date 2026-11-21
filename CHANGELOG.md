@@ -6,6 +6,16 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 119 · Nov 22, 2026 · not deployed
+
+### Changed
+- **Dear prices turn more guests away**: 70% of the usual guests come in (was 90%). Before, Dear always earned the most, because the room has seats to spare and losing a few guests cost nothing; now Fair and Dear earn about the same (about 4s a day apart in a simulated week), and the desk says "dearer, fewer".
+
+### Added
+- **The autopilot keeper** (`tools/sim/`, not in the game): runs the real game for a week in headless Chrome, serving, cooking, cleaning and ordering stock itself, and reports the money day by day, the guests hour by hour (come in, turned away, in the room) and how often serves delight. A "learner" keeper repeats whatever delighted each kind of guest; a "random" one picks ingredients at random.
+
+---
+
 ## Build 118 · Nov 21, 2026 · deployed
 
 ### Changed

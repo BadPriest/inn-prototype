@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 21, 2026 · build 118 (deployed) · https://inn-prototype.vercel.app
+Updated Nov 22, 2026 · build 119 (not deployed; 118 is live) · https://inn-prototype.vercel.app
 
 History by build: [../CHANGELOG.md](../CHANGELOG.md). What the prototype is and how to play: [../README.md](../README.md).
 
@@ -25,6 +25,10 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - #9 gramophone: horn and turntable tone; winding has a progress bar; the spring runs ~4 min (short for testing) and sags the record when it gives out (per [specs/sound.md](specs/sound.md))
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
+
+## Built, not deployed (Nov 22, build 119)
+
+- Build 119: Dear lets in 70% of guests (was 90%); the autopilot keeper (`tools/sim/run.mjs`) runs a week of the real game and reports money, guests by hour and the delight rate. First week, town, Fair: about 38s net a day (targets 4–9s), 45 guests, keeper busy a third of the time, mornings nearly empty, 2–4 groups an hour turned away at 6–9 pm, Delights 46% picking at random and 56% repeating what worked.
 
 ## Built and deployed (Nov 21, builds 117–118)
 

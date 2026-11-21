@@ -139,7 +139,7 @@ The built `dist/` folder is committed, so a fresh clone runs with `npm start` wi
 | `src/ui/` (others) | Light, tickets, side panel, menus and card screens (desk, bill of fare, shop, cooking, larder, trays), arranging the kitchen, calendar, newspaper, location picker |
 | `src/gamepad.ts` | The controller: read each frame and turned into the same keys and clicks as the keyboard and mouse |
 | `src/main.ts` | Input, settings, the pause and keys screens, the welcome screen and the main loop |
-| `tools/` | The build (`build.mjs`), the standalone packer (`standalone.mjs`), the deploy (`deploy.mjs`) |
+| `tools/` | The build (`build.mjs`), the standalone packer (`standalone.mjs`), the deploy (`deploy.mjs`), the autopilot keeper that plays a week and reports the money (`sim/run.mjs`) |
 | `assets/sounds/` | Sound files, packed into `standalone.html` by the build |
 
 Systems talk through the event bus in `core.ts` rather than calling each other directly where possible.
