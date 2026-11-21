@@ -6,6 +6,14 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 118 · Nov 21, 2026 · not deployed
+
+### Changed
+- **The stack of stages is real cards.** The older stages of an ingredient sit as cards behind the top one, each peeking out above it, slightly turned, with its band's colour showing (amber on the turn, rust stale). Turning the top card over leaves them where they are.
+
+### Fixed
+- **A card's back is centred**: the name and the text panel sit in the middle of the card, not off to one side.
+
 ## Build 117 · Nov 21, 2026 · deployed
 
 ### Added

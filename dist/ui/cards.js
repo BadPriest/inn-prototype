@@ -13,16 +13,14 @@ export function chip(tag, highlight = false) {
 }
 /** A stage's colour, by what it does to a dish: costs it (taste or price), fresh, or past fresh but harmless. */
 export const stageTone = (index, e) => (e.tastePenalty < 0 || e.priceFactor < 1 ? "cost" : index === 0 ? "fresh" : "past");
-const BAND_COLOUR = { fresh: "#6fbf5a", past: "#e0b040", cost: "#d0623f" };
 function bandHtml(b) {
     return `<div class="band b-${b.tone}">${b.shuffle ? `<button class="shuffle" data-pick="${b.shuffle}" title="Shuffle: the next stage on top">⇄</button>` : ""}<span class="bl">${b.label}</span>${b.at ? `<span class="at">${b.at}</span>` : ""}</div>`;
 }
 function countHtml(c) {
     return `<div class="count"><button class="cminus" data-pick="${c.minus}"${c.n ? "" : " disabled"} title="Take one off">−</button><span class="cn">${c.n}</span><button class="cplus" data-pick="${c.plus}"${c.plusOff ? " disabled" : ""} title="Add one">+</button></div>`;
 }
-/** The cards stacked under one, as shadows offset down and right in their bands' colours (bigger when the card is grown). */
-const underShadow = (u, scale = 1) => u.map((t, k) => `${3 * scale * (k + 1)}px ${3 * scale * (k + 1)}px 0 ${-k}px ${BAND_COLOUR[t]}`).join(",");
-const underStyle = (u) => (u.length ? ` data-under="${u.join(",")}" style="--under:${underShadow(u)}"` : "");
+/** The cards stacked under one: each peeks out behind it, its stage's band showing. */
+const underCards = (u) => u.map((t, k) => `<i class="uc b-${t}" style="--k:${k + 1}"></i>`).reverse().join("");
 // ---------------------------------------------------------------------------
 // The feel of a card in the hand: it tilts towards the pointer with a sheen across it, and the one
 // picked up turns over to its back (F, right-click, R3 on a controller); the right stick tilts it.
@@ -74,7 +72,8 @@ export function card(c) {
     // Open cards (a few big choices) show it all on the face; the rest keep it for the drawer.
     const drawer = !open && (c.detail || c.does || c.flavour) ? `<div class="more">${extra}</div>` : "";
     const cls = ["icard", c.on && "on", c.off && "off", c.focus && "focus", have && "has", c.warn && "warn", drawer && "drawer", open && "isopen", c.band && "banded", c.under?.length && "deck", c.count && "counted"].filter(Boolean).join(" ");
-    return `<div class="${cls}" data-pick="${c.pick}"${c.title ? ` title="${c.title}"` : ""}${underStyle(c.under ?? [])}>
+    return `<div class="${cls}" data-pick="${c.pick}"${c.title ? ` title="${c.title}"` : ""}>
+      ${underCards(c.under ?? [])}${c.on && !c.count ? `<i class="seal">✓</i>` : ""}
       ${c.band ? bandHtml(c.band) : ""}
       <div class="face">
         <span class="ic">${c.icon}</span><span class="nm">${c.name}</span>
@@ -133,8 +132,6 @@ export function settleCards(root) {
         const r = c.getBoundingClientRect(), box = root.getBoundingClientRect();
         const el = document.createElement("div");
         el.className = `${c.className} zoomed`;
-        if (c.dataset.under)
-            el.style.setProperty("--under", underShadow(c.dataset.under.split(","), 2));
         el.dataset.pick = c.dataset.pick;
         // Picked up: the front as it lies, with what picking it does; the back has the rest to read.
         const box2 = document.createElement("div");
@@ -142,7 +139,7 @@ export function settleCards(root) {
         const does = box2.querySelector(".does");
         does?.remove();
         const back = box2.innerHTML.trim();
-        el.innerHTML = `<div class="flipper">
+        el.innerHTML = `${[...c.querySelectorAll(".uc")].map((u) => u.outerHTML).join("")}<div class="flipper">
         <div class="side front">${c.querySelector(".band")?.outerHTML ?? ""}${c.querySelector(".face")?.outerHTML ?? ""}${does ? `<div class="open" style="border:none;margin:0;padding:0 10px 6px">${does.outerHTML}</div>` : ""}${back ? `<div class="turn">${padActive() ? "R3" : "F or right-click"}: <b>turn it over</b></div>` : ""}${c.querySelector(".have")?.outerHTML ?? ""}${c.querySelector(".count")?.outerHTML ?? ""}</div>
         ${back ? `<div class="side back"><div class="bk-name">${c.querySelector(".nm")?.innerHTML ?? ""}</div><div class="open">${back}</div></div>` : ""}
       </div>`;
