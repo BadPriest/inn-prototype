@@ -7,6 +7,8 @@ import { grid, gridKeys } from "./cards.js";
 import { openNewspaper } from "./newspaper.js";
 import { openCalendar } from "./calendar.js";
 import { openSupplies } from "./supplies.js";
+import { whenText } from "../supplies.js";
+import { SUPPLIERS_DATA } from "../gamedata.gen.js";
 import { ingredientsHtml } from "./cook.js";
 import { knows, pointsLeft } from "../skills.js";
 import { openSkills } from "./skills.js";
@@ -42,9 +44,9 @@ export function openDeskScreen(g, openJournal) {
                 detail: `${g.date.weekday}. This season's days: the weather so far, market days, and when the next season begins.`,
                 does: "See the season" },
             { pick: "supplies", icon: "🧺", name: "Supplies",
-                fact: g.deliveries.length ? `🛻 ${Math.min(...g.deliveries.map((d) => d.day)) <= g.day + 1 ? "due tomorrow" : `${g.deliveries.length} coming`}` : Object.values(g.slips).some((x) => Object.values(x).some(Boolean)) ? "A slip pencilled" : undefined,
-                status: g.deliveries.length ? undefined : "Order what the pantry needs.",
-                tone: g.deliveries.length ? "good" : undefined,
+                fact: g.crates.length ? `📦 ${g.crates.length > 1 ? `${g.crates.length} crates` : "A crate"} at the kitchen door` : g.deliveries.length ? `🛻 Expected ${whenText(g, Math.min(...g.deliveries.map((d) => d.day))).replace(" morning", "")}` : Object.values(g.slips).some((x) => Object.values(x).some(Boolean)) ? "A slip pencilled" : undefined,
+                status: g.deliveries.length ? expected(g) : g.crates.length ? "Unpack it into the pantry." : "Order what the pantry needs.",
+                tone: g.crates.length ? "warn" : g.deliveries.length ? "good" : undefined,
                 detail: "A slip for each supplier: pencil in what you need, then send it for the carter to bring, or fetch it yourself while the inn's shut.",
                 does: "Open the slips" },
             { pick: "shop", icon: "🛒", name: "Equipment",
@@ -158,6 +160,12 @@ function openHousePrices(g, changed) {
 // Two modes: one all-day bill (the default), or meal times, where each meal has its own bill (a tab
 // each) and between meals there are only drinks. Bills carry over from day to day.
 /** What can go on the bill of fare (not the kettle's hot water). */
+/** Who comes with the next delivery, and when the one after is: "Hollin's Farm · more on Friday". */
+function expected(g) {
+    const days = [...new Set(g.deliveries.map((d) => d.day))].sort((a, b) => a - b);
+    const who = [...new Set(g.deliveries.filter((d) => d.day === days[0]).map((d) => SUPPLIERS_DATA.suppliers.find((s) => s.id === d.supplierId)?.name ?? d.supplierId))].join(", ");
+    return `${who}${days[1] !== undefined ? ` · more on ${g.dateOfDay(days[1]).weekday}` : ""}`;
+}
 const MENU = RECIPES.filter((r) => !r.internal && !r.tableSnack);
 const DRINKS = MENU.filter((r) => r.kind === "drink");
 const TABS = [...MEALS.map((m) => m.id), "between"];

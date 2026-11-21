@@ -962,7 +962,7 @@ export const SOUNDS: Record<string, SoundDef> = {
   kettle: { files: [SND + "cooking/kettle-water-boiling-looping.opus"], volume: 0.45, pitch: 0.04, loop: true },
   stewCooking: { files: [SND + "cooking/stew-cooking-loop.opus"], volume: 0.5, pitch: 0.04, loop: true },
   stewSimmering: { files: [SND + "cooking/stew-simmering-loop.opus"], volume: 0.4, pitch: 0.04, loop: true },
-  frying: { files: [SND + "cooking/frying-loop.opus"], volume: 0.45, pitch: 0.05, loop: true }, // a pan on the hob: while anything made at a griddle cooks
+  frying: { files: [SND + "cooking/frying-loop.opus"], volume: 0.5, pitch: 0.05, loop: true }, // a pan on the hob: while anything made at a griddle cooks
   // Footsteps: one step per stride (see SOUND_TUNING), so the pace always matches the walking.
   keeperWalk: { files: [SND + "foley/indoors-walk-step-loop.opus", SND + "foley/indoors-walk-cycle-4-step-loop.opus"], volume: 0.4, pitch: 0.06, slice: true },
   keeperRun: { files: [SND + "foley/indoors-run-cycle-loop.opus"], volume: 0.45, pitch: 0.06, slice: true },
@@ -1041,7 +1041,7 @@ export const SOUNDS: Record<string, SoundDef> = {
   // Background music (sound/bgm.ts): plays when the gramophone has been quiet a while. Clean, not through
   // the horn, heard the same everywhere. Originals are in assets/sounds/music/bgm/.
   // A jingle as the keeper turns in (sound.ts, on TurnedIn): a short piece of its own, not in the rotation.
-  firstLight: { bus: "cue", heardEverywhere: true, files: [SND + "cues/cue-first-light.opus"], volume: 0.5, pitch: 0, trim: true }, // waking up: each morning, in a quiet room
+  firstLight: { bus: "cue", heardEverywhere: true, files: [SND + "cues/cue-first-light.opus"], volume: 0.28, pitch: 0, trim: true }, // waking up: each morning, in a quiet room
   levelUp: { bus: "cue", heardEverywhere: true, files: [SND + "cues/cue-level-up.opus"], volume: 0.55, pitch: 0, trim: true }, // a level up, with the golden wave
   turnIn: { bus: "music", heardEverywhere: true, files: [SND + "jingles/the-last-candle.opus"], volume: 0.25, pitch: 0 }, // The Last Candle
   bgmDawn: { bus: "music", heardEverywhere: true, files: [SND + "bgm/dawn-in-the-vale.opus"], volume: 0.15, pitch: 0 }, // Dawn in the Vale

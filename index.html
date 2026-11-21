@@ -265,14 +265,25 @@
   #status .st-gain { font:700 13px system-ui; color:#ffe08a; opacity:0; transform:translateY(4px); transition:opacity .4s, transform .4s; text-shadow:0 0 8px rgba(255,211,77,.55); }
   #status .st-gain.on { opacity:1; transform:none; animation:gain-pop .35s cubic-bezier(.3,1.6,.5,1); }
   @keyframes gain-pop { 0% { transform:scale(.7); } 100% { transform:none; } }
-  /* The objective card: the one thing to do next, under the status card. */
-  #quest { position:relative; z-index:1; width:250px; box-sizing:border-box; background:linear-gradient(#2e241c,#221a14); border:1px solid #5a4636; border-left:3px solid #c9a24a; border-radius:10px; padding:8px 12px 9px; box-shadow:0 4px 14px rgba(0,0,0,.4); overflow:hidden; }
-  #quest.hidden { display:none; }
-  #quest.enter { animation:q-in .45s cubic-bezier(.2,.9,.3,1.2); }
+  /* Banners under the status card: the objective card (gold) and the warning card (red). */
+  .banner { position:relative; z-index:1; width:250px; box-sizing:border-box; background:linear-gradient(#2e241c,#221a14); border:1px solid #5a4636; border-left:3px solid #c9a24a; border-radius:10px; padding:8px 12px 9px; box-shadow:0 4px 14px rgba(0,0,0,.4); overflow:hidden; }
+  .banner.hidden { display:none; }
+  .banner.enter { animation:q-in .45s cubic-bezier(.2,.9,.3,1.2); }
   @keyframes q-in { 0% { transform:translateX(-30px); opacity:0; } 100% { transform:none; opacity:1; } }
-  #quest .q-kicker { font:italic 11px Georgia, serif; color:#c9a24a; letter-spacing:.03em; }
-  #quest .q-text { font:14px/1.35 Georgia, serif; color:#f3e6cc; margin-top:2px; }
-  #quest .q-reward { font:600 12px system-ui; color:#ffe08a; margin-top:5px; }
+  .banner .b-kicker { font:italic 11px Georgia, serif; color:#c9a24a; letter-spacing:.03em; }
+  .banner .b-text { font:14px/1.35 Georgia, serif; color:#f3e6cc; margin-top:2px; }
+  .banner .b-reward { font:600 12px system-ui; color:#ffe08a; margin-top:5px; }
+  .banner.warn { background:linear-gradient(#3a1e1a,#26130f); border-color:#7a3a30; border-left-color:#e0574a; }
+  .banner.warn .b-kicker { color:#ff8a7a; font-style:normal; font-weight:600; font-family:system-ui; text-transform:uppercase; letter-spacing:.08em; font-size:10.5px; }
+  .banner.warn .w-row { display:flex; justify-content:space-between; gap:8px; }
+  .banner.warn .w-row b { font-weight:600; white-space:nowrap; }
+  .banner.warn .w-row span { color:#e8cfc4; font-size:13px; text-align:right; }
+  .banner.warn .w-row.out span { color:#ffb0a4; }
+  .banner.warn .w-coming { font:italic 12px Georgia, serif; color:#c9b39a; text-align:right; margin-top:-2px; }
+  .banner.warn .w-act { font:12px system-ui; color:#d9b8ad; margin-top:5px; }
+  .banner.warn.out { animation:w-pulse 2.4s ease-in-out infinite; }
+  .banner.warn.out.enter { animation:q-in .45s cubic-bezier(.2,.9,.3,1.2), w-pulse 2.4s ease-in-out .45s infinite; }
+  @keyframes w-pulse { 50% { box-shadow:0 4px 14px rgba(0,0,0,.4), 0 0 16px 2px rgba(224,87,74,.45); } }
   .q-stamp { position:absolute; z-index:0; width:38px; height:38px; box-sizing:border-box; border-radius:50%; border:2.5px solid #ffd34d; background:#2a2016; color:#ffd34d; font:700 22px/33px system-ui; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,.45), 0 0 14px rgba(255,211,77,.4); animation:q-stamp 1.3s ease forwards; pointer-events:none; }
   #quest::after { content:""; position:absolute; inset:0; background:linear-gradient(105deg, transparent 30%, rgba(255,220,120,.55) 50%, transparent 70%); transform:translateX(-120%); pointer-events:none; }
   #quest.done { animation:q-out 1.3s ease-in forwards; border-color:#ffd34d; }
@@ -364,6 +375,9 @@
   body.pad .pad-glyph.ci::before { width:12px; height:12px; border-radius:50%; }
   body.pad .pad-glyph.sq { color:#f2a6d2; }
   body.pad .pad-glyph.ci { color:#ff7a6a; }
+  .signed { margin-top:8px; padding:8px 12px; border:1.5px dashed #8a6d3b; border-radius:8px; background:rgba(201,162,74,.07); transform:rotate(-.6deg); }
+  .signed .sg-kicker { font:italic 11px Georgia, serif; color:#c9a24a; }
+  .signed .sg-when { font:700 26px/1.1 "Playfair Display", Georgia, serif; color:#f3e6cc; letter-spacing:.02em; }
   .slip-line { white-space: nowrap; margin-right: 0.6em; }
   .slip-minus { padding: 0 0.45em; margin-left: 0.2em; line-height: 1.2; font-weight: bold; }
 </style>
@@ -377,7 +391,8 @@
         <div class="st-face" title="The keeper. Their mood will show here.">🙂</div>
         <div class="st-main"><div class="st-day"></div><div class="st-date"></div><div class="st-time"><b></b> <span class="st-wx"></span></div><div class="st-money"><span class="st-purse" title="Your purse: crowns, shillings and pence (10d = 1s, 10s = 1 crown)"></span><span class="st-gain"></span></div></div>
       </div>
-      <div id="quest" class="hidden"></div>
+      <div id="quest" class="banner hidden"></div>
+      <div id="warn" class="banner warn hidden"></div>
     </div>
     <div id="fade"></div>
     <div id="miniclock"></div>

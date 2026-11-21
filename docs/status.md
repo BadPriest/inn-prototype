@@ -28,7 +28,7 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 
 ## Built, not deployed (Nov 19)
 
-- #63 shelf life (batches by delivery day, stages from data/spoilage.json, clear the spoiled); #62 crates pile at the kitchen door and keep their date; #64 the baker's pies and bread; #60 upkeep (firewood, lamp oil, sundries, weekly licence; wear still to design); #74 table snack effects with the tag-flip badge
+- #63 shelf life (batches by delivery day, stages from data/spoilage.json, clear the spoiled); #62 crates pile at the kitchen door and keep their date; #64 the baker's pies and bread; #60 upkeep (firewood, lamp oil, sundries, weekly licence; wear still to design); #74 table snack effects with the tag-flip badge; #80 the badge above heads; #77 a red low/out card for upkeep goods; #83 the new sounds set against the mix; no lamp oil makes a dark inn (fewer come, none stay long); out-of-season goods off the slip; deliveries on the desk, the calendar and a signed slip
 
 ## Built and deployed (Nov 19, builds 107–116)
 

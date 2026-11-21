@@ -79,14 +79,19 @@ export function payLicence(g) {
     g.stats.upkeep = (g.stats.upkeep ?? 0) + p;
     g.say(`🧾 The licence for the week is due: ${p}d paid.`);
 }
-/** Upkeep goods running low (under about a day's worth), for the morning checklist. */
-export function upkeepLow(g) {
-    const low = [];
-    if (have(g, U.firewood.item) < 15)
-        low.push("firewood");
-    if (have(g, U.lampOil.item) < 1.5)
-        low.push("lamp oil");
-    if (have(g, U.sundries.item) < 0.5)
-        low.push("sundries");
-    return low;
+/** Upkeep goods running low (under about a day's worth) or out: how long what's left lasts, and what's on its way. */
+export function upkeepWarnings(g, comingOf) {
+    const cold = g.date.season === "winter" || g.weather.rain > 0 ? U.firewood.coldOrWetFactor : 1;
+    const about = (n, one, many) => (n < 1 ? `less than ${one}` : `about ${Math.round(n)} ${Math.round(n) === 1 ? one.replace(/^an? /, "") : many}`);
+    const goods = [
+        { item: U.firewood.item, name: "🪵 Firewood", lowBelow: 15, left: (n) => about(n / (U.firewood.fireLogsPerHour * cold), "an hour of fire", "hours of fire"), out: "the fire won't light; wood stoves won't cook", empty: !hasFirewood(g) },
+        { item: U.lampOil.item, name: "🛢️ Lamp oil", lowBelow: 1.5, left: (n) => about(n / U.lampOil.pintsPerHour, "an hour of light", "hours of light"), out: "the lamps won't light: fewer come in, none stay long", empty: !hasLampOil(g) },
+        { item: U.sundries.item, name: "🧻 Sundries", lowBelow: 0.5, left: (n) => about(n / U.sundries.perGuest, "a guest", "guests"), out: "guests notice: tips are halved", empty: have(g, U.sundries.item) < U.sundries.perGuest },
+    ];
+    return goods.flatMap((x) => {
+        const n = have(g, x.item);
+        if (!x.empty && n >= x.lowBelow)
+            return [];
+        return [{ item: x.item, name: x.name, out: x.empty, left: x.empty ? x.out : x.left(n), coming: comingOf(x.item) }];
+    });
 }

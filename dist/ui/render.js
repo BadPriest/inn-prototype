@@ -430,7 +430,7 @@ export function draw(ctx, g, v, target, clickDest) {
     drawLevelUp(ctx, g, v);
     drawGuide(ctx, g, v);
     drawSpeech(ctx, ts);
-    drawTagFlips(ctx, g, (p) => ({ x: X(p.pos.x), y: Y(p.pos.y) }), ts);
+    drawTagFlips(ctx, g, ts);
     drawCoinPops(ctx, g, v); // over the speech, so the coin always reads
     const busy = g.cleaning ?? g.pouring ?? g.winding;
     if (busy) {
@@ -563,6 +563,7 @@ export function drawPatronWords(ctx, g, p, x, y, ts) {
         ctx.fillText(p.marker.text, x, lineY + 1);
         lineY -= ts * 0.45;
     }
+    lineY = stackFlip(g, p, x, lineY, ts);
     // Spoken line: collected here, laid out together after everyone's drawn so bubbles don't overlap.
     if (p.line && g.minute < p.line.until && p.line.text) {
         speech.push({ x, anchor: lineY + ts * 0.2, text: `“${p.line.text}”`, color: "#fff6e0" });
@@ -609,7 +610,8 @@ export function drawSpeech(ctx, ts) {
     });
     // Lowest speakers first; anyone above who'd overlap gets nudged up (or sideways if there's no room above).
     boxes.sort((a, b) => b.s.anchor - a.s.anchor);
-    const placed = [];
+    const placed = flipBoxes(ctx, ts).map((f) => ({ ...boxes[0], ...f, lines: [] }));
+    const pills = placed.length;
     const hits = (a, b) => a.x < b.x + b.w + gap && a.x + a.w + gap > b.x && a.y < b.y + b.h + gap && a.y + a.h + gap > b.y;
     for (const b of boxes) {
         for (let tries = 0; tries < 12; tries++) {
@@ -622,7 +624,7 @@ export function drawSpeech(ctx, ts) {
             b.y = 2;
         placed.push(b);
     }
-    for (const b of placed) {
+    for (const b of placed.slice(pills)) {
         ctx.fillStyle = PLATE;
         roundRect(ctx, b.x, b.y, b.w, b.h, ts * 0.14);
         ctx.fill();
@@ -828,51 +830,76 @@ export function crateCounts(g) {
     return m;
 }
 /**
- * A snack bowl flipping a tag (inn#74): over the guest's head, a pill with the old tag pops up, turns
- * over like a card to show the new one, sits a moment, then floats off. `headOf`: where a guest's head
- * is on screen.
+ * A snack bowl flipping a tag (inn#74): a pill in the stack over the guest's head, under what they say.
+ * It pops up with the old tag, turns over like a card to the new one, sits a moment and floats off.
  */
-const FLIP_MS = 2600;
-export function drawTagFlips(ctx, g, headOf, ts) {
+const FLIP_MS = 2800;
+const flips = [];
+const flipSize = (ts) => ({ font: `700 ${Math.max(13, Math.floor(ts * 0.32))}px Georgia, serif`, h: Math.max(20, ts * 0.48) });
+/** Leaves room for the guest's tag flip at lineY, if one is showing; returns the new lineY. */
+function stackFlip(g, p, x, lineY, ts) {
+    const f = g.tagFlips.find((t) => t.patronId === p.id);
+    if (!f)
+        return lineY;
+    const t = performance.now() - f.at;
+    if (t >= FLIP_MS)
+        return lineY;
+    const { h } = flipSize(ts);
+    flips.push({ x, y: lineY - h * 0.15, from: f.from, to: f.to, t });
+    return lineY - h - ts * 0.12;
+}
+/** Where this frame's pills sit, so speech plates move out of their way. */
+function flipBoxes(ctx, ts) {
+    const { font, h } = flipSize(ts);
+    ctx.save();
+    ctx.font = font;
+    const out = flips.map((f) => {
+        const w = Math.max(ctx.measureText(f.from).width, ctx.measureText(f.to).width) + ts * 0.5;
+        return { x: f.x - w / 2, y: f.y - h / 2, w, h };
+    });
+    ctx.restore();
+    return out;
+}
+export function drawTagFlips(ctx, g, ts) {
     const now = performance.now();
     g.tagFlips = g.tagFlips.filter((f) => now - f.at < FLIP_MS);
-    for (const f of g.tagFlips) {
-        const p = g.patrons.find((x) => x.id === f.patronId);
-        const head = p && headOf(p);
-        if (!head)
-            continue;
-        const t = now - f.at;
-        // Pop in with a little overshoot; turn over between 750 and 1150 ms; float up and fade at the end.
+    const { font, h } = flipSize(ts);
+    ctx.font = font;
+    for (const f of flips) {
+        const t = f.t;
         const pop = t < 320 ? (() => { const k = t / 320; return 1 + 2.2 * (k - 1) ** 3 + 1.2 * (k - 1) ** 2; })() : 1;
         const turn = Math.min(1, Math.max(0, (t - 750) / 400));
         const face = turn < 0.5 ? f.from : f.to;
         const sx = Math.abs(Math.cos(turn * Math.PI));
-        const out = Math.max(0, (t - 2100) / 500);
-        // Beside the head (above it is the reaction and what they say).
-        ctx.font = `700 ${Math.max(12, Math.floor(ts * 0.3))}px system-ui, sans-serif`;
-        const w = Math.max(ctx.measureText(f.from).width, ctx.measureText(f.to).width) + ts * 0.4, h = Math.max(18, ts * 0.44);
-        const x = head.x + ts * 0.45 + w / 2;
-        const y = head.y - out * ts * 0.4 - (turn >= 1 ? Math.sin((t - 1150) / 180) * ts * 0.02 : 0);
+        const out = Math.max(0, (t - 2300) / 500);
+        const w = Math.max(ctx.measureText(f.from).width, ctx.measureText(f.to).width) + ts * 0.5;
+        const x = Math.max(w / 2 + 2, Math.min(ctx.canvas.width - w / 2 - 2, f.x));
+        const y = f.y - out * ts * 0.4 - (turn >= 1 ? Math.sin((t - 1150) / 180) * ts * 0.02 : 0);
+        const isNew = turn >= 0.5;
         ctx.save();
         ctx.globalAlpha = 1 - out;
         ctx.translate(x, y);
         ctx.scale(Math.max(0.02, sx) * pop, pop);
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        const isNew = turn >= 0.5;
-        ctx.fillStyle = isNew ? "#ffd34d" : "#f4efe4";
-        ctx.strokeStyle = isNew ? "#7a5a10" : "#5a4636";
-        ctx.lineWidth = Math.max(1.5, ts * 0.04);
-        ctx.shadowColor = isNew ? "rgba(255,211,77,0.7)" : "rgba(0,0,0,0.4)";
-        ctx.shadowBlur = ts * 0.15;
+        ctx.shadowColor = isNew ? "rgba(255,190,60,0.85)" : "rgba(0,0,0,0.45)";
+        ctx.shadowBlur = ts * (isNew ? 0.3 : 0.15);
+        ctx.fillStyle = isNew ? "#ffd34d" : "#f4e9d4";
         roundRect(ctx, -w / 2, -h / 2, w, h, h / 2);
         ctx.fill();
         ctx.shadowBlur = 0;
+        ctx.strokeStyle = isNew ? "#7a5a10" : "#6b5440";
+        ctx.lineWidth = Math.max(1.5, ts * 0.045);
+        ctx.stroke();
+        ctx.strokeStyle = isNew ? "rgba(255,248,220,0.7)" : "rgba(255,255,255,0.5)";
+        ctx.lineWidth = Math.max(1, ts * 0.02);
+        roundRect(ctx, -w / 2 + ts * 0.05, -h / 2 + ts * 0.05, w - ts * 0.1, h - ts * 0.1, h / 2 - ts * 0.05);
         ctx.stroke();
         ctx.fillStyle = isNew ? "#3a2504" : "#3a2e26";
         ctx.fillText(face, 0, 1);
         ctx.restore();
     }
+    flips.length = 0;
 }
 export function badge(ctx, x, y, text, ts) {
     ctx.fillStyle = "#ffd34d";

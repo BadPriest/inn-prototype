@@ -6,12 +6,12 @@ import { INGREDIENTS } from "./data.js";
 import type { Crate, Game } from "./game.js";
 import { uid } from "./core.js";
 import { setOutDelivered } from "./readymade.js";
-import { ECONOMY_DATA, LOCATIONS_DATA, SUPPLIERS_DATA } from "./gamedata.gen.js";
+import { ECONOMY_DATA, INGREDIENTS_DATA, LOCATIONS_DATA, SUPPLIERS_DATA } from "./gamedata.gen.js";
 import type { InventoryLine, SupplierData } from "./gamedata.js";
 import { spend } from "./money.js";
 import { addStock, amount } from "./stock.js";
 import { canFetch } from "./shop.js";
-import { TUNING } from "./data.js";
+import { CALENDAR, TUNING } from "./data.js";
 
 export type Slip = Record<string, number>; // item id -> packs
 export interface Delivery { supplierId: string; day: number; slip: Slip }
@@ -39,6 +39,25 @@ export function packPrice(s: SupplierData, line: InventoryLine): number {
 }
 
 export const slipOf = (g: Game, s: SupplierData): Slip => (g.slips[s.id] ??= {});
+
+/** Whether an ingredient can be had this calendar season (ingredients.json `seasons`; none: all year). */
+export function inSeason(g: Game, id: string): boolean {
+  const s = INGREDIENTS_DATA.ingredients.find((i) => i.id === id)?.seasons;
+  return !s?.length || s.includes(g.date.season);
+}
+/** The calendar season an out-of-season ingredient comes back. */
+export function backIn(g: Game, id: string): string | undefined {
+  const s = INGREDIENTS_DATA.ingredients.find((i) => i.id === id)?.seasons;
+  if (!s?.length) return undefined;
+  const order = CALENDAR.seasons.map((x) => x.id);
+  const at = order.indexOf(g.date.season);
+  for (let k = 1; k <= order.length; k++) { const n = CALENDAR.seasons[(at + k) % order.length]; if (s.includes(n.id)) return n.name.toLowerCase(); }
+  return undefined;
+}
+/** Off the slip: whatever's out of season. */
+function dropOutOfSeason(g: Game, slip: Slip): void {
+  for (const id of Object.keys(slip)) if (!inSeason(g, id)) delete slip[id];
+}
 export function slipTotal(s: SupplierData, slip: Slip): number {
   return linesOf(s).reduce((a, l) => a + (slip[l.item] ?? 0) * packPrice(s, l), 0);
 }
@@ -71,6 +90,7 @@ export function deliveryDaysText(s: SupplierData): string {
 /** Send the slip: paid now, it comes with the carter. */
 export function sendSlip(g: Game, s: SupplierData): boolean {
   const slip = slipOf(g, s);
+  dropOutOfSeason(g, slip);
   const day = nextDeliveryDay(g, s);
   if (slipEmpty(slip) || day === undefined) return false;
   const total = slipTotal(s, slip);
@@ -90,6 +110,7 @@ export function canFetchFrom(g: Game, s: SupplierData): boolean {
 /** Fetch it yourself: paid now, you're out for the trip, and it's in the pantry when you're back. No carter's fee. */
 export function fetchSlip(g: Game, s: SupplierData): boolean {
   const slip = slipOf(g, s);
+  dropOutOfSeason(g, slip);
   if (slipEmpty(slip) || !canFetchFrom(g, s)) return false;
   if (!spend(g, slipTotal(s, slip))) { g.say(`The slip comes to more than you have.`); return false; }
   g.minute = Math.min(g.minute + (s.distanceInMinutes ?? 0), TUNING.dayLengthMinutes - 1);

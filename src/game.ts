@@ -265,6 +265,7 @@ export class Game {
   noFirewood = false; // a wood stove wants wood and there's none: its cooking stops
   noSundries = false; // the last guest served had no napkins: tips suffer
   lampsLit = false;
+  dark = false; // gloomy inside and no oil for the lamps
   /** The gramophone: playing or not, which record, and how many records the spring has left. */
   // spring: seconds of music left in it. resumeAt: where in the record it stopped when the spring gave out
   // mid-record (seconds), so winding it again picks up there; null: start the record from the top.

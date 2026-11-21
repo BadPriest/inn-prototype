@@ -17,8 +17,8 @@
           "properties": { "pence": { "type": "number", "minimum": 0 }, "weekday": { "type": "string" } } },
         "firewood": { "type": "object", "additionalProperties": false, "required": ["item", "fireLogsPerHour", "stoveLogsPerHour", "coldOrWetFactor"], "description": "Logs burned per game hour: by the hearth while it's lit (times coldOrWetFactor in winter or rain), and by each wood stove while something's cooking on it. Without wood the fire goes out and wood stoves stop.",
           "properties": { "item": { "type": "string" }, "fireLogsPerHour": { "type": "number", "minimum": 0 }, "stoveLogsPerHour": { "type": "number", "minimum": 0 }, "coldOrWetFactor": { "type": "number", "minimum": 0 } } },
-        "lampOil": { "type": "object", "additionalProperties": false, "required": ["item", "pintsPerHour"], "description": "Burned while the lamps are lit. Without it the lamps can't be lit.",
-          "properties": { "item": { "type": "string" }, "pintsPerHour": { "type": "number", "minimum": 0 } } },
+        "lampOil": { "type": "object", "additionalProperties": false, "required": ["item", "pintsPerHour", "darkFlow", "darkPatience"], "description": "Burned while the lamps are lit. Without it the lamps can't be lit, and when it's gloomy inside the room stays dark.",
+          "properties": { "item": { "type": "string" }, "pintsPerHour": { "type": "number", "minimum": 0 }, "darkFlow": { "type": "number", "minimum": 0, "maximum": 1, "description": "In the dark, passers-by come in at this share of the usual rate: the inn looks shut from the road." }, "darkPatience": { "type": "number", "minimum": 0, "maximum": 1, "description": "In the dark, guests wait this share of their usual patience." } } },
         "sundries": { "type": "object", "additionalProperties": false, "required": ["item", "perGuest", "tipShareWithout"], "description": "Napkins, soap, matches: used for each guest served. Without them, tips are this share of what they'd be.",
           "properties": { "item": { "type": "string" }, "perGuest": { "type": "number", "minimum": 0 }, "tipShareWithout": { "type": "number", "minimum": 0, "maximum": 1 } } }
       }

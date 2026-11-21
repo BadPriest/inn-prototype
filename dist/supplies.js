@@ -4,11 +4,11 @@
 import { INGREDIENTS } from "./data.js";
 import { uid } from "./core.js";
 import { setOutDelivered } from "./readymade.js";
-import { ECONOMY_DATA, LOCATIONS_DATA, SUPPLIERS_DATA } from "./gamedata.gen.js";
+import { ECONOMY_DATA, INGREDIENTS_DATA, LOCATIONS_DATA, SUPPLIERS_DATA } from "./gamedata.gen.js";
 import { spend } from "./money.js";
 import { addStock, amount } from "./stock.js";
 import { canFetch } from "./shop.js";
-import { TUNING } from "./data.js";
+import { CALENDAR, TUNING } from "./data.js";
 const WEEKDAY_IDS = { Monday: "mon", Tuesday: "tue", Wednesday: "wed", Thursday: "thu", Friday: "fri", Saturday: "sat", Sunday: "sun" };
 /** The suppliers at this inn's location, with the location's own terms for them. Only those with something to put on a slip. */
 export function suppliersHere(g) {
@@ -27,6 +27,31 @@ export function packPrice(s, line) {
     return worth * (line.pack?.units ?? 1) * (s.priceFactor ?? 1) * ECONOMY_DATA.suppliers.priceFactor;
 }
 export const slipOf = (g, s) => (g.slips[s.id] ??= {});
+/** Whether an ingredient can be had this calendar season (ingredients.json `seasons`; none: all year). */
+export function inSeason(g, id) {
+    const s = INGREDIENTS_DATA.ingredients.find((i) => i.id === id)?.seasons;
+    return !s?.length || s.includes(g.date.season);
+}
+/** The calendar season an out-of-season ingredient comes back. */
+export function backIn(g, id) {
+    const s = INGREDIENTS_DATA.ingredients.find((i) => i.id === id)?.seasons;
+    if (!s?.length)
+        return undefined;
+    const order = CALENDAR.seasons.map((x) => x.id);
+    const at = order.indexOf(g.date.season);
+    for (let k = 1; k <= order.length; k++) {
+        const n = CALENDAR.seasons[(at + k) % order.length];
+        if (s.includes(n.id))
+            return n.name.toLowerCase();
+    }
+    return undefined;
+}
+/** Off the slip: whatever's out of season. */
+function dropOutOfSeason(g, slip) {
+    for (const id of Object.keys(slip))
+        if (!inSeason(g, id))
+            delete slip[id];
+}
 export function slipTotal(s, slip) {
     return linesOf(s).reduce((a, l) => a + (slip[l.item] ?? 0) * packPrice(s, l), 0);
 }
@@ -60,6 +85,7 @@ export function deliveryDaysText(s) {
 /** Send the slip: paid now, it comes with the carter. */
 export function sendSlip(g, s) {
     const slip = slipOf(g, s);
+    dropOutOfSeason(g, slip);
     const day = nextDeliveryDay(g, s);
     if (slipEmpty(slip) || day === undefined)
         return false;
@@ -81,6 +107,7 @@ export function canFetchFrom(g, s) {
 /** Fetch it yourself: paid now, you're out for the trip, and it's in the pantry when you're back. No carter's fee. */
 export function fetchSlip(g, s) {
     const slip = slipOf(g, s);
+    dropOutOfSeason(g, slip);
     if (slipEmpty(slip) || !canFetchFrom(g, s))
         return false;
     if (!spend(g, slipTotal(s, slip))) {

@@ -12,6 +12,7 @@ import { resetSave } from "../day.js";
 import { iconFor, itemLabel, slotsUsed } from "../serving.js";
 import { objectives } from "../objectives.js";
 import { updateQuest } from "./quest.js";
+import { updateWarnings } from "./warnings.js";
 import { moneyHtml, PENCE_PER_CROWN } from "../money.js";
 import { carterArrives } from "../shop.js";
 const $ = (id) => document.getElementById(id);
@@ -75,6 +76,7 @@ export function updateHud(g, prompt) {
     $("log").innerHTML = g.log.slice(-9).reverse().map((l) => `<div${l.text.startsWith("⚠") ? ' style="color:#ff7a6a"' : ""}><span class="t">${g.clockText(l.at)}</span> ${l.text}</div>`).join("");
     updateObjectives(g);
     updateQuest(g);
+    updateWarnings(g);
     if ($("debug").style.display !== "none")
         updateDebug(g);
 }

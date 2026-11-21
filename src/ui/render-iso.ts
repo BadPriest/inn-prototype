@@ -330,7 +330,7 @@ export function drawIso(ctx: CanvasRenderingContext2D, g: Game, v: View, target:
   drawLevelUp(ctx, g, v);
   drawGuide(ctx, g, v);
   drawSpeech(ctx, ts);
-  drawTagFlips(ctx, g, (p) => P(v, p.pos.x, p.pos.y, HEAD_Z), ts);
+  drawTagFlips(ctx, g, ts);
   drawCoinPops(ctx, g, v); // over the speech, so the coin always reads
 
   const busy = g.cleaning ?? g.pouring ?? g.winding;

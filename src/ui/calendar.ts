@@ -4,6 +4,7 @@
 import { CALENDAR, WEATHER } from "../data.js";
 import type { DayStats, Game } from "../game.js";
 import { compactDate } from "../calendar.js";
+import { SUPPLIERS_DATA } from "../gamedata.gen.js";
 import { back, openMenu } from "./menu.js";
 
 /** What the weather was on a day gone by, as one icon. */
@@ -33,7 +34,10 @@ export function openCalendar(g: Game): void {
     const market = g.loc.marketDay === weekday;
     const cls = day === g.day ? "today" : day < g.day ? "past" : "";
     const icon = day < g.day && day >= 1 ? dayWeather(byDay.get(day)) : day === g.day ? "★" : "";
-    cells.push(`<div class="cd ${cls}" title="${weekday}${market ? " · market day" : ""}"><b>${n}</b><span class="ci">${icon}${market ? "🧺" : ""}</span></div>`);
+    const due = g.deliveries.filter((d) => d.day === day).map((d) => SUPPLIERS_DATA.suppliers.find((s) => s.id === d.supplierId)?.name ?? d.supplierId);
+    const crates = day === g.day && g.crates.length > 0;
+    const notes = [weekday, market ? "market day" : "", due.length ? `delivery from ${due.join(", ")}` : "", crates ? "a delivery waiting at the kitchen door" : ""].filter(Boolean).join(" · ");
+    cells.push(`<div class="cd ${cls}" title="${notes}"><b>${n}</b><span class="ci">${icon}${market ? "🧺" : ""}${due.length || crates ? "📦" : ""}</span></div>`);
   }
   const next = CALENDAR.seasons[(seasonIndex + 1) % CALENDAR.seasons.length];
   const left = length - today.dayOfSeason + 1;
@@ -43,7 +47,7 @@ export function openCalendar(g: Game): void {
     holdsClock: true,
     subtitle: `Today is ${today.weekday}, ${compactDate(today, today.year)} of ${length}`,
     body: `<div class="cal">${head}${cells.join("")}</div>
-      <p class="muted">${next.name} begins in ${left} day${left === 1 ? "" : "s"}.${g.loc.marketDay ? ` 🧺 Market day: ${g.loc.marketDay}s.` : ""} Past days show the weather they had.</p>`,
+      <p class="muted">${next.name} begins in ${left} day${left === 1 ? "" : "s"}.${g.loc.marketDay ? ` 🧺 Market day: ${g.loc.marketDay}s.` : ""} ${g.deliveries.length ? " 📦 A delivery comes." : ""} Past days show the weather they had.</p>`,
     items: [{ label: "Close", button: "secondary", cancel: true, action: () => back() }],
   });
 }

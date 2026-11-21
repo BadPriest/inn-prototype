@@ -33,6 +33,10 @@ export function indoorLight(g) {
 /** Every frame: the keeper lights the lamps when it gets gloomy inside, and puts them out when it's bright. */
 export function updateLamps(g) {
     const inside = indoorLight(g);
+    const dark = !g.lampsLit && inside < LIGHT.lampsOnBelow && !hasLampOil(g);
+    if (dark && !g.dark)
+        g.say("🛢️ It's getting dark and there's no oil for the lamps. Guests won't stay long in the dark, and from the road the inn looks shut.");
+    g.dark = dark;
     if (!g.lampsLit && inside < LIGHT.lampsOnBelow && hasLampOil(g)) {
         g.lampsLit = true;
         g.say(daylight(g) > 0.5 ? "It's gloomy out; you light the lamps." : "You light the lamps.");

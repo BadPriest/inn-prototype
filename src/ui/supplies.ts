@@ -7,7 +7,7 @@ import { fmtMoney, moneyHtml } from "../money.js";
 import { amount, condition, have, stageName, startingPantry } from "../stock.js";
 import {
   canFetchFrom, deliveryDaysText, fetchSlip, linesOf, nextDeliveryDay, packContents, packPrice, sendSlip, slipEmpty, slipOf, slipTotal,
-  suppliersHere, whenText,
+  suppliersHere, whenText, inSeason, backIn,
 } from "../supplies.js";
 import { closeAll, openMenu, replaceMenu, type MenuSpec } from "./menu.js";
 import { grid, gridKeys, type CardSpec } from "./cards.js";
@@ -37,14 +37,14 @@ export function openSupplies(g: Game): void {
     const start = startingPantry();
     const left = (id: string) => have(g, id) / Math.max(1, start[id] ?? 1);
     const low = (id: string) => left(id) < LOW_SHARE;
-    const lines = [...linesOf(s)].sort((a, b) => Number(uses.has(b.item)) - Number(uses.has(a.item)) || (uses.has(a.item) ? left(a.item) - left(b.item) : 0));
+    const lines = [...linesOf(s)].sort((a, b) => Number(uses.has(b.item)) - Number(uses.has(a.item)) || Number(inSeason(g, b.item)) - Number(inSeason(g, a.item)) || (uses.has(a.item) ? left(a.item) - left(b.item) : 0));
     const forBill = lines.filter((l) => uses.has(l.item)).length;
     const slip = slipOf(g, s);
     const ing = (id: string) => INGREDIENTS.find((x) => x.id === id)!;
     const refresh = () => replaceMenu(build());
     const change = (i: number, by: number) => {
       const l = lines[i];
-      if (!l) return;
+      if (!l || (by > 0 && !inSeason(g, l.item))) return;
       slip[l.item] = Math.max(0, (slip[l.item] ?? 0) + by);
       st.focus = i;
       g.bus.emit({ type: "MenuSound", sound: by > 0 ? "penClick" : "tick" });
@@ -55,6 +55,12 @@ export function openSupplies(g: Game): void {
     const cards: CardSpec[] = lines.map((l, i) => {
       const x = ing(l.item);
       const on = slip[l.item] ?? 0;
+      if (!inSeason(g, l.item)) return {
+        pick: String(i), icon: x.icon, name: x.name, tags: x.tags, focus: i === st.focus, off: true,
+        fact: `${moneyHtml(packPrice(s, l))} <span class="unit">${l.pack.name}</span>`,
+        status: `Out of season · back in ${backIn(g, l.item)}${have(g, l.item) > 0 ? ` · ${amount(l.item, have(g, l.item))} in the pantry` : ""}`, tone: "muted",
+        detail: `${x.name} can't be had in ${g.date.season}. ${s.name} will have it again in ${backIn(g, l.item)}.`,
+      };
       return {
         pick: String(i), icon: x.icon, name: x.name, tags: x.tags, focus: i === st.focus, on: on > 0,
         fact: `${moneyHtml(packPrice(s, l))} <span class="unit">${l.pack.name}</span>`,
@@ -72,7 +78,6 @@ export function openSupplies(g: Game): void {
     const terms = [
       deliveryDaysText(s) + (s.orderBy !== undefined ? `, order by ${s.orderBy}:00` : ""),
       s.distanceInMinutes !== undefined ? `fetch it yourself: ${s.distanceInMinutes} min there and back, open ${s.openHours?.[0]}:00–${s.openHours?.[1]}:00` : "",
-      coming.length ? `🛻 coming ${coming.map((d) => whenText(g, d.day)).join(", ")}` : "",
     ].filter(Boolean).join(" · ");
     const pinned = `<div class="bf-tabs">${all.map((x, i) => `<button class="${i === tab ? "on" : ""}" data-pick="tab:${i}">${x.icon} ${x.name}${slipEmpty(g.slips[x.id]) ? "" : " ✎"}</button>`).join("")}</div>
       <div class="dish result ${onSlip.length ? "" : "empty"}">
@@ -82,7 +87,8 @@ export function openSupplies(g: Game): void {
           <div class="meta slip-lines">${onSlip.length ? onSlip.map((l) => `<span class="slip-line">${slip[l.item]} × ${l.pack.name} of ${ing(l.item).name.toLowerCase()} <button class="ghost slip-minus" data-pick="minus:${lines.indexOf(l)}" title="Take one off">−</button></span>`).join(" ") : "Nothing pencilled in yet"}${onSlip.length ? ` · ${moneyHtml(total)}` : ""}</div>
           <div class="meta">${terms}</div>
         </div>
-      </div>`;
+      </div>
+      ${coming.map((d) => `<div class="signed"><div class="sg-kicker">Signed and sent · paid</div><div class="sg-when">${d.day === g.day + 1 ? "Tomorrow" : g.dateOfDay(d.day).weekday}</div><div class="meta">morning, with the carter · ${lines.filter((l) => d.slip[l.item]).map((l) => `${d.slip[l.item]} × ${l.pack.name} of ${ing(l.item).name.toLowerCase()}`).join(", ")}</div></div>`).join("")}`;
 
     const items: MenuSpec["items"] = [];
     if (onSlip.length) {
@@ -93,7 +99,7 @@ export function openSupplies(g: Game): void {
       for (const l of onSlip) items.push({ label: `− ${l.pack.name} of ${ing(l.item).name.toLowerCase()}`, sub: `${slip[l.item]} on the slip`, button: "secondary", action: () => change(lines.indexOf(l), -1) });
       items.push({ label: "Tear it up", button: "secondary", action: () => { g.slips[s.id] = {}; g.bus.emit({ type: "MenuSound", sound: "paperClose" }); refresh(); } });
     } else if (!slipEmpty(g.lastSlips[s.id])) {
-      items.push({ label: "Copy last slip", sub: "the same again", action: () => { g.slips[s.id] = { ...g.lastSlips[s.id] }; refresh(); } });
+      items.push({ label: "Copy last slip", sub: "the same again", action: () => { g.slips[s.id] = Object.fromEntries(Object.entries(g.lastSlips[s.id]).filter(([id]) => inSeason(g, id))); refresh(); } });
     }
 
     return {

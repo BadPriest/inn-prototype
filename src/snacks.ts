@@ -5,6 +5,7 @@
 
 import { SNACKS, dishData } from "./data.js";
 import type { DishEffect } from "./gamedata.js";
+import { ECONOMY_DATA } from "./gamedata.gen.js";
 import type { Game, Patron } from "./game.js";
 import { tagScore } from "./tastes.js";
 
@@ -27,7 +28,7 @@ export function bowlEffects(g: Game, p: Patron): DishEffect[] {
 const sum = (effects: DishEffect[], k: "patience" | "hunger" | "thirst" | "openness") => effects.reduce((a, e) => a + (e[k] ?? 0), 0);
 
 /** How long they'll wait, with the bowl's patience. */
-export const patienceOf = (g: Game, p: Patron): number => p.patience * (1 + sum(bowlEffects(g, p), "patience"));
+export const patienceOf = (g: Game, p: Patron): number => p.patience * (1 + sum(bowlEffects(g, p), "patience")) * (g.dark ? ECONOMY_DATA.upkeep.lampOil.darkPatience : 1);
 /** Hunger and thirst the bowl adds, per game hour. */
 export const bowlNeeds = (g: Game, p: Patron) => { const e = bowlEffects(g, p); return { hunger: sum(e, "hunger"), thirst: sum(e, "thirst") }; };
 /** Their openness: their own, the bowl's, and what they've drunk this visit. */

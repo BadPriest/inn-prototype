@@ -15,6 +15,7 @@ import { resetSave } from "../day.js";
 import { iconFor, itemLabel, slotsUsed } from "../serving.js";
 import { objectives } from "../objectives.js";
 import { updateQuest } from "./quest.js";
+import { updateWarnings } from "./warnings.js";
 import { moneyHtml, PENCE_PER_CROWN } from "../money.js";
 import { carterArrives } from "../shop.js";
 
@@ -83,6 +84,7 @@ export function updateHud(g: Game, prompt: string): void {
 
   updateObjectives(g);
   updateQuest(g);
+  updateWarnings(g);
   if ($("debug").style.display !== "none") updateDebug(g);
 }
 

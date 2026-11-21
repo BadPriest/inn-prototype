@@ -2,7 +2,7 @@
 // gold, its reward flies to the purse, and the next one slides in. Also: the rings in the menus.
 import { headline, objectives } from "../objectives.js";
 import { STEPS, menuGuide } from "../walkthrough.js";
-import { moneyHtml } from "../money.js";
+import { showBanner } from "./banner.js";
 let shown = null;
 let busy = false;
 function wasDone(g, key) {
@@ -21,7 +21,7 @@ export function updateQuest(g) {
     if (shown && h?.key === shown.key) {
         if (h.text !== shown.text) {
             shown.text = h.text;
-            el.querySelector(".q-text").innerHTML = h.text;
+            el.querySelector(".b-text").innerHTML = h.text;
         }
         return;
     }
@@ -30,7 +30,7 @@ export function updateQuest(g) {
         el.classList.add("done");
         stamp(el);
         if (shown.reward)
-            flyCoins(el.querySelector(".q-reward") ?? el);
+            flyCoins(el.querySelector(".b-reward") ?? el);
         setTimeout(() => { busy = false; shown = null; el.classList.remove("done"); el.classList.add("hidden"); }, 1300);
         return;
     }
@@ -40,10 +40,7 @@ export function updateQuest(g) {
         return;
     }
     shown = { key: h.key, reward: h.reward, text: h.text };
-    el.innerHTML = `<div class="q-kicker">${h.kicker}</div><div class="q-text">${h.text}</div>${h.reward ? `<div class="q-reward">+${moneyHtml(h.reward)}</div>` : ""}`;
-    el.classList.remove("hidden", "enter");
-    void el.offsetWidth;
-    el.classList.add("enter");
+    showBanner(el, h);
 }
 /** Done: a ✓ slides out from behind the card's right edge, clear of the text, and fades with it. */
 function stamp(card) {

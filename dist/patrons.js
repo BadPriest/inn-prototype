@@ -1,4 +1,5 @@
 // Patrons: arrivals, walking, ordering, waiting, eating, mess and leaving.
+import { ECONOMY_DATA } from "./gamedata.gen.js";
 import { opennessOf, patienceOf, showFlip } from "./snacks.js";
 import { chance, organic, pick, uid, weightedPick } from "./core.js";
 import { ARCHETYPES, CHATTER, NAMES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING, SHELTER, SEASONAL_TASTES, MARKET, SPECIFIC_ORDERS, garnishesFor, garnishById } from "./data.js";
@@ -883,7 +884,7 @@ export function updatePatrons(g, simDt) {
     // Visitors arrive at the flow rate.
     if (g.open && !g.lastCall && g.minute >= g.nextArrivalAt) {
         const market = marketDay(g) && g.hour >= MARKET.from && g.hour < MARKET.to ? MARKET.flow : 1;
-        const rate = TUNING.flowByHour[g.hour] * g.loc.traffic * shelterFactor(g) * market * g.flowMultiplier * priceLevel(g).flow; // per hour
+        const rate = TUNING.flowByHour[g.hour] * g.loc.traffic * shelterFactor(g) * market * g.flowMultiplier * priceLevel(g).flow * (g.dark ? ECONOMY_DATA.upkeep.lampOil.darkFlow : 1); // per hour
         if (rate > 0.01) {
             spawnVisitors(g);
             g.nextArrivalAt = g.minute + Math.max(3, organic([60 / rate, 30 / rate]));

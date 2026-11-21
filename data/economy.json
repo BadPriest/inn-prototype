@@ -30,7 +30,7 @@
   "upkeep": {
     "licence": { "pence": 140, "weekday": "Monday" },
     "firewood": { "item": "firewood", "fireLogsPerHour": 1.2, "stoveLogsPerHour": 0.6, "coldOrWetFactor": 1.4 },
-    "lampOil": { "item": "lampOil", "pintsPerHour": 0.15 },
+    "lampOil": { "item": "lampOil", "pintsPerHour": 0.15, "darkFlow": 0.4, "darkPatience": 0.75 },
     "sundries": { "item": "sundries", "perGuest": 0.03, "tipShareWithout": 0.5 }
   },
 

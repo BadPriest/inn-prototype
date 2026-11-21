@@ -3,6 +3,7 @@
 // patience (a share longer), hunger and thirst (added per game hour), openness, and flipTag (a tag
 // on what they're served counts as another). Ale and cider's openness reaches whoever drinks them.
 import { SNACKS, dishData } from "./data.js";
+import { ECONOMY_DATA } from "./gamedata.gen.js";
 import { tagScore } from "./tastes.js";
 /** The bowl a guest is eating from, if any: on their table, not empty, and to their taste. */
 export function bowlFor(g, p) {
@@ -22,7 +23,7 @@ export function bowlEffects(g, p) {
 }
 const sum = (effects, k) => effects.reduce((a, e) => a + (e[k] ?? 0), 0);
 /** How long they'll wait, with the bowl's patience. */
-export const patienceOf = (g, p) => p.patience * (1 + sum(bowlEffects(g, p), "patience"));
+export const patienceOf = (g, p) => p.patience * (1 + sum(bowlEffects(g, p), "patience")) * (g.dark ? ECONOMY_DATA.upkeep.lampOil.darkPatience : 1);
 /** Hunger and thirst the bowl adds, per game hour. */
 export const bowlNeeds = (g, p) => { const e = bowlEffects(g, p); return { hunger: sum(e, "hunger"), thirst: sum(e, "thirst") }; };
 /** Their openness: their own, the bowl's, and what they've drunk this visit. */

@@ -82,7 +82,7 @@ export interface EconomyData {
   upkeep: {
     licence: { pence: Pence; weekday: string };
     firewood: { item: string; fireLogsPerHour: number; stoveLogsPerHour: number; coldOrWetFactor: number };
-    lampOil: { item: string; pintsPerHour: number };
+    lampOil: { item: string; pintsPerHour: number; darkFlow: number; darkPatience: number };
     sundries: { item: string; perGuest: number; tipShareWithout: number };
   };
   sellBackShare: number;

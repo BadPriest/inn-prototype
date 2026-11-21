@@ -4,7 +4,7 @@
 import type { Game } from "../game.js";
 import { headline, objectives } from "../objectives.js";
 import { STEPS, menuGuide } from "../walkthrough.js";
-import { moneyHtml } from "../money.js";
+import { showBanner } from "./banner.js";
 
 let shown: { key: string; reward?: number; text: string } | null = null;
 let busy = false;
@@ -21,24 +21,21 @@ export function updateQuest(g: Game): void {
   if (!el || busy) return;
   const h = g.showObjectives ? headline(g) : null;
   if (shown && h?.key === shown.key) {
-    if (h.text !== shown.text) { shown.text = h.text; el.querySelector(".q-text")!.innerHTML = h.text; }
+    if (h.text !== shown.text) { shown.text = h.text; el.querySelector(".b-text")!.innerHTML = h.text; }
     return;
   }
   if (shown && h?.key !== shown.key && g.showObjectives && wasDone(g, shown.key)) {
     busy = true;
     el.classList.add("done");
     stamp(el);
-    if (shown.reward) flyCoins(el.querySelector(".q-reward") ?? el);
+    if (shown.reward) flyCoins(el.querySelector(".b-reward") ?? el);
     setTimeout(() => { busy = false; shown = null; el.classList.remove("done"); el.classList.add("hidden"); }, 1300);
     return;
   }
   shown = null;
   if (!h) { el.classList.add("hidden"); return; }
   shown = { key: h.key, reward: h.reward, text: h.text };
-  el.innerHTML = `<div class="q-kicker">${h.kicker}</div><div class="q-text">${h.text}</div>${h.reward ? `<div class="q-reward">+${moneyHtml(h.reward)}</div>` : ""}`;
-  el.classList.remove("hidden", "enter");
-  void el.offsetWidth;
-  el.classList.add("enter");
+  showBanner(el, h);
 }
 
 /** Done: a ✓ slides out from behind the card's right edge, clear of the text, and fades with it. */
