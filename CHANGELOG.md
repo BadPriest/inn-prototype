@@ -6,7 +6,7 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
-## Build 119 · Nov 22, 2026 · not deployed
+## Build 119 · Nov 22, 2026 · deployed
 
 ### Changed
 - **Dear prices turn more guests away**: 70% of the usual guests come in (was 90%). Before, Dear always earned the most, because the room has seats to spare and losing a few guests cost nothing; now Fair and Dear earn about the same (about 4s a day apart in a simulated week), and the desk says "dearer, fewer".
