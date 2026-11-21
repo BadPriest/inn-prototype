@@ -11,7 +11,7 @@ import { openDeliveries } from "./deliveries.js";
 import { whenText } from "../supplies.js";
 import { SUPPLIERS_DATA } from "../gamedata.gen.js";
 import { ingredientsHtml } from "./cook.js";
-import { knows, pointsLeft } from "../skills.js";
+import { knows, levelOf, levelProgress, pointsLeft } from "../skills.js";
 import { openSkills } from "./skills.js";
 import { needs, whereFull, whereShort } from "./where.js";
 import { canFetch, fetchThing, FETCH_MINUTES, hasOrBetter, onOrderCount, orderThing, priceOfThing, SELL_BACK_SHARE_WORDS, toPlaceCount } from "../shop.js";
@@ -22,62 +22,71 @@ export function openDeskScreen(g, openJournal) {
     const build = () => {
         const now = g.mealNow();
         const known = g.regulars ? [...g.regulars.values()].filter((r) => r.visits > 0).length : 0;
-        // Two rows: today's running of the inn (bill, prices, paper, calendar), then the inn itself.
-        // At rest each card is its name and one line: the state, or what's inside when it has no state.
-        // Pointed at, it grows and says more (cards.ts).
+        // Each card: its name; what you need to know now (bold, then a second line); what it is, in plain
+        // words; and at the foot, what picking it does.
+        const n = (k, one, many = `${one}s`) => `${k} ${k === 1 ? one : many}`;
+        const onMenu = g.mealMode ? g.billNow().size : g.menu.size;
+        const meal = g.mealMode ? (now ? MEALS.find((m) => m.id === now.id).name.toLowerCase() : "between meals") : "";
+        const level = priceLevel(g);
+        const openSlips = Object.values(g.slips).filter((sl) => Object.values(sl).some((k) => k > 0)).length;
+        const standing = g.standing.filter((o) => !o.paused).length, pausedSo = g.standing.length - standing;
+        const progress = levelProgress(g);
         const cards = [
-            { pick: "fare", icon: "📜", name: "Bill of fare", warn: !g.menuChosen,
-                fact: !g.menuChosen ? "Not set" : `${g.mealMode ? g.billNow().size : g.menu.size} on the board`,
+            { pick: "fare", icon: "📜", name: "Bill of Fare", warn: !g.menuChosen,
+                fact: !g.menuChosen ? "Not set yet" : `${n(onMenu, "dish and drink", "dishes and drinks")} on the menu`,
+                status: !g.menuChosen ? "Guests can only order ale and cider" : g.mealMode ? `Meal times · ${meal} now` : "All day",
                 tone: !g.menuChosen ? "warn" : undefined,
-                detail: `What guests can order to consume. They only order what's on it.${!g.menuChosen ? " Until you set it, they use a default menu." : g.mealMode ? ` Meal times: ${now ? `${MEALS.find((m) => m.id === now.id).name.toLowerCase()} now` : "between meals now"}.` : ""}`,
-                does: "Choose dishes and drinks" },
-            { pick: "prices", icon: "🪙", name: "House prices",
-                fact: priceLevel(g).name,
-                detail: `Set the prices for your inn. Lower prices bring a few more guests, while being more expensive invites less. Ale is ${fmtMoney(priceOfRecipe(g, "ale"))} a pint.`,
-                does: "Choose a price level" },
+                body: `<div class="desc">Your menu: guests only order what's on it.</div>`,
+                cta: "Choose dishes and drinks" },
+            { pick: "prices", icon: "🪙", name: "House Prices",
+                fact: `Set to: ${level.name}`,
+                status: `${level.blurb[0].toUpperCase()}${level.blurb.slice(1)} · ale ${fmtMoney(priceOfRecipe(g, "ale"))} a pint`,
+                body: `<div class="desc">Cheaper brings a few more guests; dearer, a few fewer.</div>`,
+                cta: "Choose a price level" },
             { pick: "paper", icon: "📰", name: "Today's Newspaper",
-                fact: g.paper ? (g.paper.read ? "Read" : "Unread") : "None yet",
+                fact: !g.paper ? "None yet" : g.paper.read ? "Read" : "Unread",
                 tone: g.paper && !g.paper.read ? "good" : undefined,
-                detail: "The weather forecast and the news around town.",
-                does: "Read today's paper" },
+                body: `<div class="desc">Tomorrow's weather and the news around town: market days, who's about.</div>`,
+                cta: "Read the paper" },
             { pick: "calendar", icon: "📅", name: "Calendar",
-                fact: `${g.date.seasonName} ${g.date.dayOfSeason}`,
-                detail: `${g.date.weekday}. This season's days: the weather so far, market days, and when the next season begins.`,
-                does: "See the season" },
+                fact: `${g.date.weekday}, ${g.date.seasonName} ${g.date.dayOfSeason}`,
+                status: g.loc.marketDay ? `Market day: ${g.loc.marketDay}s` : undefined,
+                body: `<div class="desc">The season at a glance: past weather, market days, deliveries.</div>`,
+                cta: "Look ahead" },
             { pick: "supplies", icon: "🧺", name: "Buy Supplies",
-                fact: Object.values(g.slips).some((sl) => Object.values(sl).some((n) => n > 0)) ? "✎ A slip pencilled in" : undefined,
-                status: "Order what the pantry needs.",
-                detail: "A slip for each supplier: pencil in what you need, then send it for the carter to bring, keep it as a standing order, or fetch it yourself while the inn's shut.",
-                does: "Open the slips" },
-            { pick: "deliveries", icon: "🛻", name: "Deliveries",
-                fact: g.crates.length ? `📦 ${g.crates.length > 1 ? `${g.crates.length} crates` : "A crate"} at the kitchen door` : g.deliveries.length ? `🛻 Expected ${whenText(g, Math.min(...g.deliveries.map((d) => d.day))).replace(" morning", "")}` : undefined,
-                status: g.deliveries.length ? expected(g) : g.crates.length ? "Unpack it into the pantry." : "Nothing on its way.",
+                fact: openSlips ? `${n(openSlips, "open order")}` : "No open orders",
+                status: openSlips ? "Pencilled in, not sent yet" : undefined,
+                tone: openSlips ? "warn" : undefined,
+                body: `<div class="desc">Order ingredients and fuel from the town's suppliers. The carter brings them in the morning.</div>`,
+                cta: "Buy goods" },
+            { pick: "deliveries", icon: "🛻", name: "Deliveries", warn: g.crates.length > 0,
+                fact: g.crates.length ? `📦 ${n(g.crates.length, "crate")} at the kitchen door` : g.deliveries.length ? `${n(g.deliveries.length, "delivery", "deliveries")} incoming` : "Nothing incoming",
+                status: [g.crates.length && g.deliveries.length ? `${n(g.deliveries.length, "delivery", "deliveries")} incoming` : g.deliveries.length ? `Next: ${whenText(g, Math.min(...g.deliveries.map((d) => d.day))).replace(" morning", "")}` : "",
+                    g.standing.length ? `📌 ${n(standing, "standing order")}${pausedSo ? ` (${pausedSo} paused)` : ""}` : ""].filter(Boolean).join(" · ") || undefined,
                 tone: g.crates.length ? "warn" : g.deliveries.length ? "good" : undefined,
-                detail: "What's on its way (cancel it until the evening before), crates waiting at the kitchen door, and the deliveries that came.",
-                does: "See the deliveries" },
+                body: `<div class="desc">What's coming, what's waiting to be carried in, and what came. Cancel an order until the evening before.</div>`,
+                cta: "Check deliveries" },
             { pick: "shop", icon: "🛒", name: "Equipment",
-                fact: g.onOrder.length ? `${g.onOrder.length} on order` : undefined,
-                status: g.onOrder.length ? undefined : "Kitchen equipment and upgrades to buy.",
+                fact: g.onOrder.length ? `${n(g.onOrder.length, "piece")} on order` : `${moneyHtml(g.purse)} in the purse`,
                 tone: g.onOrder.length ? "good" : undefined,
-                detail: `Order for the carter, who comes next morning, or fetch it yourself while the inn's shut. In the purse: ${moneyHtml(g.purse)}.`,
-                does: "Open the shop" },
-            { pick: "arrange", icon: "🛠", name: "Arrange the kitchen", warn: g.toPlace.length > 0,
-                fact: g.toPlace.length ? `📦 ${g.toPlace.length} to place` : undefined,
-                status: g.toPlace.length ? undefined : "Move, place and sell back equipment.",
+                body: `<div class="desc">Stoves, kettles, a pie safe and more, for a kitchen that can make more.</div>`,
+                cta: "Browse equipment" },
+            { pick: "arrange", icon: "🛠", name: "Arrange the Kitchen", warn: g.toPlace.length > 0,
+                fact: g.toPlace.length ? `📦 ${n(g.toPlace.length, "piece")} to place` : "Everything in place",
                 tone: g.toPlace.length ? "warn" : undefined,
-                detail: `Place what's been delivered, move what you have, or sell a piece back for ${SELL_BACK_SHARE_WORDS} its price. The clock stops while you do.`,
-                does: "Leave the desk and start arranging" },
+                body: `<div class="desc">Move your equipment, place what came, or sell a piece back for ${SELL_BACK_SHARE_WORDS} its price. The clock stops.</div>`,
+                cta: "Arrange the kitchen" },
             { pick: "skills", icon: "📚", name: "Skills", warn: pointsLeft(g) > 0,
-                fact: pointsLeft(g) ? `${pointsLeft(g)} point${pointsLeft(g) === 1 ? "" : "s"} to spend` : `${g.known.size} recipes known`,
+                fact: pointsLeft(g) ? `✦ ${n(pointsLeft(g), "point")} to spend` : `Level ${levelOf(g)} · ${n(g.known.size, "recipe")} known`,
+                status: `Next point: ${Math.floor((progress.have / Math.max(1, progress.need)) * 100)}% there`,
                 tone: pointsLeft(g) ? "good" : undefined,
-                detail: "Recipes you know and recipes to learn. Every guest you serve teaches you something: enough of them earn a point to spend on a new recipe.",
-                does: "Open the recipe book" },
+                body: `<div class="desc">Serving guests earns points. Spend them on new recipes and knacks.</div>`,
+                cta: pointsLeft(g) ? "Spend your points" : "Open the recipe book" },
             { pick: "journal", icon: "📖", name: "Journal",
-                fact: g.journalUnread ? `${g.journalUnread} new` : undefined,
-                status: g.journalUnread ? undefined : "Information about patrons you served.",
+                fact: g.journalUnread ? `${n(g.journalUnread, "new note")}` : known ? `${n(known, "regular")} met` : "No notes yet",
                 tone: g.journalUnread ? "good" : undefined,
-                detail: `Notes on the regulars and passing visitors you've served: what they said, what they liked.${known ? ` ${known} known so far.` : ""}`,
-                does: "Read the journal" },
+                body: `<div class="desc">What your guests said and liked. Regulars reward getting to know them.</div>`,
+                cta: "Read the journal" },
         ].map((c, i) => ({ ...c, focus: i === st.focus }));
         const go = (v) => {
             if (v === "fare")
@@ -116,10 +125,10 @@ export function openDeskScreen(g, openJournal) {
         return {
             title: "🕯️ Desk",
             holdsClock: true,
-            subtitle: "Run the inn: what's served, what it costs, the kitchen, the news",
+            subtitle: "Run the inn from here: the menu, prices, supplies, the kitchen and the news",
             view: {
-                html: (!g.menuChosen ? `<p class="desk-warn">⚠️ <b>The bill of fare isn't set.</b> Guests are ordering from a default one.</p>` : "")
-                    + grid(cards, { cols: 4 }),
+                html: (!g.menuChosen ? `<p class="desk-warn">⚠️ <b>Your menu isn't set.</b> Until you choose it in the Bill of Fare, guests can only order ale and cider.</p>` : "")
+                    + grid(cards, { cols: 5, size: "l" }),
                 onPick: go,
                 onKey: gridKeys(() => cards.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, (i) => go(cards[i].pick)),
             },

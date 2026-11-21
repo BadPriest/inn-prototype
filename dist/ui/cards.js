@@ -83,6 +83,7 @@ export function card(c) {
         ${c.note ? `<div class="note">${c.note}</div>` : ""}
         ${c.body ? `<div class="body">${c.body}</div>` : ""}
         ${c.tags?.length ? `<div class="chips">${c.tags.map((t) => chip(t)).join("")}</div>` : ""}
+        ${c.cta ? `<div class="cta">${c.cta} <span class="arr">→</span></div>` : ""}
         ${open && extra ? `<div class="open">${extra}</div>` : ""}
       </div>
       ${have ? `<div class="have">You have ${have}</div>` : ""}

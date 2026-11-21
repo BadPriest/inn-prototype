@@ -155,7 +155,7 @@
      as the tallest (settleCards). */
   .cards { --w:118px; display:flex; flex-wrap:wrap; justify-content:center; gap:10px; max-width:calc(var(--cols) * (var(--w) + 10px)); margin:0 auto; padding-bottom:4px; }
   .cards.size-s { --w:96px; gap:8px; }
-  .cards.size-l { --w:150px; gap:12px; }
+  .cards.size-l { --w:142px; gap:10px; }
   /* Cards: printed card stock. A cream face in a thin printed frame, the icon in an art window, the
      name under it; the other stages are cards stacked behind it (.uc), peeking out above and to the right.
      The pointer tilts the card and moves a sheen over it (--rx, --ry, --mx, --my); lifted when pointed
@@ -196,6 +196,13 @@
   .icard .body .menu-state { font:600 11px system-ui; color:var(--ink-card); margin-top:1px; }
   .icard .body .menu-state.good { color:#3c7426; } .icard .body .menu-state.muted { color:#8e7d68; font-weight:400; }
   .icard .body .flav { font:italic 11.5px/1.35 Georgia, serif; color:#6c5844; margin-top:4px; padding:0 2px; }
+  .icard .body .desc { font:italic 12px/1.35 Georgia, serif; color:#5e4b38; margin-top:5px; padding:0 3px; }
+  .icard:has(.cta) { min-height:0; }
+  .icard:has(.cta) .ic { height:54px; font-size:30px; }
+  .icard .cta { margin-top:auto; padding-top:7px; width:100%; font:600 11.5px/1.25 system-ui; color:#8a5a00; border-top:1px dashed rgba(154,122,80,.5); }
+  .icard .chips + .cta { margin-top:4px; }
+  .icard .cta .arr { display:inline-block; transition:transform .15s; }
+  .icard:hover .cta .arr, .icard.focus .cta .arr { transform:translateX(3px); }
   .icard .fact { font:600 12px system-ui; color:var(--ink-card); margin-top:2px; }
   .icard .unit { font-weight:400; color:var(--sub); font-size:11px; }
   .icard .status { font:11.5px/1.25 system-ui; color:var(--sub); }

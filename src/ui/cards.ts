@@ -24,6 +24,7 @@ export interface CardSpec {
   tone?: "good" | "warn" | "muted"; // colours the status
   tags?: string[];
   body?: string; // more on the face, above the tags: lines of icons, a flavour line
+  cta?: string; // at the foot of the face: what picking it does ("Choose dishes and drinks"), with an arrow
   detail?: string; // the drawer: more about it
   does?: string; // the drawer: what picking it does ("Opens the shop", "Takes it off the board")
   flavour?: string; // the drawer: a quiet italic line
@@ -124,6 +125,7 @@ export function card(c: CardSpec): string {
         ${c.note ? `<div class="note">${c.note}</div>` : ""}
         ${c.body ? `<div class="body">${c.body}</div>` : ""}
         ${c.tags?.length ? `<div class="chips">${c.tags.map((t) => chip(t)).join("")}</div>` : ""}
+        ${c.cta ? `<div class="cta">${c.cta} <span class="arr">→</span></div>` : ""}
         ${open && extra ? `<div class="open">${extra}</div>` : ""}
       </div>
       ${have ? `<div class="have">You have ${have}</div>` : ""}
