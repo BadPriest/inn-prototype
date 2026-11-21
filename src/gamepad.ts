@@ -1,12 +1,15 @@
-// A controller (a PS5 DualSense, or anything the browser maps to the standard layout): read each frame
-// and turned into what the keyboard and mouse already do, so every screen works without knowing about it.
+// A controller (a PS5 DualSense, an Xbox pad, or anything the browser maps to the standard layout): read
+// each frame and turned into what the keyboard and mouse already do, so every screen works without knowing
+// about it. Buttons below are named the PlayStation way; an Xbox pad has the same places (✕ A, ○ B,
+// □ X, △ Y, L1/R1 LB/RB, L2/R2 LT/RT, Options Menu, touchpad View), and prompts name its own buttons.
 //
 // Playing:  left stick walk (all the way, or R2, runs) · ✕ use (hold: hurry, clean; garnishes at the
 //           counter) · L1/R1 pick between things in reach · D-pad ←/→ choose a card, ↑ play it,
 //           ↓ put down (a dish back where it came from, or else a tray; hold ↓: empty a pot) · right
 //           stick zoom (↑↓) and turn the isometric camera (←→) · R3 top-down or isometric · Options
 //           pause · touchpad the keys · □ hold: hurry (F). ○ and △ are free while playing.
-// Menus:    D-pad or left stick move · ✕ pick (like Space: a card, an item) · □ confirm the screen (like
+// Menus:    D-pad or left stick move · ✕ pick (like Space: a card, an item) · △ take one off (like
+//           Delete: a pack off the slip) · □ confirm the screen (like
 //           Enter: Cook, Put up…, without going to the button) · ○ the negative choice (Not now, Keep playing), else back or close · L1/R1 switch tabs, L2/R2 the tabs inside them
 // Kitchen:  left stick moves a cursor · ✕ pick up / place · ○ put back or finish · □ buy · △ another ·
 //           L2 get rid of the piece in hand
@@ -30,7 +33,7 @@ export interface PadHooks {
   canvas: HTMLCanvasElement;
 }
 
-// Standard mapping (what Chrome and Edge give a DualSense).
+// Standard mapping (what Chrome and Edge give a DualSense or an Xbox pad). `share` is Create on a DualSense, View on Xbox.
 const B = { cross: 0, circle: 1, square: 2, triangle: 3, l1: 4, r1: 5, l2: 6, r2: 7, share: 8, options: 9, l3: 10, r3: 11, up: 12, down: 13, left: 14, right: 15, ps: 16, touchpad: 17 };
 const DEAD = 0.22; // stick dead zone
 const HOLD = 0.5; // seconds: a long press
@@ -41,6 +44,9 @@ let prev: boolean[] = [];
 let downAt: number[] = [];
 let longFired: boolean[] = [];
 let active = false; // the controller was the last thing used: prompts show its buttons
+/** Which buttons to name: PlayStation (✕ ○ □ △) or Xbox (A B X Y). Anything not recognised as a PlayStation pad shows Xbox. */
+export type PadKind = "ps" | "xbox";
+let kind: PadKind = "ps";
 let lastIndex = -1;
 // Menus: the left stick repeats like a held arrow key.
 let stickDir = "";
@@ -69,17 +75,35 @@ function setActive(on: boolean): void {
 /** Whether to show controller buttons in the prompts. */
 export function padActive(): boolean { return active; }
 
+/** Which controller's buttons the prompts name. */
+export function padKind(): PadKind { return kind; }
+
+function kindOf(id: string): PadKind {
+  return /054c|playstation|dualsense|dualshock|wireless controller/i.test(id) ? "ps" : "xbox";
+}
+
+const XBOX: [RegExp, string][] = [
+  [/\btouchpad or Create\b/g, "View"], [/✕/g, "A"], [/○/g, "B"], [/□/g, "X"], [/△/g, "Y"], [/\bL1\b/g, "LB"], [/\bR1\b/g, "RB"], [/\bL2\b/g, "LT"], [/\bR2\b/g, "RT"],
+  [/\bL3\b/g, "LS"], [/\bR3\b/g, "RS"], [/\bOptions\b/g, "Menu"], [/\btouchpad\b/g, "View"], [/\bPS5 or similar\b/g, "Xbox or similar"],
+];
+/** Text written with PlayStation buttons, in the buttons of the controller in use. */
+export function padText(text: string): string {
+  return kind === "xbox" ? XBOX.reduce((t, [re, to]) => t.replace(re, to), text) : text;
+}
+
 /** The keyboard's prompt, in controller buttons. */
 export function padGlyphs(text: string): string {
   if (!active) return text;
-  return text
+  return padText(text
     .replace(/\bSpace or E\b/g, "✕")
     .replace(/\bhold Space\b/gi, "hold ✕")
     .replace(/\bSpace\b/g, "✕")
     .replace(/\bR: /g, "↓: ")
     .replace(/\bX: /g, "hold ↓: ")
     .replace(/\bC: /g, "↑: ")
-    .replace(/\bTab\b/g, "L1/R1");
+    .replace(/\bTab\b/g, "L1/R1")
+    .replace(/\bDelete\b/g, "△")
+    .replace(/\bPgUp\/PgDn\b/g, "L2/R2"));
 }
 
 function key(k: string, opts: { shift?: boolean; up?: boolean; down?: boolean } = {}): void {
@@ -106,7 +130,11 @@ export function pollPad(dt: number): void {
   const pads = navigator.getGamepads?.() ?? [];
   const pad = [...pads].find((p) => p && p.connected && p.mapping === "standard") ?? [...pads].find((p) => p && p.connected) ?? null;
   if (!pad) { if (lastIndex >= 0) { hooks.setWalk(null, false); lastIndex = -1; } hideCursor(); return; }
-  if (pad.index !== lastIndex) { prev = []; downAt = []; longFired = []; lastIndex = pad.index; }
+  if (pad.index !== lastIndex) {
+    prev = []; downAt = []; longFired = []; lastIndex = pad.index;
+    kind = kindOf(pad.id);
+    document.body.classList.toggle("pad-xbox", kind === "xbox");
+  }
   const now = performance.now() / 1000;
   const btn = pad.buttons.map((b) => b.pressed);
   const pressed = (i: number) => btn[i] && !prev[i];
@@ -129,6 +157,7 @@ export function pollPad(dt: number): void {
     if (dir !== stickDir) { stickDir = dir; if (dir) { key(dir); stickNext = now + 0.35; } }
     else if (dir && now >= stickNext) { key(dir); stickNext = now + 0.12; }
     if (pressed(B.cross)) key(" ");
+    if (pressed(B.triangle)) key("Delete");
     if (pressed(B.square)) padConfirm();
     if (pressed(B.circle) && !padCancel()) key(hooks.paused() ? "Escape" : "Backspace");
     // Tabs: L1/R1 the outer level, L2/R2 the inner one (the meals on the bill of fare).
@@ -182,7 +211,7 @@ export function pollPad(dt: number): void {
     else if (!right || Math.abs(right.x) < 0.3) turned = false;
     if (pressed(B.r3)) key("v");
     if (pressed(B.options)) key("p");
-    if (pressed(B.touchpad)) key("h");
+    if (pressed(B.touchpad) || pressed(B.share)) key("h");
   }
   prev = btn;
 }

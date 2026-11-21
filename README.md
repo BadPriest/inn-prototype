@@ -25,7 +25,7 @@ Design decisions live in [docs/design-session-journal.md](docs/design-session-jo
 7. **Keep the place nice.** Wipe tables, mop spills, keep the fire going and the lamps lit. Wind the gramophone for music.
 8. **Close and sleep.** Close the door when you're done, see out the last guests, and turn in. The next day starts with a new paper.
 
-Controls are listed in-game: press **H** (or the touchpad on a controller). A PS5 controller works in Chrome and Edge: left stick walks, ✕ uses, D-pad ↓ puts down (a dish back where it came from, or a tray; hold: empty a pot), hold □ to hurry; in menus ✕ picks, □ presses the confirm button, ○ the negative one (or goes back). The keyboard and mouse basics:
+Controls are listed in-game: press **H** (or the touchpad on a controller). A PS5 or Xbox controller works in Chrome and Edge, and prompts show its own buttons (✕ ○ □ △ or A B X Y): left stick walks, ✕ uses, D-pad ↓ puts down (a dish back where it came from, or a tray; hold: empty a pot), hold □ to hurry; in menus ✕ picks, □ presses the confirm button, ○ the negative one (or goes back). The keyboard and mouse basics:
 
 | | |
 | --- | --- |
@@ -54,8 +54,8 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 - Snacks in bowls on the tables and the counter: peanuts, olives, pickled eggs, crostini, bread and butter, cheese, pretzels, chestnuts, pickled onions, apple rings.
 - The bill of fare can be one all-day bill, or a bill per meal time. Each dish says where it's made (a pot on a hob, a pan, an oven, the kettle…). Dishes your kitchen can't make are greyed out, with what they need. Every card lists what a dish takes and how much of each is in the pantry.
 - **Levels and Skills.** A new keeper knows porridge, tea, coffee, stew, and bread and butter. Guests served earn experience (more for a delighted guest); each level up is a point to spend in Skills at the desk, on a new recipe or a knack (Quick hands wipes faster, Charm adds to tips). Levels get further apart.
-- **The pantry.** Cooking and pouring use stock, oldest first. Order more at the desk in Supplies: a slip per supplier (what your bill uses first), sent for the carter (who leaves a crate at the kitchen door; crates pile up until you carry them in) or fetched yourself. You start with about four busy days' worth.
-- **Shelf life.** Everything ages from the morning after it arrives: fish in a day or two, milk sours, meat and greens in a few days, dry goods keep. A dish made with something stale is day-old (cheaper, and guests notice). Spoiled food can't be used and stays on the shelves until you clear it at the pantry.
+- **The pantry.** Cooking and pouring use stock, oldest first. Order more at the desk in Buy Supplies (and see what's coming, cancel it, or look back in Deliveries): a slip per supplier (what your bill uses first), sent for the carter (who leaves a crate at the kitchen door; crates pile up until you carry them in) or fetched yourself. You start with about four busy days' worth.
+- **Shelf life.** Everything ages from the morning after it arrives: fish in a day or two, milk sours, meat and greens in a few days, dry goods keep. A dish made only from fresh stock is **fresh** (some guests like it); one made with something stale is day-old (cheaper, and guests notice). On the cook screen each ingredient card says which stage goes in, with the other stages stacked under it: Tab shuffles them. Spoiled food can't be used and stays on the shelves until you clear it at the pantry.
 - **The baker's goods.** Pies and bread bought from the baker go in the pie safe and bread case and serve anyone who orders pie or bread: no recipe or oven needed, pleasant but plain.
 
 **Coin.**
@@ -83,7 +83,7 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 **Screen and settings.**
 - Isometric view (top-down with V), with zoom and a turnable camera.
 - Order tickets, readable speech plates, and a side panel with orders, trays and a log.
-- A UI size slider, touch controls with a toolbar, controller support (PS5 or similar), and a keys screen (H).
+- A UI size slider, touch controls with a toolbar, controller support (PS5, Xbox or similar), and a keys screen (H).
 - A debug view (`) for spawning guests and skipping time.
 
 ## Run it

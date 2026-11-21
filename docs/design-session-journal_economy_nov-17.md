@@ -119,6 +119,8 @@ Inspired by the Sears, Roebuck & Co. catalogue. The catalogue (city wholesaler) 
 
 A typical guest spends about 12d and leaves about 6d. Upkeep: licence 14s a week (about 2s a day), fuel about 10d a day. A settled day of about 20 guests nets about 9s after upkeep; the first week, nearer 4s. Start with about 2 crowns: a week's restock plus one small buy.
 
+> **Changed, Nov 21 (#79).** The baker's pie costs 18d (about 3d a slice) and sells at about 4d a slice; bread costs 8d and sells at about 1.5d. This replaces the bought pie row above.
+
 ### Pacing targets
 
 These matter more than the prices.

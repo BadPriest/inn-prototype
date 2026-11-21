@@ -14,10 +14,11 @@
     "ingredient": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "name", "icon", "unit", "worth", "tags", "roles", "spoilage"],
+      "required": ["id", "name", "description", "icon", "unit", "worth", "tags", "roles", "spoilage"],
       "properties": {
         "id": { "$ref": "common.schema.json#/definitions/id" },
         "name": { "type": "string" },
+        "description": { "type": "string", "description": "What it is, in a line or two, plainly and with a wink. Shown on its card (Supplies)." },
         "icon": { "type": "string" },
         "unit": { "type": "string", "description": "What one unit is called." },
         "worth": { "$ref": "common.schema.json#/definitions/pence", "description": "Pence per unit, used to work out dish prices." },

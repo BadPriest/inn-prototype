@@ -5,6 +5,7 @@
 // logs tell us what mood must react to. Shown in the debug view.
 import { bowlNeeds } from "./snacks.js";
 import { organic } from "./core.js";
+import { orderable } from "./readymade.js";
 import { NEED_IDS, NEEDS, RECIPES, SOAKING } from "./data.js";
 import { dist } from "./world.js";
 const clamp01 = (n) => Math.max(0, Math.min(1, n));
@@ -57,8 +58,9 @@ function circumstances(g, p, need) {
         out.push(`has ${kind}`);
     if (kind === "food" && seat?.kind === "stool")
         out.push("on a stool (drinks only)");
-    if (!RECIPES.some((r) => r.kind === kind && g.billNow().has(r.id)))
-        out.push(`no ${kind} on the bill of fare`);
+    const can = orderable(g);
+    if (!RECIPES.some((r) => r.kind === kind && can.has(r.id)))
+        out.push(`no ${kind} on the bill of fare or on display`);
     if (!g.open || g.lastCall)
         out.push("last call");
     return out;

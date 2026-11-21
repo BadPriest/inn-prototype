@@ -6,6 +6,7 @@
 
 import { bowlNeeds } from "./snacks.js";
 import { organic } from "./core.js";
+import { orderable } from "./readymade.js";
 import { NEED_IDS, NEEDS, RECIPES, SNACKS, SOAKING, type NeedId, type NeedLevels } from "./data.js";
 import type { Game, Patron, UnmetStretch } from "./game.js";
 import { dist } from "./world.js";
@@ -53,7 +54,8 @@ function circumstances(g: Game, p: Patron, need: NeedId): string[] {
   if (p.lingering) out.push("waiting for their party");
   if (p.state === "consuming" && p.consuming?.kind === kind) out.push(`has ${kind}`);
   if (kind === "food" && seat?.kind === "stool") out.push("on a stool (drinks only)");
-  if (!RECIPES.some((r) => r.kind === kind && g.billNow().has(r.id))) out.push(`no ${kind} on the bill of fare`);
+  const can = orderable(g);
+  if (!RECIPES.some((r) => r.kind === kind && can.has(r.id))) out.push(`no ${kind} on the bill of fare or on display`);
   if (!g.open || g.lastCall) out.push("last call");
   return out;
 }

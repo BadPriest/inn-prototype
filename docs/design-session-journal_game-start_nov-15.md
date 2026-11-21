@@ -46,6 +46,8 @@ Keeper's quarters: bed, desk, wardrobe. Inn: two four-seat tables, small firepla
 
 The one hob decides the day: when it's empty and clean, you choose what it's for, a stew or quick dishes (scrambled eggs, toast and the like), never both at once. Growth is your choice of upgrade: add an oven, more hobs, and so on (ties to #8).
 
+> **Changed, Nov 21 (#11).** The small tavern starts with a two-hob stove, as built in build 113, and a kettle. The one-hob stove above is superseded.
+
 The small tavern must be viable with no upgrades at all. Stove upgrades are bought on their own and never need a permit or a layout change. The kitchen's spare room is rented by another tenant as storage, so expanding the kitchen means getting that room back.
 
 ## Ideas to develop
@@ -206,6 +208,8 @@ Guests first appear by role (farmhand, dockworker), but every one has a name. Ma
 Suggestion: learn names by default through familiarity (Spec 2: stranger, acquaintance, regular, friend), and let the trait speed it up to the first serving. Then no player is stuck with numbers.
 
 Decided direction: learning names is dynamic. Some guests give their name easily, others take a long time. Suggestion: reuse each guest's openness (the same that makes regulars open about their tastes), so a chatty farmhand introduces himself on the first visit and a reserved one like Hedda takes weeks. Getting a guarded guest's name then becomes a small win.
+
+> **Changed, Nov 21 (#70).** Once a guest has told you their name, they show both name and role ("Hedda, scholar"); before that, the role alone. Players need the role to decide how to serve.
 
 ## Setting and later ideas
 

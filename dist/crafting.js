@@ -2,7 +2,7 @@
 // What you make waits where you made it: single servings on the station's shelf (labelled for the
 // order they were made for), pots on the station, whole pies in the pie safe. You pick them up there.
 // The hatch is for a hired cook, later.
-import { applyTaken, describeUses, have, nameOf, shortOf, takeStockFrom, usesOf } from "./stock.js";
+import { FRESH_TAG, applyTaken, describeUses, have, nameOf, shortOf, takeStockFrom, usesOf } from "./stock.js";
 import { organic, uid } from "./core.js";
 import { BREAD_CASE_BATCHES, INGREDIENTS, RECIPES, TUNING, URN_CAPACITY, utensilFor } from "./data.js";
 import { dist } from "./world.js";
@@ -58,10 +58,10 @@ export function urnTea(tea) {
 export function effectiveRecipe(_g, recipe, batch = false) {
     return batch && recipe.id === "tea" ? urnTea(recipe) : recipe;
 }
-export function startJob(g, slot, recipeIn, ingredients, ticket) {
+export function startJob(g, slot, recipeIn, ingredients, ticket, prefer = {}) {
     const batch = recipeIn.id === "tea" && !!recipeIn.servings;
     const recipe = effectiveRecipe(g, RECIPES.find((r) => r.id === recipeIn.id), batch);
-    const uses = usesOf(g, recipe, ingredients);
+    const uses = usesOf(g, recipe, ingredients, prefer);
     const short = shortOf(g, uses);
     if (short.length) {
         g.say(`Not enough in the pantry: short ${describeUses(short)}.`);
@@ -243,7 +243,7 @@ export function ageFood(g) {
     const stale = (i) => {
         if (i.kind !== "food" || i.snack || i.tags.includes(TUNING.staleTag))
             return;
-        i.tags = [...i.tags.filter((t) => t !== "warm" && t !== "crisp"), TUNING.staleTag];
+        i.tags = [...i.tags.filter((t) => t !== "warm" && t !== "crisp" && t !== FRESH_TAG), TUNING.staleTag];
         i.name = `Day-old ${i.name.charAt(0).toLowerCase()}${i.name.slice(1)}`;
     };
     let tossed = 0;

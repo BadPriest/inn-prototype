@@ -3,7 +3,7 @@
 // order they were made for), pots on the station, whole pies in the pie safe. You pick them up there.
 // The hatch is for a hired cook, later.
 
-import { applyTaken, describeUses, have, nameOf, shortOf, takeStockFrom, usesOf, type Taken } from "./stock.js";
+import { FRESH_TAG, applyTaken, describeUses, have, nameOf, shortOf, takeStockFrom, usesOf, type Taken } from "./stock.js";
 import { organic, uid } from "./core.js";
 import { BREAD_CASE_BATCHES, INGREDIENTS, RECIPES, TUNING, URN_CAPACITY, utensilFor, type Recipe } from "./data.js";
 import type { Game, Item, Job } from "./game.js";
@@ -61,10 +61,10 @@ export function effectiveRecipe(_g: Game, recipe: Recipe, batch = false): Recipe
   return batch && recipe.id === "tea" ? urnTea(recipe) : recipe;
 }
 
-export function startJob(g: Game, slot: Slot, recipeIn: Recipe, ingredients: string[], ticket: { id: number; name: string } | null): boolean {
+export function startJob(g: Game, slot: Slot, recipeIn: Recipe, ingredients: string[], ticket: { id: number; name: string } | null, prefer: Record<string, string> = {}): boolean {
   const batch = recipeIn.id === "tea" && !!recipeIn.servings;
   const recipe = effectiveRecipe(g, RECIPES.find((r) => r.id === recipeIn.id)!, batch);
-  const uses = usesOf(g, recipe, ingredients);
+  const uses = usesOf(g, recipe, ingredients, prefer);
   const short = shortOf(g, uses);
   if (short.length) { g.say(`Not enough in the pantry: short ${describeUses(short)}.`); return false; }
   const taken = takeStockFrom(g, uses);
@@ -211,7 +211,7 @@ export function returnSlice(g: Game, slice: Item): void {
 export function ageFood(g: Game): void {
   const stale = (i: Item) => {
     if (i.kind !== "food" || i.snack || i.tags.includes(TUNING.staleTag)) return;
-    i.tags = [...i.tags.filter((t) => t !== "warm" && t !== "crisp"), TUNING.staleTag];
+    i.tags = [...i.tags.filter((t) => t !== "warm" && t !== "crisp" && t !== FRESH_TAG), TUNING.staleTag];
     i.name = `Day-old ${i.name.charAt(0).toLowerCase()}${i.name.slice(1)}`;
   };
   let tossed = 0;

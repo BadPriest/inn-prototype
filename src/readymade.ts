@@ -63,4 +63,17 @@ export function servedReadyMade(g: Game, dish: string): boolean {
   return keepers(g, "breadcase").some((f) => breadCaseKeys(f.id).some((k) => g.pots.has(k))) || have(g, id) > 0;
 }
 
+/** Dishes with servings on display, kept where guests can see them: slices in the pie safe, bread in the bread case (yours or the baker's). */
+export function onDisplay(g: Game): Set<string> {
+  const out = new Set<string>();
+  for (const p of g.pieSafe) if (p.left > 0) out.add(p.item.recipeId);
+  for (const f of keepers(g, "breadcase")) for (const k of breadCaseKeys(f.id)) { const pot = g.pots.get(k); if (pot && pot.left > 0) out.add(pot.item.recipeId); }
+  return out;
+}
+
+/** What a guest can order now: what's on the bill of fare, and whatever's on display. */
+export function orderable(g: Game): Set<string> {
+  return new Set([...g.billNow(), ...onDisplay(g)]);
+}
+
 export const readyMadeRecipe = (id: string) => RECIPES.find((x) => x.id === READY_MADE[id]?.dish);

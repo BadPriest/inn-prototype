@@ -8,6 +8,8 @@
 // stay on the shelves until they're cleared.
 import { INGREDIENTS, TUNING, URN_CAPACITY, dishData } from "./data.js";
 import { ECONOMY_DATA, INGREDIENTS_DATA, SPOILAGE_DATA } from "./gamedata.gen.js";
+/** The tag a dish made all from fresh stock carries. */
+export const FRESH_TAG = "fresh";
 const ingredient = (id) => INGREDIENTS.find((x) => x.id === id);
 export const isFree = (id) => (ingredient(id)?.worth ?? 0) === 0;
 export const unitsOf = (id) => ingredient(id)?.unit ?? "unit";
@@ -91,7 +93,7 @@ export function addStock(g, id, units, day = g.day) {
     }
 }
 /** What one go of a recipe takes from the pantry, with these choices. A role takes whichever ingredient with it there's enough of, cheapest first. */
-export function usesOf(g, r, chosen) {
+export function usesOf(g, r, chosen, prefer = {}) {
     const times = r.storedIn === "urn" ? URN_CAPACITY : 1;
     const uses = [];
     // The stages each ingredient is taken at, from the dish's data (bread pudding wants yesterday's bread).
@@ -105,7 +107,7 @@ export function usesOf(g, r, chosen) {
     for (const id of chosen) {
         const units = [...r.base.options, ...r.optional.options].find((o) => o.id === id)?.units ?? 1;
         const stages = [...(dish?.base.options ?? []), ...(dish?.optional.options ?? [])].find((o) => o.id === id)?.stages;
-        uses.push({ id, units: units * times, stages });
+        uses.push({ id, units: units * times, stages, prefer: prefer[id] });
     }
     if (r.boughtAs)
         uses.push({ id: r.boughtAs, units: 1 });
@@ -121,29 +123,58 @@ export function shortOf(g, uses) {
     }
     return [...need.values()].filter((u) => have(g, u.id, u.stages) < u.units).map((u) => ({ id: u.id, units: u.units - have(g, u.id, u.stages), stages: u.stages }));
 }
+/** The stages a dish takes one of its choices at (dishes.json), if it says. */
+export function optionStages(r, id) {
+    const dish = dishData(r.id)?.ingredients;
+    return [...(dish?.base.options ?? []), ...(dish?.optional.options ?? [])].find((o) => o.id === id)?.stages;
+}
+/** What's on the shelves of one ingredient, stage by stage, freshest first: only stages a dish takes (`stages`), never spoiled. */
+export function stagesInPantry(g, id, stages) {
+    const out = [];
+    if (isFree(id))
+        return out;
+    for (const l of lotsOf(g, id)) {
+        if (!allowed(g, id, l, stages))
+            continue;
+        const s = stageOf(g, id, l);
+        const at = out.find((x) => x.stage === s.id);
+        if (at)
+            at.units += l.units;
+        else
+            out.push({ stage: s.id, index: s.index, units: l.units, effect: s.effect });
+    }
+    return out.sort((a, b) => a.index - b.index);
+}
 /**
- * Take these from the pantry, all or nothing; null (and nothing taken) if anything is short. Fresh
- * first, the oldest of the fresh first, and older batches only when the fresh runs out; a dish that
- * wants it past fresh (bread pudding) takes the oldest first.
+ * Which batches these uses would take, and what the dish would carry; null if anything is short.
+ * Nothing is taken. The cook's chosen stage (`prefer`) goes first; then fresh, the oldest of the
+ * fresh first, and older batches only when the fresh runs out; a dish that wants it past fresh
+ * (bread pudding) takes the oldest first.
  */
-export function takeStockFrom(g, uses) {
+function planTake(g, uses) {
     if (shortOf(g, uses).length)
         return null;
     const taken = { addTags: [], removeTags: [], past: [] };
+    const cuts = new Map();
+    let tookAny = false;
     for (const u of uses) {
         if (isFree(u.id))
             continue;
         let left = u.units;
         const wantsOld = !!u.stages && !u.stages.includes("fresh");
+        const first = (l) => (u.prefer && stageOf(g, u.id, l).id === u.prefer ? 0 : 1);
         const order = lotsOf(g, u.id).filter((l) => allowed(g, u.id, l, u.stages))
-            .sort((a, b) => (wantsOld ? 0 : stageOf(g, u.id, a).index - stageOf(g, u.id, b).index) || a.day - b.day);
+            .sort((a, b) => first(a) - first(b) || (wantsOld ? 0 : stageOf(g, u.id, a).index - stageOf(g, u.id, b).index) || a.day - b.day);
         for (const l of order) {
             if (left <= 1e-9)
                 break;
-            const s = stageOf(g, u.id, l);
-            const n = Math.min(left, l.units);
-            l.units -= n;
+            const n = Math.min(left, l.units - (cuts.get(l) ?? 0));
+            if (n <= 1e-9)
+                continue;
+            cuts.set(l, (cuts.get(l) ?? 0) + n);
             left -= n;
+            tookAny = true;
+            const s = stageOf(g, u.id, l);
             if (s.index > 0) {
                 taken.addTags.push(...s.effect.addTags);
                 taken.removeTags.push(...s.effect.removeTags);
@@ -151,11 +182,26 @@ export function takeStockFrom(g, uses) {
                     taken.past.push({ id: u.id, stage: s.id });
             }
         }
-        g.lots[u.id] = lotsOf(g, u.id).filter((l) => l.units > 1e-9);
     }
-    taken.addTags = [...new Set(taken.addTags.filter((t) => t !== "fresh"))];
+    taken.addTags = [...new Set(taken.addTags.filter((t) => t !== FRESH_TAG))];
     taken.removeTags = [...new Set(taken.removeTags)];
-    return taken;
+    if (tookAny && !taken.past.length)
+        taken.addTags.push(FRESH_TAG);
+    return { taken, cuts };
+}
+/** What a dish made from these would carry, without taking anything. */
+export const previewTaken = (g, uses) => planTake(g, uses)?.taken ?? null;
+/** Take these from the pantry, all or nothing (see planTake); null, and nothing taken, if anything is short. */
+export function takeStockFrom(g, uses) {
+    const plan = planTake(g, uses);
+    if (!plan)
+        return null;
+    for (const [l, n] of plan.cuts)
+        l.units -= n;
+    for (const id of new Set(uses.map((u) => u.id)))
+        if (g.lots[id])
+            g.lots[id] = g.lots[id].filter((l) => l.units > 1e-9);
+    return plan.taken;
 }
 export const takeStock = (g, uses) => takeStockFrom(g, uses) !== null;
 /** Put what was taken onto a dish: its tags, and what's past fresh in its name's notes. */
@@ -225,7 +271,19 @@ export function describeUses(uses) {
 }
 /** A new keeper's pantry, as amounts. */
 export const startingPantry = () => ({ ...ECONOMY_DATA.startingPantry });
-/** A new keeper's pantry, as batches that came in today. */
+/** Testing only (inn#89): a new keeper's pantry holds every ingredient at every stage, fresh to spoiled. Off before testers get a build. */
+export const TEST_PANTRY_ALL_STAGES = true;
+/** A new keeper's pantry, as batches that came in today; with TEST_PANTRY_ALL_STAGES, a batch per stage, each a share of the amount, dated to sit mid-stage. */
 export function startingLots(day) {
-    return Object.fromEntries(Object.entries(startingPantry()).map(([id, units]) => [id, [{ units, day }]]));
+    const fuel = new Set(Object.values(ECONOMY_DATA.upkeep).map((u) => u.item).filter(Boolean));
+    return Object.fromEntries(Object.entries(startingPantry()).map(([id, units]) => {
+        const stages = stagesOf(id);
+        if (!TEST_PANTRY_ALL_STAGES || fuel.has(id) || stages.length < 2)
+            return [id, [{ units, day }]];
+        const each = Math.max(1, Math.ceil(units / stages.length));
+        return [id, stages.map((st, i) => {
+                const end = stages[i + 1]?.at ?? st.at + 1;
+                return { units: each, day: i === 0 ? day : day - 1 - (st.at + end) / 2 };
+            }).reverse()];
+    }));
 }

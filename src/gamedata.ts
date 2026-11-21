@@ -56,6 +56,7 @@ export interface StageEffect { addTags: string[]; removeTags: string[]; priceFac
 export interface IngredientData {
   id: string;
   name: string;
+  description: string;
   icon: string;
   unit: string;
   worth: Pence;

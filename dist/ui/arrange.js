@@ -6,7 +6,7 @@
 import { EQUIPMENT, PIE_SAFE_CAPACITY, PLACEABLE_ON } from "../data.js";
 import { P, floorPath } from "./proj.js";
 import { openShop } from "./desk.js";
-import { padActive } from "../gamepad.js";
+import { padActive, padText } from "../gamepad.js";
 import { fmtMoney, moneyHtml } from "../money.js";
 import { sellBack, sellBackPrice } from "../shop.js";
 import { openMenu, closeAll } from "./menu.js";
@@ -235,10 +235,10 @@ function bar(g) {
     const h = g.arranging?.holding;
     const what = h ? eqOf(h.type).name.toLowerCase() : "";
     const pad = padActive(); // a controller: name its buttons
-    const k = pad ? { esc: "○", del: "L2", buy: "□", another: "△", click: "✕ on" } : { esc: "Esc", del: "Delete", buy: "B", another: "A", click: "click" };
+    const k = pad ? { esc: padText("○"), del: padText("L2"), buy: padText("□"), another: padText("△"), click: padText("✕") + " on" } : { esc: "Esc", del: "Delete", buy: "B", another: "A", click: "click" };
     const waiting = g.toPlace.length;
     el.innerHTML = `<span>🛠 <b>Arranging the kitchen</b> · the clock's stopped · ${h
-        ? `${k.click === "click" ? "click" : "✕"} where the ${what} should go · ${k.esc} ${h.isNew ? "sets it aside for now" : "puts it back"} · ${k.del} sells it for ${moneyHtml(sellBackPrice(h.type))}`
+        ? `${k.click === "click" ? "click" : padText("✕")} where the ${what} should go · ${k.esc} ${h.isNew ? "sets it aside for now" : "puts it back"} · ${k.del} sells it for ${moneyHtml(sellBackPrice(h.type))}`
         : `${k.click} a stove, oven, barrel or pie safe to move it; a stove's kettle comes off from there`}</span>${!h && waiting
         ? `<button class="ghost" data-act="another">📦 Place what the carter brought (${waiting}) <small>${k.another}</small></button>` : ""}<button class="ghost" data-act="buy">🛒 Buy <small>${k.buy}</small></button><button data-act="done">Done${pad ? " <small>○</small>" : ""}</button>`;
     const act = { done: () => stopArranging(g), buy: () => arrangeBuy(g), another: () => arrangeAnother(g) };

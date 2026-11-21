@@ -2,7 +2,7 @@
 
 import { payLicence } from "./upkeep.js";
 import { carterArrives } from "./shop.js";
-import { deliveriesArrive } from "./supplies.js";
+import { deliveriesArrive, placeStanding, supplierDays } from "./supplies.js";
 import { MEALS, TUNING, currentEquipmentId, pieceById, EQUIPMENT, currentDishId, RECIPES, DEFAULT_MENU } from "./data.js";
 import { emptyStats, type DayStats, type Game, type RegularState } from "./game.js";
 import { defaultLayout, setOnStove } from "./world.js";
@@ -13,7 +13,8 @@ import { CALENDAR } from "./data.js";
 import { longDate, seasonTurned } from "./calendar.js";
 import { morningLine, passNight, type WeatherState } from "./weather.js";
 import { deliverPaper, marketDay } from "./newspaper.js";
-import { SKILLS_DATA } from "./gamedata.gen.js";
+import { SKILLS_DATA, SUPPLIERS_DATA } from "./gamedata.gen.js";
+import { STEPS } from "./walkthrough.js";
 import { pantryNews, startingPantry } from "./stock.js";
 
 const SAVE_KEY = "travelling-inn-proto-v3"; // v3: the calendar (older saves start fresh)
@@ -110,6 +111,7 @@ export function startNextDay(g: Game): void {
   beginDay(g);
   carterArrives(g); // yesterday's orders
   deliveriesArrive(g);
+  placeStanding(g);
   payLicence(g);
   const pantry = pantryNews(g);
   if (pantry) g.say(pantry);
@@ -141,7 +143,7 @@ export function save(g: Game): void {
     localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, calendarStart: g.calendarStart, location: g.location, inn: g.inn, weather: g.weather, history, regulars, visitorNotes: g.visitorNotes,
       menu: [...g.menu], menuChosen: g.menuChosen,
       layout: g.layout, mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives, walkthroughStep: g.walkthrough?.step, known: [...g.known], pointsSpent: g.pointsSpent, xp: g.xp, knacks: g.knacks, newSkills: g.newSkills, crates: g.crates, coat: g.coat, under: g.under, newGear: g.newGear,
-      purse: g.purse, priceLevel: g.priceLevel, onOrder: g.onOrder, toPlace: g.toPlace, lots: g.lots, slips: g.slips, lastSlips: g.lastSlips, deliveries: g.deliveries }));
+      purse: g.purse, priceLevel: g.priceLevel, onOrder: g.onOrder, toPlace: g.toPlace, lots: g.lots, slips: g.slips, lastSlips: g.lastSlips, deliveries: g.deliveries, standing: g.standing, standingSkips: g.standingSkips, deliveryLog: g.deliveryLog }));
   } catch { /* storage unavailable: carry on */ }
 }
 
@@ -151,7 +153,7 @@ export function load(g: Game): void {
     if (!raw) { save(g); return; } // a new save: keep the calendar season it starts in, even before day 1 ends
     const s = JSON.parse(raw) as { day: number; calendarStart?: number; location?: Game["location"]; inn?: Game["inn"]; weather?: WeatherState; history: DayStats[]; regulars?: RegularState[]; visitorNotes?: Game["visitorNotes"];
       menu?: string[]; menuChosen?: boolean; layout?: Game["layout"]; mealMode?: boolean; meals?: unknown; betweenMenu?: string[]; upgrades?: string[]; totalServed?: number; showObjectives?: boolean; walkthroughStep?: number; known?: string[]; pointsSpent?: number; xp?: number; knacks?: Game["knacks"]; newSkills?: boolean; crates?: Game["crates"]; coat?: string; under?: string; newGear?: string[];
-      purse?: number; priceLevel?: Game["priceLevel"]; onOrder?: string[]; toPlace?: string[]; stock?: Record<string, number>; lots?: Game["lots"]; slips?: Game["slips"]; lastSlips?: Game["lastSlips"]; deliveries?: Game["deliveries"] };
+      purse?: number; priceLevel?: Game["priceLevel"]; onOrder?: string[]; toPlace?: string[]; stock?: Record<string, number>; lots?: Game["lots"]; slips?: Game["slips"]; lastSlips?: Game["lastSlips"]; deliveries?: Game["deliveries"]; standing?: Game["standing"]; standingSkips?: string[]; standingPaused?: string[]; deliveryLog?: Game["deliveryLog"] };
     const dishes = (ids: string[]) => new Set(ids.map(currentDishId).filter((id) => RECIPES.some((r) => r.id === id)));
     if (s.menu) g.menu = dishes(s.menu);
     g.menuChosen = !!s.menuChosen;
@@ -189,7 +191,9 @@ export function load(g: Game): void {
     g.coat = s.coat ?? "slate";
     g.under = s.under ?? "linen";
     g.newGear = Array.isArray(s.newGear) ? s.newGear : [];
-    g.walkthrough = typeof s.walkthroughStep === "number" ? { step: s.walkthroughStep } : undefined;
+    // A tutorial still going in the save is offered again on the welcome, never resumed on its own.
+    g.walkthrough = undefined;
+    savedTutorialStep = typeof s.walkthroughStep === "number" && s.walkthroughStep < STEPS.length ? s.walkthroughStep : undefined;
     // Saves from before coin start with the new keeper's purse.
     if (typeof s.purse === "number") g.purse = s.purse;
     if (s.priceLevel) g.priceLevel = s.priceLevel;
@@ -201,6 +205,14 @@ export function load(g: Game): void {
     for (const id of ["firewood", "lampOil", "sundries"]) if (!(id in g.lots)) g.lots[id] = [{ units: startingPantry()[id] ?? 0, day: g.day }];
     g.slips = s.slips ?? {};
     g.lastSlips = s.lastSlips ?? {};
+    // Standing orders: a list; saves from when there was one per supplier (by supplier id) become one each, on all their days.
+    const st = s.standing as unknown;
+    g.standing = Array.isArray(st) ? st as Game["standing"] : Object.entries((st ?? {}) as Record<string, Record<string, number>>).map(([supplierId, slip], i) => {
+      const sup = SUPPLIERS_DATA.suppliers.find((x) => x.id === supplierId);
+      return { id: -1 - i, supplierId, slip, days: sup ? supplierDays(sup) : [], paused: s.standingPaused?.includes(supplierId) || undefined };
+    });
+    g.standingSkips = Array.isArray(st) ? s.standingSkips ?? [] : [];
+    g.deliveryLog = s.deliveryLog ?? [];
     g.deliveries = s.deliveries ?? [];
     g.onOrder = (s.onOrder ?? []).map(currentEquipmentId).filter((id) => pieceById(id));
     g.toPlace = [...g.toPlace, ...(s.toPlace ?? []).map(currentEquipmentId).filter((id) => pieceById(id))];
@@ -215,6 +227,9 @@ export function load(g: Game): void {
     g.visitorNotes = s.visitorNotes ?? [];
   } catch { /* ignore a broken save */ }
 }
+
+/** The tutorial's step in the save, if it was still going: offered on the welcome (main.ts). */
+export let savedTutorialStep: number | undefined;
 
 export function resetSave(): void {
   try { localStorage.removeItem(SAVE_KEY); } catch { /* ignore */ }

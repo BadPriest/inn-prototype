@@ -265,6 +265,7 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText(sn?.icon ?? "🥣", cx, cy + 1);
     ctx.globalAlpha = 1;
+    if (b.left > 0.02) drawBowlFlip(ctx, cx, cy + r + ts * 0.22, b.snack, ts);
   }
 
   // Target highlight
@@ -701,12 +702,15 @@ export function crateCounts(g: Game): Map<string, number> {
 
 /**
  * A snack bowl flipping a tag (inn#74): a pill in the stack over the guest's head, under what they say.
- * It pops up with the old tag, turns over like a card to the new one, sits a moment and floats off.
+ * Parchment, not gold (a flip isn't good or bad, just different): the bowl's icon and the old tag ease
+ * in, the old tag is struck through and the new one follows an arrow, it sits a moment and floats off.
  */
-const FLIP_MS = 2800;
-interface Flip { x: number; y: number; from: string; to: string; t: number }
+const FLIP_MS = 3200;
+const FLIP_INK = "#6b4a8a";
+interface Flip { x: number; y: number; from: string; to: string; icon: string; t: number }
 const flips: Flip[] = [];
-const flipSize = (ts: number) => ({ font: `700 ${Math.max(13, Math.floor(ts * 0.32))}px Georgia, serif`, h: Math.max(20, ts * 0.48) });
+const flipSize = (ts: number) => ({ font: `700 ${Math.max(13, Math.floor(ts * 0.3))}px Georgia, serif`, h: Math.max(20, ts * 0.46) });
+const flipText = (f: { icon: string; from: string; to: string }) => ({ head: `${f.icon} ${f.from}`, tail: ` → ${f.to}` });
 
 /** Leaves room for the guest's tag flip at lineY, if one is showing; returns the new lineY. */
 function stackFlip(g: Game, p: Patron, x: number, lineY: number, ts: number): number {
@@ -715,18 +719,21 @@ function stackFlip(g: Game, p: Patron, x: number, lineY: number, ts: number): nu
   const t = performance.now() - f.at;
   if (t >= FLIP_MS) return lineY;
   const { h } = flipSize(ts);
-  flips.push({ x, y: lineY - h * 0.15, from: f.from, to: f.to, t });
+  const icon = SNACKS.find((s) => s.effects.some((e) => e.flipTag?.from === f.from && e.flipTag.to === f.to))?.icon ?? "⇄";
+  flips.push({ x, y: lineY - h * 0.15, from: f.from, to: f.to, icon, t });
   return lineY - h - ts * 0.12;
+}
+
+function flipWidth(ctx: CanvasRenderingContext2D, f: Flip, ts: number): number {
+  const { head, tail } = flipText(f);
+  return ctx.measureText(head + tail).width + ts * 0.5;
 }
 
 /** Where this frame's pills sit, so speech plates move out of their way. */
 function flipBoxes(ctx: CanvasRenderingContext2D, ts: number): { x: number; y: number; w: number; h: number }[] {
   const { font, h } = flipSize(ts);
   ctx.save(); ctx.font = font;
-  const out = flips.map((f) => {
-    const w = Math.max(ctx.measureText(f.from).width, ctx.measureText(f.to).width) + ts * 0.5;
-    return { x: f.x - w / 2, y: f.y - h / 2, w, h };
-  });
+  const out = flips.map((f) => { const w = flipWidth(ctx, f, ts); return { x: f.x - w / 2, y: f.y - h / 2, w, h }; });
   ctx.restore();
   return out;
 }
@@ -738,32 +745,54 @@ export function drawTagFlips(ctx: CanvasRenderingContext2D, g: Game, ts: number)
   ctx.font = font;
   for (const f of flips) {
     const t = f.t;
-    const pop = t < 320 ? (() => { const k = t / 320; return 1 + 2.2 * (k - 1) ** 3 + 1.2 * (k - 1) ** 2; })() : 1;
-    const turn = Math.min(1, Math.max(0, (t - 750) / 400));
-    const face = turn < 0.5 ? f.from : f.to;
-    const sx = Math.abs(Math.cos(turn * Math.PI));
-    const out = Math.max(0, (t - 2300) / 500);
-    const w = Math.max(ctx.measureText(f.from).width, ctx.measureText(f.to).width) + ts * 0.5;
+    const ease = (k: number) => 1 - (1 - Math.min(1, Math.max(0, k))) ** 3;
+    const appear = ease(t / 450);
+    const turn = ease((t - 900) / 500);
+    const out = Math.max(0, (t - 2700) / 500);
+    const { head, tail } = flipText(f);
+    const w = flipWidth(ctx, f, ts);
     const x = Math.max(w / 2 + 2, Math.min(ctx.canvas.width - w / 2 - 2, f.x));
-    const y = f.y - out * ts * 0.4 - (turn >= 1 ? Math.sin((t - 1150) / 180) * ts * 0.02 : 0);
-    const isNew = turn >= 0.5;
+    const y = f.y + (1 - appear) * ts * 0.25 - out * ts * 0.4;
     ctx.save();
-    ctx.globalAlpha = 1 - out;
+    ctx.globalAlpha = appear * (1 - out);
     ctx.translate(x, y);
-    ctx.scale(Math.max(0.02, sx) * pop, pop);
-    ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.shadowColor = isNew ? "rgba(255,190,60,0.85)" : "rgba(0,0,0,0.45)"; ctx.shadowBlur = ts * (isNew ? 0.3 : 0.15);
-    ctx.fillStyle = isNew ? "#ffd34d" : "#f4e9d4";
+    ctx.shadowColor = "rgba(0,0,0,0.4)"; ctx.shadowBlur = ts * 0.12; ctx.shadowOffsetY = ts * 0.03;
+    ctx.fillStyle = "#f4e9d4";
     roundRect(ctx, -w / 2, -h / 2, w, h, h / 2); ctx.fill();
-    ctx.shadowBlur = 0;
-    ctx.strokeStyle = isNew ? "#7a5a10" : "#6b5440"; ctx.lineWidth = Math.max(1.5, ts * 0.045); ctx.stroke();
-    ctx.strokeStyle = isNew ? "rgba(255,248,220,0.7)" : "rgba(255,255,255,0.5)"; ctx.lineWidth = Math.max(1, ts * 0.02);
-    roundRect(ctx, -w / 2 + ts * 0.05, -h / 2 + ts * 0.05, w - ts * 0.1, h - ts * 0.1, h / 2 - ts * 0.05); ctx.stroke();
-    ctx.fillStyle = isNew ? "#3a2504" : "#3a2e26";
-    ctx.fillText(face, 0, 1);
+    ctx.shadowColor = "transparent";
+    ctx.strokeStyle = turn > 0 ? `rgba(107,74,138,${0.35 + 0.5 * turn})` : "#8a6a4a"; ctx.lineWidth = Math.max(1.5, ts * 0.04); ctx.stroke();
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    const left = -w / 2 + ts * 0.25;
+    const headW = ctx.measureText(head).width;
+    ctx.fillStyle = "#3a2e26";
+    ctx.fillText(head, left, 1);
+    if (turn > 0) {
+      const fromW = ctx.measureText(f.from).width;
+      ctx.strokeStyle = "rgba(58,46,38,0.75)"; ctx.lineWidth = Math.max(1, ts * 0.03);
+      ctx.beginPath(); ctx.moveTo(left + headW - fromW, 1); ctx.lineTo(left + headW - fromW + fromW * turn, 1); ctx.stroke();
+      ctx.globalAlpha = appear * (1 - out) * turn;
+      ctx.fillStyle = FLIP_INK;
+      ctx.fillText(tail, left + headW + (1 - turn) * ts * 0.2, 1);
+    }
     ctx.restore();
   }
   flips.length = 0;
+}
+
+/** Under a bowl that turns a taste: what it turns, as long as there's some left ("sweet → bright"). */
+export function drawBowlFlip(ctx: CanvasRenderingContext2D, x: number, y: number, snackId: string, ts: number): void {
+  const flip = SNACKS.find((s) => s.id === snackId)?.effects.find((e) => e.flipTag)?.flipTag;
+  if (!flip) return;
+  const text = `${flip.from} → ${flip.to}`;
+  ctx.save();
+  ctx.font = `italic 600 ${Math.max(10, Math.floor(ts * 0.2))}px Georgia, serif`;
+  const w = ctx.measureText(text).width + ts * 0.24, h = Math.max(13, ts * 0.27);
+  ctx.globalAlpha = 0.92;
+  ctx.fillStyle = "#f4e9d4"; ctx.strokeStyle = "rgba(107,74,138,0.7)"; ctx.lineWidth = 1;
+  roundRect(ctx, x - w / 2, y - h / 2, w, h, h / 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = FLIP_INK; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(text, x, y + 1);
+  ctx.restore();
 }
 
 export function badge(ctx: CanvasRenderingContext2D, x: number, y: number, text: string, ts: number): void {

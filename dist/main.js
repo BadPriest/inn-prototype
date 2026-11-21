@@ -11,7 +11,7 @@ import { openCalendar } from "./ui/calendar.js";
 import { newWeather } from "./weather.js";
 import { Game } from "./game.js";
 import { dist } from "./world.js";
-import { simDelta, updateClock, load, beginDay, save, resetSave } from "./day.js";
+import { simDelta, updateClock, load, beginDay, save, resetSave, savedTutorialStep } from "./day.js";
 import { longDate, shortDate } from "./calendar.js";
 import { updateCrafting } from "./crafting.js";
 import { initTalk, updatePatrons } from "./patrons.js";
@@ -21,7 +21,7 @@ import { initLight, updateLamps } from "./ui/light.js";
 import { updateFrontDoor } from "./door.js";
 import { cancelPour, updatePour } from "./serving.js";
 import { watchObjectives } from "./objectives.js";
-import { initWalkthrough, startWalkthrough, updateWalkthrough } from "./walkthrough.js";
+import { initWalkthrough, startWalkthrough, updateWalkthrough, STEPS } from "./walkthrough.js";
 import { initLevelUp } from "./ui/levelup.js";
 import { updateMenuGuide } from "./ui/quest.js";
 import { watchSkills } from "./skills.js";
@@ -29,7 +29,7 @@ import { emptyHere, offerUnasked, putDownHere, cleanable, cleanStep, findTargets
 import { draw, computeView } from "./ui/render.js";
 import { computeIsoView, drawIso, isoPick } from "./ui/render-iso.js";
 import { P, screenDir } from "./ui/proj.js";
-import { initPad, padActive, padGlyphs, pollPad } from "./gamepad.js";
+import { initPad, padActive, padGlyphs, padText, pollPad } from "./gamepad.js";
 import { updateHud, initDebug, toggleDebug } from "./ui/hud.js";
 import { askChoice, back, initMenus, menuKey, menuOpen } from "./ui/menu.js";
 import { initSound, isMuted, soundscape, toggleMute, unlockAudio } from "./sound.js";
@@ -1112,9 +1112,9 @@ const KEYS = [
             ["Left stick", "walk (all the way, or R2: run)"], ["✕", "use, like Space (hold: hurry, clean)"],
             ["L1 / R1", "pick between things in reach · menu tabs"],
             ["D-pad ← →, ↑", "choose a card, play it"], ["D-pad ↓ / hold ↓", "put down (a dish back, or a tray) / empty a pot"], ["Right stick", "zoom ↑↓ · turn the camera ←→"],
-            ["In menus", "✕ pick · □ confirm (Cook, Put up…) · ○ back or close"],
+            ["In menus", "✕ pick · △ take one off · □ confirm (Cook, Put up…) · ○ back or close"],
             ["L1 / R1 · L2 / R2", "in menus: tabs · the tabs inside them (the meals)"],
-            ["R3 · Options · touchpad", "isometric · pause · this list"], ["Arranging", "stick moves the cursor · ✕ click · □ buy · △ next delivered · L2 sell it"],
+            ["R3 · Options · touchpad or Create", "isometric · pause · this list"], ["Arranging", "stick moves the cursor · ✕ click · □ buy · △ next delivered · L2 sell it"],
         ] },
     { group: "The day", rows: [
             ["J", "journal"], ["K", "calendar"], ["O", "objectives"], ["− / =", "slower / faster"],
@@ -1122,7 +1122,7 @@ const KEYS = [
         ] },
 ];
 function openKeys(fromPause = false) {
-    const html = `<div class="keys">${KEYS.map((k) => `<div class="keys-group"><h4>${k.group}</h4>${k.rows.map(([key, what]) => `<div class="keys-row"><b>${key}</b><span>${what}</span></div>`).join("")}</div>`).join("")}</div>`;
+    const html = `<div class="keys">${KEYS.map((k) => `<div class="keys-group"><h4>${padText(k.group)}</h4>${k.rows.map(([key, what]) => `<div class="keys-row"><b>${padText(key)}</b><span>${padText(what)}</span></div>`).join("")}</div>`).join("")}</div>`;
     openMenu({
         title: "⌨️ Keys and controls",
         holdsClock: true,
@@ -1150,7 +1150,18 @@ if (g.location) {
         title: g.day > 1 ? `Welcome back: ${shortDate(g.date)}` : "Welcome to the Travelling Inn",
         modal: true,
         body: welcomeBody(),
-        items: [{ label: g.day > 1 ? "Continue" : "Start game", button: "primary", action: () => { closeAll(); unlockAudio(); } }],
+        items: [{ label: g.day > 1 ? "Continue" : "Start game", button: "primary", action: () => {
+                    closeAll();
+                    unlockAudio();
+                    const step = savedTutorialStep;
+                    if (step === undefined)
+                        return;
+                    askChoice({
+                        title: "Carry on with the tutorial?",
+                        body: `<p>You were on step ${step + 1} of ${STEPS.length}. Pick it up where you left off, or carry on without it.</p>`,
+                        confirm: "Yes, carry on", cancel: "No, skip it", onConfirm: () => { startWalkthrough(g, step); save(g); closeAll(); }, onCancel: () => { save(g); closeAll(); },
+                    });
+                } }],
     });
 }
 else {

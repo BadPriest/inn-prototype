@@ -4,13 +4,25 @@
 //                     ingredient cards, then one main button saying what happens and for whom
 //   steep tea         the same panel and cards; picking a leaf pours the cup
 // Click an ingredient to add it, again to take it out.
-import { amount, describeUses, have, nextPastFresh, shortOf, stageName, usesOf } from "../stock.js";
+import { amount, describeUses, have, optionStages, previewTaken, shortOf, stageName, stagesInPantry, usesOf } from "../stock.js";
 import { INGREDIENTS, RECIPES } from "../data.js";
 import { startPour } from "../serving.js";
 import { makeItem, recipesFor, slotName, startJob, ticketFor } from "../crafting.js";
 import { back, closeAll, openMenu, replaceMenu } from "./menu.js";
 import { hasBackSpots, manageStoveSpec, stoveTabs } from "./stove.js";
-import { chip, grid, gridKeys } from "./cards.js";
+import { chip, grid, gridKeys, stageTone } from "./cards.js";
+const toneOf = stageTone;
+/** What a stage does to the dish, in a few words: "keeps it fresh", "not fresh", "day-old, −1 taste". */
+function effectText(index, e) {
+    if (index === 0)
+        return "keeps it fresh";
+    const bits = [...e.addTags.filter((t) => t !== "fresh"), ...(e.removeTags.includes("fresh") && !e.addTags.length ? ["not fresh"] : [])];
+    if (e.tastePenalty < 0)
+        bits.push(`${e.tastePenalty === -1 ? "−1" : `−${-e.tastePenalty}`} taste`);
+    if (e.priceFactor < 1)
+        bits.push("sells for less");
+    return bits.join(", ") || "no different";
+}
 const ingName = (id) => INGREDIENTS.find((x) => x.id === id)?.name.toLowerCase() ?? id;
 /** What always goes in: "water, salt". */
 const alwaysIn = (r) => r.fundamental.map((u) => ingName(u.id)).join(", ");
@@ -189,7 +201,7 @@ export function openSteepScreen(g, f) {
 // ---------------------------------------------------------------------------
 // Build the dish
 export function openCookScreen(g, f, r) {
-    const state = { base: [], optional: [], focus: 0 };
+    const state = { base: [], optional: [], focus: 0, stage: {} };
     openMenu(cookSpec(g, f, r, state));
 }
 function cookSpec(g, f, r, st) {
@@ -199,7 +211,17 @@ function cookSpec(g, f, r, st) {
     ].filter((x) => x.choice.pick[1] > 0);
     const picks = groups.flatMap((grp) => grp.choice.options.map((o) => ({ grp, id: o.id })));
     const chosen = [...st.base, ...st.optional];
-    const short = shortOf(g, usesOf(g, r, chosen));
+    // Each choice's deck: one card per stage on the shelves that the dish takes, freshest first. The top
+    // card is the cook's pick, else what cooking would take first (the oldest, for a dish that wants it old).
+    const deckOf = (id) => stagesInPantry(g, id, optionStages(r, id));
+    const topOf = (id) => {
+        const d = deckOf(id);
+        const wantsOld = !!optionStages(r, id) && !optionStages(r, id).includes("fresh");
+        return d.find((x) => x.stage === st.stage[id]) ?? (wantsOld ? d[d.length - 1] : d[0]);
+    };
+    const prefer = Object.fromEntries(chosen.map((id) => [id, topOf(id)?.stage]).filter((x) => !!x[1]));
+    const uses = usesOf(g, r, chosen, prefer);
+    const short = shortOf(g, uses);
     const ready = groups.every((grp) => grp.chosen.length >= grp.choice.pick[0]) && !short.length;
     const ticket = ticketFor(g, r);
     const refresh = () => replaceMenu(cookSpec(g, f, r, st));
@@ -226,8 +248,22 @@ function cookSpec(g, f, r, st) {
         st.focus = i;
         refresh();
     };
-    // The dish as it stands
-    const item = makeItem(r, chosen);
+    /** The next stage to the top of an ingredient's deck. */
+    const shuffle = (i) => {
+        const p = picks[i];
+        if (!p)
+            return;
+        const d = deckOf(p.id);
+        if (d.length < 2)
+            return;
+        const at = d.findIndex((x) => x.stage === topOf(p.id)?.stage);
+        st.stage[p.id] = d[(at + 1) % d.length].stage;
+        st.focus = i;
+        g.bus.emit({ type: "MenuSound", sound: "pageTurn" });
+        refresh();
+    };
+    // The dish as it stands, with what its ingredients' stages do to it
+    const item = makeItem(r, chosen, previewTaken(g, uses) ?? undefined);
     const forWho = r.servings ? "" : ticket ? `For <b>${ticket.name}</b>: the oldest order for it` : "Nobody's asked for it yet: it goes to whoever does";
     // Ingredient cards, a section per group: what each adds to the dish.
     let n = 0;
@@ -242,11 +278,19 @@ function cookSpec(g, f, r, st) {
             const left = have(g, o.id);
             const enough = left >= o.units;
             const blocked = (!on && full && (max > 1 || grp.key === "optional")) || (!on && !enough);
+            const deck = deckOf(o.id);
+            const at = deck.findIndex((x) => x.stage === topOf(o.id)?.stage);
+            const top = deck[at];
+            const rest = top ? [...deck.slice(at + 1), ...deck.slice(0, at)] : [];
+            const topTone = top ? toneOf(top.index, top.effect) : undefined;
+            const pantry = deck.map((x) => `${amount(o.id, x.units)} ${stageName(x.stage)}${x.index ? ` (${effectText(x.index, x.effect)})` : ""}`).join(" · ");
             return {
                 pick: String(i), icon: ing.icon, name: ing.name, tags: ing.tags, on, off: blocked, focus: i === st.focus,
-                status: left === Infinity ? "" : !enough ? `short: needs ${amount(o.id, o.units)}` : nextPastFresh(g, o.id) ? `${amount(o.id, left)} · only ${stageName(nextPastFresh(g, o.id))} left` : `${amount(o.id, left)} in the pantry`,
-                tone: !enough || nextPastFresh(g, o.id) ? "warn" : undefined,
-                detail: adds.length ? `Adds ${adds.join(" and ")} to the ${r.name.toLowerCase()}.` : `Keeps the ${r.name.toLowerCase()} as it is.`,
+                band: top ? { label: stageName(top.stage), tone: topTone, at: deck.length > 1 ? `${at + 1}/${deck.length}` : undefined, shuffle: deck.length > 1 ? `shuffle:${i}` : undefined } : undefined,
+                under: rest.map((x) => toneOf(x.index, x.effect)),
+                status: left === Infinity ? "" : !enough ? `short: needs ${amount(o.id, o.units)}` : top?.index ? `${amount(o.id, top.units)} · ${effectText(top.index, top.effect)}` : top ? `${amount(o.id, top.units)} in the pantry` : `${amount(o.id, left)} in the pantry`,
+                tone: !enough || topTone === "cost" ? "warn" : undefined,
+                detail: `${adds.length ? `Adds ${adds.join(" and ")} to the ${r.name.toLowerCase()}.` : `Keeps the ${r.name.toLowerCase()} as it is.`}${deck.length ? `<br>In the pantry: ${pantry}.` : ""}${deck.length > 1 ? `<br>Tab or ⇄ puts the next one on top; the top one goes in first.` : ""}`,
                 does: on ? "Take it out" : !enough ? "Not enough in the pantry: order more at the desk" : blocked ? `Full: take one out first (${max} at most)` : max === 1 && grp.chosen.length ? "Use this instead" : "Add it",
             };
         });
@@ -260,7 +304,7 @@ function cookSpec(g, f, r, st) {
     const cook = (forTicket) => {
         if (!ready)
             return;
-        if (!startJob(g, f, r, chosen, forTicket ? ticket : null))
+        if (!startJob(g, f, r, chosen, forTicket ? ticket : null, prefer))
             return;
         g.bus.emit({ type: "MenuSound", sound: "tick" });
         closeAll();
@@ -273,10 +317,16 @@ function cookSpec(g, f, r, st) {
         view: {
             pinned: resultPanel({ icon: r.icon, name: chosen.length ? item.name : r.name, tags: item.tags, lit: item.tags.filter((t) => !r.baseTags.includes(t)), meta: makesOf(r, f), forWho, empty: !chosen.length }),
             html: always + shortNote + sections.join(""),
-            onPick: (v) => toggle(Number(v)),
+            keys: Object.values(picks).some((p) => deckOf(p.id).length > 1) ? "Tab shuffles the stage" : undefined,
+            onPick: (v) => (v.startsWith("shuffle:") ? shuffle(Number(v.slice(8))) : toggle(Number(v))),
             onKey: (e) => {
                 if (e.key === "Enter") {
                     cook(true);
+                    return true;
+                }
+                if (e.key === "Tab") {
+                    e.preventDefault();
+                    shuffle(st.focus);
                     return true;
                 }
                 return gridKeys(() => picks.length, () => st.focus, (i) => { st.focus = i; refresh(); }, toggle)(e);

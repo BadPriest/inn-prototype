@@ -96,8 +96,9 @@ function isDone(g: Game, w: WalkthroughState, id: WalkthroughStepId): boolean {
 }
 
 /** A new keeper's first day starts the walkthrough. */
-export function startWalkthrough(g: Game): void {
-  g.walkthrough = { step: 0 };
+export function startWalkthrough(g: Game, step = 0): void {
+  // Picked up from a save: a step that needs the first guest starts again from opening the inn (the guest is gone).
+  g.walkthrough = { step: step > at("open") && step <= at("eat") ? at("open") : step };
 }
 
 export function initWalkthrough(g: Game): void {

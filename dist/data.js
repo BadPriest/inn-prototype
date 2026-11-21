@@ -207,7 +207,7 @@ export const INNS = [
 ];
 /** An inn by id. Saves from before there was a choice are in the big tavern. */
 export const innOf = (id) => INNS.find((i) => i.id === (id ?? "medium")) ?? INNS[0];
-export const INGREDIENTS = INGREDIENTS_DATA.ingredients.map((x) => ({ id: x.id, name: x.name, icon: x.icon, tags: x.tags, worth: x.worth, roles: x.roles, unit: x.unit }));
+export const INGREDIENTS = INGREDIENTS_DATA.ingredients.map((x) => ({ id: x.id, name: x.name, description: x.description, icon: x.icon, tags: x.tags, worth: x.worth, roles: x.roles, unit: x.unit }));
 const ingredientById = (id) => INGREDIENTS.find((x) => x.id === id);
 /** The cheapest ingredient that fills a role (a liquid: water). */
 export const defaultForRole = (role) => INGREDIENTS.filter((x) => x.roles.includes(role)).sort((a, b) => a.worth - b.worth)[0];
@@ -273,7 +273,7 @@ export const ARCHETYPES = [
         weather: { love: ["rain", "light-rain"], dislike: ["sunny"] },
         needs: { hunger: [0.35, 0.15], thirst: [0.45, 0.15], warmth: [0.4, 0.15] },
         tastes: { love: ["fragrant"], like: ["mild", "homely", "bright"], dislike: ["fiery", "smoky", "salty"] },
-        extraLikes: ["tart", "crisp", "warm"],
+        extraLikes: ["tart", "crisp", "warm", "fresh"],
         fussiness: [0.7, 0.15], patience: [32, 8], stay: [100, 30], consume: [26, 6], walk: [2.0, 0.3],
         foodBias: 0.4, garnishAsk: 0.4, messiness: [0.15, 0.1] },
     { id: "traveller", openness: 0.55, name: "Traveller", color: "#6f9e5a", weight: 3,
@@ -452,7 +452,7 @@ export const SPECIFIC_ORDERS = {
 /** Tags an unformed patron may roll each visit, and that cravings may name. */
 export const TASTE_POOL = [
     "sweet", "tart", "savoury", "bitter", "rich", "earthy", "smoky", "briny", "fiery", "salty",
-    "fragrant", "homely", "crisp", "bright", "hearty", "light", "warm", "cold", "mild",
+    "fragrant", "homely", "crisp", "bright", "hearty", "light", "warm", "cold", "mild", "fresh",
 ];
 export const SCHEMA_TUNING = {
     reservedThreshold: [5, 4, 3], // Delight threshold by familiarity band

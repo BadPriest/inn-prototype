@@ -65,7 +65,10 @@ export class Game {
     /** Pencilled slips on the desk, one per supplier (item id -> packs); the last one sent to each; what's coming. */
     slips = {};
     lastSlips = {};
-    deliveries = [];
+    deliveries = []; // standing: placed by a standing order (standingId: which)
+    standing = []; // standing orders: each placed again for its delivery days
+    standingSkips = []; // "standingId@day": a standing order's delivery that was cancelled, so it isn't placed again
+    deliveryLog = []; // past deliveries, newest last: what came (or was fetched, or cancelled), when, and what it cost
     /** Delivered pieces waiting to be placed in the kitchen (equipment ids). */
     toPlace = [];
     nextArrivalAt = 0;

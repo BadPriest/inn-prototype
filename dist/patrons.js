@@ -1,6 +1,7 @@
 // Patrons: arrivals, walking, ordering, waiting, eating, mess and leaving.
 import { ECONOMY_DATA } from "./gamedata.gen.js";
 import { opennessOf, patienceOf, showFlip } from "./snacks.js";
+import { orderable } from "./readymade.js";
 import { chance, organic, pick, uid, weightedPick } from "./core.js";
 import { ARCHETYPES, CHATTER, NAMES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING, SHELTER, SEASONAL_TASTES, MARKET, SPECIFIC_ORDERS, garnishesFor, garnishById } from "./data.js";
 import { emptyTastes } from "./game.js";
@@ -346,8 +347,10 @@ function seatOf(g, p) {
 }
 function placeOrder(g, p) {
     const seat = seatOf(g, p);
-    // Only what's on the bill of fare. If it's run out, that's the keeper's problem.
-    const offered = (k) => RECIPES.filter((r) => r.kind === k && g.billNow().has(r.id));
+    // What's on the bill of fare (if it's run out, that's the keeper's problem), and what's on display:
+    // slices in the pie safe, bread in the bread case.
+    const can = orderable(g);
+    const offered = (k) => RECIPES.filter((r) => r.kind === k && can.has(r.id));
     // Food or drink, by how hungry and thirsty they are (salty snacks already showed up as thirst).
     // Stools are for drinks. On sitting down everyone has something, even if they're hardly in need.
     const stool = seat?.kind === "stool";
@@ -361,12 +364,12 @@ function placeOrder(g, p) {
     // Someone nearby was delighted by something: they might want the same, unless they're full of it.
     const insp = p.inspiredBy;
     p.inspiredBy = undefined;
-    const inspired = insp ? RECIPES.find((r) => r.id === insp.recipeId && g.billNow().has(r.id) && (!stool || r.kind === "drink")
+    const inspired = insp ? RECIPES.find((r) => r.id === insp.recipeId && can.has(r.id) && (!stool || r.kind === "drink")
         && (wants(p.needs, p.foodBias, r.kind) > 0 || (grace && r.kind === "drink"))) : undefined;
     if (inspired) {
         kind = inspired.kind;
     }
-    const wanted = p.wants && g.billNow().has(p.wants) ? RECIPES.find((r) => r.id === p.wants) : undefined;
+    const wanted = p.wants && can.has(p.wants) ? RECIPES.find((r) => r.id === p.wants) : undefined;
     p.wants = undefined;
     if (wanted)
         kind = wanted.kind;

@@ -94,6 +94,7 @@
   .menu-btn.primary { background:linear-gradient(#e2b84f,#c9962e); color:#24180f; border-color:#ffd34d; letter-spacing:.06em; text-transform:uppercase; box-shadow:0 2px 8px rgba(0,0,0,.35); }
   .menu-btn.primary .sub { color:#4a3418; text-transform:none; letter-spacing:0; }
   .menu-btn.sel { outline:2px solid var(--accent); outline-offset:2px; }
+  .menu.in-items .icard.focus { outline:none; }
   .menu-btn:hover:not([disabled]) { filter:brightness(1.08); }
   .menu-btn[disabled] { opacity:.4; cursor:default; box-shadow:none; }
   .menu-view { margin-bottom:6px; }
@@ -178,6 +179,20 @@
   .icard .have { background:#3b4a35; color:#d6e8c8; font:600 11px system-ui; letter-spacing:.02em; padding:3px 4px 4px; border-radius:0 0 7px 7px; }
   /* The drawer: the card's .more is copied into one floating .cardtip, under (or over) the card with the
      cursor on it, outside the menu's scrolling part so it's never cut off (cards.ts settleCards). */
+  .icard.banded { overflow:visible; }
+  .icard .band { display:flex; align-items:center; gap:4px; margin:-2px -2px 0; padding:2px 5px 2px; border-radius:8px 8px 0 0; font:700 9.5px/1.2 system-ui; letter-spacing:.03em; text-transform:uppercase; color:#1a120c; }
+  .icard .band .bl { flex:1; text-align:left; }
+  .icard .band .at { font-weight:600; letter-spacing:0; opacity:.75; }
+  .icard .band.b-fresh { background:#6fbf5a; } .icard .band.b-past { background:#e0b040; } .icard .band.b-cost { background:#d0623f; color:#fff3ea; }
+  .icard .band .shuffle { border:0; background:rgba(0,0,0,.22); color:inherit; font:700 11px/1 system-ui; padding:1px 4px 2px; border-radius:4px; cursor:pointer; }
+  .icard .band .shuffle:hover { background:rgba(0,0,0,.4); }
+  .icard.counted.on::after { display:none; }
+  .icard .count { display:flex; align-items:center; justify-content:space-between; gap:4px; padding:3px 5px 5px; border-top:1px solid rgba(255,255,255,.08); }
+  .icard .count button { width:26px; height:24px; border-radius:6px; border:1px solid #6b5338; background:#2a1f18; color:#efe3cf; font:700 15px/1 system-ui; cursor:pointer; padding:0; }
+  .icard .count button:hover:not(:disabled) { border-color:#ffd34d; color:#ffd34d; }
+  .icard .count button:disabled { opacity:.3; cursor:default; }
+  .icard .count .cn { font:700 15px Georgia, serif; color:var(--muted); min-width:1.5em; text-align:center; }
+  .icard.on .count .cn { color:#ffd34d; }
   .icard .more { display:none; }
   /* The grown card: a copy over the menu, growing from the card to a bigger one with the extra text inside. */
   .icard.zoomed { position:absolute; z-index:7; zoom:var(--ui, 1); overflow:hidden; box-shadow:0 14px 34px rgba(0,0,0,.65); transition:left .17s cubic-bezier(.2,.8,.3,1), top .17s cubic-bezier(.2,.8,.3,1), width .17s cubic-bezier(.2,.8,.3,1), height .17s cubic-bezier(.2,.8,.3,1); }
@@ -190,6 +205,7 @@
   .icard.zoomed .open > :first-child { border-top:1px solid rgba(255,255,255,.08); padding-top:7px; }
   .icard .open .detail { font:12px/1.4 system-ui; color:#e3d3b8; }
   .icard .open .flavour { font:italic 12px/1.4 Georgia, serif; color:#a8977f; margin-top:4px; }
+  .icard .open .goes { font:12px/1.4 system-ui; color:#c9b89c; margin-top:5px; }
   .icard .open .does { font:600 11.5px system-ui; color:var(--accent); margin-top:6px; }
   .icard .open { margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,.08); text-align:left; width:100%; }
   .icard.warn { border-color:#ffb347; animation:warnpulse 1.4s ease-in-out infinite; }
@@ -246,6 +262,10 @@
   .cal .cd.past { opacity:.55; }
   .cal .cd.today { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); background:#3d3024; }
   .cal .cd.blank { border:none; background:none; }
+  .cal .cd[data-pick] { cursor:pointer; }
+  .cal .cd.focus { outline:2px solid var(--accent); outline-offset:2px; opacity:1; }
+  .cal-day { min-height:2.6em; margin:2px 0 8px; font:13px/1.35 system-ui; color:#e3d3b8; }
+  .cal-day b { font:600 13px Georgia, serif; color:var(--ink); margin-right:4px; }
   .paper h4 { margin:10px 0 4px; font:600 11px system-ui; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--line); padding-bottom:2px; }
   .paper p { margin:4px 0; }
   #fade { position:absolute; inset:0; background:#000; opacity:0; pointer-events:none; transition:opacity .8s; z-index:4; }
@@ -375,11 +395,22 @@
   body.pad .pad-glyph.ci::before { width:12px; height:12px; border-radius:50%; }
   body.pad .pad-glyph.sq { color:#f2a6d2; }
   body.pad .pad-glyph.ci { color:#ff7a6a; }
+  body.pad.pad-xbox .pad-glyph::before { width:auto; height:auto; border:0; font:800 14px/1 system-ui; }
+  body.pad.pad-xbox .pad-glyph.sq::before { content:"X"; } body.pad.pad-xbox .pad-glyph.sq { color:#4aa3ff; }
+  body.pad.pad-xbox .pad-glyph.ci::before { content:"B"; width:auto; height:auto; } body.pad.pad-xbox .pad-glyph.ci { color:#ff5a4f; }
   .signed { margin-top:8px; padding:8px 12px; border:1.5px dashed #8a6d3b; border-radius:8px; background:rgba(201,162,74,.07); transform:rotate(-.6deg); }
   .signed .sg-kicker { font:italic 11px Georgia, serif; color:#c9a24a; }
   .signed .sg-when { font:700 26px/1.1 "Playfair Display", Georgia, serif; color:#f3e6cc; letter-spacing:.02em; }
-  .slip-line { white-space: nowrap; margin-right: 0.6em; }
-  .slip-minus { padding: 0 0.45em; margin-left: 0.2em; line-height: 1.2; font-weight: bold; }
+  .signed.standing { border-style:solid; border-color:#6b5338; background:rgba(201,162,74,.04); transform:none; }
+  .slip-lines { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:1px 14px; margin:3px 0 4px; font:italic 13.5px/1.45 Georgia, serif; color:#efe3cf; }
+  .slip-line { white-space:nowrap; }
+  .slip-line b { font:700 13.5px Georgia, serif; font-style:normal; color:#ffe08a; }
+  .slip-line.gone s { opacity:.6; }
+  .slip-line.gone em { color:#ffb347; font-size:.9em; }
+  .slip-total { float:right; font:600 14px system-ui; white-space:nowrap; }
+  .slip-line { overflow:hidden; text-overflow:ellipsis; }
+  .st-fresh { color:#8fd473; } .st-past { color:#e8c25a; } .st-cost { color:#ec8a6a; }
+  .slip-empty { color:var(--muted); grid-column:1 / -1; }
 </style>
 </head>
 <body>

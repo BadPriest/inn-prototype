@@ -28,7 +28,7 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 
 ## Built, not deployed (Nov 19)
 
-- #63 shelf life (batches by delivery day, stages from data/spoilage.json, clear the spoiled); #62 crates pile at the kitchen door and keep their date; #64 the baker's pies and bread; #60 upkeep (firewood, lamp oil, sundries, weekly licence; wear still to design); #74 table snack effects with the tag-flip badge; #80 the badge above heads; #77 a red low/out card for upkeep goods; #83 the new sounds set against the mix; no lamp oil makes a dark inn (fewer come, none stay long); out-of-season goods off the slip; deliveries on the desk, the calendar and a signed slip
+- #63 shelf life (batches by delivery day, stages from data/spoilage.json, clear the spoiled); #62 crates pile at the kitchen door and keep their date; #64 the baker's pies and bread; #60 upkeep (firewood, lamp oil, sundries, weekly licence; wear still to design); #74 table snack effects with the tag-flip badge; #80 the badge above heads; #77 a red low/out card for upkeep goods; #83 the new sounds set against the mix; no lamp oil makes a dark inn (fewer come, none stay long); out-of-season goods off the slip (a copied slip crosses them out); deliveries on the desk, the calendar and a signed slip; #78 steps 1–2: pick the stage on the cook screen (labelled strip, stacked deck, Tab shuffles) and a fresh tag on all-fresh dishes; standing orders (📌); #79 pie and bread on display can be ordered, baker's prices 18d / 8d; #80 the flip pill in parchment and a label under flip bowls; supply cards reworked (counter, pantry by stage); □/Enter press the main button; calendar and supplies navigation on the controller; Xbox controllers
 
 ## Built and deployed (Nov 19, builds 107–116)
 

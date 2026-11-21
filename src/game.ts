@@ -234,6 +234,12 @@ export interface LogLine { at: number; text: string }
 
 export interface Spill { id: number; x: number; y: number }
 /** Supplies the carter left at the kitchen door, until they're carried in. `day`: the day it came (it ages from the next). */
+/** A standing order: the slip placed again, each morning, for the supplier's next delivery day among `days` (mon…sun); not while paused. */
+export interface StandingOrder { id: number; supplierId: string; slip: Record<string, number>; days: string[]; paused?: boolean }
+
+/** A delivery that's done: brought by the carter (sent or standing), fetched yourself, or cancelled before it came. */
+export interface DeliveryLogEntry { supplierId: string; day: number; slip: Record<string, number>; total: number; how: "sent" | "standing" | "fetched" | "cancelled" }
+
 export interface Crate { id: number; x: number; y: number; day: number; lines: { item: string; units: number }[]; got: string[] }
 
 export interface Cleaning { targetId: string; progress: number; total: number }
@@ -288,7 +294,10 @@ export class Game {
   /** Pencilled slips on the desk, one per supplier (item id -> packs); the last one sent to each; what's coming. */
   slips: Record<string, Record<string, number>> = {};
   lastSlips: Record<string, Record<string, number>> = {};
-  deliveries: { supplierId: string; day: number; slip: Record<string, number> }[] = [];
+  deliveries: { supplierId: string; day: number; slip: Record<string, number>; standing?: boolean; standingId?: number }[] = []; // standing: placed by a standing order (standingId: which)
+  standing: StandingOrder[] = []; // standing orders: each placed again for its delivery days
+  standingSkips: string[] = []; // "standingId@day": a standing order's delivery that was cancelled, so it isn't placed again
+  deliveryLog: DeliveryLogEntry[] = []; // past deliveries, newest last: what came (or was fetched, or cancelled), when, and what it cost
   /** Delivered pieces waiting to be placed in the kitchen (equipment ids). */
   toPlace: string[] = [];
   nextArrivalAt = 0;

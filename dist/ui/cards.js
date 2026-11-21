@@ -10,14 +10,25 @@
 export function chip(tag, highlight = false) {
     return `<span class="chip ${highlight ? "new" : ""}">${tag}</span>`;
 }
+/** A stage's colour, by what it does to a dish: costs it (taste or price), fresh, or past fresh but harmless. */
+export const stageTone = (index, e) => (e.tastePenalty < 0 || e.priceFactor < 1 ? "cost" : index === 0 ? "fresh" : "past");
+const BAND_COLOUR = { fresh: "#6fbf5a", past: "#e0b040", cost: "#d0623f" };
+function bandHtml(b) {
+    return `<div class="band b-${b.tone}">${b.shuffle ? `<button class="shuffle" data-pick="${b.shuffle}" title="Shuffle: the next stage on top">⇄</button>` : ""}<span class="bl">${b.label}</span>${b.at ? `<span class="at">${b.at}</span>` : ""}</div>`;
+}
+function countHtml(c) {
+    return `<div class="count"><button class="cminus" data-pick="${c.minus}"${c.n ? "" : " disabled"} title="Take one off">−</button><span class="cn">${c.n}</span><button class="cplus" data-pick="${c.plus}"${c.plusOff ? " disabled" : ""} title="Add one">+</button></div>`;
+}
+const underStyle = (u) => u.length ? ` style="box-shadow:${u.map((t, k) => `${3 * (k + 1)}px ${3 * (k + 1)}px 0 ${-k}px ${BAND_COLOUR[t]}`).join(",")}"` : "";
 export function card(c) {
     const open = !!c.open;
     const have = c.have ?? c.owned ?? 0;
     const extra = `${c.detail ? `<div class="detail">${c.detail}</div>` : ""}${c.flavour ? `<div class="flavour">${c.flavour}</div>` : ""}${c.does ? `<div class="does">${c.does}</div>` : ""}`;
     // Open cards (a few big choices) show it all on the face; the rest keep it for the drawer.
     const drawer = !open && (c.detail || c.does || c.flavour) ? `<div class="more">${extra}</div>` : "";
-    const cls = ["icard", c.on && "on", c.off && "off", c.focus && "focus", have && "has", c.warn && "warn", drawer && "drawer", open && "isopen"].filter(Boolean).join(" ");
-    return `<div class="${cls}" data-pick="${c.pick}"${c.title ? ` title="${c.title}"` : ""}>
+    const cls = ["icard", c.on && "on", c.off && "off", c.focus && "focus", have && "has", c.warn && "warn", drawer && "drawer", open && "isopen", c.band && "banded", c.under?.length && "deck", c.count && "counted"].filter(Boolean).join(" ");
+    return `<div class="${cls}" data-pick="${c.pick}"${c.title ? ` title="${c.title}"` : ""}${underStyle(c.under ?? [])}>
+      ${c.band ? bandHtml(c.band) : ""}
       <div class="face">
         <span class="ic">${c.icon}</span><span class="nm">${c.name}</span>
         ${c.fact ? `<div class="fact">${c.fact}</div>` : ""}
@@ -28,6 +39,7 @@ export function card(c) {
         ${open && extra ? `<div class="open">${extra}</div>` : ""}
       </div>
       ${have ? `<div class="have">You have ${have}</div>` : ""}
+      ${c.count ? countHtml(c.count) : ""}
       ${drawer}
     </div>`;
 }
@@ -57,7 +69,7 @@ export function settleCards(root) {
     });
     let zoom = null;
     let shown = null;
-    const focused = () => root.querySelector(".icard.focus");
+    const focused = () => (root.querySelector(".menu.in-items") ? null : root.querySelector(".icard.focus"));
     const show = (c, animate = true) => {
         const more = c?.querySelector(".more");
         if (!c || !more) {
@@ -75,7 +87,7 @@ export function settleCards(root) {
         const el = document.createElement("div");
         el.className = `${c.className} zoomed`;
         el.dataset.pick = c.dataset.pick;
-        el.innerHTML = `${c.querySelector(".face")?.outerHTML ?? ""}<div class="open">${more.innerHTML}</div>${c.querySelector(".have")?.outerHTML ?? ""}`;
+        el.innerHTML = `${c.querySelector(".band")?.outerHTML ?? ""}${c.querySelector(".face")?.outerHTML ?? ""}<div class="open">${more.innerHTML}</div>${c.querySelector(".have")?.outerHTML ?? ""}${c.querySelector(".count")?.outerHTML ?? ""}`;
         root.appendChild(el);
         zoom = el;
         // Where it ends up: wider, as tall as its text needs, centred on the card and kept on screen.
@@ -100,7 +112,11 @@ export function settleCards(root) {
         void el.offsetWidth;
         el.classList.add("grown");
         place(left, top, w, h); // ...to its grown size
-        el.addEventListener("click", () => c.click());
+        el.addEventListener("click", (e) => {
+            const inner = e.target.closest("[data-pick]");
+            const twin = inner && inner !== el ? c.querySelector(`[data-pick="${inner.dataset.pick}"]`) : null;
+            (twin ?? c).click();
+        });
         el.addEventListener("mouseleave", (e) => {
             const to = e.relatedTarget?.closest?.(".cards .icard");
             show(to ?? focused());
@@ -109,7 +125,9 @@ export function settleCards(root) {
     root.querySelectorAll(".cards .icard").forEach((c) => {
         c.addEventListener("mouseenter", () => show(c));
     });
-    root.querySelector(".menu-view")?.addEventListener("scroll", () => { const c = shown; shown = null; show(c, false); });
+    const view = root.querySelector(".menu-view");
+    if (view)
+        view.onscroll = () => { const c = shown; shown = null; show(c?.isConnected ? c : focused(), false); };
     show(focused());
 }
 /** How many cards fit in a row right now (the grid wraps to the screen). */
@@ -120,26 +138,52 @@ export function columns() {
     const top = cards[0].offsetTop;
     return Math.max(1, cards.filter((c) => c.offsetTop === top).length);
 }
+/** The cards on the open screen, in order (not the grown copy). */
+const screenCards = () => [...document.querySelectorAll(".menu-view .cards .icard:not(.zoomed)")];
 /**
- * Arrow keys move the focus over a grid of `count` cards; Space uses the focused card.
- * Returns a key handler for a MenuView. Enter also uses the focused card; a screen with a main button
- * (COOK) handles Enter itself before calling this.
+ * The card to go to from card `from`, moving by sight: the nearest card whose middle lies that way,
+ * across rows and sections (screens with several grids, rows that don't line up). -1 if there's none.
+ */
+function nearest(from, dx, dy) {
+    const cs = screenCards();
+    const r = cs[from]?.getBoundingClientRect();
+    if (!r)
+        return -1;
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    let best = -1, bestScore = Infinity;
+    cs.forEach((c, i) => {
+        if (i === from)
+            return;
+        const b = c.getBoundingClientRect();
+        const x = b.left + b.width / 2 - cx, y = b.top + b.height / 2 - cy;
+        const along = x * dx + y * dy;
+        const across = Math.abs(x * dy - y * dx);
+        if (along < 8)
+            return;
+        const score = along + across * 2.5;
+        if (score < bestScore) {
+            bestScore = score;
+            best = i;
+        }
+    });
+    return best;
+}
+/**
+ * Arrow keys (and the D-pad) move the focus over the cards on screen; Space uses the focused card.
+ * Returns a key handler for a MenuView. Left and right go to the card before and after (wrapping);
+ * up and down go to the nearest card above or below; down from the bottom row is left to the menu (it goes
+ * to the buttons under the cards). Enter is left to the menu:
+ * it presses the screen's main button, or uses the focused card when there's none (menuKey).
  */
 export function gridKeys(count, focus, setFocus, use) {
     return (e) => {
         const n = count();
         if (!n)
             return false;
-        const cols = columns();
         const to = (i) => { setFocus((i + n) % n); return true; };
-        // Up and down stop at the edge rather than wrapping: a short last row has nothing below some cards.
-        const row = (by) => {
-            const i = focus() + by * cols;
-            if (i < 0 || i >= n) {
-                const lastRow = Math.floor((n - 1) / cols) * cols;
-                return to(by > 0 ? (focus() >= lastRow ? focus() : n - 1) : focus());
-            }
-            return to(i);
+        const vertical = (dy) => {
+            const i = nearest(focus(), 0, dy);
+            return i >= 0 && i < n ? to(i) : dy < 0;
         };
         switch (e.key) {
             case "ArrowLeft":
@@ -150,12 +194,11 @@ export function gridKeys(count, focus, setFocus, use) {
             case "D": return to(focus() + 1);
             case "ArrowUp":
             case "w":
-            case "W": return row(-1);
+            case "W": return vertical(-1);
             case "ArrowDown":
             case "s":
-            case "S": return row(1);
+            case "S": return vertical(1);
             case " ":
-            case "Enter":
                 use(focus());
                 return true;
         }

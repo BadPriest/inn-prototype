@@ -19,7 +19,7 @@ import { drawLevelUp } from "./levelup.js";
 import { coatColor, eyeColor, underColor } from "./wardrobe.js";
 import { gaitOf, keeperGait, type Gait } from "../sound/footsteps.js";
 import { ISO, P, Pt, floorPath, turn, turnedSize, unproject, unturn } from "./proj.js";
-import { badge, barLabel, drawTagFlips, crateCounts, drawEyes, busyWord, jobWord, drawCoinPops, drawGuide, drawPatronWords, drawSpeech, say, type View } from "./render.js";
+import { badge, barLabel, drawBowlFlip, drawTagFlips, crateCounts, drawEyes, busyWord, jobWord, drawCoinPops, drawGuide, drawPatronWords, drawSpeech, say, type View } from "./render.js";
 
 /** Height of the back walls, in tiles; every other wall is a low stub so you can see past it. */
 const TALL = 1.5;
@@ -504,6 +504,7 @@ function drawReadables(ctx: CanvasRenderingContext2D, g: Game, v: View, byTile: 
     ctx.font = `${Math.floor(ts * 0.36)}px system-ui, sans-serif`;
     ctx.fillText(sn?.icon ?? "🥣", c.x, c.y - ts * 0.04);
     ctx.globalAlpha = 1;
+    if (b.left > 0.02) drawBowlFlip(ctx, c.x, c.y + r * 0.6 + ts * 0.2, b.snack, ts);
   }
 
   // The woodpile by the hearth: how many logs are left.

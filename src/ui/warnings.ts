@@ -23,7 +23,7 @@ export function updateWarnings(g: Game): void {
   const bare = (name: string) => name.split(" ").slice(1).join(" ").toLowerCase();
   const rows = ws.map((w) => `<div class="w-row${w.out ? " out" : ""}"><b>${w.name}</b><span>${w.left}</span></div>${w.coming ? `<div class="w-coming">${w.coming}</div>` : ""}`).join("");
   const waiting = ws.filter((w) => !w.coming);
-  const text = rows + (waiting.length ? `<div class="w-act">Order more at the desk: 🧺 Supplies</div>` : "");
+  const text = rows + (waiting.length ? `<div class="w-act">Order more at the desk: 🧺 Buy Supplies</div>` : "");
   const kicker = out.length ? `Out of ${out.map((w) => bare(w.name)).join(" and ")}` : "Running low";
   const key = kicker + text;
   if (key === shown) return;
