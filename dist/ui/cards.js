@@ -19,7 +19,9 @@ function bandHtml(b) {
 function countHtml(c) {
     return `<div class="count"><button class="cminus" data-pick="${c.minus}"${c.n ? "" : " disabled"} title="Take one off">−</button><span class="cn">${c.n}</span><button class="cplus" data-pick="${c.plus}"${c.plusOff ? " disabled" : ""} title="Add one">+</button></div>`;
 }
-const underStyle = (u) => u.length ? ` style="box-shadow:${u.map((t, k) => `${3 * (k + 1)}px ${3 * (k + 1)}px 0 ${-k}px ${BAND_COLOUR[t]}`).join(",")}"` : "";
+/** The cards stacked under one, as shadows offset down and right in their bands' colours (bigger when the card is grown). */
+const underShadow = (u, scale = 1) => u.map((t, k) => `${3 * scale * (k + 1)}px ${3 * scale * (k + 1)}px 0 ${-k}px ${BAND_COLOUR[t]}`).join(",");
+const underStyle = (u) => (u.length ? ` data-under="${u.join(",")}" style="box-shadow:${underShadow(u)}"` : "");
 export function card(c) {
     const open = !!c.open;
     const have = c.have ?? c.owned ?? 0;
@@ -86,6 +88,8 @@ export function settleCards(root) {
         const r = c.getBoundingClientRect(), box = root.getBoundingClientRect();
         const el = document.createElement("div");
         el.className = `${c.className} zoomed`;
+        if (c.dataset.under)
+            el.style.boxShadow = `${underShadow(c.dataset.under.split(","), 2)}, 0 14px 34px rgba(0,0,0,.65)`;
         el.dataset.pick = c.dataset.pick;
         el.innerHTML = `${c.querySelector(".band")?.outerHTML ?? ""}${c.querySelector(".face")?.outerHTML ?? ""}<div class="open">${more.innerHTML}</div>${c.querySelector(".have")?.outerHTML ?? ""}${c.querySelector(".count")?.outerHTML ?? ""}`;
         root.appendChild(el);

@@ -104,6 +104,7 @@ export function openSupplies(g) {
             return {
                 pick: String(i), icon: x.icon, name: x.name, focus: i === st.focus, on: on > 0, fact,
                 status: pantryLine(l.item),
+                under: stagesInPantry(g, l.item).slice(1).map((x) => stageTone(x.index, x.effect)),
                 tone: have(g, l.item) <= 0 || (uses.has(l.item) && low(l.item)) ? "warn" : undefined,
                 count,
                 detail: `${x.description}${goesInto(g, l.item)}`,
