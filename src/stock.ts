@@ -276,19 +276,7 @@ export function describeUses(uses: Use[]): string {
 /** A new keeper's pantry, as amounts. */
 export const startingPantry = (): Record<string, number> => ({ ...ECONOMY_DATA.startingPantry });
 
-/** Testing only (inn#89): a new keeper's pantry holds every ingredient at every stage, fresh to spoiled. Off before testers get a build. */
-export const TEST_PANTRY_ALL_STAGES = true;
-
-/** A new keeper's pantry, as batches that came in today; with TEST_PANTRY_ALL_STAGES, a batch per stage, each a share of the amount, dated to sit mid-stage. */
+/** A new keeper's pantry, as batches that came in today. */
 export function startingLots(day: number): Record<string, Lot[]> {
-  const fuel = new Set(Object.values(ECONOMY_DATA.upkeep).map((u) => (u as { item?: string }).item).filter(Boolean));
-  return Object.fromEntries(Object.entries(startingPantry()).map(([id, units]) => {
-    const stages = stagesOf(id);
-    if (!TEST_PANTRY_ALL_STAGES || fuel.has(id) || stages.length < 2) return [id, [{ units, day }]];
-    const each = Math.max(1, Math.ceil(units / stages.length));
-    return [id, stages.map((st, i) => {
-      const end = stages[i + 1]?.at ?? st.at + 1;
-      return { units: each, day: i === 0 ? day : day - 1 - (st.at + end) / 2 };
-    }).reverse()];
-  }));
+  return Object.fromEntries(Object.entries(startingPantry()).map(([id, units]) => [id, [{ units, day }]]));
 }

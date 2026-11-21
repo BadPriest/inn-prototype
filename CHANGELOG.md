@@ -6,7 +6,7 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
-## Build 117 · Nov 19, 2026 · not deployed
+## Build 117 · Nov 21, 2026 · deployed
 
 ### Added
 - **Cards like playing cards.** Every card (the desk, cooking, supplies, the shop, the recipe book…) is printed card stock: a cream face in a thin printed frame, the icon in a dark art window, the name over a rule. Pointed at, a card lifts and tilts towards the pointer with a sheen moving across it; the one chosen with the keys or D-pad lifts and leans forward with a gold edge. A chosen card gets a red wax-seal ✓. The card picked up (grown under the cursor) shows its front and what picking it does, and **turns over** (F, right-click, or R3 on a controller) to its back, a latticed card back with the rest to read. On a controller the right stick tilts the card in hand.
