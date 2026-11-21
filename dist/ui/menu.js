@@ -126,7 +126,8 @@ export function menuKey(e) {
             i = (i + d + items.length) % items.length;
             if (!items[i].disabled)
                 break;
-        } top.index = i; render(); return true; };
+        } if (!items[i].disabled)
+            top.index = i; render(); return true; };
         switch (e.key) {
             case "ArrowUp":
             case "w":
@@ -157,10 +158,11 @@ export function menuKey(e) {
     if (view?.onKey?.(e))
         return true;
     if (view && !top.inItems && ["ArrowDown", "s", "S"].includes(e.key)) {
-        const first = items.findIndex((it) => !it.disabled);
-        if (first >= 0) {
+        // Down past the cards: to the buttons under them, the first one that works (or the first, to see it).
+        if (items.length) {
+            const first = items.findIndex((it) => !it.disabled);
             top.inItems = true;
-            top.index = first;
+            top.index = Math.max(0, first);
             render();
         }
         return true;

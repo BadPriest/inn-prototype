@@ -18,6 +18,7 @@ From build 92 on, every build that changes the game gets an entry here, with the
 ### Fixed
 - **A card's back is centred**: the name and the text panel sit in the middle of the card, not off to one side.
 - **A turned card turns back** to its face when you move away from it.
+- **Down on the D-pad always reaches the buttons under the cards** (Cook, Send it…), even while they can't be pressed yet. On the cook screen, Cook stays greyed until you choose a base, and down used to stop at the last row of ingredients.
 
 ## Build 117 · Nov 21, 2026 · deployed
 
