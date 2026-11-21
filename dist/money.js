@@ -80,7 +80,7 @@ function workedOutPrice(r, options) {
 const LEVEL_NAMES = { cheap: "Cheap", fair: "Fair", dear: "Dear" };
 function levelBlurb(factor, flow) {
     const pct = Math.round(Math.abs(factor - 1) * 100);
-    const crowd = flow > 1 ? "; a few more come in" : flow < 1 ? "; a few fewer come in" : "";
+    const crowd = flow > 1 ? "; a few more come in" : flow < 1 ? "; fewer come in" : "";
     if (factor < 1)
         return `${pct}% off everything${crowd}`;
     if (factor > 1)

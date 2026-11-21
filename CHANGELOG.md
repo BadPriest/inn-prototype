@@ -6,9 +6,10 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
-## Build 118 · Nov 21, 2026 · not deployed
+## Build 118 · Nov 21, 2026 · deployed
 
 ### Changed
+- **Dear prices say "fewer come in"** (was "a few fewer").
 - **The stack of stages is real cards.** The older stages of an ingredient sit as cards behind the top one, each peeking out above it, slightly turned, with its band's colour showing (amber on the turn, rust stale). Turning the top card over leaves them where they are.
 - **Recipe cards say it all on their face**: the picture, the name, then "~14 min · tended · 7 servings" over a rule; what always goes in as icons; the base choices as icons; "+ up to 2 extras"; on the menu or not (and who's waiting); the dish's flavour line; its tags at the foot. "Choose its ingredients" is gone. The back holds how it's made and what's in the pantry.
 - **The desk speaks plainly.** Every desk card has its name (in title case), what you need to know now, a line on what it is in everyday words, and at the foot what picking it does ("Choose dishes and drinks →"). Bill of Fare says it's your menu and how many dishes are on it; House Prices shows the level and what it means (ale 4d a pint); Buy Supplies counts open orders not yet sent; Deliveries counts deliveries incoming, crates waiting and standing orders; Skills shows your level, points to spend and how close the next point is; the Journal counts new notes. Ten cards in two rows of five, no scrolling.

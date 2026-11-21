@@ -89,7 +89,7 @@ export type PriceLevel = "cheap" | "fair" | "dear";
 const LEVEL_NAMES: Record<PriceLevel, string> = { cheap: "Cheap", fair: "Fair", dear: "Dear" };
 function levelBlurb(factor: number, flow: number): string {
   const pct = Math.round(Math.abs(factor - 1) * 100);
-  const crowd = flow > 1 ? "; a few more come in" : flow < 1 ? "; a few fewer come in" : "";
+  const crowd = flow > 1 ? "; a few more come in" : flow < 1 ? "; fewer come in" : "";
   if (factor < 1) return `${pct}% off everything${crowd}`;
   if (factor > 1) return `${pct}% on everything${crowd}`;
   return `what things are worth${crowd}`;
