@@ -9,13 +9,14 @@
 //           stick zoom (↑↓) and turn the isometric camera (←→) · R3 top-down or isometric · Options
 //           pause · touchpad the keys · □ hold: hurry (F). ○ and △ are free while playing.
 // Menus:    D-pad or left stick move · ✕ pick (like Space: a card, an item) · △ take one off (like
-//           Delete: a pack off the slip) · □ confirm the screen (like
+//           Delete: a pack off the slip) · R3 turn the card in hand over (F) · right stick tilt it · □ confirm the screen (like
 //           Enter: Cook, Put up…, without going to the button) · ○ the negative choice (Not now, Keep playing), else back or close · L1/R1 switch tabs, L2/R2 the tabs inside them
 // Kitchen:  left stick moves a cursor · ✕ pick up / place · ○ put back or finish · □ buy · △ another ·
 //           L2 get rid of the piece in hand
 
 import type { Vec } from "./world.js";
 import { padCancel, padConfirm } from "./ui/menu.js";
+import { padTilt } from "./ui/cards.js";
 
 /** What the game lends the controller: where things are and what's going on. */
 export interface PadHooks {
@@ -54,6 +55,8 @@ let stickNext = 0;
 // Kitchen: the cursor, in client pixels.
 let cursor: Vec | null = null;
 let cursorEl: HTMLElement | null = null;
+// Menus: the right stick is tilting a card.
+let tilting = false;
 // Right stick: one camera turn per push.
 let turned = false;
 
@@ -158,6 +161,9 @@ export function pollPad(dt: number): void {
     else if (dir && now >= stickNext) { key(dir); stickNext = now + 0.12; }
     if (pressed(B.cross)) key(" ");
     if (pressed(B.triangle)) key("Delete");
+    if (pressed(B.r3)) key("f");
+    // The right stick tilts the card in hand.
+    if (right) { padTilt(right.x, right.y); tilting = true; } else if (tilting) { padTilt(0, 0); tilting = false; }
     if (pressed(B.square)) padConfirm();
     if (pressed(B.circle) && !padCancel()) key(hooks.paused() ? "Escape" : "Backspace");
     // Tabs: L1/R1 the outer level, L2/R2 the inner one (the meals on the bill of fare).

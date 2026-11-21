@@ -9,11 +9,12 @@
 //           stick zoom (↑↓) and turn the isometric camera (←→) · R3 top-down or isometric · Options
 //           pause · touchpad the keys · □ hold: hurry (F). ○ and △ are free while playing.
 // Menus:    D-pad or left stick move · ✕ pick (like Space: a card, an item) · △ take one off (like
-//           Delete: a pack off the slip) · □ confirm the screen (like
+//           Delete: a pack off the slip) · R3 turn the card in hand over (F) · right stick tilt it · □ confirm the screen (like
 //           Enter: Cook, Put up…, without going to the button) · ○ the negative choice (Not now, Keep playing), else back or close · L1/R1 switch tabs, L2/R2 the tabs inside them
 // Kitchen:  left stick moves a cursor · ✕ pick up / place · ○ put back or finish · □ buy · △ another ·
 //           L2 get rid of the piece in hand
 import { padCancel, padConfirm } from "./ui/menu.js";
+import { padTilt } from "./ui/cards.js";
 // Standard mapping (what Chrome and Edge give a DualSense or an Xbox pad). `share` is Create on a DualSense, View on Xbox.
 const B = { cross: 0, circle: 1, square: 2, triangle: 3, l1: 4, r1: 5, l2: 6, r2: 7, share: 8, options: 9, l3: 10, r3: 11, up: 12, down: 13, left: 14, right: 15, ps: 16, touchpad: 17 };
 const DEAD = 0.22; // stick dead zone
@@ -32,6 +33,8 @@ let stickNext = 0;
 // Kitchen: the cursor, in client pixels.
 let cursor = null;
 let cursorEl = null;
+// Menus: the right stick is tilting a card.
+let tilting = false;
 // Right stick: one camera turn per push.
 let turned = false;
 export function initPad(h) {
@@ -161,6 +164,17 @@ export function pollPad(dt) {
             key(" ");
         if (pressed(B.triangle))
             key("Delete");
+        if (pressed(B.r3))
+            key("f");
+        // The right stick tilts the card in hand.
+        if (right) {
+            padTilt(right.x, right.y);
+            tilting = true;
+        }
+        else if (tilting) {
+            padTilt(0, 0);
+            tilting = false;
+        }
         if (pressed(B.square))
             padConfirm();
         if (pressed(B.circle) && !padCancel())

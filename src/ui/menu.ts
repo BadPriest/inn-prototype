@@ -1,6 +1,6 @@
 // Plain keyboard menus and dialogs. Arrows / Enter / Backspace / Esc, or the mouse.
 
-import { settleCards } from "./cards.js";
+import { flipCard, settleCards } from "./cards.js";
 import { padActive, padGlyphs } from "../gamepad.js";
 
 export interface MenuItem {
@@ -176,6 +176,7 @@ export function menuKey(e: KeyboardEvent): boolean {
       case " ": case "Enter": { const it = items[top.index]; if (it && !it.disabled) run(it); return true; }
     }
   }
+  if (view && (e.key === "f" || e.key === "F") && flipCard()) return true;
   if (view?.onKey?.(e)) return true;
   if (view && !top.inItems && ["ArrowDown", "s", "S"].includes(e.key)) {
     const first = items.findIndex((it) => !it.disabled);
@@ -232,8 +233,8 @@ function render(): void {
   const s = top.spec;
   const onlyButtons = s.items.length > 0 && s.items.every((it) => it.button);
   const hint = padActive()
-    ? padGlyphs(s.view ? `D-pad choose · Space picks${s.view.keys ? ` · ${s.view.keys}` : ""}${s.items.some((it) => it.button === "primary") ? " · □ confirms" : ""} · ○ back` : `D-pad choose · Space confirms${s.modal && stack.length === 1 ? "" : " · ○ back"}`)
-    : s.view ? `Arrows choose · Space picks${s.view.keys ? ` · ${s.view.keys}` : ""} · Enter confirms · Backspace back · Esc close`
+    ? padGlyphs(s.view ? `D-pad choose · Space picks${s.view.html.includes('class="more"') ? " · R3 turns a card over" : ""}${s.view.keys ? ` · ${s.view.keys}` : ""}${s.items.some((it) => it.button === "primary") ? " · □ confirms" : ""} · ○ back` : `D-pad choose · Space confirms${s.modal && stack.length === 1 ? "" : " · ○ back"}`)
+    : s.view ? `Arrows choose · Space picks${s.view.html.includes('class="more"') ? " · F turns a card over" : ""}${s.view.keys ? ` · ${s.view.keys}` : ""} · Enter confirms · Backspace back · Esc close`
     : s.modal && stack.length === 1 ? `${onlyButtons ? "←→" : "↑↓"} choose · Enter confirm` : "↑↓ choose · Enter confirm · Backspace back · Esc close";
   const row = (it: MenuItem, i: number) => `
           <div class="menu-item ${i === top.index && (!s.view || top.inItems) ? "sel" : ""} ${it.disabled ? "dis" : ""}" data-i="${i}">

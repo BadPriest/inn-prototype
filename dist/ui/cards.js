@@ -7,6 +7,7 @@
 //   fact     what it is or costs (plain)            status   its state now (small, coloured by `tone`)
 //   detail   more about it, when grown              does     what picking it does, when grown
 //   flavour  a line of colour, when grown, italic and quiet
+import { padActive } from "../gamepad.js";
 export function chip(tag, highlight = false) {
     return `<span class="chip ${highlight ? "new" : ""}">${tag}</span>`;
 }
@@ -21,7 +22,51 @@ function countHtml(c) {
 }
 /** The cards stacked under one, as shadows offset down and right in their bands' colours (bigger when the card is grown). */
 const underShadow = (u, scale = 1) => u.map((t, k) => `${3 * scale * (k + 1)}px ${3 * scale * (k + 1)}px 0 ${-k}px ${BAND_COLOUR[t]}`).join(",");
-const underStyle = (u) => (u.length ? ` data-under="${u.join(",")}" style="box-shadow:${underShadow(u)}"` : "");
+const underStyle = (u) => (u.length ? ` data-under="${u.join(",")}" style="--under:${underShadow(u)}"` : "");
+// ---------------------------------------------------------------------------
+// The feel of a card in the hand: it tilts towards the pointer with a sheen across it, and the one
+// picked up turns over to its back (F, right-click, R3 on a controller); the right stick tilts it.
+/** Tilt a card: x and y from -1 to 1 (right, down), as the pointer or the right stick puts them. */
+function tilt(el, x, y) {
+    el.style.setProperty("--ry", `${(x * 9).toFixed(2)}deg`);
+    el.style.setProperty("--rx", `${(-y * 9).toFixed(2)}deg`);
+    el.style.setProperty("--mx", `${(50 + x * 50).toFixed(1)}%`);
+    el.style.setProperty("--my", `${(50 + y * 50).toFixed(1)}%`);
+}
+function untilt(el) {
+    for (const v of ["--rx", "--ry", "--mx", "--my"])
+        el.style.removeProperty(v);
+}
+function followPointer(el) {
+    el.addEventListener("pointermove", (e) => {
+        const r = el.getBoundingClientRect();
+        tilt(el, ((e.clientX - r.left) / r.width) * 2 - 1, ((e.clientY - r.top) / r.height) * 2 - 1);
+    });
+    el.addEventListener("pointerleave", () => untilt(el));
+}
+/** The card picked up now, if any. */
+const pickedUp = () => document.querySelector(".icard.zoomed");
+/** Which card is turned over (its pick), so it stays turned when the screen redraws. */
+let turned = null;
+/** Turn the card that's picked up over, or back. False if none is picked up or it has no back. */
+export function flipCard() {
+    const el = pickedUp();
+    if (!el?.querySelector(".side.back"))
+        return false;
+    el.classList.toggle("flipped");
+    turned = el.classList.contains("flipped") ? el.dataset.pick ?? null : null;
+    return true;
+}
+/** The right stick on a controller: tilts the card picked up (or the one with the focus). */
+export function padTilt(x, y) {
+    const el = pickedUp() ?? document.querySelector(".menu-view .icard.focus");
+    if (!el)
+        return;
+    if (Math.abs(x) < 0.01 && Math.abs(y) < 0.01)
+        untilt(el);
+    else
+        tilt(el, x, y);
+}
 export function card(c) {
     const open = !!c.open;
     const have = c.have ?? c.owned ?? 0;
@@ -89,9 +134,22 @@ export function settleCards(root) {
         const el = document.createElement("div");
         el.className = `${c.className} zoomed`;
         if (c.dataset.under)
-            el.style.boxShadow = `${underShadow(c.dataset.under.split(","), 2)}, 0 14px 34px rgba(0,0,0,.65)`;
+            el.style.setProperty("--under", underShadow(c.dataset.under.split(","), 2));
         el.dataset.pick = c.dataset.pick;
-        el.innerHTML = `${c.querySelector(".band")?.outerHTML ?? ""}${c.querySelector(".face")?.outerHTML ?? ""}<div class="open">${more.innerHTML}</div>${c.querySelector(".have")?.outerHTML ?? ""}${c.querySelector(".count")?.outerHTML ?? ""}`;
+        // Picked up: the front as it lies, with what picking it does; the back has the rest to read.
+        const box2 = document.createElement("div");
+        box2.innerHTML = more.innerHTML;
+        const does = box2.querySelector(".does");
+        does?.remove();
+        const back = box2.innerHTML.trim();
+        el.innerHTML = `<div class="flipper">
+        <div class="side front">${c.querySelector(".band")?.outerHTML ?? ""}${c.querySelector(".face")?.outerHTML ?? ""}${does ? `<div class="open" style="border:none;margin:0;padding:0 10px 6px">${does.outerHTML}</div>` : ""}${back ? `<div class="turn">${padActive() ? "R3" : "F or right-click"}: <b>turn it over</b></div>` : ""}${c.querySelector(".have")?.outerHTML ?? ""}${c.querySelector(".count")?.outerHTML ?? ""}</div>
+        ${back ? `<div class="side back"><div class="bk-name">${c.querySelector(".nm")?.innerHTML ?? ""}</div><div class="open">${back}</div></div>` : ""}
+      </div>`;
+        if (back && turned === c.dataset.pick)
+            el.classList.add("flipped");
+        else
+            turned = null;
         root.appendChild(el);
         zoom = el;
         // Where it ends up: wider, as tall as its text needs, centred on the card and kept on screen.
@@ -110,12 +168,15 @@ export function settleCards(root) {
         if (!animate) {
             place(left, top, w, h);
             el.classList.add("grown");
-            return;
         }
-        place(r.left - box.left, r.top - box.top, r.width, r.height); // from the card itself...
-        void el.offsetWidth;
-        el.classList.add("grown");
-        place(left, top, w, h); // ...to its grown size
+        else {
+            place(r.left - box.left, r.top - box.top, r.width, r.height); // from the card itself...
+            void el.offsetWidth;
+            el.classList.add("grown");
+            place(left, top, w, h); // ...to its grown size
+        }
+        el.addEventListener("contextmenu", (e) => { e.preventDefault(); flipCard(); });
+        followPointer(el);
         el.addEventListener("click", (e) => {
             const inner = e.target.closest("[data-pick]");
             const twin = inner && inner !== el ? c.querySelector(`[data-pick="${inner.dataset.pick}"]`) : null;
@@ -128,6 +189,7 @@ export function settleCards(root) {
     };
     root.querySelectorAll(".cards .icard").forEach((c) => {
         c.addEventListener("mouseenter", () => show(c));
+        followPointer(c);
     });
     const view = root.querySelector(".menu-view");
     if (view)
