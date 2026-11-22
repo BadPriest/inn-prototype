@@ -197,7 +197,7 @@ export function menuGuide(g: Game, title: string, root: HTMLElement): MenuGuide[
       if (title === "🕯️ Desk") return [{ sel: '[data-pick="fare"]' }];
       if (title === "📜 Bill of fare" && dish) {
         const on = [...root.querySelectorAll(".icard.on .nm")].some((el) => el.textContent === dish.name);
-        return on ? [{ sel: ".menu-btn.primary" }] : [{ sel: '[data-pick="mode:all"]:not(.on)' }, { sel: ".icard", name: dish.name }];
+        return on ? [{ sel: ".menu-btn.primary" }] : [{ sel: '[data-pick="tab:all"]:not(.on)' }, { sel: ".icard", name: dish.name }];
       }
       return [];
     case "cook":

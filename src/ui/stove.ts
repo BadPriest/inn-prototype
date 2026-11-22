@@ -5,8 +5,8 @@ import { EQUIPMENT, lowerName } from "../data.js";
 import type { Game } from "../game.js";
 import type { Furniture } from "../world.js";
 import { emptyPot } from "../crafting.js";
-import { askChoice, back, openMenu, replaceMenu, type MenuSpec } from "./menu.js";
-import { grid, gridKeys, type CardSpec } from "./cards.js";
+import { askChoice, back, openMenu, replaceMenu, type CardScreen, type TabSet } from "./menu.js";
+import { grid, type CardSpec, heading } from "./cards.js";
 
 const newUid = () => `eq-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 const gearOf = (id: string) => EQUIPMENT.find((e) => e.id === id && e.gear);
@@ -14,25 +14,23 @@ const gearOf = (id: string) => EQUIPMENT.find((e) => e.id === id && e.gear);
 /** A stove with back spots for gear. */
 export const hasBackSpots = (f: Furniture): boolean => (f.equip?.hotSlots ?? 0) > 0;
 
-/** The tab bar for a stove's menus: whatever its own tabs are, then Manage stove. */
-export function stoveTabs(tabs: { id: string; name: string }[], on: string): string {
-  return `<div class="bf-tabs">${[...tabs, { id: "manage", name: "🔧 Manage stove" }].map((t) => `<button class="${on === t.id ? "on" : ""}" data-pick="tab:${t.id}">${t.name}</button>`).join("")}</div>`;
+export type StoveTab = { id: string; name: string };
+/** The tabs on a stove's screens: whatever its own tabs are, then Manage stove. */
+export function stoveTabs(own: StoveTab[], current: string, pick: (id: string) => void): TabSet {
+  return { list: [...own, { id: "manage", name: "🔧 Manage stove" }].map((t) => ({ id: t.id, label: t.name })), current, pick };
 }
 
 /** Spare gear on the shelf: bought or taken off, not on a stove. */
 const spares = (g: Game): string[] => [...new Set(g.toPlace.filter((id) => gearOf(id)))];
 
-/**
- * The Manage stove view. `tabs`: the tab bar to show; `leave(tab)`: go to another of the stove's tabs
- * (Tab and Shift+Tab step through `order`).
- */
-export function manageStoveSpec(g: Game, stoveId: string, tabs: string, order: string[], leave: (tab: string) => void, st = { focus: 0, holding: undefined as string | undefined }): MenuSpec {
+/** The Manage stove screen. `own`: the stove's other tabs; `leave(tab)`: go to one of them. */
+export function manageStoveSpec(g: Game, stoveId: string, own: StoveTab[], leave: (tab: string) => void, st = { focus: 0, holding: undefined as string | undefined }): CardScreen {
   const f = g.world.furniture.find((x) => x.id === stoveId)!;
   const placed = g.layout.find((p) => p.uid === stoveId)!;
   const spots = f.equip?.hotSlots ?? 0;
   const on = g.layout.filter((p) => p.on === stoveId);
   const spare = spares(g);
-  const redraw = () => replaceMenu(manageStoveSpec(g, stoveId, tabs, order, leave, st));
+  const redraw = () => replaceMenu(manageStoveSpec(g, stoveId, own, leave, st));
   const rebuild = () => { g.rebuildWorld(); redraw(); };
 
   /** What's keeping a spot busy, if anything. */
@@ -112,7 +110,6 @@ export function manageStoveSpec(g: Game, stoveId: string, tabs: string, order: s
     }
     if (q) takeOff(q.uid, () => { g.say(`You take the ${lowerName(gearOf(q.type)!.name)} off and set it on the shelf.`); g.bus.emit({ type: "MenuSound", sound: "tick" }); rebuild(); });
   };
-  const keys = gridKeys(() => cards.length, () => st.focus, (i) => { st.focus = i; redraw(); }, (i) => pick(cards[i].pick));
   const hint = st.holding ? `Where should the ${lowerName(gearOf(st.holding)!.name)} go? Pick a spot on the stove.`
     : spareCards.length ? "Pick something on the stove to take it off, or something on the shelf to set it on."
     : "Pick something on the stove to take it off. Nothing spare on the shelf: kettles, coffee pots and a Dutch oven are bought at the desk.";
@@ -120,26 +117,15 @@ export function manageStoveSpec(g: Game, stoveId: string, tabs: string, order: s
     title: f.name,
     holdsClock: true,
     subtitle: `${spots} spot${spots === 1 ? "" : "s"} at the back for a kettle, a coffee pot or a Dutch oven`,
-    view: {
-      pinned: tabs,
-      html: `<div class="sec-h"><h4>On the stove, and on the shelf</h4><small>${hint}</small></div>${grid(cards)}`,
-      onPick: (v) => { if (v.startsWith("tab:")) { if (v !== "tab:manage") leave(v.slice(4)); return; } pick(v); },
-      onKey: (e) => {
-        if (e.key === "Tab") {
-          e.preventDefault();
-          const i = order.indexOf("manage");
-          leave(order[(i + (e.shiftKey ? -1 : 1) + order.length) % order.length]);
-          return true;
-        }
-        if ((e.key === "Escape" || e.key === "Backspace") && st.holding) { st.holding = undefined; redraw(); return true; }
-        return keys(e);
-      },
-    },
-    items: [],
+    tabs: own.length ? stoveTabs(own, "manage", (id) => { if (id !== "manage") leave(id); }) : undefined,
+    cards: `${heading(`On the stove, and on the shelf`, `${hint}`)}${grid(cards)}`,
+    nav: { count: () => cards.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; redraw(); }, use: (i) => pick(cards[i].pick) },
+    onPick: pick,
+    cancel: st.holding ? { label: "Put it back", run: () => { st.holding = undefined; redraw(); } } : undefined,
   };
 }
 
 /** Open the stove straight on its Manage stove tab (from where there's no other menu to tab from). */
 export function openManageStove(g: Game, stoveId: string): void {
-  openMenu(manageStoveSpec(g, stoveId, stoveTabs([], "manage"), ["manage"], () => {}));
+  openMenu(manageStoveSpec(g, stoveId, [], () => {}));
 }

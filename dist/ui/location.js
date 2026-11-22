@@ -1,7 +1,7 @@
 // Where the inn stands: picked on cards when a save starts. Card screens: cards.ts.
 import { INNS, LOCATIONS } from "../data.js";
 import { confirmed, openMenu, replaceMenu } from "./menu.js";
-import { grid, gridKeys } from "./cards.js";
+import { grid } from "./cards.js";
 const SEASONS = [["spring", "🌱"], ["summer", "☀️"], ["autumn", "🍂"], ["winter", "❄️"]];
 /** The year as a bar: each season as long as its days. */
 const yearBar = (days) => `<div class="yearbar">${SEASONS.map(([id, ic], i) => `<span class="ys ys-${id}" style="flex:${days[i]}" title="${id}: ${days[i]} days"><i>${ic}</i>${days[i]}</span>`).join("")}</div>`;
@@ -31,20 +31,13 @@ export function openLocationPicker(onChosen, replace = false) {
             title: "Where does your inn stand?",
             subtitle: "It shapes the year, the weather, and who comes through the door",
             modal: true,
-            view: {
-                // A fixed size (the cards in one row, room for the longest description), so the screen
-                // doesn't jump or re-wrap as you move between places.
-                html: `<div style="width:min(640px, 88vw)">${grid(cards, { size: "l", cols: 3 })}</div>`,
-                onPick: (v) => choose(Number(v)),
-                onKey: (e) => {
-                    if (e.key === "Enter") {
-                        settle();
-                        return true;
-                    }
-                    return gridKeys(() => LOCATIONS.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, choose)(e);
-                },
-            },
-            items: [{ label: "Settle here", sub: chosen.name, button: "primary", action: settle }],
+            // A fixed size (the cards in one row, room for the longest description), so the screen
+            // doesn't jump or re-wrap as you move between places.
+            cards: `<div style="width:min(640px, 88vw)">${grid(cards, { size: "l", cols: 3 })}</div>`,
+            onPick: (v) => choose(Number(v)),
+            nav: { count: () => LOCATIONS.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; replaceMenu(build()); }, use: choose },
+            confirm: { label: "Settle here", sub: chosen.name, run: settle },
+            cancel: false,
         };
     };
     if (replace)
@@ -67,18 +60,11 @@ export function openInnPicker(onChosen) {
             title: "Which inn is yours?",
             subtitle: "The small one is the easiest start; the big one is busy enough to need staff",
             modal: true,
-            view: {
-                html: `<div style="width:min(640px, 88vw)">${grid(cards, { size: "l", cols: 3 })}</div>`,
-                onPick: (v) => choose(Number(v)),
-                onKey: (e) => {
-                    if (e.key === "Enter") {
-                        settle();
-                        return true;
-                    }
-                    return gridKeys(() => INNS.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, choose)(e);
-                },
-            },
-            items: [{ label: "Move in", sub: chosen.name, button: "primary", action: settle }],
+            cards: `<div style="width:min(640px, 88vw)">${grid(cards, { size: "l", cols: 3 })}</div>`,
+            onPick: (v) => choose(Number(v)),
+            nav: { count: () => INNS.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; replaceMenu(build()); }, use: choose },
+            confirm: { label: "Move in", sub: chosen.name, run: settle },
+            cancel: false,
         };
     };
     replaceMenu(build());

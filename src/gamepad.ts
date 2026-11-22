@@ -8,14 +8,14 @@
 //           ↓ put down (a dish back where it came from, or else a tray; hold ↓: empty a pot) · right
 //           stick zoom (↑↓) and turn the isometric camera (←→) · R3 top-down or isometric · Options
 //           pause · touchpad the keys · □ hold: hurry (F). ○ and △ are free while playing.
-// Menus:    D-pad or left stick move · ✕ pick (like Space: a card, an item) · △ take one off (like
-//           Delete: a pack off the slip) · R3 turn the card in hand over (F) · right stick tilt it · □ confirm the screen (like
-//           Enter: Cook, Put up…, without going to the button) · ○ the negative choice (Not now, Keep playing), else back or close · L1/R1 switch tabs, L2/R2 the tabs inside them
+// Menus:    D-pad or left stick move over the cards · ✕ pick (like Space: a card, an item) · the buttons under a card
+//           screen: □ confirm (Enter), △ the alternative (1), ○ cancel, else back or close (Backspace) · L3 take one off
+//           (Delete: a pack off the slip) · R3 turn the card in hand over (F) · right stick tilt it · L1/R1 switch tabs, L2/R2 the tabs inside them
 // Kitchen:  left stick moves a cursor · ✕ pick up / place · ○ put back or finish · □ buy · △ another ·
 //           L2 get rid of the piece in hand
 
 import type { Vec } from "./world.js";
-import { padCancel, padConfirm, padExtra } from "./ui/menu.js";
+import { padAlt, padCancel, padConfirm } from "./ui/menu.js";
 import { padTilt } from "./ui/cards.js";
 
 /** What the game lends the controller: where things are and what's going on. */
@@ -108,7 +108,7 @@ export function padGlyphs(text: string): string {
     .replace(/\bX: /g, "hold ↓: ")
     .replace(/\bC: /g, "↑: ")
     .replace(/\bTab\b/g, "L1/R1")
-    .replace(/\bDelete\b/g, "△")
+    .replace(/\bDelete\b/g, "L3")
     .replace(/\bPgUp\/PgDn\b/g, "L2/R2"));
 }
 
@@ -162,11 +162,9 @@ export function pollPad(dt: number): void {
     if (dir !== stickDir) { stickDir = dir; if (dir) { key(dir); stickNext = now + 0.35; } }
     else if (dir && now >= stickNext) { key(dir); stickNext = now + 0.12; }
     if (pressed(B.cross)) key(" ");
-    // The buttons under a card screen: △, L3, the touchpad, Create (padExtra). △ elsewhere takes one off.
-    if (pressed(B.triangle) && !padExtra("tr")) key("Delete");
-    if (pressed(B.l3)) padExtra("l3");
-    if (pressed(B.touchpad)) padExtra("tp");
-    if (pressed(B.share)) padExtra("sh");
+    // △ the alternative button under a card screen; L3 takes one off (supply slips).
+    if (pressed(B.triangle)) padAlt();
+    if (pressed(B.l3)) key("Delete");
     if (pressed(B.r3)) key("f");
     // The right stick tilts the card in hand.
     if (right) { padTilt(right.x, right.y); tilting = true; } else if (tilting) { padTilt(0, 0); tilting = false; }

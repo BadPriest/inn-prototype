@@ -4,6 +4,21 @@ How menus and card screens are built, so every screen reads and handles the same
 
 Code: `src/ui/menu.ts` (the frame), `src/ui/cards.ts` (cards), styles in `index.html`.
 
+## Two shapes of menu, and nothing else
+
+Decided Nov 22, 2026: every screen is built from one of these, so nothing has to be hunted for screen by screen.
+
+- **Card screens** (`CardScreen`, opened with `openMenu`): every screen of cards. In order, top to bottom:
+  - `title`;
+  - `subtitle` (required): what the screen is for, and what to do here;
+  - `tabs` (L1/R1, Tab) and `modes`, the tabs inside them (L2/R2, PageUp/PageDown);
+  - `summary`: a panel that stays put (the dish as it will come out, the slip, your level);
+  - `cards`: built with `heading()` and `grid()`;
+  - at most **three buttons**: `confirm` (□, Enter), `alt` (△, 1) and `cancel` (○, Backspace). Cancel is Back or Close when it's left out; `cancel: false` means the screen has no way out but confirm.
+
+  `nav` gives the D-pad and arrows the cards: they move over the cards only, by where each card sits in the grid. There is no list of items, so a fourth button can't be written. Anything else a screen offers is a card on it (a standing order's days, stopping it).
+- **Lists and dialogs** (`MenuSpec`): rows or buttons to move through, for the pause menu's lists, settings and yes-or-no questions (`askChoice`).
+
 ## Text: three kinds, never mixed
 
 | Kind | What it is | Where it goes |
@@ -14,7 +29,7 @@ Code: `src/ui/menu.ts` (the frame), `src/ui/cards.ts` (cards), styles in `index.
 
 - No explanation paragraphs. What they taught moves to the subtitle, the card or the button.
 - A screen's **subtitle** says, in one line, what the screen is for ("One level for everything on the bill of fare").
-- A section heading can carry a small subtitle: `<div class="sec-h"><h4>Weather</h4><small>forecasts may be wrong</small></div>`.
+- A section heading carries a small line on what to do there: `heading("Weather", "forecasts may be wrong")`.
 
 ## Cards: two sizes
 
@@ -27,9 +42,8 @@ Code: `src/ui/menu.ts` (the frame), `src/ui/cards.ts` (cards), styles in `index.
 
 ## Layout
 
-- `grid(cards, { cols, size })`: fixed card width (`s` 96, `m` 118, `l` 150 px), rows centred so a short last row sits balanced, every card as tall as the tallest. Pick `cols` so rows come out even (7 desk cards → 4 + 3; 14 dishes → 7 + 7).
-- **Pinned:** tabs, mode switches and bands go in the view's `pinned`, which stays put while the cards scroll.
-- One main action, bottom right, its label saying what it does and its sub-line the consequence ("Put it up · 6 on the board").
+- `grid(cards, { cols, size })`: one card shape, 1 : 1.55, at a fixed width (`m` 118 px for things, `l` 142 px for choices; `s` 96 px only for the wardrobe's swatches), rows centred so a short last row sits balanced. Content is cut to fit the card, never the card to the content: long text goes on the back (`detail`, `flavour`), and what still doesn't fit fades at the bottom. Pick `cols` so rows come out even.
+- The confirm button's label says what it does and its sub-line the consequence ("Put it up · 6 on the board").
 - Arrow keys stop at the edges up and down; they wrap left and right.
 
 ## Sounds

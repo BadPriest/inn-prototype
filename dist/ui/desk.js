@@ -3,7 +3,7 @@ import { READY_MADE, servedReadyMade } from "../readymade.js";
 import { CARRIED, EQUIP_GROUPS, EQUIPMENT, FUELS, MEALS, RECIPES, TUNING, bestInLine, pieceById } from "../data.js";
 import { back, closeAll, openMenu, replaceMenu } from "./menu.js";
 import { startArranging } from "./arrange.js";
-import { grid, gridKeys } from "./cards.js";
+import { grid } from "./cards.js";
 import { openNewspaper } from "./newspaper.js";
 import { openCalendar } from "./calendar.js";
 import { openSupplies } from "./supplies.js";
@@ -125,14 +125,11 @@ export function openDeskScreen(g, openJournal) {
         return {
             title: "🕯️ Desk",
             holdsClock: true,
-            subtitle: "Run the inn from here: the menu, prices, supplies, the kitchen and the news",
-            view: {
-                html: (!g.menuChosen ? `<p class="desk-warn">⚠️ <b>Your menu isn't set.</b> Until you choose it in the Bill of Fare, guests can only order ale and cider.</p>` : "")
-                    + grid(cards, { cols: 5, size: "l" }),
-                onPick: go,
-                onKey: gridKeys(() => cards.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, (i) => go(cards[i].pick)),
-            },
-            items: [],
+            subtitle: "Run the inn from here: the menu, prices, supplies, the kitchen and the news · pick a card",
+            cards: (!g.menuChosen ? `<p class="desk-warn">⚠️ <b>Your menu isn't set.</b> Until you choose it in the Bill of Fare, guests can only order ale and cider.</p>` : "")
+                + grid(cards, { cols: 5, size: "l" }),
+            onPick: go,
+            nav: { count: () => cards.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; replaceMenu(build()); }, use: (i) => go(cards[i].pick) },
         };
     };
     openMenu(build());
@@ -163,13 +160,10 @@ function openHousePrices(g, changed) {
         return {
             title: "🪙 House prices",
             holdsClock: true,
-            subtitle: "One level for everything on the bill of fare",
-            view: {
-                html: grid(cards, { cols: 3, size: "l", open: true }),
-                onPick: pick,
-                onKey: gridKeys(() => cards.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, (i) => pick(cards[i].pick)),
-            },
-            items: [],
+            subtitle: "One level for everything on the bill of fare · pick one",
+            cards: grid(cards, { cols: 3, size: "l", open: true }),
+            onPick: pick,
+            nav: { count: () => cards.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; replaceMenu(build()); }, use: (i) => pick(cards[i].pick) },
         };
     };
     openMenu(build());
@@ -204,7 +198,7 @@ function dayStrip(g, tab) {
     const pct = (h) => ((h - DAY_FROM) / span) * 100;
     const segs = g.meals.map((m) => {
         const def = MEALS.find((x) => x.id === m.id);
-        return `<div class="bf-seg ${tab === m.id ? "on" : ""}" data-pick="tab:${m.id}" style="left:${pct(m.from)}%;width:${pct(m.to) - pct(m.from)}%" title="${def.name} ${hourLabel(m.from)}–${hourLabel(m.to)}">${def.icon}</div>`;
+        return `<div class="bf-seg ${tab === m.id ? "on" : ""}" data-pick="mode:${m.id}" style="left:${pct(m.from)}%;width:${pct(m.to) - pct(m.from)}%" title="${def.name} ${hourLabel(m.from)}–${hourLabel(m.to)}">${def.icon}</div>`;
     }).join("");
     const ticks = [6, 9, 12, 15, 18, 21, 24].map((h) => `<span class="bf-tick" style="left:${pct(h)}%">${hourLabel(h)}</span>`).join("");
     const now = Math.min(DAY_TO, g.clockHour);
@@ -295,66 +289,43 @@ export function openBillOfFare(g) {
                 does: !known ? "Learn the recipe in Skills, at the desk" : !can ? "Buy what it needs in Equipment" : on ? "Take it off the board" : "Put it on the board",
             };
         });
-        const modes = `<div class="bf-modes">
-      <button class="${g.mealMode ? "" : "on"}" data-pick="mode:all">All day</button>
-      <button class="${g.mealMode ? "on" : ""}" data-pick="mode:meals">Meal times</button>
-    </div>`;
         let head = "";
         if (g.mealMode) {
-            const live = g.mealNow()?.id ?? "between";
-            const tabs = `<div class="bf-tabs">${TABS.map((t) => {
-                const m = g.meals.find((x) => x.id === t);
-                const def = MEALS.find((x) => x.id === t);
-                const label = def && m ? `${def.icon} ${def.name}<small>${hourLabel(m.from)}–${hourLabel(m.to)}</small>` : `🍺 Between<small>drinks only</small>`;
-                return `<button class="${st.tab === t ? "on" : ""}${live === t ? " live" : ""}" data-pick="tab:${t}">${label}</button>`;
-            }).join("")}</div>`;
             const m = meal();
             const times = m
                 ? `<div class="bf-times">Served <button data-pick="from:-1">−</button><b>${hourLabel(m.from)}</b><button data-pick="from:1">+</button>
            to <button data-pick="to:-1">−</button><b>${hourLabel(m.to)}</b><button data-pick="to:1">+</button></div>`
                 : `<div class="bf-times muted">Drinks and the snacks on the tables only. Guests who stay can order when a meal starts.</div>`;
-            head = `${tabs}${dayStrip(g, st.tab)}${times}`;
+            head = `${dayStrip(g, st.tab)}${times}`;
         }
+        const live = g.mealNow()?.id ?? "between";
         return {
             title: "📜 Bill of fare",
             holdsClock: true,
-            subtitle: g.mealMode ? "A bill for each meal. Guests order only what's on it." : "Guests order only what's on the board, all day.",
-            view: {
-                pinned: `${modes}${head}`,
-                html: grid(cards, { cols: 6 }),
-                onPick: (v) => {
-                    const [k, arg] = v.split(":");
-                    if (k === "mode")
-                        setMode(arg === "meals");
-                    else if (k === "tab")
-                        setTab(arg);
-                    else if (k === "from" || k === "to")
-                        nudge(k, Number(arg));
-                    else
-                        toggle(Number(v));
-                },
-                onKey: (e) => {
-                    if (e.key === "Enter") {
-                        putUp();
-                        return true;
-                    }
-                    // Two levels of tabs. Outer, Tab (L1/R1): all-day bill or meal times. Inner, PageUp/PageDown
-                    // (L2/R2): which meal. Every bill keeps what's on it when you switch.
-                    if (e.key === "Tab") {
-                        e.preventDefault();
-                        setMode(!g.mealMode);
-                        return true;
-                    }
-                    if ((e.key === "PageDown" || e.key === "PageUp") && g.mealMode) {
-                        e.preventDefault();
-                        const i = TABS.indexOf(st.tab);
-                        setTab(TABS[(i + (e.key === "PageUp" ? -1 : 1) + TABS.length) % TABS.length]);
-                        return true;
-                    }
-                    return gridKeys(() => list.length, () => st.focus, (i) => { st.focus = i; redraw(); }, toggle)(e);
-                },
+            subtitle: `${g.mealMode ? "A bill for each meal. Guests order only what's on it." : "Guests order only what's on the board, all day."} Pick dishes, then put it up`,
+            // Two levels of tabs: all-day bill or meal times (Tab, L1/R1), then which meal (PageUp/PageDown, L2/R2).
+            // Every bill keeps what's on it when you switch.
+            tabs: { list: [{ id: "all", label: "All day" }, { id: "meals", label: "Meal times" }], current: g.mealMode ? "meals" : "all", pick: (id) => setMode(id === "meals") },
+            modes: g.mealMode ? {
+                list: TABS.map((t) => {
+                    const m = g.meals.find((x) => x.id === t);
+                    const def = MEALS.find((x) => x.id === t);
+                    const now = live === t ? " · now" : "";
+                    return { id: t, label: def && m ? `${def.icon} ${def.name}<small>${hourLabel(m.from)}–${hourLabel(m.to)}${now}</small>` : `🍺 Between<small>drinks only${now}</small>` };
+                }),
+                current: st.tab, pick: (id) => setTab(id),
+            } : undefined,
+            summary: head || undefined,
+            cards: grid(cards, { cols: 6 }),
+            onPick: (v) => {
+                const [k, arg] = v.split(":");
+                if (k === "from" || k === "to")
+                    nudge(k, Number(arg));
+                else
+                    toggle(Number(v));
             },
-            items: [{ label: "Put it up", sub: `${set.size} on ${g.mealMode ? "this bill" : "the board"}`, button: "primary", action: putUp }],
+            nav: { count: () => list.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; redraw(); }, use: toggle },
+            confirm: { label: "Put it up", sub: `${set.size} on ${g.mealMode ? "this bill" : "the board"}`, run: putUp },
         };
     };
     openMenu(build());
@@ -416,13 +387,6 @@ export function openShop(g) {
                 ],
             });
         };
-        const switchTab = (by) => {
-            const i = EQUIP_GROUPS.findIndex((t) => t.id === shopTab);
-            shopTab = EQUIP_GROUPS[(i + by + EQUIP_GROUPS.length) % EQUIP_GROUPS.length].id;
-            g.bus.emit({ type: "MenuSound", sound: "pageTurn" });
-            st.focus = 0;
-            replaceMenu(build());
-        };
         const cards = items.map((it, i) => {
             const owned = ownedOf(it);
             const fuel = it.fuel ? FUELS[it.fuel] : null;
@@ -442,38 +406,21 @@ export function openShop(g) {
                 does: done ? (owned ? (isBest(it.id) ? "You have this" : "You have a better one") : "It's on the carter's cart") : short > 0 ? `You need ${fmtMoney(short)} more` : owned ? "Buy another: order it or fetch it" : "Buy it: order it or fetch it",
             };
         });
-        const tabs = `<div class="bf-tabs">${EQUIP_GROUPS.map((t) => {
-            const n = all.filter((it) => it.group === t.id).reduce((a, it) => a + (it.goods ? 0 : ownedOf(it)), 0);
-            return `<button class="${shopTab === t.id ? "on" : ""}" data-pick="tab:${t.id}">${t.icon} ${t.name}${n ? ` <small>${n}</small>` : ""}</button>`;
-        }).join("")}</div>`;
         return {
             title: "🛒 Equipment",
-            subtitle: `${moneyHtml(g.purse)} in the purse · the carter brings orders next morning`,
+            subtitle: `${moneyHtml(g.purse)} in the purse · pick something to buy · the carter brings orders next morning`,
             holdsClock: true,
-            view: {
-                pinned: tabs,
-                html: grid(cards),
-                onPick: (v) => {
-                    if (v.startsWith("tab:")) {
-                        if (v.slice(4) !== shopTab)
-                            g.bus.emit({ type: "MenuSound", sound: "pageTurn" });
-                        shopTab = v.slice(4);
-                        st.focus = 0;
-                        replaceMenu(build());
-                        return;
-                    }
-                    buy(Number(v));
-                },
-                onKey: (e) => {
-                    if (e.key === "Tab") {
-                        e.preventDefault();
-                        switchTab(e.shiftKey ? -1 : 1);
-                        return true;
-                    }
-                    return gridKeys(() => items.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, buy)(e);
-                },
+            tabs: {
+                list: EQUIP_GROUPS.map((t) => {
+                    const n = all.filter((it) => it.group === t.id).reduce((a, it) => a + (it.goods ? 0 : ownedOf(it)), 0);
+                    return { id: t.id, label: `${t.icon} ${t.name}${n ? ` <small>${n}</small>` : ""}` };
+                }),
+                current: shopTab,
+                pick: (id) => { g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); shopTab = id; st.focus = 0; replaceMenu(build()); },
             },
-            items: [],
+            cards: grid(cards),
+            onPick: (v) => buy(Number(v)),
+            nav: { count: () => items.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; replaceMenu(build()); }, use: buy },
         };
     };
     openMenu(build());

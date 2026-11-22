@@ -1,8 +1,8 @@
 // The wardrobe: which coat the keeper wears, shown as their colour in the room.
 
 import type { Game } from "../game.js";
-import { openMenu, replaceMenu, type MenuSpec } from "./menu.js";
-import { grid, gridKeys, type CardSpec } from "./cards.js";
+import { openMenu, replaceMenu, type CardScreen } from "./menu.js";
+import { grid, type CardSpec } from "./cards.js";
 
 export const COATS: { id: string; name: string; color: string }[] = [
   { id: "linen", name: "Linen", color: "#f2e2c2" },
@@ -33,7 +33,7 @@ let part: Part = "coat";
 
 export function openWardrobe(g: Game): void {
   const st = { focus: Math.max(0, COATS.findIndex((c) => c.id === g[part])) };
-  const build = (): MenuSpec => {
+  const build = (): CardScreen => {
     const worn = g[part];
     // Each swatch shows the whole keeper: the coat, and the head on top.
     const cards: CardSpec[] = COATS.map((c, i) => ({
@@ -54,20 +54,13 @@ export function openWardrobe(g: Game): void {
       replaceMenu(build());
     };
     const switchTab = (to: Part) => { part = to; st.focus = Math.max(0, COATS.findIndex((c) => c.id === g[part])); g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); replaceMenu(build()); };
-    const keys = gridKeys(() => cards.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, pick);
     return {
       title: "🧥 Wardrobe",
-      subtitle: "Your good coat, your other coats, and what goes under",
-      view: {
-        pinned: `<div class="bf-tabs">${(["coat", "under"] as const).map((t) => `<button class="${part === t ? "on" : ""}" data-pick="tab:${t}">${t === "coat" ? "🧥 Coat" : "👕 Under it"}</button>`).join("")}</div>`,
-        html: grid(cards, { cols: 5, size: "s" }),
-        onPick: (v) => { if (v.startsWith("tab:")) { if (v.slice(4) !== part) switchTab(v.slice(4) as Part); return; } pick(Number(v)); },
-        onKey: (e) => {
-          if (e.key === "Tab") { e.preventDefault(); switchTab(part === "coat" ? "under" : "coat"); return true; }
-          return keys(e);
-        },
-      },
-      items: [],
+      subtitle: "Your good coat, your other coats, and what goes under · pick one to wear it",
+      tabs: { list: [{ id: "coat", label: "🧥 Coat" }, { id: "under", label: "👕 Under it" }], current: part, pick: (id) => switchTab(id as Part) },
+      cards: grid(cards, { cols: 5, size: "s" }),
+      onPick: (v) => pick(Number(v)),
+      nav: { count: () => cards.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; replaceMenu(build()); }, use: pick },
     };
   };
   openMenu(build());

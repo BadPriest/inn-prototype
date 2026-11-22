@@ -1,8 +1,8 @@
 // Where the inn stands: picked on cards when a save starts. Card screens: cards.ts.
 
 import { INNS, LOCATIONS, type InnId, type LocationId } from "../data.js";
-import { confirmed, openMenu, replaceMenu, type MenuSpec } from "./menu.js";
-import { grid, gridKeys, type CardSpec } from "./cards.js";
+import { confirmed, openMenu, replaceMenu, type CardScreen } from "./menu.js";
+import { grid, type CardSpec } from "./cards.js";
 
 const SEASONS = [["spring", "🌱"], ["summer", "☀️"], ["autumn", "🍂"], ["winter", "❄️"]] as const;
 /** The year as a bar: each season as long as its days. */
@@ -20,7 +20,7 @@ const backHtml = (icon: string, name: string, blurb: string, back: string): stri
 /** The card screen for choosing a location. `onChosen` runs once it's settled. */
 export function openLocationPicker(onChosen: (id: LocationId) => void, replace = false): void {
   const st = { focus: 0, chosen: 0 };
-  const build = (): MenuSpec => {
+  const build = (): CardScreen => {
     const chosen = LOCATIONS[st.chosen];
     const cards: CardSpec[] = LOCATIONS.map((l, i) => ({
       pick: String(i),
@@ -38,17 +38,13 @@ export function openLocationPicker(onChosen: (id: LocationId) => void, replace =
       title: "Where does your inn stand?",
       subtitle: "It shapes the year, the weather, and who comes through the door",
       modal: true,
-      view: {
-        // A fixed size (the cards in one row, room for the longest description), so the screen
-        // doesn't jump or re-wrap as you move between places.
-        html: `<div style="width:min(640px, 88vw)">${grid(cards, { size: "l", cols: 3 })}</div>`,
-        onPick: (v) => choose(Number(v)),
-        onKey: (e) => {
-          if (e.key === "Enter") { settle(); return true; }
-          return gridKeys(() => LOCATIONS.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, choose)(e);
-        },
-      },
-      items: [{ label: "Settle here", sub: chosen.name, button: "primary", action: settle }],
+      // A fixed size (the cards in one row, room for the longest description), so the screen
+      // doesn't jump or re-wrap as you move between places.
+      cards: `<div style="width:min(640px, 88vw)">${grid(cards, { size: "l", cols: 3 })}</div>`,
+      onPick: (v) => choose(Number(v)),
+      nav: { count: () => LOCATIONS.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; replaceMenu(build()); }, use: choose },
+      confirm: { label: "Settle here", sub: chosen.name, run: settle },
+      cancel: false,
     };
   };
   if (replace) replaceMenu(build()); else openMenu(build());
@@ -57,7 +53,7 @@ export function openLocationPicker(onChosen: (id: LocationId) => void, replace =
 /** Then which inn: the big tavern (the default) or a small one, the real start. */
 export function openInnPicker(onChosen: (id: InnId) => void): void {
   const st = { focus: 0, chosen: 0 };
-  const build = (): MenuSpec => {
+  const build = (): CardScreen => {
     const chosen = INNS[st.chosen];
     const cards: CardSpec[] = INNS.map((inn, i) => ({
       pick: String(i), icon: inn.icon, name: inn.name, tags: inn.traits, on: i === st.chosen, focus: i === st.focus,
@@ -69,15 +65,11 @@ export function openInnPicker(onChosen: (id: InnId) => void): void {
       title: "Which inn is yours?",
       subtitle: "The small one is the easiest start; the big one is busy enough to need staff",
       modal: true,
-      view: {
-        html: `<div style="width:min(640px, 88vw)">${grid(cards, { size: "l", cols: 3 })}</div>`,
-        onPick: (v) => choose(Number(v)),
-        onKey: (e) => {
-          if (e.key === "Enter") { settle(); return true; }
-          return gridKeys(() => INNS.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, choose)(e);
-        },
-      },
-      items: [{ label: "Move in", sub: chosen.name, button: "primary", action: settle }],
+      cards: `<div style="width:min(640px, 88vw)">${grid(cards, { size: "l", cols: 3 })}</div>`,
+      onPick: (v) => choose(Number(v)),
+      nav: { count: () => INNS.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; replaceMenu(build()); }, use: choose },
+      confirm: { label: "Move in", sub: chosen.name, run: settle },
+      cancel: false,
     };
   };
   replaceMenu(build());

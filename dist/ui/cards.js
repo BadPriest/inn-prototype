@@ -11,6 +11,8 @@ import { padActive } from "../gamepad.js";
 export function chip(tag, highlight = false) {
     return `<span class="chip ${highlight ? "new" : ""}">${tag}</span>`;
 }
+/** A section of a card screen: its name, and a line on what to do there. Cards (grid()) follow it. */
+export const heading = (title, note) => `<div class="sec-h"><h4>${title}</h4><small>${note}</small></div>`;
 /** A stage's colour, by what it does to a dish: costs it (taste or price), fresh, or past fresh but harmless. */
 export const stageTone = (index, e) => (e.tastePenalty < 0 || e.priceFactor < 1 ? "cost" : index === 0 ? "fresh" : "past");
 function bandHtml(b) {
@@ -81,7 +83,7 @@ export function padTilt(x, y) {
 }
 export function card(c) {
     const open = !!c.open;
-    const have = c.have ?? c.owned ?? 0;
+    const have = c.have ?? 0;
     const extra = `${c.detail ? `<div class="detail">${c.detail}</div>` : ""}${c.flavour ? `<div class="flavour">${c.flavour}</div>` : ""}${c.does ? `<div class="does">${c.does}</div>` : ""}`;
     // Open cards (a few big choices) show it all on the face; the rest keep it for the drawer.
     const drawer = !open && (c.detail || c.does || c.flavour) ? `<div class="more">${extra}</div>` : "";
@@ -92,9 +94,7 @@ export function card(c) {
       <div class="face">
         <span class="ic">${c.icon}</span><span class="nm">${c.name}</span>${c.sub ? `<div class="sub">${c.sub}</div>` : ""}
         ${c.fact ? `<div class="fact">${c.fact}</div>` : ""}
-        ${c.where ? `<div class="where">${c.where}</div>` : ""}
         ${c.status ? `<div class="status ${c.tone ?? ""}">${c.status}</div>` : ""}
-        ${c.note ? `<div class="note">${c.note}</div>` : ""}
         ${c.body ? `<div class="body">${c.body}</div>` : ""}
         ${c.tags?.length ? `<div class="chips">${c.tags.map((t) => chip(t)).join("")}</div>` : ""}
         ${c.cta ? `<div class="cta">${c.cta} <span class="arr">→</span></div>` : ""}
@@ -239,20 +239,31 @@ const screenCards = () => [...document.querySelectorAll(".menu-view .cards .icar
  * across rows and sections (screens with several grids, rows that don't line up). -1 if there's none.
  */
 function nearest(from, dx, dy) {
+    // Where each card sits in the grid, not where it's drawn: the lift, tilt and nudge of a picked-up card
+    // (scaled by the UI size) would otherwise put a card beside it "below" it.
     const cs = screenCards();
-    const r = cs[from]?.getBoundingClientRect();
-    if (!r)
+    const view = document.querySelector(".menu-view");
+    const at = (el) => {
+        let x = 0, y = 0;
+        for (let e = el; e && e !== view; e = e.offsetParent) {
+            x += e.offsetLeft;
+            y += e.offsetTop;
+        }
+        return { x: x + el.offsetWidth / 2, y: y + el.offsetHeight / 2, w: el.offsetWidth, h: el.offsetHeight };
+    };
+    const a = cs[from] ? at(cs[from]) : null;
+    if (!a)
         return -1;
-    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const step = Math.abs(dy) ? a.h / 2 : a.w / 2;
     let best = -1, bestScore = Infinity;
     cs.forEach((c, i) => {
         if (i === from)
             return;
-        const b = c.getBoundingClientRect();
-        const x = b.left + b.width / 2 - cx, y = b.top + b.height / 2 - cy;
+        const b = at(c);
+        const x = b.x - a.x, y = b.y - a.y;
         const along = x * dx + y * dy;
         const across = Math.abs(x * dy - y * dx);
-        if (along < 8)
+        if (along < step)
             return;
         const score = along + across * 2.5;
         if (score < bestScore) {
@@ -264,7 +275,7 @@ function nearest(from, dx, dy) {
 }
 /**
  * Arrow keys (and the D-pad) move the focus over the cards on screen; Space uses the focused card.
- * Returns a key handler for a MenuView. Left and right go to the card before and after (wrapping);
+ * Returns a key handler for a card screen (CardScreen.nav). Left and right go to the card before and after (wrapping);
  * up and down go to the nearest card above or below, and stay put at the top and bottom rows. Enter is left
  * to the menu: it presses the screen's main button, or uses the focused card when there's none (menuKey).
  */

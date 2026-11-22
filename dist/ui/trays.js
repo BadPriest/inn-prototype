@@ -4,7 +4,7 @@ import { have } from "../stock.js";
 import { garnishById, garnishesFor } from "../data.js";
 import { applyGarnish, garnishableDrinks, iconFor, pickupFromHatch, removeFromTray, serveUnasked, setTrayDown, takeFromHatch, trayItems, } from "../serving.js";
 import { closeAll, openMenu, replaceMenu } from "./menu.js";
-import { grid, gridKeys } from "./cards.js";
+import { grid, heading } from "./cards.js";
 import { resultPanel } from "./cook.js";
 /** A dish or drink as a card. */
 /** The open order each dish or drink would go to: the guest it was made for, else the oldest order for it not already taken. */
@@ -103,30 +103,22 @@ function garnishSpec(g, st) {
         };
     });
     const html = `
-    ${showDrinks ? `<div class="sec-h"><h4>On your trays</h4><small>which one</small></div>${grid(drinkCards)}` : ""}
-    <div class="sec-h"><h4>Garnish</h4><small>choose one</small></div>
+    ${showDrinks ? `${heading(`On your trays`, `which one`)}${grid(drinkCards)}` : ""}
+    ${heading(`Garnish`, `choose one`)}
     ${grid(garnishCards)}`;
     return {
         title: "🍋 Garnish",
         subtitle: st.kind === "food" ? "At the garnish board · a little something on top" : "At the counter · a little something on top",
         flavour: "It changes how a dish or a drink lands, for better or worse.",
-        view: {
-            pinned: resultPanel({
-                icon: iconFor(drink.recipeId, gar?.id), name: gar ? `${drink.name} with ${gar.name.toLowerCase()}` : drink.name,
-                tags: after, lit: after.filter((t) => !drink.tags.includes(t)), meta: gar ? "Garnished, ready to serve" : "Pick a garnish to see what it becomes",
-                forWho: order ? `${plaque(order.no)}For <b>${g.patron(order.patronId)?.name ?? "a guest"}</b>${asked ? `, who asked for ${garnishById(asked)?.name.toLowerCase() ?? "a garnish"}` : ""}` : drink.ticketName ? `For <b>${drink.ticketName}</b>` : undefined, empty: !gar,
-            }),
-            html,
-            onPick: use,
-            onKey: (e) => {
-                if (e.key === "Enter") {
-                    go();
-                    return true;
-                }
-                return gridKeys(() => picks.length, () => st.focus, (i) => { st.focus = i; refresh(); }, (i) => use(picks[i]))(e);
-            },
-        },
-        items: [{ label: "Garnish it", sub: gar ? `with ${gar.name.toLowerCase()}` : "choose a garnish", button: "primary", disabled: !gar, action: go }],
+        summary: resultPanel({
+            icon: iconFor(drink.recipeId, gar?.id), name: gar ? `${drink.name} with ${gar.name.toLowerCase()}` : drink.name,
+            tags: after, lit: after.filter((t) => !drink.tags.includes(t)), meta: gar ? "Garnished, ready to serve" : "Pick a garnish to see what it becomes",
+            forWho: order ? `${plaque(order.no)}For <b>${g.patron(order.patronId)?.name ?? "a guest"}</b>${asked ? `, who asked for ${garnishById(asked)?.name.toLowerCase() ?? "a garnish"}` : ""}` : drink.ticketName ? `For <b>${drink.ticketName}</b>` : undefined, empty: !gar,
+        }),
+        cards: html,
+        onPick: use,
+        nav: { count: () => picks.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; refresh(); }, use: (i) => use(picks[i]) },
+        confirm: { label: "Garnish it", sub: gar ? `with ${gar.name.toLowerCase()}` : "choose a garnish", disabled: !gar, run: go },
     };
 }
 // ---------------------------------------------------------------------------
@@ -141,13 +133,10 @@ export function openOfferScreen(g, p) {
             title: `🃏 Something for ${p.name}?`,
             subtitle: "A gift, on the house: it doesn't count as their order",
             flavour: "It might be exactly what they needed.",
-            view: {
-                html: `<div class="sec-h"><h4>On your trays</h4><small>choose one to give</small></div>
+            cards: `${heading(`On your trays`, `choose one to give`)}
           ${grid(items.map((it, i) => itemCard(it, String(i), i === st.focus, { does: `Give it to ${p.name}` })))}`,
-                onPick: (v) => give(Number(v)),
-                onKey: gridKeys(() => items.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, give),
-            },
-            items: [],
+            onPick: (v) => give(Number(v)),
+            nav: { count: () => items.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; replaceMenu(build()); }, use: give },
         };
     };
     openMenu(build());
@@ -177,18 +166,16 @@ export function openBinScreen(g) {
         };
         return {
             title: "🗑️ Scrap bin",
-            subtitle: "Throw away something on your trays",
+            subtitle: "Throw away something on your trays · pick it",
             flavour: "Nothing's wasted here: what goes in the bin goes to the hens.",
-            view: {
-                html: `<div class="sec-h"><h4>On your trays</h4><small>choose what to throw away</small></div>${grid(items.map((it, i) => itemCard(it, String(i), i === st.focus, { does: "Throw it away" })))}`,
-                onPick: (v) => toss(Number(v)),
-                onKey: gridKeys(() => items.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, toss),
+            cards: `${heading(`On your trays`, `choose what to throw away`)}${grid(items.map((it, i) => itemCard(it, String(i), i === st.focus, { does: "Throw it away" })))}`,
+            onPick: (v) => toss(Number(v)),
+            nav: { count: () => items.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; replaceMenu(build()); }, use: toss },
+            alt: {
+                label: "Throw it all away", sub: `everything on your trays · ${items.length} item${items.length === 1 ? "" : "s"}`,
+                run: () => { for (const it of trayItems(g))
+                    removeFromTray(g, it); g.say("You scrape your trays clean."); g.bus.emit({ type: "MenuSound", sound: "tick" }); closeAll(); },
             },
-            items: [{
-                    label: "Throw it all away", sub: `everything on your trays · ${items.length} item${items.length === 1 ? "" : "s"}`, button: "secondary",
-                    action: () => { for (const it of trayItems(g))
-                        removeFromTray(g, it); g.say("You scrape your trays clean."); g.bus.emit({ type: "MenuSound", sound: "tick" }); closeAll(); },
-                }],
         };
     };
     openMenu(build());
@@ -216,13 +203,11 @@ export function openHatchScreen(g) {
         };
         return {
             title: "🪟 Kitchen hatch",
-            subtitle: "Dishes ready to take out",
-            view: {
-                html: `<div class="sec-h"><h4>Ready</h4><small>choose one to take</small></div>${grid(g.hatch.map((it, i) => itemCard(it, String(i), i === st.focus, { does: "Put it on your tray" })))}`,
-                onPick: (v) => take(Number(v)),
-                onKey: gridKeys(() => g.hatch.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, take),
-            },
-            items: [{ label: "Take everything that fits", sub: "oldest first", button: "primary", action: () => { pickupFromHatch(g); g.bus.emit({ type: "MenuSound", sound: "tick" }); closeAll(); } }],
+            subtitle: "Dishes ready to take out · pick one, or take everything that fits",
+            cards: `${heading(`Ready`, `choose one to take`)}${grid(g.hatch.map((it, i) => itemCard(it, String(i), i === st.focus, { does: "Put it on your tray" })))}`,
+            onPick: (v) => take(Number(v)),
+            nav: { count: () => g.hatch.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; replaceMenu(build()); }, use: take },
+            confirm: { label: "Take everything that fits", sub: "oldest first", run: () => { pickupFromHatch(g); g.bus.emit({ type: "MenuSound", sound: "tick" }); closeAll(); } },
         };
     };
     openMenu(build());
@@ -245,12 +230,9 @@ export function openSetDownScreen(g) {
         return {
             title: "Set down which tray?",
             subtitle: "On the counter or a nearby table, to free your hands",
-            view: {
-                html: grid(cards, { cols: 2 }),
-                onPick: (v) => put(Number(v)),
-                onKey: gridKeys(() => 2, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, put),
-            },
-            items: [],
+            cards: grid(cards, { cols: 2 }),
+            onPick: (v) => put(Number(v)),
+            nav: { count: () => 2, focus: () => st.focus, setFocus: (i) => { st.focus = i; replaceMenu(build()); }, use: put },
         };
     };
     openMenu(build());

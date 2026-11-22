@@ -6,6 +6,20 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 121 · Nov 22, 2026 · deployed
+
+### Changed
+- **Every card screen is built the same way**: a title, a line saying what the screen is for and what to do, tabs, a panel that stays put, the cards, and at most three buttons under them: confirm (□, Enter), an alternative (△, 1) and cancel (○, Backspace; Back or Close if the screen has none). Anything else a screen offers is a card on it.
+- **Sending a supply order**: one button, "Send order…", asks how it should come: delivery with the carter, fetch it yourself, or a standing order. The other button copies the last order slip when the slip is empty and clears it when it isn't. Taking a pack off the slip is L3 on a controller (Delete or − on the keyboard).
+- **Editing a standing order**: Done, and Pause/Resume as one button; its delivery days and stopping it are cards on the screen.
+- **The cook button names the guest**: "Cook it for the traveller" (Bake for pies and bread); the other button cooks it for nobody in particular.
+- **On the bill of fare**, All day / Meal times are the outer tabs (L1/R1) and the meals the inner ones (L2/R2).
+
+### Fixed
+- **Down on the D-pad goes down** on Skills and every card screen at larger UI sizes. The card in hand is drawn lifted, and at a big UI size the card beside it counted as "below"; moving now goes by where cards sit in the grid.
+
+---
+
 ## Build 120 · Nov 22, 2026 · deployed
 
 ### Added

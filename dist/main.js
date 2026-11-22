@@ -936,7 +936,6 @@ function openPause() {
     g.bus.emit({ type: "Paused" });
     const build = () => {
         const redraw = () => replaceMenu(build());
-        const tabs = `<div class="bf-tabs set-tabs">${PAUSE_TABS.map((t) => `<button class="${pauseTab === t.id ? "on" : ""}" data-pick="tab:${t.id}">${t.label}</button>`).join("")}</div>`;
         let panel = "";
         if (pauseTab === "game") {
             panel = `<div class="set-list">
@@ -965,137 +964,125 @@ function openPause() {
         }
         return {
             title: "Paused",
+            subtitle: "The clock is stopped. Change a setting, or resume",
             modal: true,
-            view: {
-                html: tabs + panel,
-                onPick: (v) => {
-                    const [k, arg] = v.split(":");
-                    if (k === "tab") {
-                        pauseTab = arg;
-                        pauseFocus = -1;
-                        redraw();
-                    }
-                    else if (k === "objectives") {
-                        g.showObjectives = !g.showObjectives;
-                        redraw();
-                    }
-                    else if (k === "keys")
-                        openKeys(true);
-                    else if (k === "restart")
-                        askChoice({
-                            title: "Start over?",
-                            body: `<p>The inn, the purse, the journal and every regular you've met are forgotten, and a new game begins.</p><p class="muted">This can't be undone.</p>`,
-                            confirm: "Start over", cancel: "Keep playing", danger: true, onConfirm: () => { resetSave(); location.reload(); }, onCancel: () => back(),
-                        });
-                    else if (k === "howto")
-                        openMenu({ title: "How to play", body: welcomeBody(), items: [{ label: "Back", button: "secondary", cancel: true, action: () => back() }] });
-                    else if (k === "mute") {
-                        toggleMute();
-                        redraw();
-                    }
-                    else if (k === "iso") {
-                        toggleIso();
-                        redraw();
-                    }
-                    else if (k === "turn") {
-                        turnCamera(1);
-                        redraw();
-                    }
-                    else if (k === "uiauto") {
-                        uiChoice = uiChoice === "auto" ? uiScale() : "auto";
-                        saveSettings();
-                        applyUi();
-                        redraw();
-                    }
-                },
-                onKey: (e) => {
-                    const root = document.getElementById("menu");
-                    const rows = [...root.querySelectorAll(".set-list > *")];
-                    const row = rows[pauseFocus];
-                    const slider = row?.querySelector("input[type=range]");
-                    const show = () => rows.forEach((r, i) => r.classList.toggle("focus", i === pauseFocus));
-                    switch (e.key) {
-                        case "Tab": {
-                            e.preventDefault();
-                            const i = PAUSE_TABS.findIndex((t) => t.id === pauseTab);
-                            pauseTab = PAUSE_TABS[(i + (e.shiftKey ? -1 : 1) + PAUSE_TABS.length) % PAUSE_TABS.length].id;
-                            pauseFocus = -1;
-                            redraw();
-                            return true;
-                        }
-                        case "ArrowDown":
-                        case "s":
-                        case "S":
-                            pauseFocus = Math.min(rows.length - 1, pauseFocus + 1);
-                            show();
-                            return true;
-                        case "ArrowUp":
-                        case "w":
-                        case "W":
-                            pauseFocus = Math.max(-1, pauseFocus - 1);
-                            show();
-                            return true;
-                        case "ArrowLeft":
-                        case "ArrowRight":
-                        case "a":
-                        case "A":
-                        case "d":
-                        case "D": {
-                            if (!slider)
-                                return true;
-                            const dir = e.key === "ArrowLeft" || e.key.toLowerCase() === "a" ? -1 : 1;
-                            const v = Math.max(Number(slider.min), Math.min(Number(slider.max), Number(slider.value) + dir * Number(slider.step || 1)));
-                            slider.value = String(v);
-                            slider.dispatchEvent(new Event("input"));
-                            slider.dispatchEvent(new Event("change"));
-                            return true;
-                        }
-                        case " ":
-                        case "Enter":
-                            if (!row || slider)
-                                return e.key === " "; // nothing picked: Enter (□) resumes
-                            row.click();
-                            return true;
-                    }
-                    return false;
-                },
-                onMount: (root) => {
-                    root.querySelectorAll(".set-list > *").forEach((r, i) => r.classList.toggle("focus", i === pauseFocus));
-                    root.querySelectorAll("input[data-set]").forEach((el) => {
-                        const key = el.dataset.set;
-                        const label = root.querySelector(`[data-val="${key}"]`);
-                        el.oninput = () => {
-                            const v = Number(el.value) / 100;
-                            if (key === "ui") {
-                                if (label)
-                                    label.textContent = `${Math.round(v * 100)}%`;
-                                return;
-                            } // applied on release: resizing mid-drag jumps the slider
-                            if (key === "zoom") {
-                                setZoom(v);
-                                if (label)
-                                    label.textContent = `${Math.round(zoom() * 100)}%`;
-                                return;
-                            }
-                            settings[key] = v;
-                            if (label)
-                                label.textContent = pct(v);
-                            applySound();
-                        };
-                        el.onchange = () => {
-                            if (key === "ui") {
-                                uiChoice = Number(el.value) / 100;
-                                applyUi();
-                            }
-                            saveSettings();
-                            el.blur(); // so P and Esc reach the game again
-                            if (key === "ui")
-                                redraw();
-                        };
+            tabs: { list: PAUSE_TABS.map((t) => ({ id: t.id, label: t.label })), current: pauseTab, pick: (id) => { pauseTab = id; pauseFocus = -1; redraw(); } },
+            cards: panel,
+            onPick: (v) => {
+                const [k] = v.split(":");
+                if (k === "objectives") {
+                    g.showObjectives = !g.showObjectives;
+                    redraw();
+                }
+                else if (k === "keys")
+                    openKeys(true);
+                else if (k === "restart")
+                    askChoice({
+                        title: "Start over?",
+                        body: `<p>The inn, the purse, the journal and every regular you've met are forgotten, and a new game begins.</p><p class="muted">This can't be undone.</p>`,
+                        confirm: "Start over", cancel: "Keep playing", danger: true, onConfirm: () => { resetSave(); location.reload(); }, onCancel: () => back(),
                     });
-                },
+                else if (k === "howto")
+                    openMenu({ title: "How to play", body: welcomeBody(), items: [{ label: "Back", button: "secondary", cancel: true, action: () => back() }] });
+                else if (k === "mute") {
+                    toggleMute();
+                    redraw();
+                }
+                else if (k === "iso") {
+                    toggleIso();
+                    redraw();
+                }
+                else if (k === "turn") {
+                    turnCamera(1);
+                    redraw();
+                }
+                else if (k === "uiauto") {
+                    uiChoice = uiChoice === "auto" ? uiScale() : "auto";
+                    saveSettings();
+                    applyUi();
+                    redraw();
+                }
             },
-            items: [{ label: "Resume", button: "primary", action: () => resume() }],
+            onKey: (e) => {
+                const root = document.getElementById("menu");
+                const rows = [...root.querySelectorAll(".set-list > *")];
+                const row = rows[pauseFocus];
+                const slider = row?.querySelector("input[type=range]");
+                const show = () => rows.forEach((r, i) => r.classList.toggle("focus", i === pauseFocus));
+                switch (e.key) {
+                    case "ArrowDown":
+                    case "s":
+                    case "S":
+                        pauseFocus = Math.min(rows.length - 1, pauseFocus + 1);
+                        show();
+                        return true;
+                    case "ArrowUp":
+                    case "w":
+                    case "W":
+                        pauseFocus = Math.max(-1, pauseFocus - 1);
+                        show();
+                        return true;
+                    case "ArrowLeft":
+                    case "ArrowRight":
+                    case "a":
+                    case "A":
+                    case "d":
+                    case "D": {
+                        if (!slider)
+                            return true;
+                        const dir = e.key === "ArrowLeft" || e.key.toLowerCase() === "a" ? -1 : 1;
+                        const v = Math.max(Number(slider.min), Math.min(Number(slider.max), Number(slider.value) + dir * Number(slider.step || 1)));
+                        slider.value = String(v);
+                        slider.dispatchEvent(new Event("input"));
+                        slider.dispatchEvent(new Event("change"));
+                        return true;
+                    }
+                    case " ":
+                    case "Enter":
+                        if (!row || slider)
+                            return e.key === " "; // nothing picked: Enter (□) resumes
+                        row.click();
+                        return true;
+                }
+                return false;
+            },
+            onMount: (root) => {
+                root.querySelectorAll(".set-list > *").forEach((r, i) => r.classList.toggle("focus", i === pauseFocus));
+                root.querySelectorAll("input[data-set]").forEach((el) => {
+                    const key = el.dataset.set;
+                    const label = root.querySelector(`[data-val="${key}"]`);
+                    el.oninput = () => {
+                        const v = Number(el.value) / 100;
+                        if (key === "ui") {
+                            if (label)
+                                label.textContent = `${Math.round(v * 100)}%`;
+                            return;
+                        } // applied on release: resizing mid-drag jumps the slider
+                        if (key === "zoom") {
+                            setZoom(v);
+                            if (label)
+                                label.textContent = `${Math.round(zoom() * 100)}%`;
+                            return;
+                        }
+                        settings[key] = v;
+                        if (label)
+                            label.textContent = pct(v);
+                        applySound();
+                    };
+                    el.onchange = () => {
+                        if (key === "ui") {
+                            uiChoice = Number(el.value) / 100;
+                            applyUi();
+                        }
+                        saveSettings();
+                        el.blur(); // so P and Esc reach the game again
+                        if (key === "ui")
+                            redraw();
+                    };
+                });
+            },
+            confirm: { label: "Resume", run: () => resume() },
+            cancel: false,
         };
     };
     openMenu(build());
@@ -1125,7 +1112,7 @@ const KEYS = [
             ["Left stick", "walk (all the way: run)"], ["Hold L2", "Innsight: read the room (R2: with what only a debugger sees)"], ["✕", "use, like Space (hold: hurry, clean)"],
             ["L1 / R1", "pick between things in reach · menu tabs"],
             ["D-pad ← →, ↑", "choose a card, play it"], ["D-pad ↓ / hold ↓", "put down (a dish back, or a tray) / empty a pot"], ["Right stick", "zoom ↑↓ · turn the camera ←→"],
-            ["In menus", "✕ pick · △ take one off · □ confirm (Cook, Put up…) · ○ back or close"],
+            ["In menus", "D-pad over the cards · ✕ pick · □ confirm (Cook, Send order…) · △ the other button · ○ cancel, back or close · L3 take one off"],
             ["L1 / R1 · L2 / R2", "in menus: tabs · the tabs inside them (the meals)"],
             ["R3 · Options · touchpad or Create", "isometric · pause · this list"], ["Arranging", "stick moves the cursor · ✕ click · □ buy · △ next delivered · L2 sell it"],
         ] },
@@ -1138,9 +1125,10 @@ function openKeys(fromPause = false) {
     const html = `<div class="keys">${KEYS.map((k) => `<div class="keys-group"><h4>${padText(k.group)}</h4>${k.rows.map(([key, what]) => `<div class="keys-row"><b>${padText(key)}</b><span>${padText(what)}</span></div>`).join("")}</div>`).join("")}</div>`;
     openMenu({
         title: "⌨️ Keys and controls",
+        subtitle: "Every key and button, in one place",
         holdsClock: true,
-        view: { html },
-        items: [{ label: fromPause ? "Back" : "Close", button: "secondary", cancel: true, action: () => (fromPause ? back() : closeAll()) }],
+        cards: html,
+        cancel: { label: fromPause ? "Back" : "Close", run: () => (fromPause ? back() : closeAll()) },
     });
 }
 // A welcome before anything moves. The clock starts when the player presses Start.

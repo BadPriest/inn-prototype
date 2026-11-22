@@ -39,7 +39,7 @@ import { initSound, isMuted, soundscape, toggleMute, unlockAudio } from "./sound
 import { setBusVolume } from "./sound/engine.js";
 import { updateWinding } from "./sound/gramophone.js";
 import { BUILD } from "./version.js";
-import { openMenu, closeAll, replaceMenu, type MenuSpec } from "./ui/menu.js";
+import { openMenu, closeAll, replaceMenu, type CardScreen, type MenuSpec } from "./ui/menu.js";
 
 const g = new Game();
 load(g);
@@ -791,9 +791,8 @@ function openPause(): void {
   pauseFocus = -1;
   g.paused = true;
   g.bus.emit({ type: "Paused" });
-  const build = (): MenuSpec => {
+  const build = (): CardScreen => {
     const redraw = () => replaceMenu(build());
-    const tabs = `<div class="bf-tabs set-tabs">${PAUSE_TABS.map((t) => `<button class="${pauseTab === t.id ? "on" : ""}" data-pick="tab:${t.id}">${t.label}</button>`).join("")}</div>`;
     let panel = "";
     if (pauseTab === "game") {
       panel = `<div class="set-list">
@@ -820,13 +819,13 @@ function openPause(): void {
     }
     return {
       title: "Paused",
+      subtitle: "The clock is stopped. Change a setting, or resume",
       modal: true,
-      view: {
-        html: tabs + panel,
+      tabs: { list: PAUSE_TABS.map((t) => ({ id: t.id, label: t.label })), current: pauseTab, pick: (id) => { pauseTab = id as PauseTab; pauseFocus = -1; redraw(); } },
+      cards: panel,
         onPick: (v) => {
-          const [k, arg] = v.split(":");
-          if (k === "tab") { pauseTab = arg as PauseTab; pauseFocus = -1; redraw(); }
-          else if (k === "objectives") { g.showObjectives = !g.showObjectives; redraw(); }
+          const [k] = v.split(":");
+          if (k === "objectives") { g.showObjectives = !g.showObjectives; redraw(); }
           else if (k === "keys") openKeys(true);
           else if (k === "restart") askChoice({
             title: "Start over?",
@@ -846,14 +845,6 @@ function openPause(): void {
           const slider = row?.querySelector<HTMLInputElement>("input[type=range]");
           const show = () => rows.forEach((r, i) => r.classList.toggle("focus", i === pauseFocus));
           switch (e.key) {
-            case "Tab": {
-              e.preventDefault();
-              const i = PAUSE_TABS.findIndex((t) => t.id === pauseTab);
-              pauseTab = PAUSE_TABS[(i + (e.shiftKey ? -1 : 1) + PAUSE_TABS.length) % PAUSE_TABS.length].id;
-              pauseFocus = -1;
-              redraw();
-              return true;
-            }
             case "ArrowDown": case "s": case "S":
               pauseFocus = Math.min(rows.length - 1, pauseFocus + 1); show(); return true;
             case "ArrowUp": case "w": case "W":
@@ -895,8 +886,8 @@ function openPause(): void {
             };
           });
         },
-      },
-      items: [{ label: "Resume", button: "primary" as const, action: () => resume() }],
+      confirm: { label: "Resume", run: () => resume() },
+      cancel: false,
     };
   };
   openMenu(build());
@@ -927,7 +918,7 @@ const KEYS: { group: string; rows: [string, string][] }[] = [
     ["Left stick", "walk (all the way: run)"], ["Hold L2", "Innsight: read the room (R2: with what only a debugger sees)"], ["✕", "use, like Space (hold: hurry, clean)"],
     ["L1 / R1", "pick between things in reach · menu tabs"],
     ["D-pad ← →, ↑", "choose a card, play it"], ["D-pad ↓ / hold ↓", "put down (a dish back, or a tray) / empty a pot"], ["Right stick", "zoom ↑↓ · turn the camera ←→"],
-    ["In menus", "✕ pick · △ take one off · □ confirm (Cook, Put up…) · ○ back or close"],
+    ["In menus", "D-pad over the cards · ✕ pick · □ confirm (Cook, Send order…) · △ the other button · ○ cancel, back or close · L3 take one off"],
     ["L1 / R1 · L2 / R2", "in menus: tabs · the tabs inside them (the meals)"],
     ["R3 · Options · touchpad or Create", "isometric · pause · this list"], ["Arranging", "stick moves the cursor · ✕ click · □ buy · △ next delivered · L2 sell it"],
   ] },
@@ -940,9 +931,10 @@ function openKeys(fromPause = false): void {
   const html = `<div class="keys">${KEYS.map((k) => `<div class="keys-group"><h4>${padText(k.group)}</h4>${k.rows.map(([key, what]) => `<div class="keys-row"><b>${padText(key)}</b><span>${padText(what)}</span></div>`).join("")}</div>`).join("")}</div>`;
   openMenu({
     title: "⌨️ Keys and controls",
+    subtitle: "Every key and button, in one place",
     holdsClock: true,
-    view: { html },
-    items: [{ label: fromPause ? "Back" : "Close", button: "secondary", cancel: true, action: () => (fromPause ? back() : closeAll()) }],
+    cards: html,
+    cancel: { label: fromPause ? "Back" : "Close", run: () => (fromPause ? back() : closeAll()) },
   });
 }
 

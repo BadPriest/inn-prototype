@@ -3,7 +3,7 @@
 import { CALENDAR, WEATHER } from "../data.js";
 import { compactDate } from "../calendar.js";
 import { SUPPLIERS_DATA } from "../gamedata.gen.js";
-import { back, openMenu, replaceMenu } from "./menu.js";
+import { openMenu, replaceMenu } from "./menu.js";
 /** What the weather was on a day gone by, as one icon. */
 function dayWeather(s) {
     const w = s?.weather;
@@ -62,26 +62,23 @@ export function openCalendar(g) {
             title: `📅 ${today.seasonName}, year ${today.year}`,
             holdsClock: true,
             subtitle: `Today is ${today.weekday}, ${compactDate(today, today.year)} of ${length}`,
-            view: {
-                html: `<div class="cal">${head}${cells.join("")}</div>
+            cards: `<div class="cal">${head}${cells.join("")}</div>
           <div class="cal-day"><b>${when ? `${when}, ` : ""}${f.weekday} ${st.focus}</b> ${lines || "Nothing on."}</div>
           <p class="muted">${next.name} begins in ${left} day${left === 1 ? "" : "s"}.${g.loc.marketDay ? ` 🧺 Market day: ${g.loc.marketDay}s.` : ""} Past days show the weather they had.</p>`,
-                onPick: (v) => { st.focus = Number(v); replaceMenu(build()); },
-                onKey: (e) => {
-                    const by = { ArrowLeft: -1, a: -1, A: -1, ArrowRight: 1, d: 1, D: 1, ArrowUp: -7, w: -7, W: -7, ArrowDown: 7, s: 7, S: 7 }[e.key];
-                    if (!by)
-                        return false;
-                    const to = st.focus + by;
-                    if (to >= 1 && to <= length) {
-                        st.focus = to;
-                        g.bus.emit({ type: "MenuSound", sound: "tick" });
-                        replaceMenu(build());
-                        return true;
-                    }
-                    return by !== 7; // down past the last week: to the Close button
-                },
+            onPick: (v) => { st.focus = Number(v); replaceMenu(build()); },
+            onKey: (e) => {
+                const by = { ArrowLeft: -1, a: -1, A: -1, ArrowRight: 1, d: 1, D: 1, ArrowUp: -7, w: -7, W: -7, ArrowDown: 7, s: 7, S: 7 }[e.key];
+                if (!by)
+                    return false;
+                const to = st.focus + by;
+                if (to >= 1 && to <= length) {
+                    st.focus = to;
+                    g.bus.emit({ type: "MenuSound", sound: "tick" });
+                    replaceMenu(build());
+                    return true;
+                }
+                return true;
             },
-            items: [{ label: "Close", button: "secondary", cancel: true, action: () => back() }],
         };
     };
     openMenu(build());

@@ -106,6 +106,8 @@
   .bf-tabs { display:flex; gap:4px; margin-bottom:8px; flex-wrap:wrap; }
   .bf-tabs button { border:1px solid #6b5338; border-radius:7px 7px 0 0; border-bottom-width:2px; display:flex; flex-direction:column; align-items:center; padding:4px 10px; }
   .bf-tabs button small { font:10.5px system-ui; color:var(--muted); }
+  .bf-modes button:has(small) { display:inline-flex; flex-direction:column; align-items:center; padding:4px 12px; }
+  .bf-modes button small { font:10.5px system-ui; color:var(--muted); }
   .bf-tabs button.on { border-color:#ffd34d; background:#3a2c1c; }
   .bf-tabs button.live::after { content:"now"; font:700 9px system-ui; color:#9be27a; }
   .bf-strip { position:relative; height:18px; margin:2px 0 20px; background:#1a1410; border:1px solid #3d3027; border-radius:5px; }
@@ -520,7 +522,7 @@
   body.pad.pad-xbox .pad-glyph.ci::before { content:"B"; width:auto; height:auto; } body.pad.pad-xbox .pad-glyph.ci { color:#ff5a4f; }
   body.pad .pad-glyph.tx { width:auto; min-width:26px; padding:0 6px; box-sizing:border-box; border-radius:13px; font:800 12px/1 system-ui; }
   body.pad .pad-glyph.tx::before { content:none; }
-  body.pad .pad-glyph.g-tr { color:#5fd0a8; font-size:14px; } body.pad .pad-glyph.g-l3, body.pad .pad-glyph.g-tp, body.pad .pad-glyph.g-sh { color:#d8c8a8; }
+  body.pad .pad-glyph.g-tr { color:#5fd0a8; font-size:14px; }
   body.pad.pad-xbox .pad-glyph.g-tr { color:#f2c14e; }
   .key-glyph { display:inline-block; min-width:16px; padding:1px 5px; border-radius:4px; background:#efe3ca; color:#2c2017; font:600 11px system-ui; box-shadow:0 2px 0 #9a7a50; text-align:center; }
   body.pad .key-glyph { display:none; }

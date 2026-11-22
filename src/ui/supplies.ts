@@ -11,8 +11,8 @@ import {
   canFetchFrom, deliveryDaysText, fetchSlip, linesOf, nextDeliveryDay, packContents, packPrice, sendSlip, slipEmpty, slipOf, slipTotal,
   suppliersHere, whenText, inSeason, backIn, seasonsText, sendStanding, stopStanding, pauseStanding, standingWhen, supplierDays, dayName, toggleStandingDay,
 } from "../supplies.js";
-import { back, closeAll, openMenu, replaceMenu, type MenuSpec } from "./menu.js";
-import { grid, gridKeys, stageTone, type CardSpec } from "./cards.js";
+import { back, closeAll, openMenu, replaceMenu, type CardScreen, type MenuSpec } from "./menu.js";
+import { grid, stageTone, type CardSpec, heading } from "./cards.js";
 
 let tab = 0; // the screen opens on the supplier you left it at
 type Page = "slip" | "standing" | "coming";
@@ -67,7 +67,7 @@ function openDays(g: Game, s: SupplierData, o: StandingOrder, done: () => void):
 
 export function openSupplies(g: Game): void {
   const st = { focus: 0 };
-  const build = (): MenuSpec => {
+  const build = (): CardScreen => {
     const all = suppliersHere(g);
     tab = Math.min(tab, all.length - 1);
     const s = all[tab];
@@ -81,6 +81,8 @@ export function openSupplies(g: Game): void {
     const mine = g.standing.filter((o) => o.supplierId === s.id);
     const ed = mine.find((o) => o.id === editing);
     if (!ed) editing = null;
+    /** Editing a standing order: two cards for the order itself (its days, stopping it) come before the goods. */
+    const off = ed ? 2 : 0;
     /** What the goods cards change: the slip, or the standing order being edited. */
     const target = ed ? ed.slip : slip;
     const ing = (id: string) => INGREDIENTS.find((x) => x.id === id)!;
@@ -89,11 +91,10 @@ export function openSupplies(g: Game): void {
       const l = lines[i];
       if (!l || (by > 0 && !inSeason(g, l.item))) return;
       target[l.item] = Math.max(0, (target[l.item] ?? 0) + by);
-      st.focus = i;
+      st.focus = i + off;
       g.bus.emit({ type: "MenuSound", sound: by > 0 ? "penClick" : "tick" });
       refresh();
     };
-    const switchTab = (by: number) => { tab = (tab + by + all.length) % all.length; st.focus = 0; g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); refresh(); };
 
     /** What's in the pantry, stage by stage: "Pantry: 71 lb (fresh), 6 lb (on the turn)". */
     const pantryLine = (id: string) => {
@@ -106,13 +107,13 @@ export function openSupplies(g: Game): void {
       const fact = `${moneyHtml(packPrice(s, l))} <span class="unit">${l.pack.name}</span>`;
       const count = { n: on, minus: `minus:${i}`, plus: String(i) };
       if (!inSeason(g, l.item)) return {
-        pick: String(i), icon: x.icon, name: x.name, focus: i === st.focus, off: true, fact,
+        pick: String(i), icon: x.icon, name: x.name, focus: i + off === st.focus, off: true, fact,
         status: `Only in ${seasonsText(l.item)}${seasonsText(l.item) === backIn(g, l.item) ? "" : ` · back in ${backIn(g, l.item)}`}`, tone: "muted",
         count: on ? { ...count, plusOff: true } : undefined,
         detail: `${x.description}${on ? " What's on the slip won't be sent." : ""}${goesInto(g, l.item)}`,
       };
       return {
-        pick: String(i), icon: x.icon, name: x.name, focus: i === st.focus, on: on > 0, fact,
+        pick: String(i), icon: x.icon, name: x.name, focus: i + off === st.focus, on: on > 0, fact,
         status: pantryLine(l.item),
         under: stagesInPantry(g, l.item).slice(1).map((x) => stageTone(x.index, x.effect)),
         tone: have(g, l.item) <= 0 || (uses.has(l.item) && low(l.item)) ? "warn" : undefined,
@@ -136,7 +137,6 @@ export function openSupplies(g: Game): void {
     const pages = (["slip", standing ? "standing" : "", coming.length ? "coming" : ""].filter(Boolean)) as Page[];
     if (!pages.includes(page)) page = "slip";
     const pageName: Record<Page, string> = { slip: "📝 Slip", standing: `📌 Standing orders (${mine.length})`, coming: `🛻 On its way (${coming.length})` };
-    const switchPage = (by: number) => { page = pages[(pages.indexOf(page) + by + pages.length) % pages.length]; st.focus = 0; g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); refresh(); };
     const lineList = (sl: Record<string, number>) => `<div class="slip-lines">${lines.filter((l) => sl[l.item]).map((l) => `<span class="slip-line${inSeason(g, l.item) ? "" : " gone"}"><b>${sl[l.item]}</b> × ${l.pack.name} of ${ing(l.item).name.toLowerCase()}${inSeason(g, l.item) ? "" : ` <em>only in ${seasonsText(l.item)}</em>`}</span>`).join("")}</div>`;
 
     const editBox = (o: StandingOrder) => `<div class="dish result standing-edit${slipEmpty(o.slip) ? " empty" : ""}">
@@ -157,12 +157,10 @@ export function openSupplies(g: Game): void {
           <div class="meta">${terms}</div>
         </div>
       </div>`;
-    const pinned = `<div class="bf-tabs">${all.map((x, i) => `<button class="${i === tab ? "on" : ""}" data-pick="tab:${i}">${x.icon} ${x.name}${g.standing.some((o) => o.supplierId === x.id) ? (g.standing.some((o) => o.supplierId === x.id && !o.paused) ? " 📌" : " ⏸") : ""}${slipEmpty(g.slips[x.id]) ? "" : " ✎"}</button>`).join("")}</div>
-      ${ed ? "" : pages.length > 1 ? `<div class="bf-modes">${pages.map((p) => `<button class="${p === page ? "on" : ""}" data-pick="page:${p}">${pageName[p]}</button>`).join("")}</div>` : ""}
-      ${ed ? editBox(ed) : page === "slip" ? slipBox : ""}`;
+    const summary = ed ? editBox(ed) : page === "slip" ? slipBox : "";
 
-    const goods = (forBill ? `<div class="sec-h"><h4>For your bill of fare</h4><small>what's on it uses these · lowest first</small></div>${grid(cards.slice(0, forBill))}` : "")
-      + (cards.length > forBill ? `<div class="sec-h"><h4>${forBill ? "Everything else" : "Their goods"}</h4><small>${forBill ? "nothing on your bill uses these" : "nothing on your bill comes from here"}</small></div>${grid(cards.slice(forBill))}` : "");
+    const goods = (forBill ? `${heading(`For your bill of fare`, `what's on it uses these · lowest first`)}${grid(cards.slice(0, forBill))}` : "")
+      + (cards.length > forBill ? `${heading(`${forBill ? "Everything else" : "Their goods"}`, `${forBill ? "nothing on your bill uses these" : "nothing on your bill comes from here"}`)}${grid(cards.slice(forBill))}` : "");
     const standingCards: CardSpec[] = mine.map((o, i) => ({
       pick: `so:${i}`, icon: o.paused ? "⏸" : "📌", name: standingWhen(o)[0].toUpperCase() + standingWhen(o).slice(1), focus: i === st.focus,
       fact: `${moneyHtml(slipTotal(s, o.slip))} each time`,
@@ -172,58 +170,80 @@ export function openSupplies(g: Game): void {
       does: "Change it: its goods, its days, pause or cancel it",
     }));
     const editStanding = (i: number) => { const o = mine[i]; if (!o) return; editing = o.id; st.focus = 0; g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); refresh(); };
-    const standingPage = `<div class="sec-h"><h4>Standing orders</h4><small>each placed again for its days, paid as it's placed</small></div>${grid(standingCards)}`;
+    const standingPage = `${heading(`Standing orders`, `each placed again for its days, paid as it's placed`)}${grid(standingCards)}`;
     const comingPage = coming.map((d) => `<div class="signed"><div class="sg-kicker">${d.standing ? "📌 Placed by your standing order · paid" : "🛻 Signed and sent · paid"}</div><div class="sg-when">${d.day === g.day + 1 ? "Tomorrow" : g.dateOfDay(d.day).weekday}</div><div class="meta">morning, with the carter · ${moneyHtml(slipTotal(s, d.slip))}</div>${lineList(d.slip)}</div>`).join("")
       + `<p class="muted">To cancel one, go to the desk: 🛻 Deliveries.</p>`;
 
-    const items: MenuSpec["items"] = [];
-    if (ed) {
-      items.push({ label: "✓ Done", sub: "back to the standing orders", button: "primary", action: () => { editing = null; page = "standing"; st.focus = 0; g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); refresh(); } });
-      items.push({ label: `📅 Days: ${standingWhen(ed)}`, sub: "which of their delivery days it comes", button: "secondary", action: () => openDays(g, s, ed, refresh) });
-      items.push(ed.paused
-        ? { label: "▶ Resume it", sub: "placed again from tomorrow morning", button: "secondary", action: () => { pauseStanding(g, ed, false); g.bus.emit({ type: "MenuSound", sound: "penClick" }); refresh(); } }
-        : { label: "⏸ Pause it", sub: "kept as it is, nothing placed until you resume", button: "secondary", action: () => { pauseStanding(g, ed, true); g.bus.emit({ type: "MenuSound", sound: "tick" }); refresh(); } });
-      items.push({ label: "Cancel standing order", sub: "what's already sent still comes", button: "secondary", action: () => { stopStanding(g, ed); editing = null; page = mine.length > 1 ? "standing" : "slip"; st.focus = 0; g.bus.emit({ type: "MenuSound", sound: "paperClose" }); refresh(); } });
-    } else if (page === "slip") {
-      if (onSlip.length) {
-        items.push({ label: day !== undefined ? `🛻 Send it: ${fmtMoney(total)}` : "They don't deliver", sub: day !== undefined ? `comes ${whenText(g, day)} · the carter charges a few pence a morning` : "fetch it yourself",
-          button: "primary", disabled: day === undefined || slipEmpty(live) || g.purse < total, action: () => { if (sendSlip(g, s)) { g.bus.emit({ type: "MenuSound", sound: "coins" }); refresh(); } } });
-        if (s.distanceInMinutes !== undefined) items.push({ label: `🚶 Fetch it yourself: ${fmtMoney(total)}`, sub: canFetchFrom(g, s) ? `you're out ${s.distanceInMinutes} min; no carter's fee` : "only while the inn is shut and empty, and they're open",
-          disabled: !canFetchFrom(g, s) || slipEmpty(live) || g.purse < total, action: () => { if (fetchSlip(g, s)) { g.bus.emit({ type: "MenuSound", sound: "coins" }); closeAll(); } } });
-        if (day !== undefined) items.push({ label: "📌 Send it as a standing order", sub: `placed again for every delivery, paid each time`,
-          button: "secondary", disabled: slipEmpty(live) || g.purse < total, action: () => { if (sendStanding(g, s)) { g.bus.emit({ type: "MenuSound", sound: "coins" }); refresh(); } } });
-        items.push({ label: "Tear it up", button: "secondary", action: () => { g.slips[s.id] = {}; g.bus.emit({ type: "MenuSound", sound: "paperClose" }); refresh(); } });
-      } else if (!slipEmpty(g.lastSlips[s.id])) {
-        items.push({ label: "Copy last slip", sub: "the same again", action: () => { g.slips[s.id] = { ...g.lastSlips[s.id] }; refresh(); } });
-      }
-    }
-
+    // Editing a standing order: its days and stopping it, as cards before the goods.
+    const edCards: CardSpec[] = ed ? [
+      { pick: "ed:days", icon: "📅", name: "Delivery days", focus: st.focus === 0, fact: standingWhen(ed),
+        status: "which of their delivery days it comes", detail: `${s.name} deliver ${deliveryDaysText(s).toLowerCase()}. A standing order can come on all of those days or only some.`, does: "Choose the days" },
+      { pick: "ed:stop", icon: "✖", name: "Stop it", focus: st.focus === 1, fact: "cancel this standing order",
+        status: "what's already sent still comes", tone: "warn", does: "Stop the standing order" },
+    ] : [];
+    const stop = () => { if (!ed) return; stopStanding(g, ed); editing = null; page = mine.length > 1 ? "standing" : "slip"; st.focus = 0; g.bus.emit({ type: "MenuSound", sound: "paperClose" }); refresh(); };
+    /** Send the slip: by the carter, fetched yourself, or as a standing order. */
+    const sendHow = () => {
+      const fetchable = s.distanceInMinutes !== undefined;
+      const how: MenuSpec = {
+        title: `Send the order to ${s.name}`,
+        subtitle: `${fmtMoney(total)} · how should it come?`,
+        items: [
+          { label: "🛻 Delivery", sub: day !== undefined ? `the carter brings it ${whenText(g, day)} · a few pence a morning` : "they don't deliver",
+            disabled: day === undefined, action: () => { back(); if (sendSlip(g, s)) { g.bus.emit({ type: "MenuSound", sound: "coins" }); refresh(); } } },
+          ...(fetchable ? [{ label: "🚶 Fetch it yourself", sub: canFetchFrom(g, s) ? `you're out ${s.distanceInMinutes} min; no carter's fee` : "only while the inn is shut and empty, and they're open",
+            disabled: !canFetchFrom(g, s), action: () => { back(); if (fetchSlip(g, s)) { g.bus.emit({ type: "MenuSound", sound: "coins" }); closeAll(); } } }] : []),
+          { label: "📌 Standing order", sub: day !== undefined ? "the carter brings the same again every delivery, paid each time" : "they don't deliver",
+            disabled: day === undefined, action: () => { back(); if (sendStanding(g, s)) { g.bus.emit({ type: "MenuSound", sound: "coins" }); refresh(); } } },
+          { label: "Not now", button: "secondary", cancel: true, action: () => back() },
+        ],
+      };
+      openMenu(how);
+    };
+    const onPage = ed ? "edit" : page;
+    const navCards = ed ? edCards.length + cards.length : page === "slip" ? cards.length : page === "standing" ? standingCards.length : 0;
+    const useCard = (i: number) => {
+      if (ed && i < off) { if (i === 0) openDays(g, s, ed, refresh); else stop(); return; }
+      if (onPage === "standing") { editStanding(i); return; }
+      change(i - off, 1);
+    };
+    const hasLast = !slipEmpty(g.lastSlips[s.id]);
     return {
       title: "🧺 Buy Supplies",
-      subtitle: `${moneyHtml(g.purse)} in the purse · pencil packs onto a slip, then send it or fetch it`,
+      subtitle: ed ? `${moneyHtml(g.purse)} in the purse · change the standing order: its goods, its days` : `${moneyHtml(g.purse)} in the purse · pencil packs onto the slip, then send the order`,
       holdsClock: true,
-      view: {
-        pinned,
-        html: ed || page === "slip" ? goods : page === "standing" ? standingPage : comingPage,
-        onPick: (v) => {
-          if (v.startsWith("so:")) { editStanding(Number(v.slice(3))); return; }
-          if (v.startsWith("page:")) { const p = v.slice(5) as Page; if (p !== page) { page = p; st.focus = 0; g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); refresh(); } return; }
-          if (v.startsWith("minus:")) { change(Number(v.slice(6)), -1); return; }
-          if (v.startsWith("tab:")) { const i = Number(v.slice(4)); if (i !== tab) { tab = i; page = "slip"; editing = null; st.focus = 0; g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); refresh(); } return; }
-          change(Number(v), 1);
-        },
-        padTriangle: !!ed || page === "slip",
-        keys: ed ? "Delete takes one off" : `${page === "slip" ? "Delete takes one off · " : ""}Tab another supplier${pages.length > 1 ? " · PgUp/PgDn its pages" : ""}`,
-        onKey: (e) => {
-          if (e.key === "Tab") { e.preventDefault(); if (!ed) { page = "slip"; switchTab(e.shiftKey ? -1 : 1); } return true; }
-          if (e.key === "PageUp" || e.key === "PageDown") { e.preventDefault(); if (!ed && pages.length > 1) switchPage(e.key === "PageUp" ? -1 : 1); return true; }
-          if (!ed && page === "standing") return gridKeys(() => standingCards.length, () => st.focus, (i) => { st.focus = i; refresh(); }, editStanding)(e);
-          if (!ed && page !== "slip") return false;
-          if (e.key === "-" || e.key === "Delete") { change(st.focus, -1); return true; }
-          return gridKeys(() => cards.length, () => st.focus, (i) => { st.focus = i; refresh(); }, (i) => change(i, 1))(e);
-        },
+      tabs: ed ? undefined : {
+        list: all.map((x) => ({ id: x.id, label: `${x.icon} ${x.name}${g.standing.some((o) => o.supplierId === x.id) ? (g.standing.some((o) => o.supplierId === x.id && !o.paused) ? " 📌" : " ⏸") : ""}${slipEmpty(g.slips[x.id]) ? "" : " ✎"}` })),
+        current: s.id,
+        pick: (id) => { tab = Math.max(0, all.findIndex((x) => x.id === id)); page = "slip"; editing = null; st.focus = 0; g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); refresh(); },
       },
-      items,
+      modes: !ed && pages.length > 1 ? { list: pages.map((p) => ({ id: p, label: pageName[p] })), current: page, pick: (id) => { page = id as Page; st.focus = 0; g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); refresh(); } } : undefined,
+      summary,
+      cards: ed ? `${heading(`This standing order`, `its days, or stop it`)}${grid(edCards)}${goods}` : page === "slip" ? goods : page === "standing" ? standingPage : comingPage,
+      onPick: (v) => {
+        if (v === "ed:days" && ed) { openDays(g, s, ed, refresh); return; }
+        if (v === "ed:stop") { stop(); return; }
+        if (v.startsWith("so:")) { editStanding(Number(v.slice(3))); return; }
+        if (v.startsWith("minus:")) { change(Number(v.slice(6)), -1); return; }
+        change(Number(v), 1);
+      },
+      keys: onPage === "slip" || ed ? "Delete takes one off" : undefined,
+      onKey: (e) => {
+        if ((e.key === "-" || e.key === "Delete") && (ed || page === "slip") && st.focus >= off) { change(st.focus - off, -1); return true; }
+        return false;
+      },
+      nav: { count: () => navCards, focus: () => st.focus, setFocus: (i) => { st.focus = i; refresh(); }, use: useCard },
+      confirm: ed
+        ? { label: "✓ Done", sub: "back to the standing orders", run: () => { editing = null; page = "standing"; st.focus = 0; g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); refresh(); } }
+        : page === "slip" ? { label: "Send order…", sub: onSlip.length ? `${fmtMoney(total)} · delivery, fetch it, or a standing order` : "pencil something onto the slip first", disabled: slipEmpty(live) || g.purse < total, run: sendHow } : undefined,
+      alt: ed
+        ? (ed.paused
+          ? { label: "▶ Resume", sub: "placed again from tomorrow morning", run: () => { pauseStanding(g, ed, false); g.bus.emit({ type: "MenuSound", sound: "penClick" }); refresh(); } }
+          : { label: "⏸ Pause", sub: "kept as it is, nothing placed until you resume", run: () => { pauseStanding(g, ed, true); g.bus.emit({ type: "MenuSound", sound: "tick" }); refresh(); } })
+        : page !== "slip" ? undefined
+        : onSlip.length ? { label: "Clear the slip", run: () => { g.slips[s.id] = {}; g.bus.emit({ type: "MenuSound", sound: "paperClose" }); refresh(); } }
+        : hasLast ? { label: "Copy last order slip", sub: "the same again", run: () => { g.slips[s.id] = { ...g.lastSlips[s.id] }; g.bus.emit({ type: "MenuSound", sound: "penClick" }); refresh(); } }
+        : undefined,
     };
   };
   openMenu(build());

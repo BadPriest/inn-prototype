@@ -12,9 +12,9 @@ import { startPour } from "../serving.js";
 import type { Game } from "../game.js";
 import type { Slot } from "../world.js";
 import { makeItem, recipesFor, slotName, startJob, ticketFor } from "../crafting.js";
-import { back, closeAll, openMenu, replaceMenu, type MenuSpec } from "./menu.js";
+import { back, closeAll, openMenu, replaceMenu, type CardScreen } from "./menu.js";
 import { hasBackSpots, manageStoveSpec, stoveTabs } from "./stove.js";
-import { chip, grid, gridKeys, stageTone, type CardSpec } from "./cards.js";
+import { chip, grid, stageTone, type CardSpec, heading } from "./cards.js";
 
 /** `stage`: the stage the cook put on top of an ingredient's deck, by ingredient. */
 interface CookState { base: string[]; optional: string[]; focus: number; stage: Record<string, string> }
@@ -99,7 +99,6 @@ export function openRecipeScreen(g: Game, slot: Slot): void {
   if (recipes.length === 1 && !manage) { openCookScreen(g, slot, recipes[0]); return; }
   const st = { focus: 0 };
   const own = hasSnacks ? [{ id: "dishes", name: "🍲 Dishes" }, { id: "snacks", name: "🥜 Table snacks" }] : [{ id: "cook", name: "🔥 Cook" }];
-  const order = [...own.map((t) => t.id), "manage"];
   /** Back from Manage stove: the stove may have changed, so the screen opens afresh on that tab. */
   const leave = (tab: string) => {
     if (tab === "dishes" || tab === "snacks") recipeTab = tab;
@@ -107,12 +106,13 @@ export function openRecipeScreen(g: Game, slot: Slot): void {
     const fresh = g.world.furniture.flatMap((x) => x.slots ?? []).find((s) => s.id === slot.id);
     if (fresh) openRecipeScreen(g, fresh);
   };
-  const showManage = () => { g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); replaceMenu(manageStoveSpec(g, slot.f.id, stoveTabs(own, "manage"), order, leave)); };
-  const build = (): MenuSpec => {
+  const showManage = () => { g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); replaceMenu(manageStoveSpec(g, slot.f.id, own, leave)); };
+  const build = (): CardScreen => {
     // What guests are waiting for comes first.
     const list = recipes.filter((r) => !!r.tableSnack === (recipeTab === "snacks")).sort((a, b) => waiting(b) - waiting(a));
     const switchTab = () => { recipeTab = recipeTab === "dishes" ? "snacks" : "dishes"; st.focus = 0; g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); replaceMenu(build()); };
-    const tabs = manage ? stoveTabs(own, hasSnacks ? recipeTab : "cook") : hasSnacks ? `<div class="bf-tabs">${(["dishes", "snacks"] as const).map((t) => `<button class="${recipeTab === t ? "on" : ""}" data-pick="tab:${t}">${t === "dishes" ? "🍲 Dishes" : "🥜 Table snacks"}</button>`).join("")}</div>` : undefined;
+    const pickTab = (id: string) => { if (id === "manage") showManage(); else if (hasSnacks && id !== recipeTab) switchTab(); };
+    const tabs = manage ? stoveTabs(own, hasSnacks ? recipeTab : "cook", pickTab) : hasSnacks ? { list: own.map((t) => ({ id: t.id, label: t.name })), current: recipeTab, pick: pickTab } : undefined;
     const cards: CardSpec[] = list.map((r, i) => {
       const n = waiting(r);
       const onBoard = g.billNow().has(r.id);
@@ -137,28 +137,11 @@ export function openRecipeScreen(g: Game, slot: Slot): void {
     const pick = (i: number) => { const r = list[i]; if (r) openCookScreen(g, slot, r); };
     return {
       title: `${slot.f.name}${(slot.f.slots?.length ?? 1) > 1 ? `: ${slot.name.toLowerCase()}` : ""}`,
-      subtitle: "What will you make?",
-      view: {
-        pinned: tabs,
-        html: `<div class="dishes">${grid(cards, { size: "l" })}</div>`,
-        onPick: (v) => {
-          if (v === "tab:manage") { showManage(); return; }
-          if (v.startsWith("tab:")) { if (hasSnacks && v.slice(4) !== recipeTab) switchTab(); return; }
-          pick(Number(v));
-        },
-        onKey: (e) => {
-          if (manage && e.key === "Tab") {
-            e.preventDefault();
-            const i = order.indexOf(hasSnacks ? recipeTab : "cook");
-            const next = order[(i + (e.shiftKey ? -1 : 1) + order.length) % order.length];
-            if (next === "manage") showManage(); else switchTab();
-            return true;
-          }
-          if (hasSnacks && e.key === "Tab") { e.preventDefault(); switchTab(); return true; }
-          return gridKeys(() => cards.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, pick)(e);
-        },
-      },
-      items: [],
+      subtitle: "What will you make? Pick a dish to choose what goes in it",
+      tabs,
+      cards: `<div class="dishes">${grid(cards, { size: "l" })}</div>`,
+      onPick: (v) => pick(Number(v)),
+      nav: { count: () => cards.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; replaceMenu(build()); }, use: pick },
     };
   };
   openMenu(build());
@@ -172,7 +155,7 @@ export function openSteepScreen(g: Game, f: Slot): void {
   const tea = RECIPES.find((r) => r.id === "tea")!;
   const water = g.pots.get(f.id);
   const st = { focus: 0 };
-  const build = (): MenuSpec => {
+  const build = (): CardScreen => {
     const waiting = g.orders.filter((o) => o.open && o.recipeId === "tea").sort((a, b) => a.placedAt - b.placedAt);
     const wanted = (id: string) => waiting.filter((o) => o.wantOption === id).map((o) => g.patron(o.patronId)?.name).filter(Boolean);
     const steep = (id: string) => { closeAll(); startPour(g, f.id, `leaf:${id}`); };
@@ -191,14 +174,11 @@ export function openSteepScreen(g: Game, f: Slot): void {
     const forWho = first ? `Next: <b>${g.patron(first.patronId)?.name ?? "someone"}</b>${first.wantOption ? `, who asked for ${INGREDIENTS.find((x) => x.id === first.wantOption)?.name.toLowerCase()}` : ""}${waiting.length > 1 ? ` · ${waiting.length} waiting` : ""}` : "Nobody's waiting: it goes to whoever asks.";
     return {
       title: "🍵 Steep a cup",
-      subtitle: `Pick a leaf · hot water for ${water?.left ?? 0} more`,
-      view: {
-        pinned: resultPanel({ icon: tea.icon, name: "Tea", tags: tea.baseTags, meta: `One cup, steeped now`, forWho }),
-        html: `<div class="sec-h"><h4>Leaves</h4><small>choose one</small></div>${grid(cards)}`,
-        onPick: steep,
-        onKey: gridKeys(() => leaves.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, (i) => steep(leaves[i])),
-      },
-      items: [],
+      subtitle: `Pick a leaf to steep a cup · hot water for ${water?.left ?? 0} more`,
+      summary: resultPanel({ icon: tea.icon, name: "Tea", tags: tea.baseTags, meta: `One cup, steeped now`, forWho }),
+      cards: `${heading(`Leaves`, `choose one`)}${grid(cards)}`,
+      onPick: steep,
+      nav: { count: () => leaves.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; replaceMenu(build()); }, use: (i) => steep(leaves[i]) },
     };
   };
   openMenu(build());
@@ -212,7 +192,7 @@ export function openCookScreen(g: Game, f: Slot, r: Recipe): void {
   openMenu(cookSpec(g, f, r, state));
 }
 
-function cookSpec(g: Game, f: Slot, r: Recipe, st: CookState): MenuSpec {
+function cookSpec(g: Game, f: Slot, r: Recipe, st: CookState): CardScreen {
   const groups = [
     { key: "base" as const, title: "Base", choice: r.base, chosen: st.base },
     { key: "optional" as const, title: "Extras", choice: r.optional, chosen: st.optional },
@@ -297,10 +277,10 @@ function cookSpec(g: Game, f: Slot, r: Recipe, st: CookState): MenuSpec {
     });
     const [lo, hi] = grp.choice.pick;
     const rule = lo === hi ? `choose ${lo}` : lo === 0 ? `up to ${hi}` : `choose ${lo} to ${hi}`;
-    return `<div class="sec-h"><h4>${grp.title}</h4><small>${rule}${grp.chosen.length ? ` · ${grp.chosen.length} chosen` : ""}</small></div>${grid(cards, { cols: Math.min(6, cards.length) })}`;
+    return `${heading(`${grp.title}`, `${rule}${grp.chosen.length ? ` · ${grp.chosen.length} chosen` : ""}`)}${grid(cards, { cols: Math.min(6, cards.length) })}`;
   });
-  const always = r.fundamental.length ? `<div class="sec-h"><h4>Always in it</h4><small>${alwaysIn(r)}</small></div>` : "";
-  const shortNote = short.length ? `<div class="sec-h"><h4>Short</h4><small>${describeUses(short)}: order more at the desk</small></div>` : "";
+  const always = r.fundamental.length ? `${heading(`Always in it`, `${alwaysIn(r)}`)}` : "";
+  const shortNote = short.length ? `${heading(`Short`, `${describeUses(short)}: order more at the desk`)}` : "";
   const missing = groups.filter((grp) => grp.chosen.length < grp.choice.pick[0]).map((grp) => `${grp.choice.pick[0] - grp.chosen.length} ${grp.title.toLowerCase()}`).join(" and ");
 
   const cook = (forTicket: boolean) => {
@@ -313,22 +293,18 @@ function cookSpec(g: Game, f: Slot, r: Recipe, st: CookState): MenuSpec {
   const verb = r.id === "water" ? "Boil" : r.storedIn === "piesafe" || f.kinds.includes("oven" as never) ? "Bake" : "Cook";
   return {
     title: `${r.icon} ${r.name}`,
-    subtitle: `At the ${slotName(f)} · ${timeOf(r)}`,
+    subtitle: `At the ${slotName(f)} · ${timeOf(r)} · pick what goes in it`,
     flavour: r.blurb,
-    view: {
-      pinned: resultPanel({ icon: r.icon, name: chosen.length ? item.name : r.name, tags: item.tags, lit: item.tags.filter((t) => !r.baseTags.includes(t)), meta: makesOf(r, f), forWho, empty: !chosen.length }),
-      html: always + shortNote + sections.join(""),
-      keys: Object.values(picks).some((p) => deckOf(p.id).length > 1) ? "Tab shuffles the stage" : undefined,
-      onPick: (v) => (v.startsWith("shuffle:") ? shuffle(Number(v.slice(8))) : toggle(Number(v))),
-      onKey: (e) => {
-        if (e.key === "Enter") { cook(true); return true; }
-        if (e.key === "Tab") { e.preventDefault(); shuffle(st.focus); return true; }
-        return gridKeys(() => picks.length, () => st.focus, (i) => { st.focus = i; refresh(); }, toggle)(e);
-      },
+    summary: resultPanel({ icon: r.icon, name: chosen.length ? item.name : r.name, tags: item.tags, lit: item.tags.filter((t) => !r.baseTags.includes(t)), meta: makesOf(r, f), forWho, empty: !chosen.length }),
+    cards: always + shortNote + sections.join(""),
+    keys: Object.values(picks).some((p) => deckOf(p.id).length > 1) ? "Tab shuffles the stage" : undefined,
+    onPick: (v) => (v.startsWith("shuffle:") ? shuffle(Number(v.slice(8))) : toggle(Number(v))),
+    onKey: (e) => {
+      if (e.key === "Tab") { e.preventDefault(); shuffle(st.focus); return true; }
+      return false;
     },
-    items: [
-      ...(ticket ? [{ label: "For nobody in particular", button: "secondary" as const, disabled: !ready, action: () => cook(false) }] : []),
-      { label: verb, sub: short.length ? "not enough in the pantry" : !ready ? `choose ${missing}` : ticket ? `for ${ticket.name} · ${timeOf(r)}` : timeOf(r), button: "primary" as const, disabled: !ready, action: () => cook(true) },
-    ],
+    nav: { count: () => picks.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; refresh(); }, use: toggle },
+    confirm: { label: ticket ? `${verb} it for ${ticket.name}` : verb, sub: short.length ? "not enough in the pantry" : !ready ? `choose ${missing}` : timeOf(r), disabled: !ready, run: () => cook(true) },
+    alt: ticket ? { label: `${verb} it for nobody in particular`, disabled: !ready, run: () => cook(false) } : undefined,
   };
 }

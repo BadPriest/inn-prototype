@@ -4,8 +4,8 @@ import type { Game } from "../game.js";
 import { EQUIPMENT, RECIPES, dishData, type Recipe } from "../data.js";
 import type { Knack } from "../gamedata.js";
 import { SKILLS, buyKnack, costOf, learn, levelOf, levelProgress, nextTier, pointsLeft, tierOf } from "../skills.js";
-import { openMenu, replaceMenu, type MenuSpec } from "./menu.js";
-import { grid, gridKeys, type CardSpec } from "./cards.js";
+import { openMenu, replaceMenu, type CardScreen } from "./menu.js";
+import { grid, type CardSpec } from "./cards.js";
 import { ingredientsHtml } from "./cook.js";
 import { needs, whereFull, whereShort } from "./where.js";
 
@@ -43,7 +43,7 @@ export function openSkills(g: Game, changed: () => void): void {
     return w ? `set out the ${w.name.toLowerCase()} to make it` : needs(r);
   };
 
-  const build = (): MenuSpec => {
+  const build = (): CardScreen => {
     const left = pointsLeft(g);
     type Entry = { card: CardSpec; use: () => boolean };
     let entries: Entry[];
@@ -80,9 +80,8 @@ export function openSkills(g: Game, changed: () => void): void {
           card: {
             pick: "", icon: r.icon, name: r.name, on: has, off: !has && !afford,
             fact: has ? "known" : pts(cost),
-            status: has ? note || "ready to cook" : afford ? `learn it: ${pts(cost)}` : `${pts(cost)}: you have ${left}`,
+            status: has ? note || "ready to cook" : `${afford ? `learn it: ${pts(cost)}` : `${pts(cost)}: you have ${left}`}${note ? ` · ${note}` : ""}`,
             tone: has ? (note ? "warn" : "good") : afford ? "good" : "muted",
-            note: !has && note ? note : undefined,
             tags: r.baseTags,
             detail: `${r.blurb ?? ""}<div class="where-full">${whereShort(r)}${whereFull(r) ? ` · ${whereFull(r)}` : ""}</div>${ingredientsHtml(g, r)}`,
             does: has ? "You know this one" : afford ? `Learn it: ${pts(cost)}${note ? ` (you can learn it now; ${note})` : ""}` : `Level up to earn ${pts(cost - left)} more`,
@@ -104,37 +103,21 @@ export function openSkills(g: Game, changed: () => void): void {
       if (e.use()) { g.bus.emit({ type: "MenuSound", sound: "tick" }); changed(); }
       replaceMenu(build());
     };
-    const switchTab = (by: number) => {
-      const i = TABS.findIndex((t) => t.id === st.tab);
-      st.tab = lastTab = TABS[(i + by + TABS.length) % TABS.length].id;
-      st.focus = 0;
-      replaceMenu(build());
-    };
     const prog = levelProgress(g);
     const xp = SKILLS.xpPerServe;
-    const tabs = `<div class="bf-tabs">${TABS.map((t) => `<button class="${st.tab === t.id ? "on" : ""}" data-pick="tab:${t.id}">${t.name}</button>`).join("")}</div>`;
-    const keys = gridKeys(() => cards.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, pick);
     return {
       title: "📚 Skills",
       holdsClock: true,
-      subtitle: `${pts(left)} to spend · a point each level`,
-      view: {
-        pinned: `<div class="dish result"><span class="ic">🧑‍🍳</span><div class="dish-body">
+      subtitle: `${pts(left)} to spend · a point each level · pick a card to learn it`,
+      tabs: { list: TABS.map((t) => ({ id: t.id, label: t.name })), current: st.tab, pick: (id) => { st.tab = lastTab = id as Tab; st.focus = 0; replaceMenu(build()); } },
+      summary: `<div class="dish result"><span class="ic">🧑‍🍳</span><div class="dish-body">
           <div class="nm">Level ${levelOf(g)}</div>
           <div class="meta">${prog.have} of ${prog.need} to level ${levelOf(g) + 1} · a guest delighted earns ${xp.DELIGHT ?? 0}, pleased ${xp.PLEASED ?? 0}, served ${xp.FULFILLED ?? 0}</div>
           <div class="skill-bar"><span style="width:${Math.round((prog.have / prog.need) * 100)}%"></span></div>
-        </div></div>${tabs}`,
-        html: cards.length ? grid(cards, { size: "l" }) : `<p class="blurb">Nothing here yet.</p>`,
-        onPick: (v) => {
-          if (v.startsWith("tab:")) { st.tab = lastTab = v.slice(4) as Tab; st.focus = 0; replaceMenu(build()); return; }
-          pick(Number(v));
-        },
-        onKey: (e) => {
-          if (e.key === "Tab") { e.preventDefault(); switchTab(e.shiftKey ? -1 : 1); return true; }
-          return keys(e);
-        },
-      },
-      items: [],
+        </div></div>`,
+      cards: cards.length ? grid(cards, { size: "l" }) : `<p class="blurb">Nothing here yet.</p>`,
+      onPick: (v) => pick(Number(v)),
+      nav: { count: () => cards.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; replaceMenu(build()); }, use: pick },
     };
   };
   openMenu(build());

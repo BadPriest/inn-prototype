@@ -6,7 +6,7 @@ import { SNACKS, INGREDIENTS } from "../data.js";
 import { returnSlice, storePie, takeSlice } from "../crafting.js";
 import { trayItems, trayRoomFor } from "../serving.js";
 import { askChoice, back, closeAll, openMenu, replaceMenu } from "./menu.js";
-import { grid, gridKeys } from "./cards.js";
+import { grid, heading } from "./cards.js";
 import { resultPanel } from "./cook.js";
 // ---------------------------------------------------------------------------
 // Snacks: a complimentary bowl on a table. Pick a card to set it out; an empty bowl can be filled again.
@@ -79,15 +79,11 @@ function snackSpec(g, key, st) {
     return {
         title: where === "counter" ? "🥜 Snacks for the counter" : "🥜 Snacks for the table",
         subtitle: `On the house${where === "counter" ? ", for the stools beside it" : ""} · salty ones make guests thirsty, and thirsty guests order drinks`,
-        view: {
-            pinned: now,
-            html: `<div class="sec-h"><h4>Snacks</h4><small>${empty ? "choose one" : "the bowl can be filled once it's empty"}</small></div>${grid(cards)}`,
-            onPick: (v) => setOut(Number(v)),
-            onKey: gridKeys(() => SNACKS.length, () => st.focus, (i) => { st.focus = i; refresh(); }, setOut),
-        },
-        items: bowl
-            ? [{ label: "Clear the bowl away", button: "secondary", action: () => { g.bowls.delete(key); g.say("You clear the snack bowl away."); g.bus.emit({ type: "MenuSound", sound: "tick" }); closeAll(); } }]
-            : [],
+        summary: now,
+        cards: `${heading(`Snacks`, `${empty ? "choose one" : "the bowl can be filled once it's empty"}`)}${grid(cards)}`,
+        onPick: (v) => setOut(Number(v)),
+        nav: { count: () => SNACKS.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; refresh(); }, use: setOut },
+        alt: bowl ? { label: "Clear the bowl away", run: () => { g.bowls.delete(key); g.say("You clear the snack bowl away."); g.bus.emit({ type: "MenuSound", sound: "tick" }); closeAll(); } } : undefined,
     };
 }
 // ---------------------------------------------------------------------------
@@ -165,21 +161,18 @@ function pieSpec(g, st) {
         does: "Put it back in the pie",
     }));
     const html = `
-    ${store.length ? `<div class="sec-h"><h4>From the oven</h4><small>${full ? "the safe is full" : "put it away"}</small></div>${grid(store)}` : ""}
-    ${boughtCard.length ? `<div class="sec-h"><h4>From the baker</h4><small>${full ? "the safe is full" : "set one out"}</small></div>${grid(boughtCard)}` : ""}
-    <div class="sec-h"><h4>In the safe</h4><small>${g.pieSafe.length} of ${g.pieSafeCapacity}${pies.length ? (room ? " · cut a slice" : " · no room on your trays") : ""}</small></div>
+    ${store.length ? `${heading(`From the oven`, `${full ? "the safe is full" : "put it away"}`)}${grid(store)}` : ""}
+    ${boughtCard.length ? `${heading(`From the baker`, `${full ? "the safe is full" : "set one out"}`)}${grid(boughtCard)}` : ""}
+    ${heading(`In the safe`, `${g.pieSafe.length} of ${g.pieSafeCapacity}${pies.length ? (room ? " · cut a slice" : " · no room on your trays") : ""}`)}
     ${pies.length ? grid(pies) : `<p class="lead">No pies. Bake one in the oven, then bring it here.</p>`}
-    ${back.length ? `<div class="sec-h"><h4>On your tray</h4><small>put a slice back</small></div>${grid(back)}` : ""}`;
+    ${back.length ? `${heading(`On your tray`, `put a slice back`)}${grid(back)}` : ""}`;
     return {
         title: "🥧 Pie safe",
-        subtitle: "Whole pies, sold by the slice",
+        subtitle: "Whole pies, sold by the slice · pick one to cut a slice",
         flavour: "Pies keep for the day they're baked. Tomorrow they're day-old; the day after, they go to the hens.",
-        view: {
-            html,
-            onPick: use,
-            onKey: gridKeys(() => picks.length, () => st.focus, (i) => { st.focus = i; refresh(); }, (i) => use(picks[i])),
-        },
-        items: [],
+        cards: html,
+        onPick: use,
+        nav: { count: () => picks.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; refresh(); }, use: (i) => use(picks[i]) },
     };
 }
 // ---------------------------------------------------------------------------
@@ -241,12 +234,10 @@ export function openPantryScreen(g) {
         return {
             title: "🧺 Pantry",
             subtitle: shelves.length ? "What's on the shelves, and how it's keeping · order more at the desk (Supplies)" : "The shelves are bare · order supplies at the desk",
-            view: {
-                html: cards.length ? grid(cards) : `<div class="muted">Nothing left. Water from the pump is always there.</div>`,
-                onPick: (v) => throwOut(v),
-                onKey: gridKeys(() => cards.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, (i) => throwOut(cards[i]?.pick ?? "")),
-            },
-            items: spoiled.length ? [{ label: "🗑️ Clear out the spoiled", sub: describeUses(spoiled), button: "primary", action: clear }] : [],
+            cards: cards.length ? grid(cards) : `<div class="muted">Nothing left. Water from the pump is always there.</div>`,
+            onPick: (v) => throwOut(v),
+            nav: { count: () => cards.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; replaceMenu(build()); }, use: (i) => throwOut(cards[i]?.pick ?? "") },
+            confirm: spoiled.length ? { label: "🗑️ Clear out the spoiled", sub: describeUses(spoiled), run: clear } : undefined,
         };
     };
     openMenu(build());

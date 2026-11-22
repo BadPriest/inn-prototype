@@ -1,5 +1,6 @@
 // Reading the morning paper, from the desk.
 
+import { heading } from "./cards.js";
 import type { Game } from "../game.js";
 import { longDate } from "../calendar.js";
 import { back, openMenu } from "./menu.js";
@@ -15,8 +16,8 @@ export function openNewspaper(g: Game): void {
     holdsClock: true,
     subtitle: longDate(g.date),
     body: `<div class="paper">
-      <div class="sec-h"><h4>Weather</h4><small>forecasts may be wrong</small></div><p>${p.forecast}</p>
-      <div class="sec-h"><h4>Around town</h4><small>news and gossip</small></div>${p.news.map((n) => `<p>${n}</p>`).join("")}
+      ${heading(`Weather`, `forecasts may be wrong`)}<p>${p.forecast}</p>
+      ${heading(`Around town`, `news and gossip`)}${p.news.map((n) => `<p>${n}</p>`).join("")}
     </div>`,
     items: [{ label: "Fold it up", button: "secondary", cancel: true, action: () => back() }],
     onLeave: () => g.bus.emit({ type: "MenuSound", sound: "paperClose" }),

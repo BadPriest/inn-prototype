@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 22, 2026 · build 120 (deployed) · https://inn-prototype.vercel.app
+Updated Nov 22, 2026 · build 121 (deployed) · https://inn-prototype.vercel.app
 
 History by build: [../CHANGELOG.md](../CHANGELOG.md). What the prototype is and how to play: [../README.md](../README.md).
 
@@ -26,7 +26,9 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
 
-## Built and deployed (Nov 22, builds 119–120)
+## Built and deployed (Nov 22, builds 119–121)
+
+- Build 121: card screens on one component (title, subtitle, tabs, summary, cards, at most confirm / alternative / cancel); supplies: Send order… (delivery, fetch, standing), copy last / clear; standing order Done + Pause/Resume, days and stop as cards; cook button names the guest; D-pad down fixed at large UI sizes
 
 - Build 120: #90 Innsight (L2 / Alt; R2 debug layer); #92 per-visitor tastes, Delights 46% → 12% in an autopilot week; end-of-day tally as three placards; controller card screens (D-pad on the cards, □ ○ △ L3 touchpad Create for the buttons), Fetch it yourself back as a button; one card shape, two sizes, long text on the back; firelit dish cards; Skills cards show the points; morning guide desk → crates → stove; stronger highlights; crates in a kitchen corner; Today list toggle only hides the log list; new welcome screen
 

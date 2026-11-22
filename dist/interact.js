@@ -18,7 +18,7 @@ import { compactDate, longDate } from "./calendar.js";
 import { gramophoneChanged, gramophoneWound, recordsReady, springLeft } from "./sound/gramophone.js";
 import { openRecipeScreen, openSteepScreen } from "./ui/cook.js";
 import { closeAll, openMenu, replaceMenu, back } from "./ui/menu.js";
-import { grid, gridKeys } from "./ui/cards.js";
+import { grid } from "./ui/cards.js";
 import { openPieSafeScreen, openSnackScreen, openPantryScreen } from "./ui/larder.js";
 import { openBinScreen, openGarnishScreen, openHatchScreen, openOfferScreen, openSetDownScreen } from "./ui/trays.js";
 import { openBillOfFare as openBillOfFareScreen, openDeskScreen } from "./ui/desk.js";
@@ -563,34 +563,21 @@ function openActCards(g, f, subtitle, acts) {
         else
             openManageStove(g, fresh.id);
     };
-    const showManage = () => { g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); replaceMenu(manageStoveSpec(g, f.id, stoveTabs(own, "manage"), ["use", "manage"], leave)); };
+    const showManage = () => { g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); replaceMenu(manageStoveSpec(g, f.id, own, leave)); };
     const build = () => {
         const cards = acts.map((a, i) => {
             // A label may start with its own icon ("🍲 Take a serving of stew"); otherwise one by what it does.
-            const m = a.label.match(/^(\p{Extended_Pictographic}\uFE0F?)\s+(.*)$/u);
+            const m = a.label.match(/^(\p{Extended_Pictographic}️?)\s+(.*)$/u);
             return { pick: String(i), icon: m ? m[1] : ACT_ICON[a.short] ?? "•", name: m ? m[2] : a.label, status: a.sub, focus: i === st.focus };
         });
         return {
             title: f.name,
             subtitle,
-            view: {
-                pinned: manage ? stoveTabs(own, "use") : undefined,
-                html: grid(cards, { cols: Math.min(4, cards.length) }),
-                onPick: (v) => { if (v === "tab:manage") {
-                    showManage();
-                    return;
-                } if (v.startsWith("tab:"))
-                    return; run(Number(v)); },
-                onKey: (e) => {
-                    if (manage && e.key === "Tab") {
-                        e.preventDefault();
-                        showManage();
-                        return true;
-                    }
-                    return gridKeys(() => cards.length, () => st.focus, (i) => { st.focus = i; replaceMenu(build()); }, run)(e);
-                },
-            },
-            items: [],
+            tabs: manage ? stoveTabs(own, "use", (id) => { if (id === "manage")
+                showManage(); }) : undefined,
+            cards: grid(cards, { cols: Math.min(4, cards.length) }),
+            nav: { count: () => cards.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; replaceMenu(build()); }, use: run },
+            onPick: (v) => run(Number(v)),
         };
     };
     openMenu(build());

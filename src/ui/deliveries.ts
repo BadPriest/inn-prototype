@@ -6,8 +6,8 @@ import { INGREDIENTS } from "../data.js";
 import { moneyHtml } from "../money.js";
 import { SUPPLIERS_DATA } from "../gamedata.gen.js";
 import { canCancel, cancelDelivery, linesOf, slipTotal } from "../supplies.js";
-import { askChoice, back, openMenu, replaceMenu, type MenuSpec } from "./menu.js";
-import { grid, gridKeys, type CardSpec } from "./cards.js";
+import { askChoice, back, openMenu, replaceMenu, type CardScreen } from "./menu.js";
+import { grid, type CardSpec, heading } from "./cards.js";
 
 const supplier = (id: string) => SUPPLIERS_DATA.suppliers.find((s) => s.id === id);
 
@@ -31,7 +31,7 @@ const HOW: Record<Game["deliveryLog"][number]["how"], { icon: string; word: stri
 export function openDeliveries(g: Game): void {
   const st = { focus: 0 };
   const dayName = (day: number) => (day === g.day ? "Today" : day === g.day + 1 ? "Tomorrow" : day === g.day - 1 ? "Yesterday" : `${g.dateOfDay(day).weekday} ${g.dateOfDay(day).dayOfSeason}`);
-  const build = (): MenuSpec => {
+  const build = (): CardScreen => {
     const coming = [...g.deliveries].sort((a, b) => a.day - b.day);
     const past = [...g.deliveryLog].reverse();
     let i = 0;
@@ -59,7 +59,7 @@ export function openDeliveries(g: Game): void {
       detail: slipLines(e.supplierId, e.slip),
     }));
     const all = [...comingCards, ...crateCards, ...pastCards];
-    const section = (title: string, note: string, cards: CardSpec[]) => (cards.length ? `<div class="sec-h"><h4>${title}</h4><small>${note}</small></div>${grid(cards)}` : "");
+    const section = (title: string, note: string, cards: CardSpec[]) => (cards.length ? `${heading(`${title}`, `${note}`)}${grid(cards)}` : "");
     const pick = (n: number) => {
       const d = coming[n];
       if (!d || n >= comingCards.length || !canCancel(g, d)) return;
@@ -75,16 +75,13 @@ export function openDeliveries(g: Game): void {
     };
     return {
       title: "🛻 Deliveries",
-      subtitle: `${moneyHtml(g.purse)} in the purse · what's on its way, and what came`,
+      subtitle: `${moneyHtml(g.purse)} in the purse · what's on its way, and what came · pick an order on its way to cancel it`,
       holdsClock: true,
-      view: {
-        html: all.length
+      cards: all.length
           ? section("On its way", "paid when sent", comingCards) + section("In the kitchen", "waiting to be carried in", crateCards) + section("Past deliveries", "newest first", pastCards)
           : `<p class="muted">Nothing on its way, and nothing delivered yet. Order at the desk: 🧺 Buy Supplies.</p>`,
-        onPick: (v) => pick(Number(v.slice(2))),
-        onKey: gridKeys(() => all.length, () => st.focus, (n) => { st.focus = n; replaceMenu(build()); }, pick),
-      },
-      items: [],
+      onPick: (v) => pick(Number(v.slice(2))),
+      nav: { count: () => all.length, focus: () => st.focus, setFocus: (n) => { st.focus = n; replaceMenu(build()); }, use: pick },
     };
   };
   openMenu(build());
