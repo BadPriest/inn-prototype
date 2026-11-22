@@ -105,6 +105,7 @@ export interface Patron {
   greeted?: boolean; // the keeper has said hello this visit
   wants?: string; // the dish they came in for: their first order, while it's on the bill
   nextChatAt?: number;
+  served?: { icon: string; outcome: Outcome }[]; // this visit, for Innsight
   consuming?: { icon: string; kind: ItemKind; from: number; tags?: string[]; needs?: Record<NeedId, number> }; // what's in front of them
   marker?: { text: Outcome | string; until: number };
   /** Tips earned this visit, paid all at once when they get up to leave (pennies); whether any came from a Delight. */
@@ -221,6 +222,7 @@ export interface RegularState {
   /** They've told you their name. */
   nameKnown?: boolean;
   journal: JournalEntry[];
+  served?: { icon: string; outcome: Outcome; day: number }[]; // the last few serves, for Innsight
   // today only (not saved)
   arriveAt?: number;
   visitedToday?: boolean;
@@ -233,7 +235,7 @@ export function emptyTastes(): Tastes {
 export interface LogLine { at: number; text: string }
 
 export interface Spill { id: number; x: number; y: number }
-/** Supplies the carter left at the kitchen door, until they're carried in. `day`: the day it came (it ages from the next). */
+/** Supplies the carter left in the kitchen, until they're carried in. `day`: the day it came (it ages from the next). */
 /** A standing order: the slip placed again, each morning, for the supplier's next delivery day among `days` (mon…sun); not while paused. */
 export interface StandingOrder { id: number; supplierId: string; slip: Record<string, number>; days: string[]; paused?: boolean }
 

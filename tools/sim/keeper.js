@@ -174,6 +174,7 @@
     let turned = false, n = 0, ordered = false;
     const dt = 0.25;
     while (!turned) {
+      if (OPT.stopAt && g.minute >= OPT.stopAt) return { stoppedAt: g.minute, patrons: g.patrons.length };
       if (!g.open && !g.lastCall && g.minute >= (OPT.openAt ?? 30) && g.minute < 1000) day.toggleInn(g);
       if (g.open && !g.lastCall && g.minute >= (OPT.lastCallAt ?? 1110)) day.toggleInn(g);
       if (g.lastCall && g.patrons.length === 0 && g.minute > 1110) day.toggleInn(g);

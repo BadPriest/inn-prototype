@@ -90,6 +90,15 @@ function followPointer(el: HTMLElement): void {
 const pickedUp = (): HTMLElement | null => document.querySelector<HTMLElement>(".icard.zoomed");
 /** Which card is turned over (its pick), so it stays turned when the screen redraws. */
 let turned: string | null = null;
+/** The mouse picks cards up only once it has moved since the last key: a still pointer doesn't steal the keys' card when the screen redraws under it. */
+let pointerLive = false;
+let lastX = -1, lastY = -1;
+window.addEventListener("keydown", () => { pointerLive = false; }, true);
+window.addEventListener("pointermove", (e) => {
+  if (!e.isTrusted || (Math.abs(e.clientX - lastX) < 2 && Math.abs(e.clientY - lastY) < 2)) return;
+  lastX = e.clientX; lastY = e.clientY;
+  pointerLive = true;
+}, true);
 
 /** Turn the card that's picked up over, or back. False if none is picked up or it has no back. */
 export function flipCard(): boolean {
@@ -97,8 +106,11 @@ export function flipCard(): boolean {
   if (!el?.querySelector(".side.back")) return false;
   el.classList.toggle("flipped");
   turned = el.classList.contains("flipped") ? el.dataset.pick ?? null : null;
+  fitters.get(el)?.();
   return true;
 }
+/** Each card picked up resizes to the side showing: the front's height face up, the back's (as far as the menu allows) turned over. */
+const fitters = new WeakMap<HTMLElement, () => void>();
 
 /** The right stick on a controller: tilts the card picked up (or the one with the focus). */
 export function padTilt(x: number, y: number): void {
@@ -151,19 +163,14 @@ export function grid(cards: CardSpec[], opts: { cols?: number; size?: "s" | "m" 
  * in. The mouse grows the card it's over; otherwise the keyboard's card is grown.
  */
 export function settleCards(root: HTMLElement): void {
-  root.querySelectorAll<HTMLElement>(".cards").forEach((g) => {
-    const cs = [...g.querySelectorAll<HTMLElement>(":scope > .icard")];
-    if (!cs.length) return;
-    cs.forEach((c) => { c.style.height = ""; });
-    const h = Math.max(...cs.map((c) => c.offsetHeight));
-    cs.forEach((c) => { c.style.height = `${h}px`; });
-  });
+  root.querySelectorAll<HTMLElement>(".icard .face > .body").forEach((b) => b.classList.toggle("clipped", b.scrollHeight > b.clientHeight + 1));
   let zoom: HTMLElement | null = null;
   let shown: HTMLElement | null = null;
-  const focused = () => (root.querySelector(".menu.in-items") ? null : root.querySelector<HTMLElement>(".icard.focus"));
+  const focused = () => root.querySelector<HTMLElement>(".icard.focus");
   const show = (c: HTMLElement | null, animate = true) => {
     const more = c?.querySelector<HTMLElement>(".more");
-    if (!c || !more) { zoom?.remove(); zoom = null; shown = null; return; }
+    root.querySelectorAll<HTMLElement>(".cards .icard").forEach((x) => x.style.removeProperty("--shift"));
+    if (!c) { zoom?.remove(); zoom = null; shown = null; return; }
     if (c === shown && animate) return;
     zoom?.remove();
     shown = c;
@@ -173,10 +180,10 @@ export function settleCards(root: HTMLElement): void {
     el.className = `${c.className} zoomed`;
     el.dataset.pick = c.dataset.pick;
     // Picked up: the front as it lies, with what picking it does; the back has the rest to read.
-    const box2 = document.createElement("div"); box2.innerHTML = more.innerHTML;
+    const box2 = document.createElement("div"); box2.innerHTML = more?.innerHTML ?? "";
     const does = box2.querySelector(".does"); does?.remove();
     const back = box2.innerHTML.trim();
-    el.innerHTML = `${[...c.querySelectorAll(".uc")].map((u) => u.outerHTML).join("")}<div class="flipper">
+    el.innerHTML = `${[...c.querySelectorAll(".uc")].map((u) => u.outerHTML).join("")}${c.querySelector(".seal")?.outerHTML ?? ""}<div class="flipper">
         <div class="side front">${c.querySelector(".band")?.outerHTML ?? ""}${c.querySelector(".face")?.outerHTML ?? ""}${does ? `<div class="open" style="border:none;margin:0;padding:0 10px 6px">${does.outerHTML}</div>` : ""}${c.querySelector(".have")?.outerHTML ?? ""}${c.querySelector(".count")?.outerHTML ?? ""}</div>
         ${back ? `<div class="side back"><div class="bk-name">${c.querySelector(".nm")?.innerHTML ?? ""}</div><div class="open">${back}</div></div>` : ""}
       </div>${back ? `<button class="flip-tab" title="Turn it over (F, right-click)"><span class="fa">↻</span><span class="fk">${padActive() ? "R3" : "F"}</span><span class="fw">flip</span></button>` : ""}`;
@@ -186,20 +193,34 @@ export function settleCards(root: HTMLElement): void {
     zoom = el;
     // Where it ends up: wider, as tall as its text needs, centred on the card and kept on screen.
     const w = Math.max(r.width * 1.45, 210 * z);
+    // The cards beside it in its row slide aside, so less of them is hidden under it.
+    const shift = Math.min(14, ((w - r.width) / 2) * 0.5) / z;
+    const row = [...(c.parentElement?.querySelectorAll<HTMLElement>(":scope > .icard") ?? [])].filter((x) => Math.abs(x.offsetTop - c.offsetTop) <= 4);
+    const at = row.indexOf(c);
+    row[at - 1]?.style.setProperty("--shift", `${-shift}px`);
+    row[at + 1]?.style.setProperty("--shift", `${shift}px`);
     el.style.width = `${w / z}px`;
     el.style.height = "auto";
-    const h = Math.max(el.getBoundingClientRect().height, r.height * 1.12);
-    const left = Math.max(6, Math.min(box.width - w - 6, r.left - box.left + r.width / 2 - w / 2));
-    const top = Math.max(6, Math.min(box.height - h - 6, r.top - box.top + r.height / 2 - h / 2));
+    // Kept inside the menu, below its tabs: centred on the card where there's room.
+    const m = root.querySelector<HTMLElement>(".menu")?.getBoundingClientRect() ?? box;
+    const v = root.querySelector<HTMLElement>(".menu-view")?.getBoundingClientRect() ?? m;
+    const area = { left: m.left - box.left + 6, top: v.top - box.top + 2, right: m.right - box.left - 6, bottom: m.bottom - box.top - 6 };
+    const frontH = Math.max(el.getBoundingClientRect().height, r.height * 1.12);
+    const backEl = el.querySelector<HTMLElement>(".side.back");
+    const backH = backEl ? Math.min(backEl.scrollHeight * z, area.bottom - area.top) : 0;
+    const left = Math.max(area.left, Math.min(area.right - w, r.left - box.left + r.width / 2 - w / 2));
+    const topFor = (h: number) => Math.max(area.top, Math.min(area.bottom - h, r.top - box.top + r.height / 2 - h / 2));
     const place = (x: number, y: number, ww: number, hh: number) => {
       el.style.left = `${x / z}px`; el.style.top = `${y / z}px`; el.style.width = `${ww / z}px`; el.style.height = `${hh / z}px`;
     };
-    if (!animate) { place(left, top, w, h); el.classList.add("grown"); }
+    const heightNow = () => (el.classList.contains("flipped") ? Math.max(frontH, backH) : frontH);
+    fitters.set(el, () => place(left, topFor(heightNow()), w, heightNow()));
+    if (!animate) { place(left, topFor(heightNow()), w, heightNow()); el.classList.add("grown"); }
     else {
       place(r.left - box.left, r.top - box.top, r.width, r.height); // from the card itself...
       void el.offsetWidth;
       el.classList.add("grown");
-      place(left, top, w, h); // ...to its grown size
+      place(left, topFor(heightNow()), w, heightNow()); // ...to its grown size
     }
     el.addEventListener("contextmenu", (e) => { e.preventDefault(); flipCard(); });
     followPointer(el);
@@ -209,13 +230,15 @@ export function settleCards(root: HTMLElement): void {
       (twin ?? c).click();
     });
     el.addEventListener("mouseleave", (e) => {
+      if (!pointerLive) return;
       turned = null; // put down: it lies face up again
       const to = (e.relatedTarget as HTMLElement | null)?.closest?.(".cards .icard") as HTMLElement | null;
       show(to ?? focused());
     });
   };
   root.querySelectorAll<HTMLElement>(".cards .icard").forEach((c) => {
-    c.addEventListener("mouseenter", () => show(c));
+    c.addEventListener("mouseenter", () => { if (pointerLive) show(c); });
+    c.addEventListener("pointermove", () => { if (pointerLive && shown !== c) show(c); });
     followPointer(c);
   });
   const view = root.querySelector<HTMLElement>(".menu-view");
@@ -260,9 +283,8 @@ function nearest(from: number, dx: number, dy: number): number {
 /**
  * Arrow keys (and the D-pad) move the focus over the cards on screen; Space uses the focused card.
  * Returns a key handler for a MenuView. Left and right go to the card before and after (wrapping);
- * up and down go to the nearest card above or below; down from the bottom row is left to the menu (it goes
- * to the buttons under the cards). Enter is left to the menu:
- * it presses the screen's main button, or uses the focused card when there's none (menuKey).
+ * up and down go to the nearest card above or below, and stay put at the top and bottom rows. Enter is left
+ * to the menu: it presses the screen's main button, or uses the focused card when there's none (menuKey).
  */
 export function gridKeys(count: () => number, focus: () => number, setFocus: (i: number) => void, use: (i: number) => void) {
   return (e: KeyboardEvent): boolean => {

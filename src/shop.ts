@@ -4,7 +4,7 @@
 // kitchen). What you no longer want sells back for half its price.
 //
 // No secondhand pieces yet: those come with the tinker (inn#66). The carter is a message for now; his
-// cart and the crates by the kitchen door come with inn#62.
+// cart and the crates in the kitchen come with inn#62.
 
 import { CARRIED, TUNING, bestInLine, pieceById } from "./data.js";
 import type { Game } from "./game.js";

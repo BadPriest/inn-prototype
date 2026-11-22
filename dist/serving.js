@@ -237,10 +237,22 @@ function judgeWithBowl(g, p, item, order) {
     servedEffects(p, item.recipeId);
     return judge(g, p, flips.length ? { ...item, tags } : item, order);
 }
+/** Kept for Innsight: what they were served and how it went, this visit and (regulars) the last few. */
+function noteServed(g, p, item, outcome) {
+    const icon = iconFor(item.recipeId, item.garnish) || "🥣";
+    (p.served ??= []).push({ icon, outcome });
+    const st = g.regular(p.regularId);
+    if (st) {
+        (st.served ??= []).push({ icon, outcome, day: g.day });
+        if (st.served.length > 8)
+            st.served.splice(0, st.served.length - 8);
+    }
+}
 /** The unasked-serve card: give a patron something they didn't order. Never fulfils an order. */
 export function serveUnasked(g, p, item) {
     removeFromTray(g, item);
     const v = judgeWithBowl(g, p, item, null);
+    noteServed(g, p, item, v.outcome);
     p.marker = { text: v.outcome, until: g.minute + TUNING.outcomeShowMinutes };
     if (v.line)
         g.speak(p, v.line, 1, true);
@@ -293,6 +305,7 @@ export function deliverTo(g, p, quiet = false, extra = []) {
     order.open = false;
     g.bus.emit({ type: "OrderFulfilled", orderId: order.id });
     const v = judgeWithBowl(g, p, item, order);
+    noteServed(g, p, item, v.outcome);
     p.state = "consuming";
     const [c, s] = p.consumeTime;
     const base = c + (Math.random() - 0.5) * s;

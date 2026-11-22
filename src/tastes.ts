@@ -30,7 +30,7 @@ function copy(t: TasteSet): TasteSet {
   return { love: [...t.love], like: [...t.like], dislike: [...t.dislike] };
 }
 
-function sample(pool: string[], n: number): string[] {
+export function sample(pool: string[], n: number): string[] {
   const p = [...pool];
   const out: string[] = [];
   while (out.length < n && p.length) out.push(p.splice(Math.floor(Math.random() * p.length), 1)[0]);

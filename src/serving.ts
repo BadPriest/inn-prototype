@@ -9,7 +9,7 @@ const needsOf = (recipeId: string) => RECIPES.find((r) => r.id === currentDishId
 import { makeItem, serveFromPot, steepTea } from "./crafting.js";
 import type { Game, Item, Order, Patron, SetDownTray, Tray } from "./game.js";
 import { dist } from "./world.js";
-import { organic, uid } from "./core.js";
+import { organic, uid, type Outcome } from "./core.js";
 import { afterServe, describeReaction, judge } from "./tastes.js";
 import { inspireOthers, maybeIntroduce } from "./patrons.js";
 import { priceOf, takeCoin, tipFor } from "./money.js";
@@ -211,10 +211,19 @@ function judgeWithBowl(g: Game, p: Patron, item: Item, order: Order | null) {
   return judge(g, p, flips.length ? { ...item, tags } : item, order);
 }
 
+/** Kept for Innsight: what they were served and how it went, this visit and (regulars) the last few. */
+function noteServed(g: Game, p: Patron, item: Item, outcome: Outcome): void {
+  const icon = iconFor(item.recipeId, item.garnish) || "🥣";
+  (p.served ??= []).push({ icon, outcome });
+  const st = g.regular(p.regularId);
+  if (st) { (st.served ??= []).push({ icon, outcome, day: g.day }); if (st.served.length > 8) st.served.splice(0, st.served.length - 8); }
+}
+
 /** The unasked-serve card: give a patron something they didn't order. Never fulfils an order. */
 export function serveUnasked(g: Game, p: Patron, item: Item): void {
   removeFromTray(g, item);
   const v = judgeWithBowl(g, p, item, null);
+  noteServed(g, p, item, v.outcome);
   p.marker = { text: v.outcome, until: g.minute + TUNING.outcomeShowMinutes };
   if (v.line) g.speak(p, v.line, 1, true);
   else if (v.outcome === "DELIGHT") g.speak(p, "For me? Oh!", 1, true);
@@ -260,6 +269,7 @@ export function deliverTo(g: Game, p: Patron, quiet = false, extra: Item[] = [])
   order.open = false;
   g.bus.emit({ type: "OrderFulfilled", orderId: order.id });
   const v = judgeWithBowl(g, p, item, order);
+  noteServed(g, p, item, v.outcome);
   p.state = "consuming";
   const [c, s] = p.consumeTime;
   const base = c + (Math.random() - 0.5) * s;

@@ -3,7 +3,7 @@
 // about it. Buttons below are named the PlayStation way; an Xbox pad has the same places (✕ A, ○ B,
 // □ X, △ Y, L1/R1 LB/RB, L2/R2 LT/RT, Options Menu, touchpad View), and prompts name its own buttons.
 //
-// Playing:  left stick walk (all the way, or R2, runs) · ✕ use (hold: hurry, clean; garnishes at the
+// Playing:  left stick walk (all the way runs) · hold L2 Innsight (R2 with the debug layer) · ✕ use (hold: hurry, clean; garnishes at the
 //           counter) · L1/R1 pick between things in reach · D-pad ←/→ choose a card, ↑ play it,
 //           ↓ put down (a dish back where it came from, or else a tray; hold ↓: empty a pot) · right
 //           stick zoom (↑↓) and turn the isometric camera (←→) · R3 top-down or isometric · Options
@@ -13,11 +13,12 @@
 //           Enter: Cook, Put up…, without going to the button) · ○ the negative choice (Not now, Keep playing), else back or close · L1/R1 switch tabs, L2/R2 the tabs inside them
 // Kitchen:  left stick moves a cursor · ✕ pick up / place · ○ put back or finish · □ buy · △ another ·
 //           L2 get rid of the piece in hand
-import { padCancel, padConfirm } from "./ui/menu.js";
+import { padCancel, padConfirm, padExtra } from "./ui/menu.js";
 import { padTilt } from "./ui/cards.js";
 // Standard mapping (what Chrome and Edge give a DualSense or an Xbox pad). `share` is Create on a DualSense, View on Xbox.
 const B = { cross: 0, circle: 1, square: 2, triangle: 3, l1: 4, r1: 5, l2: 6, r2: 7, share: 8, options: 9, l3: 10, r3: 11, up: 12, down: 13, left: 14, right: 15, ps: 16, touchpad: 17 };
 const DEAD = 0.22; // stick dead zone
+const MENU_STICK = 0.5; // in menus the stick moves the focus only when pushed this far: a resting stick that drifts doesn't
 const HOLD = 0.5; // seconds: a long press
 const CURSOR_SPEED = 900; // client pixels a second at full tilt
 let hooks = null;
@@ -27,7 +28,7 @@ let longFired = [];
 let active = false; // the controller was the last thing used: prompts show its buttons
 let kind = "ps";
 let lastIndex = -1;
-// Menus: the left stick repeats like a held arrow key.
+// Menus: the D-pad and left stick repeat like a held arrow key.
 let stickDir = "";
 let stickNext = 0;
 // Kitchen: the cursor, in client pixels.
@@ -136,19 +137,15 @@ export function pollPad(dt) {
     const right = stick(pad.axes[2] ?? 0, pad.axes[3] ?? 0);
     if (btn.some(Boolean) || left || right)
         setActive(true);
+    if (hooks.menuOpen() || hooks.arranging())
+        hooks.insight(null);
     if (hooks.menuOpen()) {
         hooks.setWalk(null, false);
         hideCursor();
-        // Move: D-pad, or the left stick repeating like a held key.
-        if (pressed(B.up))
-            key("ArrowUp");
-        if (pressed(B.down))
-            key("ArrowDown");
-        if (pressed(B.left))
-            key("ArrowLeft");
-        if (pressed(B.right))
-            key("ArrowRight");
-        const dir = left ? (Math.abs(left.x) > Math.abs(left.y) ? (left.x > 0 ? "ArrowRight" : "ArrowLeft") : left.y > 0 ? "ArrowDown" : "ArrowUp") : "";
+        // Move: the D-pad or the left stick, repeating like a held key.
+        const dpad = btn[B.up] ? "ArrowUp" : btn[B.down] ? "ArrowDown" : btn[B.left] ? "ArrowLeft" : btn[B.right] ? "ArrowRight" : "";
+        const firm = left && !dpad && Math.hypot(left.x, left.y) > MENU_STICK ? left : null;
+        const dir = dpad || (firm ? (Math.abs(firm.x) > Math.abs(firm.y) ? (firm.x > 0 ? "ArrowRight" : "ArrowLeft") : firm.y > 0 ? "ArrowDown" : "ArrowUp") : "");
         if (dir !== stickDir) {
             stickDir = dir;
             if (dir) {
@@ -162,8 +159,15 @@ export function pollPad(dt) {
         }
         if (pressed(B.cross))
             key(" ");
-        if (pressed(B.triangle))
+        // The buttons under a card screen: △, L3, the touchpad, Create (padExtra). △ elsewhere takes one off.
+        if (pressed(B.triangle) && !padExtra("tr"))
             key("Delete");
+        if (pressed(B.l3))
+            padExtra("l3");
+        if (pressed(B.touchpad))
+            padExtra("tp");
+        if (pressed(B.share))
+            padExtra("sh");
         if (pressed(B.r3))
             key("f");
         // The right stick tilts the card in hand.
@@ -224,8 +228,9 @@ export function pollPad(dt) {
     else {
         hideCursor();
         cursor = null;
-        // Walking: screen directions; all the way over, or R2, runs.
-        const run = btn[B.r2] || (left ? Math.hypot(left.x, left.y) > 0.95 : false);
+        // Walking: screen directions; all the way over runs.
+        const run = left ? Math.hypot(left.x, left.y) > 0.95 : false;
+        hooks.insight(btn[B.r2] ? "debug" : btn[B.l2] ? "on" : null);
         hooks.setWalk(left, run);
         // ✕ is Space: press and hold.
         if (pressed(B.cross))

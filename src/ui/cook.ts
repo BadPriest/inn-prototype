@@ -53,10 +53,10 @@ export function ingredientsHtml(g: Game, r: Recipe): string {
 
 /** What always goes in, as icons (a role, like the liquid, shows its plainest). */
 const fundamentalIcons = (r: Recipe): string => r.fundamental.map((u) => INGREDIENTS.find((x) => x.id === u.id)?.icon ?? (u.role ? defaultForRole(u.role)?.icon : "") ?? "").join("");
-/** Under a recipe card's name: how long, whether you stay with it, how much it makes. */
-function cardTime(r: Recipe): string {
+/** Under a dish card's name, as small pills: how long, whether you stay with it, how much it makes. */
+function cardPills(r: Recipe): string {
   const serves = r.storedIn === "piesafe" ? `${r.servings?.[0] ?? 6} slices` : r.servings ? `${r.servings[0]} servings` : "1 serving";
-  return [`~${Math.round(r.minutes[0])} min`, r.tended ? "tended" : "", r.id === "water" ? "" : serves].filter(Boolean).join(" · ");
+  return [`⏱ ${Math.round(r.minutes[0])} min`, r.tended ? "tended" : "", r.id === "water" ? "" : serves].filter(Boolean).map((t) => `<span class="pill">${t}</span>`).join("");
 }
 
 /** The base choices as icons, for a card's face. */
@@ -121,15 +121,17 @@ export function openRecipeScreen(g: Game, slot: Slot): void {
         r.fundamental.length ? `<div class="icons" title="Always in it">${fundamentalIcons(r)}</div>` : "",
         r.base.options.length ? `<div class="icons" title="Base: choose ${r.base.pick[0] === r.base.pick[1] ? r.base.pick[0] : `${r.base.pick[0]}–${r.base.pick[1]}`}">${baseIcons(r)}</div>` : "",
         extras ? `<div class="extras">+ up to ${extras} extra${extras === 1 ? "" : "s"}</div>` : "",
-        r.internal ? "" : `<div class="menu-state ${n ? "good" : onBoard || r.tableSnack ? "" : "muted"}">${n ? `${n} waiting · ` : ""}${r.tableSnack ? "for the tables" : onBoard ? "on the menu" : "not on the menu"}</div>`,
         r.blurb ? `<div class="flav">${r.blurb}</div>` : "",
       ].filter(Boolean).join("");
       return {
         pick: String(i), icon: r.icon, name: r.name, focus: i === st.focus,
-        sub: cardTime(r),
+        sub: cardPills(r),
+        status: r.internal ? "" : n ? `${n} waiting for it` : onBoard ? "On the menu" : "",
+        tone: n ? "warn" : "good",
         body: lines,
         tags: r.baseTags,
         detail: `${makesOf(r, slot)}.${ingredientsHtml(g, r)}`,
+        flavour: r.blurb,
       };
     });
     const pick = (i: number) => { const r = list[i]; if (r) openCookScreen(g, slot, r); };
@@ -138,7 +140,7 @@ export function openRecipeScreen(g: Game, slot: Slot): void {
       subtitle: "What will you make?",
       view: {
         pinned: tabs,
-        html: grid(cards),
+        html: `<div class="dishes">${grid(cards, { size: "l" })}</div>`,
         onPick: (v) => {
           if (v === "tab:manage") { showManage(); return; }
           if (v.startsWith("tab:")) { if (hasSnacks && v.slice(4) !== recipeTab) switchTab(); return; }

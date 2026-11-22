@@ -33,7 +33,7 @@ export function appeal(baseTags, t) {
 function copy(t) {
     return { love: [...t.love], like: [...t.like], dislike: [...t.dislike] };
 }
-function sample(pool, n) {
+export function sample(pool, n) {
     const p = [...pool];
     const out = [];
     while (out.length < n && p.length)

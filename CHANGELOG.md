@@ -6,6 +6,31 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 120 · Nov 22, 2026 · deployed
+
+### Added
+- **Innsight** (inn#90): hold L2 (Alt) to read the room. The camera eases in to 1.9×, the room greys out, and guests, who now wear everyday clothes like the keeper, show their occupation's colour. A card under each guest gives name (??? until known) and role, how hungry, thirsty or cold they look, a craving they said aloud, and what they were served before and now, with how it went; tastes stay "???". Equipment shows what's cooking, what's left, the tap's stock and the fire. R2 (Shift+Alt) adds a debug layer: true tastes, exact needs, schema and fussiness.
+- **A new end-of-day tally**: three paper placards. The purse (the day's gain or loss in big figures, then takings, tips, spending, upkeep and the purse), the guests (served, came in, orders, a coloured bar of how they took it, walk-outs) and what was learned today (names, tastes, regulars opening up), with the kitchen's counts at the foot.
+- **A new welcome screen**: the date, the shape of a day as a timeline, four cards for what to do, and the keys.
+
+### Changed
+- **Fewer Delights** (inn#92): each visitor draws their own tastes (1 love, 2 likes, 1 dislike), separately for food and drink, instead of their kind's whole list. Travellers like "warm" rather than love it. In an autopilot week Delights fell from 46% of serves to 12%, and repeating what worked no longer beats picking at random.
+- **Card screens on a controller**: the D-pad moves over the cards only, and down on the bottom row stays put. Each button under the cards has a controller button of its own: □ the main one, ○ cancel or back, then △, L3, the touchpad and Create, as each button shows (1–4 on the keyboard). On the supplies slip △ still takes one off. Holding the D-pad repeats. A resting mouse no longer picks up the card under it when the screen redraws.
+- **Fetch it yourself is a button again** on the supplies slip (L3 on a controller, 1 on the keyboard).
+- **Every card has the same shape** (1 : 1.55), in two sizes: standard for things, large for choices. Long text moved to the back; what doesn't fit fades at the bottom. Every card picks up and its neighbours slide aside. The picked-up card stays inside the menu, below its tabs, and grows to fit its back when turned over.
+- **Dish cards on the stove look like food**: a warm, firelit window, a bigger icon, time and servings as pills, and a green "On the menu" or amber "waiting for it" label.
+- **Skills cards say what a recipe costs** ("2 points: you have 1"); missing equipment is a separate note, and equipment you own but haven't set out counts ("set out the dutch oven to make it"). Learning never needed equipment.
+- **The morning guide goes desk first**: new equipment to place or new skills, then the crates, then new gear at the stove. The desk's Arrange the Kitchen card lights up whenever anything waits to be placed.
+- **Highlights are about 15% stronger**: the glow in menus, the amber pulse, and the ring and arrow in the room.
+- **The carter's crates go in a corner of the kitchen**, nearest the pantry, out of doorways and the spots where you stand to use things.
+- **The Today list has no emojis**, and its toggle (O) now hides only the list in the log; the card on the left stays. It's called "Today's list in the log".
+- **Location and inn cards turn over**: their backs carry the line that used to sit under the cards and a line of flavour.
+
+### Fixed
+- **Back-of-card text is readable**: dark ink on the paper instead of the menu's yellow and grey.
+
+---
+
 ## Build 119 · Nov 22, 2026 · deployed
 
 ### Changed

@@ -17,6 +17,7 @@ import type { Furniture, Tile, Vec } from "../world.js";
 import { drawLight, windowColor } from "./light.js";
 import { drawLevelUp } from "./levelup.js";
 import { coatColor, eyeColor, underColor } from "./wardrobe.js";
+import { drawEquipmentCards, drawGuestCard, flushCards, guestColor, guestHead, insightMix, washRoom } from "./innsight.js";
 import { gaitOf, keeperGait, type Gait } from "../sound/footsteps.js";
 import { ISO, P, Pt, floorPath, turn, turnedSize, unproject, unturn } from "./proj.js";
 import { badge, barLabel, drawBowlFlip, drawTagFlips, crateCounts, drawEyes, busyWord, jobWord, drawCoinPops, drawGuide, drawPatronWords, drawSpeech, say, type View } from "./render.js";
@@ -285,8 +286,9 @@ export function drawIso(ctx: CanvasRenderingContext2D, g: Game, v: View, target:
   const byTile = new Map(solid.map((s) => [`${s.t.x},${s.t.y}`, s]));
   type Item = { d: number; pri: number; draw: () => void };
   const items: Item[] = solid.map((s) => ({ d: turnedTile(v, s.t.x, s.t.y).d, pri: 0, draw: () => drawSolid(ctx, g, v, s, byTile) }));
+  const guestBody = (p: (typeof g.patrons)[number]) => personBody(ctx, v, p.pos, guestColor(p), p.state === "leaving" ? 0.6 : 1, p.soaked ?? 0, p.id, guestHead(p), stepBob(v, p.pos, gaitOf(p.id), gaitOf(p.id).dir));
   for (const p of g.patrons) {
-    items.push({ d: depth(v, p.pos), pri: 1, draw: () => personBody(ctx, v, p.pos, p.color, p.state === "leaving" ? 0.6 : 1, p.soaked ?? 0, p.id, undefined, stepBob(v, p.pos, gaitOf(p.id), gaitOf(p.id).dir)) });
+    items.push({ d: depth(v, p.pos), pri: 1, draw: () => guestBody(p) });
   }
   const k = g.keeper;
   items.push({
@@ -308,11 +310,15 @@ export function drawIso(ctx: CanvasRenderingContext2D, g: Game, v: View, target:
   drawReadables(ctx, g, v, byTile, target);
   drawLight(ctx, g, (x, y) => P(v, x, y), ts * ISO.a * Math.SQRT2, ISO.b / ISO.a, false);
 
+  if (insightMix() > 0) { washRoom(ctx); for (const p of [...g.patrons].sort((a, b) => depth(v, a.pos) - depth(v, b.pos))) guestBody(p); }
   // What people say and carry, over everything.
   for (const p of g.patrons) {
     const foot = P(v, p.pos.x, p.pos.y);
     drawPatronWords(ctx, g, p, foot.x, foot.y - ts * 0.55, ts);
   }
+  drawEquipmentCards(ctx, g, (x, y) => P(v, x, y, 0.6), ts);
+  for (const p of g.patrons) { const foot = P(v, p.pos.x, p.pos.y); drawGuestCard(ctx, g, p, foot.x, foot.y + ts * 0.12, ts); }
+  flushCards(ctx);
   const kf = P(v, k.pos.x, k.pos.y), kh = P(v, k.pos.x, k.pos.y, HEAD_Z);
   // Trays: one per arm, shown only with something on them.
   k.trays.forEach((tray, i) => {
@@ -517,7 +523,7 @@ function drawReadables(ctx: CanvasRenderingContext2D, g: Game, v: View, byTile: 
     ctx.fillText(`🪵 ${logs}`, c.x, c.y);
   }
 
-  // The carter's crates at the kitchen door, piled up until they're carried in.
+  // The carter's crates in the kitchen, piled up until they're carried in.
   for (const [key, n] of crateCounts(g)) {
     const [cx, cy] = key.split(",").map(Number);
     const shown = Math.min(3, n);

@@ -131,7 +131,7 @@ function bringFirstGuest(g, w) {
     w.guestId = p.id;
     w.served = false;
 }
-/** Where in the room the guide points now, if anywhere. Without the walkthrough: the desk until the bill is set, and after a level up until Skills is opened. */
+/** Where in the room the guide points now, if anywhere. Without the walkthrough: the desk until the bill is set; then, a morning's deliveries in order: the desk (new equipment to place, new skills), the crates, then new gear at the stove. */
 export function worldGuide(g) {
     const desk = g.world.furniture.find((f) => f.kind === "desk");
     const deskGuide = desk ? { at: desk.center, z: 1.2, size: Math.max(1, desk.tiles.length * 0.7) } : null;
@@ -140,18 +140,18 @@ export function worldGuide(g) {
     if (!w || !s) {
         if (!g.menuChosen)
             return deskGuide;
+        if (deskGuide && g.toPlace.some((id) => pieceById(id)?.type !== "gear"))
+            return { ...deskGuide, label: "🛠 Place new equipment" };
+        if (deskGuide && g.newSkills)
+            return { ...deskGuide, label: "✦ New skills available" };
         const crate = g.crates[0];
         if (crate)
             return { at: { x: crate.x + 0.5, y: crate.y + 0.5 }, z: 0.9, size: 0.8, label: g.crates.length > 1 ? `📦 Unpack supplies (${g.crates.length})` : "📦 Unpack supplies" };
-        if (!deskGuide)
-            return null;
-        if (g.toPlace.some((id) => pieceById(id)?.type !== "gear"))
-            return { ...deskGuide, label: "🛠 Place new equipment" };
         const gear = g.newGear.find((id) => g.toPlace.includes(id));
         const stove = gear ? g.world.furniture.find((f) => (f.equip?.hotSlots ?? 0) > 0) : undefined;
         if (gear && stove)
             return { at: stove.center, z: 1.1, size: Math.max(1, stove.tiles.length * 0.6), label: `🔧 Set out the ${lowerName(pieceById(gear).name)}` };
-        return g.newSkills ? { ...deskGuide, label: "✦ New skills available" } : null;
+        return null;
     }
     const dish = dishOf(g, w);
     const guest = guestOf(g, w);
@@ -177,7 +177,7 @@ export function menuGuide(g, title, root) {
             return [{ sel: `[data-pick="spare:${gear}"]` }, { sel: '[data-pick="tab:manage"]' }];
         if (title !== "🕯️ Desk")
             return [];
-        return [...(g.toPlace.some((id) => pieceById(id)?.type !== "gear") ? [{ sel: '[data-pick="arrange"]' }] : []), ...(g.newSkills ? [{ sel: '[data-pick="skills"]' }] : [])];
+        return [...(g.toPlace.length ? [{ sel: '[data-pick="arrange"]' }] : []), ...(g.newSkills ? [{ sel: '[data-pick="skills"]' }] : [])];
     }
     const dish = dishOf(g, w);
     const slot = slotFor(g, dish?.id);

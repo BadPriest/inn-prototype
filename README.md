@@ -25,7 +25,7 @@ Design decisions live in [docs/design-session-journal.md](docs/design-session-jo
 7. **Keep the place nice.** Wipe tables, mop spills, keep the fire going and the lamps lit. Wind the gramophone for music.
 8. **Close and sleep.** Close the door when you're done, see out the last guests, and turn in. The next day starts with a new paper.
 
-Controls are listed in-game: press **H** (or the touchpad on a controller). A PS5 or Xbox controller works in Chrome and Edge, and prompts show its own buttons (✕ ○ □ △ or A B X Y): left stick walks, ✕ uses, D-pad ↓ puts down (a dish back where it came from, or a tray; hold: empty a pot), hold □ to hurry; in menus ✕ picks, □ presses the confirm button, ○ the negative one (or goes back). The keyboard and mouse basics:
+Controls are listed in-game: press **H** (or the touchpad on a controller). A PS5 or Xbox controller works in Chrome and Edge, and prompts show its own buttons (✕ ○ □ △ or A B X Y): left stick walks, ✕ uses, D-pad ↓ puts down (a dish back where it came from, or a tray; hold: empty a pot), hold □ to hurry; in menus the D-pad moves over the cards, ✕ picks, □ presses the confirm button, ○ the negative one (or goes back), and △, L3, the touchpad and Create the other buttons, as each shows (1–4 on the keyboard). The keyboard and mouse basics:
 
 | | |
 | --- | --- |
@@ -39,13 +39,15 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 | X | empty a pot, urn or kettle |
 | E · C | garnish · offer something unasked |
 | Wheel or [ ] · V · , . | zoom · top-down view · turn the camera |
-| J · K · O · P · H | journal · calendar · objectives · pause and settings · all the keys |
+| J · K · O · P · H | journal · calendar · today's list in the log · pause and settings · all the keys |
 
 ## What's in
 
 **Your day.** One time of day drives everything. The game has four calendar seasons of 28 days, weekdays and years. At the start you pick where the inn stands (town centre, dockside, mountainside, crossroads or hill country), which reshapes the year, the weather and who passes by. Then you pick your inn: a small tavern (two tables, a short bar, a used two-hob stove, one barrel; the easiest start, and the one picked unless you choose otherwise) or the big tavern (six tables, a long bar, an oven; busy enough to need staff). A morning newspaper brings the forecast, market days and town news, and there's a calendar screen. The clock stops whenever you're at the desk or in a menu.
 
 **Guests.** There are four kinds of passers-by (dockworkers, scholars, travellers, farmhands) and six named regulars with their own schedules and roles (ten are planned). Guests have hunger, thirst and warmth, and orders grow from those needs. Their tastes are hidden, follow one of four schemas, and shift with the calendar season. They chat, talk about the weather, and react to what you serve. They wait with growing impatience and leave if left too long. Soaked guests seek the fire. When the rain stops, each guest decides whether to stay. You learn their names over time, and a journal keeps notes on regulars and visitors.
+
+**Innsight.** Hold L2 (Alt on the keyboard) to read the room: the camera eases in, the room greys out, and guests, who otherwise wear everyday clothes like yours, show their occupation's colour. A card under each guest gives their name (??? until they tell you) and role, how hungry, thirsty or cold they look, anything they said they fancy, and what you served them and how it went; their tastes stay unknown. Equipment shows what's cooking and how much is left, the tap how much ale, the fire whether it's lit. R2 (Shift+Alt) adds a debug layer with each guest's true tastes and exact needs.
 
 **Food and drink.**
 - Breakfast: scrambled eggs, toast, a fried breakfast, porridge.
@@ -54,7 +56,7 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 - Snacks in bowls on the tables and the counter: peanuts, olives, pickled eggs, crostini, bread and butter, cheese, pretzels, chestnuts, pickled onions, apple rings.
 - The bill of fare can be one all-day bill, or a bill per meal time. Each dish says where it's made (a pot on a hob, a pan, an oven, the kettle…). Dishes your kitchen can't make are greyed out, with what they need. Every card lists what a dish takes and how much of each is in the pantry.
 - **Levels and Skills.** A new keeper knows porridge, tea, coffee, stew, and bread and butter. Guests served earn experience (more for a delighted guest); each level up is a point to spend in Skills at the desk, on a new recipe or a knack (Quick hands wipes faster, Charm adds to tips). Levels get further apart.
-- **The pantry.** Cooking and pouring use stock, oldest first. Order more at the desk in Buy Supplies (and see what's coming, cancel it, or look back in Deliveries): a slip per supplier (what your bill uses first), sent for the carter (who leaves a crate at the kitchen door; crates pile up until you carry them in) or fetched yourself. You start with about four busy days' worth.
+- **The pantry.** Cooking and pouring use stock, oldest first. Order more at the desk in Buy Supplies (and see what's coming, cancel it, or look back in Deliveries): a slip per supplier (what your bill uses first), sent for the carter (who leaves a crate in a corner of the kitchen; crates pile up until you carry them in) or fetched yourself. You start with about four busy days' worth.
 - **Shelf life.** Everything ages from the morning after it arrives: fish in a day or two, milk sours, meat and greens in a few days, dry goods keep. A dish made only from fresh stock is **fresh** (some guests like it); one made with something stale is day-old (cheaper, and guests notice). On the cook screen each ingredient card says which stage goes in, with the other stages stacked under it: Tab shuffles them. Spoiled food can't be used and stays on the shelves until you clear it at the pantry.
 - **The baker's goods.** Pies and bread bought from the baker go in the pie safe and bread case and serve anyone who orders pie or bread: no recipe or oven needed, pleasant but plain.
 
@@ -126,6 +128,8 @@ The built `dist/` folder is committed, so a fresh clone runs with `npm start` wi
 | `src/crafting.ts` | Stations and their slots, cooking, pots, shelves, putting back, emptying |
 | `src/serving.ts` | Trays, pickup, pouring, garnishing, delivery |
 | `src/objectives.ts` | The "Today" checklist |
+| `src/ui/dayend.ts` | The end-of-day tally: the purse, the guests, what was learned |
+| `src/ui/innsight.ts` | Innsight: hold L2 (Alt) to read the room, R2 (Shift+Alt) for the debug layer |
 | `src/walkthrough.ts` | The tutorial: its steps, rewards, the first guest, and what the guide points at |
 | `src/skills.ts` | Levels, the recipe book and knacks |
 | `src/stock.ts`, `src/supplies.ts` | The pantry, and slips to the suppliers |

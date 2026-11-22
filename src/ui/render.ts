@@ -13,6 +13,7 @@ import { worldGuide } from "../walkthrough.js";
 import { P } from "./proj.js";
 import { drawLevelUp } from "./levelup.js";
 import { coatColor, eyeColor, underColor } from "./wardrobe.js";
+import { drawEquipmentCards, drawGuestCard, flushCards, guestColor, insightMix, washRoom } from "./innsight.js";
 import { gaitOf, keeperGait } from "../sound/footsteps.js";
 import { COINS, coinParts, type CoinId } from "../money.js";
 
@@ -289,7 +290,7 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
     ctx.fillText(`🪵 ${logs}`, X(f.center.x), Y(f.center.y) - ts * 0.9);
   }
 
-  // The carter's crates at the kitchen door, piled up until they're carried in.
+  // The carter's crates in the kitchen, piled up until they're carried in.
   for (const [key, n] of crateCounts(g)) {
     const [cx, cy] = key.split(",").map(Number);
     for (let i = Math.min(3, n) - 1; i >= 0; i--) {
@@ -341,7 +342,11 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
   }
 
   drawLight(ctx, g, (x, y) => ({ x: X(x), y: Y(y) }), ts);
+  if (insightMix() > 0) { washRoom(ctx); for (const p of g.patrons) drawPatron(ctx, g, p, X, Y, ts, "body"); }
   for (const p of g.patrons) drawPatron(ctx, g, p, X, Y, ts, "words");
+  drawEquipmentCards(ctx, g, (x, y) => ({ x: X(x), y: Y(y) }), ts);
+  for (const p of g.patrons) drawGuestCard(ctx, g, p, X(p.pos.x), Y(p.pos.y) + ts * 0.4, ts);
+  flushCards(ctx);
   // Trays: one per arm, shown only with something on them.
   k.trays.forEach((tray, i) => {
     if (!tray.items.length) return;
@@ -396,7 +401,7 @@ function drawPatron(ctx: CanvasRenderingContext2D, g: Game, p: Patron, X: (n: nu
   const x = X(p.pos.x + gait.dir.x * lean) + shiver, y = Y(p.pos.y + gait.dir.y * lean);
   if (part === "body") {
   const swell = 1 + Math.sin(gait.phase * Math.PI) * 0.06 * gait.amount;
-  ctx.fillStyle = p.color;
+  ctx.fillStyle = guestColor(p);
   ctx.globalAlpha = p.state === "leaving" ? 0.6 : 1;
   ctx.beginPath(); ctx.arc(x, y, ts * 0.32 * swell, 0, Math.PI * 2); ctx.fill();
   if (wet > 0.05) {
@@ -418,7 +423,7 @@ export function drawPatronWords(ctx: CanvasRenderingContext2D, g: Game, p: Patro
   ctx.fillStyle = "#f8f0e0";
   ctx.font = `${Math.floor(ts * 0.26)}px system-ui, sans-serif`;
   ctx.textAlign = "center";
-  ctx.fillText(p.name, x, y + ts * 0.55);
+  if (insightMix() < 0.05) ctx.fillText(p.name, x, y + ts * 0.55);
 
   // What's in front of them: a dish or a drink, slowly going down
   if (p.consuming && p.state === "consuming") {
@@ -625,12 +630,12 @@ export function drawGuide(ctx: CanvasRenderingContext2D, g: Game, v: View): void
   const c = P(v, guide.at.x, guide.at.y, 0);
   const r = ts * (0.62 + 0.06 * pulse) * guide.size;
   ctx.save();
-  ctx.lineWidth = Math.max(1.5, ts * 0.045);
-  ctx.strokeStyle = `rgba(255,211,77,${0.25 + 0.25 * pulse})`;
-  ctx.shadowColor = "rgba(255,211,77,0.6)"; ctx.shadowBlur = ts * 0.2;
+  ctx.lineWidth = Math.max(1.7, ts * 0.052);
+  ctx.strokeStyle = `rgba(255,211,77,${0.29 + 0.29 * pulse})`;
+  ctx.shadowColor = "rgba(255,211,77,0.7)"; ctx.shadowBlur = ts * 0.23;
   ctx.beginPath(); ctx.ellipse(c.x, c.y, r, r * squash, 0, 0, Math.PI * 2); ctx.stroke();
   const top = P(v, guide.at.x, guide.at.y, v.iso ? guide.z : 0);
-  const aw = ts * 0.28;
+  const aw = ts * 0.32;
   const bob = ts * 0.14 * Math.abs(Math.sin(t * 2.6));
   const W = ctx.canvas.width, H = ctx.canvas.height, m = aw * 1.6;
   const tipX = top.x, tipY = top.y - ts * (v.iso ? 0.25 : 0.7);

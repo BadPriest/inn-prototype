@@ -1,7 +1,7 @@
 // Plain keyboard menus and dialogs. Arrows / Enter / Backspace / Esc, or the mouse.
 
 import { flipCard, settleCards } from "./cards.js";
-import { padActive, padGlyphs } from "../gamepad.js";
+import { padActive, padGlyphs, padText } from "../gamepad.js";
 
 export interface MenuItem {
   label: string;
@@ -29,6 +29,8 @@ export interface MenuView {
   /** After it's drawn: wire up what clicks alone can't (sliders, say). */
   /** Keys this view adds to the hint line: "Tab shuffles". */
   keys?: string;
+  /** The view uses △ itself (it sends Delete: take one off), so the buttons under it start at L3. */
+  padTriangle?: boolean;
   onMount?: (root: HTMLElement) => void;
 }
 
@@ -51,8 +53,7 @@ export interface MenuSpec {
   focus?: number;
 }
 
-/** `inItems`: on a card screen, the focus has gone down from the cards to the buttons under them. */
-interface Open { spec: MenuSpec; index: number; inItems?: boolean }
+interface Open { spec: MenuSpec; index: number }
 
 const stack: Open[] = [];
 let root: HTMLElement;
@@ -71,19 +72,52 @@ export function confirmed(): void {
 }
 
 /** Run an item's action, with the confirm sound first if it asks for one. */
-/** A button's action is running from the buttons under a card screen: a redraw keeps the focus there. */
-let fromItems = false;
 function run(it: MenuItem): void {
   if (it.confirmSound) onConfirm();
-  fromItems = !!stack[stack.length - 1]?.inItems;
-  try { it.action(); } finally { fromItems = false; }
+  it.action();
 }
 
 export function menuOpen(): boolean {
   return stack.length > 0;
 }
 
+/** A card screen with no buttons gets one to leave by (○ on a controller). */
+function withWayOut(spec: MenuSpec): MenuSpec {
+  if (!spec.view || spec.modal || spec.items.length) return spec;
+  return { ...spec, items: [{ label: stack.length ? "Back" : "Close", button: "secondary", cancel: true, action: back }] };
+}
+
+/**
+ * Card screens: the D-pad stays on the cards, and each button under them has a button of its own.
+ * The main one is □ (Enter), the negative one ○ (Backspace), and the rest, in order, △, L3, the touchpad
+ * and Create (1, 2, 3, 4 on the keyboard). A view that uses △ itself starts them at L3.
+ */
+export type PadSlot = "tr" | "l3" | "tp" | "sh";
+const SLOTS: PadSlot[] = ["tr", "l3", "tp", "sh"];
+const SLOT_TEXT: Record<PadSlot, string> = { tr: "△", l3: "L3", tp: "touchpad", sh: "Create" };
+function extraSlots(spec: MenuSpec): Map<number, { slot: PadSlot; key: string }> {
+  const out = new Map<number, { slot: PadSlot; key: string }>();
+  if (!spec.view) return out;
+  const pool = spec.view.padTriangle ? SLOTS.slice(1) : SLOTS;
+  let n = 0;
+  spec.items.forEach((it, i) => {
+    if (it.button === "primary" || it.cancel || n >= pool.length) return;
+    out.set(i, { slot: pool[n], key: String(n + 1) });
+    n++;
+  });
+  return out;
+}
+
+/** △, L3, the touchpad or Create on a card screen: presses the button it's given to. False if none (△ then sends Delete). */
+export function padExtra(slot: PadSlot): boolean {
+  if (!stack.length) return false;
+  const spec = stack[stack.length - 1].spec;
+  for (const [i, x] of extraSlots(spec)) if (x.slot === slot) { const it = spec.items[i]; if (!it.disabled) run(it); return true; }
+  return !!spec.view && slot !== "tr";
+}
+
 export function openMenu(spec: MenuSpec): void {
+  spec = withWayOut(spec);
   const first = spec.items.findIndex((i) => !i.disabled);
   stack.push({ spec, index: spec.focus ?? Math.max(0, first) });
   render();
@@ -114,6 +148,7 @@ export function padConfirm(): void {
   if (top.spec.view?.onKey?.(new KeyboardEvent("keydown", { key: "Enter" }))) return;
   if (top.spec.view && top.spec.items.some((it) => it.button === "primary" && it.disabled)) return;
   const i = top.spec.items.findIndex((it) => it.button === "primary" && !it.disabled);
+  if (i < 0 && top.spec.view) { top.spec.view.onKey?.(new KeyboardEvent("keydown", { key: " " })); return; }
   const it = top.spec.items[i >= 0 ? i : top.index];
   if (it && !it.disabled) { top.index = i >= 0 ? i : top.index; run(it); }
 }
@@ -128,16 +163,8 @@ export function padCancel(): boolean {
 }
 
 export function replaceMenu(spec: MenuSpec): void {
-  const was = stack.pop();
+  stack.pop();
   openMenu(spec);
-  // Still in the buttons (one was pressed and the screen redrawn): stay there, on the same one if it's still there.
-  const top = stack[stack.length - 1];
-  if (was?.inItems && fromItems && spec.view && spec.items.some((it) => !it.disabled)) {
-    top.inItems = true;
-    top.index = Math.min(was.index, spec.items.length - 1);
-    if (spec.items[top.index].disabled) top.index = spec.items.findIndex((it) => !it.disabled);
-    render();
-  }
 }
 
 export function back(): void {
@@ -165,25 +192,18 @@ export function menuKey(e: KeyboardEvent): boolean {
   const top = stack[stack.length - 1];
   const items = top.spec.items;
   const view = top.spec.view;
-  // Card screens: the arrows move over the cards; down past the last row goes to the buttons under them,
-  // and up from the buttons comes back.
-  if (view && top.inItems) {
-    const step = (d: number) => { let i = top.index; for (let n = 0; n < items.length; n++) { i = (i + d + items.length) % items.length; if (!items[i].disabled) break; } if (!items[i].disabled) top.index = i; render(); return true; };
-    switch (e.key) {
-      case "ArrowUp": case "w": case "W": top.inItems = false; render(); return true;
-      case "ArrowLeft": case "a": case "A": return step(-1);
-      case "ArrowRight": case "d": case "D": case "ArrowDown": case "s": case "S": return step(1);
-      case " ": case "Enter": { const it = items[top.index]; if (it && !it.disabled) run(it); return true; }
-    }
-  }
+  // Card screens: the arrows stay on the cards; the buttons under them each have a key (extraSlots).
   if (view && (e.key === "f" || e.key === "F") && flipCard()) return true;
   if (view?.onKey?.(e)) return true;
-  if (view && !top.inItems && ["ArrowDown", "s", "S"].includes(e.key)) {
-    // Down past the cards: to the buttons under them, the first one that works (or the first, to see it).
-    if (items.length) { const first = items.findIndex((it) => !it.disabled); top.inItems = true; top.index = Math.max(0, first); render(); }
-    return true;
+  if (view) {
+    const extra = [...extraSlots(top.spec)].find(([, x]) => x.key === e.key);
+    if (extra) { const it = items[extra[0]]; if (!it.disabled) run(it); return true; }
+    if (e.key === "Backspace" || (e.key === "Escape" && isModal())) {
+      const no = items.find((it) => it.cancel && !it.disabled);
+      if (no) { run(no); return true; }
+    }
+    if (["ArrowUp", "w", "W", "ArrowDown", "s", "S", "ArrowLeft", "a", "A", "ArrowRight", "d", "D", " "].includes(e.key)) return true;
   }
-  if (view && ["ArrowUp", "w", "W", "ArrowLeft", "a", "A", "ArrowRight", "d", "D"].includes(e.key)) return true;
   const move = (d: number) => {
     if (!items.length) return;
     let i = top.index;
@@ -205,7 +225,6 @@ export function menuKey(e: KeyboardEvent): boolean {
         else top.spec.view.onKey?.(new KeyboardEvent("keydown", { key: " " }));
         return true;
       }
-      if (view && !top.inItems) return true; // on a card screen, ✕ presses a button only once the focus is down on them
       const it = items[top.index];
       if (it && !it.disabled) run(it);
       return true;
@@ -237,21 +256,28 @@ function render(): void {
     : s.view ? `Arrows choose · Space picks${s.view.keys ? ` · ${s.view.keys}` : ""} · Enter confirms · Backspace back · Esc close`
     : s.modal && stack.length === 1 ? `${onlyButtons ? "←→" : "↑↓"} choose · Enter confirm` : "↑↓ choose · Enter confirm · Backspace back · Esc close";
   const row = (it: MenuItem, i: number) => `
-          <div class="menu-item ${i === top.index && (!s.view || top.inItems) ? "sel" : ""} ${it.disabled ? "dis" : ""}" data-i="${i}">
+          <div class="menu-item ${i === top.index ? "sel" : ""} ${it.disabled ? "dis" : ""}" data-i="${i}">
             <span>${it.label}</span>${it.sub ? `<span class="sub">${it.sub}</span>` : ""}
           </div>`;
-  const glyph = (it: MenuItem) => (it.button === "primary" ? `<span class="pad-glyph sq"></span>` : it.cancel ? `<span class="pad-glyph ci"></span>` : "");
+  const slots = extraSlots(s);
+  const glyph = (it: MenuItem, i: number) => {
+    const x = slots.get(i);
+    if (x) return `<span class="pad-glyph tx g-${x.slot}">${padText(SLOT_TEXT[x.slot]).replace(/^touchpad$/, "▭")}</span><kbd class="key-glyph">${x.key}</kbd>`;
+    return it.button === "primary" ? `<span class="pad-glyph sq"></span>` : it.cancel ? `<span class="pad-glyph ci"></span>` : "";
+  };
+  // On a card screen every item is a button under the cards.
+  const isBtn = (it: MenuItem) => !!it.button || !!s.view;
   const btn = (it: MenuItem, i: number) =>
-    `<button class="menu-btn ${it.button} ${top.inItems ? (i === top.index ? "sel" : "") : i === top.index && (!s.view || it.button === "primary" || s.focus !== undefined) ? "sel" : ""}" data-i="${i}" ${it.disabled ? "disabled" : ""}><span class="btn-row">${glyph(it)}<span>${it.label}</span></span>${it.sub ? `<span class="sub">${it.sub}</span>` : ""}</button>`;
-  const listed = s.items.map((it, i) => (it.button ? "" : row(it, i))).join("");
-  const buttons = s.items.map((it, i) => (it.button ? btn(it, i) : "")).join("");
+    `<button class="menu-btn ${it.button ?? "secondary"} ${s.view ? (it.button === "primary" ? "sel" : "") : i === top.index ? "sel" : ""}" data-i="${i}" ${it.disabled ? "disabled" : ""}><span class="btn-row">${glyph(it, i)}<span>${it.label}</span></span>${it.sub ? `<span class="sub">${it.sub}</span>` : ""}</button>`;
+  const listed = s.items.map((it, i) => (isBtn(it) ? "" : row(it, i))).join("");
+  const buttons = s.items.map((it, i) => (isBtn(it) ? btn(it, i) : "")).join("");
   // Redrawing the same screen (a card picked, a tab changed) keeps where its view was scrolled to.
   const prevView = root.querySelector<HTMLElement>(".menu-view");
   const prevTitle = root.dataset.title;
   const keepScroll = prevView && prevTitle === s.title ? prevView.scrollTop : 0;
   root.dataset.title = s.title;
   root.innerHTML = `
-    <div class="menu ${s.modal ? "modal" : ""} ${s.view ? "wide" : ""} ${top.inItems ? "in-items" : ""}">
+    <div class="menu ${s.modal ? "modal" : ""} ${s.view ? "wide" : ""}">
       <div class="menu-head">
         ${stack.length > 1 ? `<button class="mbtn" data-act="back" aria-label="Back">‹</button>` : ""}
         <div class="menu-title">${s.title}${s.subtitle ? `<div class="menu-subtitle">${s.subtitle}</div>` : ""}</div>

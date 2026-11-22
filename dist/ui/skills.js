@@ -1,5 +1,5 @@
 // Skills at the desk: the keeper's level, and what its points buy: recipes, by kind, and knacks.
-import { RECIPES, dishData } from "../data.js";
+import { EQUIPMENT, RECIPES, dishData } from "../data.js";
 import { SKILLS, buyKnack, costOf, learn, levelOf, levelProgress, nextTier, pointsLeft, tierOf } from "../skills.js";
 import { openMenu, replaceMenu } from "./menu.js";
 import { grid, gridKeys } from "./cards.js";
@@ -31,6 +31,13 @@ export function openSkills(g, changed) {
     g.newSkills = false;
     const st = { focus: 0, tab: lastTab };
     const canMakeHere = (r) => g.world.furniture.some((f) => (f.slots ?? []).some((sl) => sl.kinds.includes(r.station)));
+    const waiting = (r) => EQUIPMENT.find((e) => g.toPlace.includes(e.id) && e.slots.some((sl) => sl.kinds.includes(r.station)));
+    const kitchenNote = (r) => {
+        if (canMakeHere(r))
+            return "";
+        const w = waiting(r);
+        return w ? `set out the ${w.name.toLowerCase()} to make it` : needs(r);
+    };
     const build = () => {
         const left = pointsLeft(g);
         let entries;
@@ -64,20 +71,22 @@ export function openSkills(g, changed) {
                 const cost = costOf(r.id);
                 const afford = left >= cost;
                 const here = canMakeHere(r);
+                const note = kitchenNote(r);
                 return {
                     card: {
                         pick: "", icon: r.icon, name: r.name, on: has, off: !has && !afford,
-                        fact: whereShort(r),
-                        status: has ? `known${here ? "" : ` · ${needs(r)}`}` : `${afford ? `learn it: ${pts(cost)}` : `${pts(cost - left)} more`}${here ? "" : ` · ${needs(r)}`}`,
-                        tone: !here ? "warn" : has || afford ? "good" : "muted",
+                        fact: has ? "known" : pts(cost),
+                        status: has ? note || "ready to cook" : afford ? `learn it: ${pts(cost)}` : `${pts(cost)}: you have ${left}`,
+                        tone: has ? (note ? "warn" : "good") : afford ? "good" : "muted",
+                        note: !has && note ? note : undefined,
                         tags: r.baseTags,
-                        detail: `${r.blurb ?? ""}<div class="where-full">${whereFull(r)}</div>${ingredientsHtml(g, r)}`,
-                        does: has ? "You know this one" : afford ? `Learn it: ${pts(cost)}` : "Level up to earn points",
+                        detail: `${r.blurb ?? ""}<div class="where-full">${whereShort(r)}${whereFull(r) ? ` · ${whereFull(r)}` : ""}</div>${ingredientsHtml(g, r)}`,
+                        does: has ? "You know this one" : afford ? `Learn it: ${pts(cost)}${note ? ` (you can learn it now; ${note})` : ""}` : `Level up to earn ${pts(cost - left)} more`,
                     },
                     use: () => {
                         if (!learn(g, r.id))
                             return false;
-                        g.say(`You've learned to make ${r.name.toLowerCase()}.${here ? " Put it on the bill of fare when you're ready." : ` You'll need somewhere to make it: it ${needs(r)}.`}`);
+                        g.say(`You've learned to make ${r.name.toLowerCase()}.${here ? " Put it on the bill of fare when you're ready." : ` To cook it: ${note}.`}`);
                         return true;
                     },
                 };
@@ -116,7 +125,7 @@ export function openSkills(g, changed) {
           <div class="meta">${prog.have} of ${prog.need} to level ${levelOf(g) + 1} · a guest delighted earns ${xp.DELIGHT ?? 0}, pleased ${xp.PLEASED ?? 0}, served ${xp.FULFILLED ?? 0}</div>
           <div class="skill-bar"><span style="width:${Math.round((prog.have / prog.need) * 100)}%"></span></div>
         </div></div>${tabs}`,
-                html: cards.length ? grid(cards) : `<p class="blurb">Nothing here yet.</p>`,
+                html: cards.length ? grid(cards, { size: "l" }) : `<p class="blurb">Nothing here yet.</p>`,
                 onPick: (v) => {
                     if (v.startsWith("tab:")) {
                         st.tab = lastTab = v.slice(4);

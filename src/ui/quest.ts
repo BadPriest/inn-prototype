@@ -19,12 +19,12 @@ function wasDone(g: Game, key: string): boolean {
 export function updateQuest(g: Game): void {
   const el = document.getElementById("quest");
   if (!el || busy) return;
-  const h = g.showObjectives ? headline(g) : null;
+  const h = headline(g);
   if (shown && h?.key === shown.key) {
     if (h.text !== shown.text) { shown.text = h.text; el.querySelector(".b-text")!.innerHTML = h.text; }
     return;
   }
-  if (shown && h?.key !== shown.key && g.showObjectives && wasDone(g, shown.key)) {
+  if (shown && h?.key !== shown.key && wasDone(g, shown.key)) {
     busy = true;
     el.classList.add("done");
     stamp(el);

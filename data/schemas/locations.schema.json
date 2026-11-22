@@ -53,7 +53,8 @@
           "type": "object", "additionalProperties": false, "required": ["cardChips", "card"],
           "properties": {
             "cardChips": { "type": "array", "items": { "type": "string" }, "description": "Short chips on its card." },
-            "card": { "type": "string", "description": "Line on its card." }
+            "card": { "type": "string", "description": "Line on its card." },
+            "back": { "type": "string", "description": "Flavour on the back of its card, under the card line." }
           }
         }
       }

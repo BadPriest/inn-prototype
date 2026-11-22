@@ -212,6 +212,7 @@ export function openSupplies(g: Game): void {
           if (v.startsWith("tab:")) { const i = Number(v.slice(4)); if (i !== tab) { tab = i; page = "slip"; editing = null; st.focus = 0; g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); refresh(); } return; }
           change(Number(v), 1);
         },
+        padTriangle: !!ed || page === "slip",
         keys: ed ? "Delete takes one off" : `${page === "slip" ? "Delete takes one off · " : ""}Tab another supplier${pages.length > 1 ? " · PgUp/PgDn its pages" : ""}`,
         onKey: (e) => {
           if (e.key === "Tab") { e.preventDefault(); if (!ed) { page = "slip"; switchTab(e.shiftKey ? -1 : 1); } return true; }

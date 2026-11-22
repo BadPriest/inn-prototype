@@ -224,6 +224,7 @@ export interface Inn {
   name: string;
   icon: string;
   blurb: string;
+  back: string; // flavour on the back of its card
   traits: string[];
   map: string[];
   rooms: { text: string; x: number; y: number }[];
@@ -257,6 +258,7 @@ export const INNS: Inn[] = [
   {
     id: "small", name: "A small tavern", icon: "🏠", traits: ["easiest start", "cosy", "one keeper"],
     blurb: "Two tables, three stools at a short bar, a small fire. A used two-hob stove, a kettle and a barrel of ale; no oven yet. The spare room is let to a tenant.",
+    back: "One fire, one keeper, and a room small enough to hear every order. By the end of the week you'll know every face.",
     map: SMALL_MAP,
     rooms: [
       { text: "Bedroom", x: 3.5, y: 3.6 },
@@ -275,6 +277,7 @@ export const INNS: Inn[] = [
   {
     id: "medium", name: "The big tavern", icon: "🏰", traits: ["harder", "busy", "needs staff"],
     blurb: "Six tables, a long bar, an oven and pies, a coat hall. Lively, and a lot for one keeper: you'll lose some guests at the busy times.",
+    back: "Long tables, a bread oven warm from dawn, and a crowd most nights. It wants more hands than you've got, for now.",
     map: MAP, rooms: ROOM_LABELS,
     lamps: [
       { x: 4.5, y: 3.5, r: 4 }, // bedroom
@@ -422,8 +425,8 @@ export interface Archetype {
   openness: number;
   needs: NeedLevels; // how hungry, thirsty and cold they tend to arrive
   weather: WeatherTaste; // weather they love or dislike (by weather tag)
-  tastes: TasteSet;
-  extraLikes: string[]; // each visitor draws one of these as a personal extra like
+  tastes: TasteSet; // what each visitor's own tastes are drawn from (VISITOR_TASTES: how many of each)
+  extraLikes: string[]; // drawn from with the likes
   fussiness: Organic; // 0..1
   patience: Organic; // minutes they'll wait for an order before it starts to wear
   stay: Organic; // minutes they intend to stay
@@ -433,6 +436,9 @@ export interface Archetype {
   garnishAsk: number; // chance a drink order asks for a garnish
   messiness: Organic; // 0..1
 }
+
+/** Each visitor draws their own tastes from their kind's, food and drink apart: this many of each. */
+export const VISITOR_TASTES = { love: 1, like: 2, dislike: 1 };
 
 export const ARCHETYPES: Archetype[] = [
   { id: "dock", openness: 0.45, name: "Dockworker", color: "#b5651d", weight: 3,
@@ -452,7 +458,7 @@ export const ARCHETYPES: Archetype[] = [
   { id: "traveller", openness: 0.55, name: "Traveller", color: "#6f9e5a", weight: 3,
     weather: { love: ["sunny"], dislike: ["rain", "stormy"] },
     needs: { hunger: [0.75, 0.15], thirst: [0.5, 0.15], warmth: [0.45, 0.15] },
-    tastes: { love: ["warm"], like: ["hearty", "sweet", "homely", "savoury", "crisp"], dislike: [] },
+    tastes: { love: ["hearty", "savoury", "sweet"], like: ["warm", "homely", "crisp"], dislike: ["bitter", "briny"] },
     extraLikes: ["earthy", "rich", "bright"],
     fussiness: [0.2, 0.15], patience: [55, 15], stay: [90, 30], consume: [20, 5], walk: [2.4, 0.4],
     foodBias: 0.55, garnishAsk: 0.2, messiness: [0.4, 0.2] },
@@ -725,6 +731,7 @@ export interface Location {
   icon: string;
   traits: string[]; // short chips on its card
   blurb: string;
+  back: string; // flavour on the back of its card
   days: [spring: number, summer: number, autumn: number, winter: number]; // sums to 112
   rain: number; // more (> 1) or less rain: weights the sky toward rain, and rain lingers
   storm: number; // how often a storm breaks, against the calendar season's own odds
@@ -742,6 +749,7 @@ export const LOCATIONS: Location[] = LOCATIONS_DATA.locations.map((l) => ({
   icon: l.icon,
   traits: l.text.cardChips,
   blurb: l.text.card,
+  back: l.text.back ?? "",
   days: l.seasonDays,
   rain: l.rainWeight,
   storm: l.stormWeight,

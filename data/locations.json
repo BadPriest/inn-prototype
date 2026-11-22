@@ -14,7 +14,7 @@
         { "id": "generalStore", "priceFactor": 1.0, "distanceInMinutes": 30, "deliveryDays": ["mon", "thu"] },
         { "id": "carter" }, { "id": "tinker" }, { "id": "catalogue" }
       ],
-      "text": { "cardChips": ["busy", "rain rush"], "card": "On the market square. Busy all year; when it rains, half the street comes in." } },
+      "text": { "cardChips": ["busy", "rain rush"], "card": "On the market square. Busy all year; when it rains, half the street comes in.", "back": "Carts rattle past from first light. On market day the square is all elbows and baskets, and every one of them is thirsty by noon." } },
 
     { "id": "dockside", "name": "Dockside", "icon": "⚓",
       "seasonDays": [28, 28, 28, 28], "rainWeight": 1.3, "stormWeight": 1.6,
@@ -29,7 +29,7 @@
         { "id": "generalStore" },
         { "id": "carter" }, { "id": "tinker" }, { "id": "catalogue" }
       ],
-      "text": { "cardChips": ["dockworkers", "wet", "stormy"], "card": "By the harbour, where the boats come in. Thirsty dockworkers, wet weather, the odd storm off the sea." } },
+      "text": { "cardChips": ["dockworkers", "wet", "stormy"], "card": "By the harbour, where the boats come in. Thirsty dockworkers, wet weather, the odd storm off the sea.", "back": "Tar, rope and gulls. The tide decides when the boats come in, and the boats decide when your door swings open." } },
 
     { "id": "mountainside", "name": "Mountainside", "icon": "🏔️",
       "seasonDays": [21, 21, 28, 42], "rainWeight": 1.2, "stormWeight": 1.2,
@@ -44,7 +44,7 @@
         { "id": "generalStore", "distanceInMinutes": 150 },
         { "id": "carter" }, { "id": "tinker" }, { "id": "catalogue" }
       ],
-      "text": { "cardChips": ["long winter", "quiet", "cold"], "card": "On the pass road, high up. Long winters, few passers-by, and everyone who comes in is glad of the fire." } },
+      "text": { "cardChips": ["long winter", "quiet", "cold"], "card": "On the pass road, high up. Long winters, few passers-by, and everyone who comes in is glad of the fire.", "back": "The last warm room before the pass. Travellers stamp the snow off their boots and stay longer than they meant to." } },
 
     { "id": "crossroads", "name": "Crossroads", "icon": "🪧",
       "seasonDays": [28, 28, 28, 28], "rainWeight": 1, "stormWeight": 1,
@@ -58,7 +58,7 @@
         { "id": "generalStore" },
         { "id": "carter" }, { "id": "tinker" }, { "id": "catalogue", "priceFactor": 0.95 }
       ],
-      "text": { "cardChips": ["travellers", "quiet"], "card": "Where the roads meet, out among the fields. Travellers passing through; rain or shine, much the same." } },
+      "text": { "cardChips": ["travellers", "quiet"], "card": "Where the roads meet, out among the fields. Travellers passing through; rain or shine, much the same.", "back": "Four roads, one signpost, and your lantern in the window. Most folk are passing through; a few will remember the stew." } },
 
     { "id": "hills", "name": "Hill country", "icon": "🌳",
       "seasonDays": [35, 35, 21, 21], "rainWeight": 0.8, "stormWeight": 0.4,
@@ -73,6 +73,6 @@
         { "id": "generalStore" },
         { "id": "carter" }, { "id": "tinker" }, { "id": "catalogue" }
       ],
-      "text": { "cardChips": ["long summer", "gentle", "farmers"], "card": "Among green hills and smallholdings. Long, gentle springs and summers; soft rain, hardly ever a storm." } }
+      "text": { "cardChips": ["long summer", "gentle", "farmers"], "card": "Among green hills and smallholdings. Long, gentle springs and summers; soft rain, hardly ever a storm.", "back": "Sheep on every slope and a farmer at every table. The summers are long, the rain is soft, and nobody's in a hurry." } }
   ]
 }

@@ -6,6 +6,7 @@ import { setOut } from "./readymade.js";
 import { organic } from "./core.js";
 import { knack } from "./skills.js";
 import { moneyHtml } from "./money.js";
+import { dayEndBody } from "./ui/dayend.js";
 import { GARNISHES, GRAMOPHONE, INGREDIENTS, RECIPES, REGULARS, SNACKS, TUNING, UPGRADES, type Recipe } from "./data.js";
 import type { Crate, Game, Patron, SetDownTray, Spill } from "./game.js";
 import { unpackCrate } from "./supplies.js";
@@ -616,31 +617,10 @@ function goToSleep(g: Game): void {
   g.bus.emit({ type: "TurnedIn" });
   setTimeout(() => {
     const s = endDay(g);
-    const o = s.outcomes;
-    const row = (k: string, v: number | string) => `<tr><td>${k}</td><td>${v}</td></tr>`;
     openMenu({
       title: `End of ${compactDate(g.dateOfDay(s.day), g.date.year)}`,
       modal: true,
-      body: `<table class="summary">
-        ${row("Takings", moneyHtml(s.taken ?? 0))}
-        ${row("Tips", moneyHtml(s.tips ?? 0))}
-        ${(s.spent ?? 0) ? row("Spent", moneyHtml(s.spent ?? 0)) : ""}
-        ${(s.sold ?? 0) ? row("Sold back", moneyHtml(s.sold ?? 0)) : ""}
-        ${(s.upkeep ?? 0) >= 1 ? row("Upkeep (wood, oil, sundries, licence)", moneyHtml(Math.round(s.upkeep ?? 0))) : ""}
-        ${row("In the purse", moneyHtml(g.purse))}
-        ${row("Patrons", s.arrivals)}
-        ${row("Orders taken", s.orders ?? 0)}
-        ${row("Served", s.served)}
-        ${row("Delight", o.DELIGHT)}
-        ${row("Pleased", o.PLEASED)}
-        ${row("Fulfilled", o.FULFILLED)}
-        ${row("Unfinished", o.UNFINISHED)}
-        ${row("Complaints", o.COMPLAINS)}
-        ${row("Left early", s.leftEarly)}
-        ${row("Left without being served", s.leftUnserved)}
-        ${row("Crafted / garnished", `${s.crafted} / ${s.garnished}`)}
-        ${row("Cleaned up", s.cleaned)}
-      </table>${s.moments.length ? `<div class="moments">${s.moments.map((m) => `<div>✦ ${m}</div>`).join("")}</div>` : ""}`,
+      body: dayEndBody(g, s),
       items: [{
         button: "primary",
         label: `Wake up: ${compactDate(g.dateOfDay(s.day + 1), g.date.year)}`,

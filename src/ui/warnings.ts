@@ -8,9 +8,9 @@ import { bannerHtml, hideBanner, showBanner } from "./banner.js";
 
 let shown = "";
 
-/** What's on its way for an item: a crate at the kitchen door, or a slip the carter brings. */
+/** What's on its way for an item: a crate in the kitchen, or a slip the carter brings. */
 function comingOf(g: Game, item: string): string | undefined {
-  if (g.crates.some((c) => c.lines.some((l) => l.item === item))) return "in a crate at the kitchen door";
+  if (g.crates.some((c) => c.lines.some((l) => l.item === item))) return "in a crate in the kitchen";
   const d = g.deliveries.filter((x) => (x.slip[item] ?? 0) > 0).sort((a, b) => a.day - b.day)[0];
   return d ? `coming ${whenText(g, d.day)}` : undefined;
 }

@@ -238,6 +238,7 @@ export function openSupplies(g) {
                     }
                     change(Number(v), 1);
                 },
+                padTriangle: !!ed || page === "slip",
                 keys: ed ? "Delete takes one off" : `${page === "slip" ? "Delete takes one off · " : ""}Tab another supplier${pages.length > 1 ? " · PgUp/PgDn its pages" : ""}`,
                 onKey: (e) => {
                     if (e.key === "Tab") {

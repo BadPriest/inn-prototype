@@ -4,10 +4,10 @@ import { ECONOMY_DATA } from "./gamedata.gen.js";
 import { opennessOf, patienceOf, showFlip } from "./snacks.js";
 import { orderable } from "./readymade.js";
 import { chance, organic, pick, uid, weightedPick } from "./core.js";
-import { ARCHETYPES, CHATTER, NAMES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING, SHELTER, SEASONAL_TASTES, MARKET, SPECIFIC_ORDERS, type NeedId, type Archetype, type ItemKind, type Regular, garnishesFor, garnishById } from "./data.js";
+import { ARCHETYPES, CHATTER, NAMES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING, SHELTER, SEASONAL_TASTES, MARKET, SPECIFIC_ORDERS, VISITOR_TASTES, type NeedId, type Archetype, type TasteSet, type ItemKind, type Regular, garnishesFor, garnishById } from "./data.js";
 import type { Game, Group, Order, Patron, RegularState } from "./game.js";
 import { emptyTastes } from "./game.js";
-import { appeal, prepareVisit, tagScore } from "./tastes.js";
+import { appeal, prepareVisit, sample, tagScore } from "./tastes.js";
 import { arrivalNeeds, closeAllStretches } from "./needs.js";
 import { cameIn, weatherTags } from "./weather.js";
 import { marketDay } from "./newspaper.js";
@@ -152,11 +152,10 @@ export function spawnPatron(g: Game, archetype?: Archetype, forced?: { seat: Sea
   needs.warmth = clamp01(needs.warmth + soaked * SOAKING.warmthOnArrival);
   const seat = forced?.seat ?? chooseSeat(g, hungrier(needs, a.foodBias), fussiness, soaked);
   if (!seat) return null;
-  const extra = a.extraLikes.filter((t) => !a.tastes.love.includes(t) && !a.tastes.dislike.includes(t));
-  const t = {
-    love: [...a.tastes.love],
-    like: [...new Set([...a.tastes.like, extra[Math.floor(Math.random() * extra.length)]].filter(Boolean))],
-    dislike: [...a.tastes.dislike],
+  const draw = (): TasteSet => {
+    const love = sample(a.tastes.love, VISITOR_TASTES.love);
+    const like = sample([...new Set([...a.tastes.like, ...a.extraLikes])].filter((x) => !love.includes(x)), VISITOR_TASTES.like);
+    return { love, like, dislike: sample(a.tastes.dislike.filter((x) => !love.includes(x) && !like.includes(x)), VISITOR_TASTES.dislike) };
   };
   const p: Patron = {
     ...basePatron(g, seat),
@@ -166,7 +165,7 @@ export function spawnPatron(g: Game, archetype?: Archetype, forced?: { seat: Sea
     schema: "open",
     color: a.color,
     speed: Math.max(0.8, organic(a.walk)),
-    tastes: { food: t, drink: { love: [...t.love], like: [...t.like], dislike: [...t.dislike] } },
+    tastes: { food: draw(), drink: draw() },
     fussiness,
     messiness: clamp01(organic(a.messiness)),
     patience: Math.max(6, organic(a.patience)),

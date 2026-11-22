@@ -256,28 +256,36 @@ function stockUp(g, s, slip) {
         addStock(g, l.item, l.units);
     return got;
 }
-/** Where the carter leaves crates: the kitchen floor just inside the kitchen door, beside the doorway. Crates pile up there. */
+/** Where the carter leaves crates: a free corner of the kitchen (else a spot along a wall), nearest the pantry. Crates pile up there. */
 export function deliverySpot(g) {
     const w = g.world;
+    const pantry = w.furniture.find((f) => f.name === "Pantry");
     const kitchen = (x, y) => w.tile(x, y)?.ch === "," && !w.tile(x, y)?.equip;
+    // In a corner of the kitchen if one's free (else along a wall), nearest the pantry, out of every doorway
+    // and off the spots where the keeper stands to use things.
+    const inTheWay = new Set(w.furniture.flatMap((f) => w.approachTiles(f)).map((t) => `${t.x},${t.y}`));
+    const sides = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+    let best = null, bestD = Infinity;
     for (let y = 0; y < w.h; y++)
         for (let x = 0; x < w.w; x++) {
-            if (w.tile(x, y)?.ch !== "D")
+            if (!kitchen(x, y) || inTheWay.has(`${x},${y}`))
                 continue;
-            // The door's kitchen side, then a step to one side of it, out of the doorway.
-            for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
-                const ix = x + dx, iy = y + dy;
-                if (!kitchen(ix, iy))
-                    continue;
-                for (const [sx, sy] of dx === 0 ? [[1, 0], [-1, 0]] : [[0, 1], [0, -1]])
-                    if (kitchen(ix + sx, iy + sy))
-                        return { x: ix + sx, y: iy + sy };
-                return { x: ix, y: iy };
+            const near = sides.map(([dx, dy]) => w.tile(x + dx, y + dy));
+            if (near.some((t) => t?.ch === "D"))
+                continue;
+            const walls = near.filter((t) => !t || t.ch === "#").length;
+            if (!walls)
+                continue;
+            const d = (pantry ? Math.hypot(x + 0.5 - pantry.center.x, y + 0.5 - pantry.center.y) : 0) + (walls >= 2 ? 0 : 4);
+            if (d < bestD) {
+                bestD = d;
+                best = { x, y };
             }
         }
-    const pantry = g.world.furniture.find((f) => f.name === "Pantry");
-    const by = pantry ? g.world.approachTiles(pantry)[0] : undefined;
-    return by ? { x: Math.floor(by.x), y: Math.floor(by.y) } : { x: g.world.frontDoor.x, y: g.world.frontDoor.y - 1 };
+    if (best)
+        return best;
+    const by = pantry ? w.approachTiles(pantry)[0] : undefined;
+    return by ? { x: Math.floor(by.x), y: Math.floor(by.y) } : { x: w.frontDoor.x, y: w.frontDoor.y - 1 };
 }
 /** Carrying the delivery in: every crate in the pile goes in the pantry, each dated the day it came. */
 export function unpackCrate(g, c) {
@@ -318,7 +326,7 @@ export function deliveriesArrive(g) {
     g.purse -= fee;
     g.stats.spent = (g.stats.spent ?? 0) + fee;
     const pile = g.crates.length;
-    g.say(`🛻 The carter's left a crate at the kitchen door: ${got.join(", ")}. ${fee}d for the carter.${pile > 1 ? ` That's ${pile} crates waiting.` : ""} Carry it in to the pantry.`);
+    g.say(`🛻 The carter's left a crate in the kitchen: ${got.join(", ")}. ${fee}d for the carter.${pile > 1 ? ` That's ${pile} crates waiting.` : ""} Carry it in to the pantry.`);
 }
 /** "8 pints" in a pack, for the slip. */
 export const packContents = (l) => amount(l.item, l.pack.units);

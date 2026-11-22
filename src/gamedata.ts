@@ -142,7 +142,7 @@ export interface LocationData {
   marketDay?: string;
   streetSound: "streetTown" | "streetCountry";
   suppliers: ({ id: string } & SupplierFields)[];
-  text: { cardChips: string[]; card: string };
+  text: { cardChips: string[]; card: string; back?: string };
 }
 export interface LocationsData { locations: LocationData[] }
 

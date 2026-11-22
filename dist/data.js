@@ -175,6 +175,7 @@ export const INNS = [
     {
         id: "small", name: "A small tavern", icon: "🏠", traits: ["easiest start", "cosy", "one keeper"],
         blurb: "Two tables, three stools at a short bar, a small fire. A used two-hob stove, a kettle and a barrel of ale; no oven yet. The spare room is let to a tenant.",
+        back: "One fire, one keeper, and a room small enough to hear every order. By the end of the week you'll know every face.",
         map: SMALL_MAP,
         rooms: [
             { text: "Bedroom", x: 3.5, y: 3.6 },
@@ -193,6 +194,7 @@ export const INNS = [
     {
         id: "medium", name: "The big tavern", icon: "🏰", traits: ["harder", "busy", "needs staff"],
         blurb: "Six tables, a long bar, an oven and pies, a coat hall. Lively, and a lot for one keeper: you'll lose some guests at the busy times.",
+        back: "Long tables, a bread oven warm from dawn, and a crowd most nights. It wants more hands than you've got, for now.",
         map: MAP, rooms: ROOM_LABELS,
         lamps: [
             { x: 4.5, y: 3.5, r: 4 }, // bedroom
@@ -261,6 +263,8 @@ export function garnishesFor(recipeId) {
     const d = DISHES_DATA.dishes.find((x) => x.id === currentDishId(recipeId));
     return d?.garnish ? GARNISHES.filter((x) => x.garnishFor.includes(d.container)) : [];
 }
+/** Each visitor draws their own tastes from their kind's, food and drink apart: this many of each. */
+export const VISITOR_TASTES = { love: 1, like: 2, dislike: 1 };
 export const ARCHETYPES = [
     { id: "dock", openness: 0.45, name: "Dockworker", color: "#b5651d", weight: 3,
         weather: { love: [], dislike: ["stormy", "cold"] },
@@ -279,7 +283,7 @@ export const ARCHETYPES = [
     { id: "traveller", openness: 0.55, name: "Traveller", color: "#6f9e5a", weight: 3,
         weather: { love: ["sunny"], dislike: ["rain", "stormy"] },
         needs: { hunger: [0.75, 0.15], thirst: [0.5, 0.15], warmth: [0.45, 0.15] },
-        tastes: { love: ["warm"], like: ["hearty", "sweet", "homely", "savoury", "crisp"], dislike: [] },
+        tastes: { love: ["hearty", "savoury", "sweet"], like: ["warm", "homely", "crisp"], dislike: ["bitter", "briny"] },
         extraLikes: ["earthy", "rich", "bright"],
         fussiness: [0.2, 0.15], patience: [55, 15], stay: [90, 30], consume: [20, 5], walk: [2.4, 0.4],
         foodBias: 0.55, garnishAsk: 0.2, messiness: [0.4, 0.2] },
@@ -480,6 +484,7 @@ export const LOCATIONS = LOCATIONS_DATA.locations.map((l) => ({
     icon: l.icon,
     traits: l.text.cardChips,
     blurb: l.text.card,
+    back: l.text.back ?? "",
     days: l.seasonDays,
     rain: l.rainWeight,
     storm: l.stormWeight,

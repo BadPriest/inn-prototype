@@ -1,5 +1,5 @@
 // The Deliveries screen at the desk: what's on its way (cancel it until the supplier's order-by hour the
-// evening before), crates waiting at the kitchen door, and the deliveries that came, newest first.
+// evening before), crates waiting in the kitchen, and the deliveries that came, newest first.
 import { INGREDIENTS } from "../data.js";
 import { moneyHtml } from "../money.js";
 import { SUPPLIERS_DATA } from "../gamedata.gen.js";
@@ -42,7 +42,7 @@ export function openDeliveries(g) {
             };
         });
         const crateCards = g.crates.map((c) => ({
-            pick: `k:${i}`, icon: "📦", name: "At the kitchen door", focus: i++ === st.focus,
+            pick: `k:${i}`, icon: "📦", name: "In the kitchen", focus: i++ === st.focus,
             fact: dayName(c.day), status: "Carry it in to the pantry", tone: "warn",
             detail: c.got.join("<br>"),
         }));
@@ -75,7 +75,7 @@ export function openDeliveries(g) {
             holdsClock: true,
             view: {
                 html: all.length
-                    ? section("On its way", "paid when sent", comingCards) + section("At the kitchen door", "waiting to be carried in", crateCards) + section("Past deliveries", "newest first", pastCards)
+                    ? section("On its way", "paid when sent", comingCards) + section("In the kitchen", "waiting to be carried in", crateCards) + section("Past deliveries", "newest first", pastCards)
                     : `<p class="muted">Nothing on its way, and nothing delivered yet. Order at the desk: 🧺 Buy Supplies.</p>`,
                 onPick: (v) => pick(Number(v.slice(2))),
                 onKey: gridKeys(() => all.length, () => st.focus, (n) => { st.focus = n; replaceMenu(build()); }, pick),

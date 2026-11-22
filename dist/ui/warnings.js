@@ -4,10 +4,10 @@ import { upkeepWarnings } from "../upkeep.js";
 import { whenText } from "../supplies.js";
 import { bannerHtml, hideBanner, showBanner } from "./banner.js";
 let shown = "";
-/** What's on its way for an item: a crate at the kitchen door, or a slip the carter brings. */
+/** What's on its way for an item: a crate in the kitchen, or a slip the carter brings. */
 function comingOf(g, item) {
     if (g.crates.some((c) => c.lines.some((l) => l.item === item)))
-        return "in a crate at the kitchen door";
+        return "in a crate in the kitchen";
     const d = g.deliveries.filter((x) => (x.slip[item] ?? 0) > 0).sort((a, b) => a.day - b.day)[0];
     return d ? `coming ${whenText(g, d.day)}` : undefined;
 }

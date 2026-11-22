@@ -1,4 +1,6 @@
 // Wiring: input, the main loop, and the order systems run in.
+import { holdInsight, updateInsight } from "./ui/innsight.js";
+import { grid } from "./ui/cards.js";
 import { updateUpkeep } from "./upkeep.js";
 import { SELL_BACK_SHARE_WORDS } from "./shop.js";
 import { TUNING } from "./data.js";
@@ -134,6 +136,11 @@ window.addEventListener("keydown", (e) => {
         return;
     }
     const k = e.key.toLowerCase();
+    if (k === "alt") {
+        e.preventDefault();
+        holdInsight("key", e.shiftKey ? "debug" : "on");
+        return;
+    }
     keys.add(k);
     if (e.repeat)
         return;
@@ -224,8 +231,12 @@ window.addEventListener("keyup", (e) => {
     }
     if (k === "f")
         g.hurrying = false;
+    if (k === "alt") {
+        e.preventDefault();
+        holdInsight("key", null);
+    }
 });
-window.addEventListener("blur", () => { keys.clear(); g.holdingSpace = false; g.hurrying = false; });
+window.addEventListener("blur", () => { keys.clear(); g.holdingSpace = false; g.hurrying = false; holdInsight("key", null); });
 // Out of sight pauses: another tab, a minimised window, or (Chrome/Edge) a window covering it.
 // Focus alone doesn't: the address bar or devtools take it too, and the game is still on screen.
 document.addEventListener("visibilitychange", () => { if (document.hidden)
@@ -480,6 +491,7 @@ initPad({
     paused: () => g.paused,
     setWalk: (v, run) => { padWalk = v; padRun = run; },
     zoomBy: (f) => setZoom(zoom() * f, false),
+    insight: (mode) => holdInsight("pad", mode),
     cardStep: (by) => {
         handIndex = (handIndex + by + HAND.length) % HAND.length;
         showHandPick();
@@ -928,7 +940,7 @@ function openPause() {
         let panel = "";
         if (pauseTab === "game") {
             panel = `<div class="set-list">
-        <button class="set-btn" data-pick="objectives">✅ Toggle objectives <small>${g.showObjectives ? "shown now" : "hidden now"}</small></button>
+        <button class="set-btn" data-pick="objectives">📋 Today's list in the log <small>${g.showObjectives ? "shown now" : "hidden now"}</small></button>
         <button class="set-btn" data-pick="howto">❔ How to play</button>
         <button class="set-btn" data-pick="keys">⌨️ Keys and controls <small>keybind: H</small></button>
         <button class="set-btn" data-pick="restart">🗑️ Start Over? <small>all your progress will be erased</small></button>
@@ -1092,6 +1104,7 @@ function openPause() {
 const KEYS = [
     { group: "Getting about", rows: [
             ["Click / tap the floor", "walk there (double: run)"], ["Right-click", "stop"], ["WASD or arrows", "walk"], ["Shift", "run"],
+            ["Hold Alt", "Innsight: read the room (Shift+Alt: with what only a debugger sees)"],
         ] },
     { group: "Using things", rows: [
             ["Click / tap a thing or person", "go and use it"], ["Space", "use what's in reach: serve, pick up, pour, cook"],
@@ -1109,7 +1122,7 @@ const KEYS = [
             ["Wheel / pinch / [ ]", "zoom"], ["V", "top-down or isometric"], [", .", "turn the isometric camera"],
         ] },
     { group: "Controller (PS5 or similar)", rows: [
-            ["Left stick", "walk (all the way, or R2: run)"], ["✕", "use, like Space (hold: hurry, clean)"],
+            ["Left stick", "walk (all the way: run)"], ["Hold L2", "Innsight: read the room (R2: with what only a debugger sees)"], ["✕", "use, like Space (hold: hurry, clean)"],
             ["L1 / R1", "pick between things in reach · menu tabs"],
             ["D-pad ← →, ↑", "choose a card, play it"], ["D-pad ↓ / hold ↓", "put down (a dish back, or a tray) / empty a pot"], ["Right stick", "zoom ↑↓ · turn the camera ←→"],
             ["In menus", "✕ pick · △ take one off · □ confirm (Cook, Put up…) · ○ back or close"],
@@ -1117,7 +1130,7 @@ const KEYS = [
             ["R3 · Options · touchpad or Create", "isometric · pause · this list"], ["Arranging", "stick moves the cursor · ✕ click · □ buy · △ next delivered · L2 sell it"],
         ] },
     { group: "The day", rows: [
-            ["J", "journal"], ["K", "calendar"], ["O", "objectives"], ["− / =", "slower / faster"],
+            ["J", "journal"], ["K", "calendar"], ["O", "today's list in the log"], ["− / =", "slower / faster"],
             ["M", "sound on or off"], ["P / Esc", "pause and settings"], ["H", "this list"], ["` / F2", "debug"],
         ] },
 ];
@@ -1132,17 +1145,29 @@ function openKeys(fromPause = false) {
 }
 // A welcome before anything moves. The clock starts when the player presses Start.
 const touch = window.matchMedia("(pointer: coarse)").matches;
-const controls = touch
-    ? `<b>Tap</b> the floor to walk, <b>double tap</b> to run. <b>Tap</b> things and people to use them. <b>Keep your finger</b> on a pot or a mess to hurry or clean. The buttons on the side do the rest.`
-    : `<b>Click</b> the floor to walk, <b>click</b> things and people to use them, <b>double-click</b> to run, <b>right-click</b> to stop. Or <b>WASD</b> to walk (<b>Shift</b> runs) and <b>Space</b> to use. Hold <b>Space</b> or <b>F</b> to hurry cooking; hold <b>Space</b> or the mouse on a mess to clean it. <b>R</b> puts back a dish picked up by mistake; <b>X</b> empties a pot. When several things are in reach, <b>Tab</b> picks one. The <b>wheel</b> zooms; <b>V</b> switches to an isometric view. <b>P</b> pauses; <b>H</b> lists every key.`;
 function welcomeBody() {
+    const day = [
+        ["🌅", "6:00", "wake up"], ["📜", "", "choose the menu"], ["🍲", "", "start the pots"], ["🚪", "", "open the door"],
+        ["🍺", "", "serve"], ["🔔", "", "last call"], ["🌙", "2:00", "turn in"],
+    ].map(([icon, time, what]) => `<li><span class="wd-ic">${icon}</span><b>${time}</b><span>${what}</span></li>`).join("");
+    const cards = [
+        { pick: "order", icon: "🧾", name: "Guests Order", fact: "Food at tables, drinks at the counter",
+            body: `<div class="desc">Cook it in the kitchen, pour it at the taps, carry it over on your two trays.</div>` },
+        { pick: "tastes", icon: "🎭", name: "Hidden Tastes", fact: "What goes in decides how it lands",
+            body: `<div class="desc">Watch how people react. Your journal remembers; hold ${padActive() ? "L2" : "Alt"} to read the room.</div>` },
+        { pick: "coin", icon: "🪙", name: "Coin", fact: "They pay for what they order",
+            body: `<div class="desc">A delighted guest tips. Spend it at the desk on supplies and equipment.</div>` },
+        { pick: "rush", icon: "🌿", name: "No Rush", fact: "Nothing burns, nothing is ruined",
+            body: `<div class="desc">The Today list on the left shows where to start.</div>` },
+    ];
+    const keys = touch ? [["Tap", "walk · use"], ["Double tap", "run"], ["Hold", "hurry · clean"]]
+        : padActive() ? [["Left stick", "walk"], ["✕", "use"], ["□", "hurry"], ["L1 R1", "pick"], ["L2", "read the room"], ["Options", "pause"]]
+            : [["WASD", "walk"], ["Space", "use"], ["F", "hurry"], ["Tab", "pick"], ["Alt", "read the room"], ["P", "pause"], ["H", "all keys"]];
     return `<div class="welcome">
-    <p><b>${longDate(g.date)}.</b></p>
-    <p>You're the keeper. Each day you wake at 6, get the inn ready, open the door, and look after whoever comes in.</p>
-    <p><b>Guests order</b> food at tables and drinks at the counter. Cook in the kitchen and pick dishes up where they were made, pour at the taps, and carry them over on your two trays.</p>
-    <p><b>Everyone has hidden tastes.</b> Which ingredients you choose decides how a dish lands. Watch how people react, and read your <b>journal</b> at the desk: regulars reward getting to know them.</p>
-    <p><b>Nothing burns, nothing is ruined,</b> and there's no rush. The checklist on the side ("Today") shows where to start.</p>
-    <p class="muted">${controls}</p>
+    <p class="wl-date">${longDate(g.date)}. You're the keeper.</p>
+    <ol class="wl-day">${day}</ol>
+    ${grid(cards, { cols: 4 })}
+    <div class="wl-keys">${keys.map(([k, what]) => `<span><kbd>${padGlyphs(k)}</kbd>${what}</span>`).join("")}</div>
   </div>`;
 }
 if (g.location) {
@@ -1229,7 +1254,8 @@ function frame(now) {
     updateMenuGuide(g);
     watchObjectives(g);
     soundscape(g, realDt);
-    view = settings.iso ? computeIsoView(canvas, g, 34, statusClearance(), zoom(), settings.rot ?? 0) : computeView(canvas, g, 22, statusClearance(), zoom());
+    const lens = updateInsight(realDt);
+    view = settings.iso ? computeIsoView(canvas, g, 34, statusClearance(), zoom() * lens, settings.rot ?? 0) : computeView(canvas, g, 22, statusClearance(), zoom() * lens);
     (view.iso ? drawIso : draw)(ctx, g, view, g.arranging ? null : target, clickDest);
     drawArrange(ctx, g, view);
     drawViewNote();

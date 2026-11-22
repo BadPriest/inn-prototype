@@ -56,7 +56,7 @@ export function openCalendar(g) {
             f.weather ? `${f.weather}.` : f.day < 1 ? "Before you came." : "",
             f.market ? "🧺 Market day." : "",
             f.due.length ? `📦 Your order from ${f.due.join(" and ")} comes.` : "",
-            f.crates ? "📦 A delivery is waiting at the kitchen door." : "",
+            f.crates ? "📦 A delivery is waiting in the kitchen." : "",
         ].filter(Boolean).join(" ");
         return {
             title: `📅 ${today.seasonName}, year ${today.year}`,
