@@ -111,7 +111,13 @@ export function draw(ctx, g, v, target, clickDest) {
             }
             if (k === "table") {
                 ctx.fillStyle = "#6b4a30";
-                ctx.fillRect(x + ts * 0.08, y + ts * 0.08, ts * 0.84, ts * 0.84);
+                if (g.world.furniture.find((f) => f.id === t.equip)?.equip?.standing) {
+                    ctx.beginPath();
+                    ctx.arc(x + ts / 2, y + ts / 2, ts * 0.42, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                else
+                    ctx.fillRect(x + ts * 0.08, y + ts * 0.08, ts * 0.84, ts * 0.84);
             }
             if (k === "chair") {
                 ctx.fillStyle = "#4e3826";

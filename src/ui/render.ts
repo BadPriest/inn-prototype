@@ -107,7 +107,11 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
         } else ctx.fillRect(x + ts * 0.08, y + ts * 0.08, ts * 0.84, ts * 0.84);
       }
       if (k === "counter") { ctx.fillStyle = "#5a3d28"; ctx.fillRect(x, y + ts * 0.1, ts, ts * 0.8); }
-      if (k === "table") { ctx.fillStyle = "#6b4a30"; ctx.fillRect(x + ts * 0.08, y + ts * 0.08, ts * 0.84, ts * 0.84); }
+      if (k === "table") {
+        ctx.fillStyle = "#6b4a30";
+        if (g.world.furniture.find((f) => f.id === t.equip)?.equip?.standing) { ctx.beginPath(); ctx.arc(x + ts / 2, y + ts / 2, ts * 0.42, 0, Math.PI * 2); ctx.fill(); }
+        else ctx.fillRect(x + ts * 0.08, y + ts * 0.08, ts * 0.84, ts * 0.84);
+      }
       if (k === "chair") { ctx.fillStyle = "#4e3826"; ctx.fillRect(x + ts * 0.28, y + ts * 0.28, ts * 0.44, ts * 0.44); }
       if (k === "bench") { ctx.fillStyle = "#4e3826"; ctx.fillRect(x + ts * 0.12, y + ts * 0.12, ts * 0.76, ts * 0.76); }
       if (k === "stool") {

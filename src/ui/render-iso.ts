@@ -367,6 +367,15 @@ function drawSolid(ctx: CanvasRenderingContext2D, g: Game, v: View, s: Solid, by
     drawBox(ctx, v, { x0: t.x + 0.78, x1: t.x + 0.94, y0: t.y + 0.08, y1: t.y + 0.92, z: 0.5, color: "#6b4a32", faceU: true, faceW: true });
     return;
   }
+  if (s.f?.kind === "table" && s.f.equip?.standing) {
+    // A standing table: round, on a single leg, taller than a sitting one.
+    const cx = t.x + 0.5, cy = t.y + 0.5, top = s.z + 0.16, r = 0.42;
+    drawBox(ctx, v, { x0: cx - 0.07, x1: cx + 0.07, y0: cy - 0.07, y1: cy + 0.07, z: top, color: shade(colorOf(g, t, s.f), 0.8), faceU: true, faceW: true });
+    const disc = (z: number) => { ctx.beginPath(); for (let i = 0; i <= 24; i++) { const a = (i / 24) * Math.PI * 2; const p = P(v, cx + Math.cos(a) * r, cy + Math.sin(a) * r, z); if (i) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); } ctx.closePath(); };
+    ctx.fillStyle = shade(colorOf(g, t, s.f), 0.6); disc(top - 0.05); ctx.fill();
+    ctx.fillStyle = colorOf(g, t, s.f); disc(top); ctx.fill();
+    return;
+  }
   const b = boxFor(g, v, s, byTile);
   drawBox(ctx, v, b);
   if (t.def.name === "Window") {
