@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 23, 2026 · build 122 (deployed) · https://inn-prototype.vercel.app
+Updated Nov 23, 2026 · build 123 (deployed) · https://inn-prototype.vercel.app
 
 History by build: [../CHANGELOG.md](../CHANGELOG.md). What the prototype is and how to play: [../README.md](../README.md).
 
@@ -26,7 +26,7 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
 
-## Built, not deployed (Nov 23, build 123)
+## Built and deployed (Nov 23, build 123)
 
 - #81 wear: a share of takings and tips per messy guest (0.4%, up to 10%), listed as mishaps in the tally; Keen eye knack
 - #65 hearth cooking: hooks over the fire (1/2/3 by tier), hanging pot, cooks while lit; stoves in three tiers (1+1, 2+2, 2+2+oven); shop sorted into six categories by line and tier

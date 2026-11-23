@@ -6,7 +6,7 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
-## Build 123 · Nov 23, 2026 · not deployed
+## Build 123 · Nov 23, 2026 · deployed
 
 ### Added
 - **Wear.** When you turn in, the day's small mishaps take a share of the takings and tips: 0.4% for each messy guest who came in, up to 10%. The purse placard lists them under a Wear line, up to four with a cost each ("a candle, eaten on a dare: 4d"), drawn from 81. In an autopilot week it came to 2.5–7.5s a day.
