@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 23, 2026 · build 123 (deployed) · https://inn-prototype.vercel.app
+Updated Nov 23, 2026 · build 124 (deployed) · https://inn-prototype.vercel.app
 
 History by build: [../CHANGELOG.md](../CHANGELOG.md). What the prototype is and how to play: [../README.md](../README.md).
 
@@ -26,7 +26,7 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
 
-## Built and deployed (Nov 23, build 123)
+## Built and deployed (Nov 23, builds 123–124)
 
 - #81 wear: a share of takings and tips per messy guest (0.4%, up to 10%), listed as mishaps in the tally; Keen eye knack
 - #65 hearth cooking: hooks over the fire (1/2/3 by tier), hanging pot, cooks while lit; stoves in three tiers (1+1, 2+2, 2+2+oven); shop sorted into six categories by line and tier
@@ -34,6 +34,7 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - #66 (2 of 3) breakdowns: health by tier, wears per serving, breaks more as it wears; tinker (15% of price, ~2 h), look over (+15, daily), Handy and Gentle hands knacks; 5 s bar for now
 - #66 (3 of 3) tinker's cart: 3 used pieces a week (Mondays), 40–60% price, 35–70% health, already worn in, half with an odd used-only trait; wear follows gear between stoves
 - #104 tables and seats: bought and placed in the taproom (room empty); standing/small/square/six-seat tables, chairs, stools, benches in quality tiers with comfort and feel values (unused yet); chairs count up to a table's seats; seats must stay reachable
+- #106 Innsight slowdown: the full-screen saturation blend (CPU fallback) replaced by a GPU CSS filter, guests and cards on an overlay canvas
 
 ## Built and deployed (Nov 23, build 122)
 

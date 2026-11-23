@@ -6,7 +6,7 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
-## Build 124 · Nov 23, 2026 · not deployed
+## Build 124 · Nov 23, 2026 · deployed
 
 ### Fixed
 - **Innsight no longer slows the game down.** The room was greyed by blending a colour over the whole picture every frame, a kind of blend the graphics card can't do, so the browser drew it slowly by hand. Now the room's picture is greyed by a filter the graphics card applies, and the guests and cards are drawn on a clear layer over it. In a test with 11 guests, a frame with Innsight on cost about as much as one without (it was about half as much again before); on a real graphics card the difference should be bigger. Text widths on the cards are also kept rather than measured every frame.
