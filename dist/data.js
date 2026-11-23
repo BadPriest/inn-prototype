@@ -176,7 +176,7 @@ export const SMALL_MAP = [
 ];
 export const INNS = [
     {
-        id: "small", name: "A small tavern", icon: "🏠", traits: ["easiest start", "cosy", "one keeper"],
+        id: "small", name: "A small tavern", icon: "🏠", traits: ["easiest start", "cosy", "one keeper"], startUsed: ["twoHobStove"],
         blurb: "Two tables, three stools at a short bar, a small fire. A used two-hob stove, a kettle and a barrel of ale; no oven yet. The spare room is let to a tenant.",
         back: "One fire, one keeper, and a room small enough to hear every order. By the end of the week you'll know every face.",
         map: SMALL_MAP,

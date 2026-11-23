@@ -57,3 +57,6 @@ export function countMade(g: Game, slotId: string, servings: number, batch: bool
 
 /** The traits only used hardware has. */
 export const usedOnlyTraits = (): SeasoningTrait[] => S.traits.filter((t) => t.usedOnly);
+
+/** Servings made to reach each level from 2 up. */
+export const levelsAt = (): number[] => S.levelsAt;

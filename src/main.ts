@@ -1,5 +1,6 @@
 // Wiring: input, the main loop, and the order systems run in.
 
+import { wearInStartingPieces } from "./used.js";
 import { updateMending, updateTinker } from "./breakdowns.js";
 import { holdInsight, updateInsight } from "./ui/innsight.js";
 import { grid, type CardSpec } from "./ui/cards.js";
@@ -989,6 +990,7 @@ if (g.location) {
     g.location = id;
     openInnPicker((inn) => {
       g.setInn(inn);
+      wearInStartingPieces(g);
       buildRooms(g); // sound carries through this inn's rooms
       g.weather = newWeather(g.date.season, g.loc);
       g.log.length = 0;

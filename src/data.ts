@@ -239,6 +239,8 @@ export interface Inn {
   rooms: { text: string; x: number; y: number }[];
   lamps: { x: number; y: number; r: number }[];
   roomLinks: [string, string][];
+  /** Equipment that comes used: worn in to level 2 with one trait, and part worn down, like a piece off the tinker's cart. */
+  startUsed?: string[];
 }
 
 /**
@@ -265,7 +267,7 @@ export const SMALL_MAP: string[] = [
 
 export const INNS: Inn[] = [
   {
-    id: "small", name: "A small tavern", icon: "🏠", traits: ["easiest start", "cosy", "one keeper"],
+    id: "small", name: "A small tavern", icon: "🏠", traits: ["easiest start", "cosy", "one keeper"], startUsed: ["twoHobStove"],
     blurb: "Two tables, three stools at a short bar, a small fire. A used two-hob stove, a kettle and a barrel of ale; no oven yet. The spare room is let to a tenant.",
     back: "One fire, one keeper, and a room small enough to hear every order. By the end of the week you'll know every face.",
     map: SMALL_MAP,

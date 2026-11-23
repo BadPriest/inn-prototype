@@ -1,5 +1,6 @@
 import { EQUIPMENT_DATA } from "./gamedata.gen.js";
-import { EQUIPMENT, pieceById } from "./data.js";
+import { EQUIPMENT, innOf, pieceById } from "./data.js";
+import { levelsAt } from "./seasoning.js";
 import { roll, seasonLevel, usedOnlyTraits } from "./seasoning.js";
 import { mostHealth } from "./breakdowns.js";
 import { spend, fmtMoney } from "./money.js";
@@ -73,4 +74,15 @@ export function unplacedPaid(g, type) {
     const paid = g.usedWaiting[i].state.paid;
     g.usedWaiting.splice(i, 1);
     return paid || undefined;
+}
+/** A new game: the inn's used pieces come worn in to level 2, with one trait, and part worn down. */
+export function wearInStartingPieces(g) {
+    for (const type of innOf(g.inn).startUsed ?? []) {
+        const p = g.layout.find((x) => x.type === type);
+        if (!p)
+            continue;
+        const [two, three] = levelsAt();
+        const t = roll(2, [], true, type);
+        g.seasoning[p.uid] = { made: two + Math.floor(Math.random() * (three - two)), traits: t ? [t.id] : [], batches: true, health: Math.round(mostHealth(type) * between(U.health)) };
+    }
 }

@@ -51,3 +51,5 @@ export function countMade(g, slotId, servings, batch) {
 }
 /** The traits only used hardware has. */
 export const usedOnlyTraits = () => S.traits.filter((t) => t.usedOnly);
+/** Servings made to reach each level from 2 up. */
+export const levelsAt = () => S.levelsAt;
