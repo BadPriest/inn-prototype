@@ -19,10 +19,15 @@ export const SELL_BACK_SHARE_WORDS = ECONOMY_DATA.sellBackShare === 0.5 ? "half"
 const nameOf = (id: string) => pieceById(id)?.name ?? id;
 /** Utensils and trays: owned and used, never placed. */
 export const isCarried = (id: string) => CARRIED.some((x) => x.id === id);
-/** A utensil or tray the keeper has, or has something better in its line. */
+/** The hearth the inn has now. */
+export const hearthPiece = (g: Game) => g.layout.find((p) => pieceById(p.type)?.hearth);
+/** Bought once, never placed by hand: utensils, trays, and the hearth. */
+export const isUpgrade = (id: string) => isCarried(id) || !!pieceById(id)?.hearth;
+/** A utensil, tray or hearth the keeper has, or has something better in its line. */
 export function hasOrBetter(g: Game, id: string): boolean {
   const p = pieceById(id);
   if (!p?.line) return false;
+  if (p.hearth) return (pieceById(hearthPiece(g)?.type ?? "")?.tier ?? 1) >= (p.tier ?? 1);
   return (bestInLine(g.upgrades, p.line)?.tier ?? 0) >= (p.tier ?? 1);
 }
 
@@ -54,7 +59,9 @@ export function fetchThing(g: Game, id: string): boolean {
 }
 
 function receive(g: Game, id: string): void {
-  if (isCarried(id)) g.upgrades.add(id);
+  const hearth = pieceById(id)?.hearth ? hearthPiece(g) : undefined;
+  if (hearth) { hearth.type = id; g.rebuildWorld(); }
+  else if (isCarried(id)) g.upgrades.add(id);
   else g.toPlace.push(id);
 }
 
@@ -67,7 +74,7 @@ export function carterArrives(g: Game): void {
   const list = came.map((id) => nameOf(id).toLowerCase()).join(", ");
   const gear = came.filter((id) => pieceById(id)?.type === "gear");
   g.newGear.push(...gear);
-  const place = came.some((id) => !isCarried(id) && !gear.includes(id)) ? " Place it from the desk: Arrange the kitchen." : gear.length ? " Set it on a stove from the stove's Manage stove tab." : "";
+  const place = came.some((id) => !isUpgrade(id) && !gear.includes(id)) ? " Place it from the desk: Arrange the kitchen." : gear.length ? " Set it on a stove from the stove's Manage stove tab." : "";
   g.say(`🛻 The carter's been: ${list}.${place}`);
 }
 

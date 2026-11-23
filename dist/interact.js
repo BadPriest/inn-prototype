@@ -102,7 +102,7 @@ export function findTargets(g) {
         consider({ type: "furniture", f }, { x: near.x + 0.5, y: near.y + 0.5 }, FURNITURE_RANGE);
         // A station with several parts (a hob, a kettle, a coffee pot): Tab picks each on its own.
         const parts = (f.slots ?? []).filter((sl) => recipesFor(g, sl).length || g.pots.has(sl.id) || g.jobs.has(sl.id) || g.shelves.get(sl.id)?.length);
-        if (f.kind === "station" && parts.length > 1)
+        if ((f.kind === "station" && parts.length > 1) || (f.kind === "fireplace" && parts.length))
             parts.forEach((part, i) => consider({ type: "furniture", f, part }, { x: near.x + 0.5, y: near.y + 0.5 }, FURNITURE_RANGE, 0.001 * (i + 1)));
     }
     for (const p of g.patrons) {
@@ -162,6 +162,12 @@ export function promptFor(g, t) {
                 return `${tap} · hold to wipe${tableDirt(g, f) >= TUNING.tableDirtyAt ? " (it's dirty)" : ""}`;
             return n && !trayItems(g).length ? `${n} waiting here · ${tap}` : tap;
         }
+        case "fireplace":
+            if (!t.part)
+                return `${g.fireLit ? (hasBackSpots(f) ? "Space: bank the fire, or see to the hooks" : "Space: put out the fire") : hasFirewood(g) ? "Space: light the fire" : "No firewood to light it"} · 🪵 ${Math.floor(have(g, "firewood"))} logs`;
+            if (!g.fireLit && g.jobs.has(t.part.id))
+                return `${t.part.name}: waiting for the fire to be lit`;
+        // falls through: a hook over the fire is used like any place to cook
         case "station": {
             if (t.part) {
                 const job = g.jobs.get(t.part.id);
@@ -215,7 +221,6 @@ export function promptFor(g, t) {
             return `Space: pour ${RECIPES.find((r) => r.id === f.tap)?.name.toLowerCase()}`;
         case "garnish": return `Space or E: garnish a ${garnishKindAt(f.name) === "food" ? "dish" : "drink"}`;
         case "frontdoor": return g.open ? (g.lastCall ? "Space: bolt the door" : "Space: call last orders") : "Space: open the inn";
-        case "fireplace": return `${g.fireLit ? "Space: put out the fire" : hasFirewood(g) ? "Space: light the fire" : "No firewood to light it"} · 🪵 ${Math.floor(have(g, "firewood"))} logs`;
         case "bed": return "Space: turn in";
         case "wardrobe": return "Space: the wardrobe (change your coat)";
         case "desk": return g.paper && !g.paper.read ? "Space: the desk (today's paper is here)" : "Space: bill of fare, paper, equipment, journal";
@@ -347,14 +352,28 @@ export function interact(g, t) {
         case "frontdoor":
             toggleInn(g);
             return;
-        case "fireplace":
-            if (!g.fireLit && !hasFirewood(g)) {
-                g.say("🪵 No firewood to light it with. Order some at the desk (Supplies).");
+        case "fireplace": {
+            if (t.part) {
+                usePart(g, f, t.part);
                 return;
             }
-            g.fireLit = !g.fireLit;
-            g.say(g.fireLit ? "The fire catches and crackles." : "You bank the fire.");
+            const toggle = () => {
+                if (!g.fireLit && !hasFirewood(g)) {
+                    g.say("🪵 No firewood to light it with. Order some at the desk (Supplies).");
+                    return;
+                }
+                g.fireLit = !g.fireLit;
+                g.say(g.fireLit ? "The fire catches and crackles." : (f.slots ?? []).some((sl) => g.jobs.get(sl.id) && !g.jobs.get(sl.id).done) ? "You bank the fire. What's over it stops cooking until it's lit again." : "You bank the fire.");
+            };
+            if (!g.fireLit || !hasBackSpots(f)) {
+                toggle();
+                return;
+            }
+            const plan = stationPlan(g, f);
+            const bank = { label: "🔥 Bank the fire", sub: "saves firewood; the hooks stop cooking", short: "bank", main: true, run: toggle };
+            openActCards(g, f, "The fire's lit", [bank, ...(plan.direct ? [plan.direct] : plan.choices)]);
             return;
+        }
         case "bed":
             askTurnIn(g);
             return;
@@ -587,7 +606,7 @@ function openActCards(g, f, subtitle, acts) {
  * its shelf); anywhere else, a tray goes down on the nearest free spot.
  */
 export function putDownHere(g, t) {
-    const f = t?.type === "furniture" && t.f.kind === "station" ? t.f : null;
+    const f = t?.type === "furniture" && (t.f.kind === "station" || t.f.kind === "fireplace") ? t.f : null;
     if (f && sideActs(g, f, "put back").length) {
         runSide(g, f, "put back", "Put back which?");
         return;
@@ -604,7 +623,7 @@ export function putDownHere(g, t) {
 }
 /** X: empty a pot, urn or kettle so it's free to cook again. */
 export function emptyHere(g, t) {
-    const f = t?.type === "furniture" && t.f.kind === "station" ? t.f : null;
+    const f = t?.type === "furniture" && (t.f.kind === "station" || t.f.kind === "fireplace") ? t.f : null;
     if (!f || !sideActs(g, f, "empty it").length) {
         g.say("Stand at a pot, urn or kettle to empty it.");
         return;

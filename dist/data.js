@@ -80,7 +80,9 @@ export const TILE_LEGEND = {
     X: { kind: "furniture", floor: C.entry, label: "Coats", name: "Coat rack", interact: "coats" },
 };
 export const EQUIP_GROUPS = [
-    { id: "cooking", name: "Cooking", icon: "🔥" },
+    { id: "stoves", name: "Stoves and ovens", icon: "🍳" },
+    { id: "hearth", name: "Hearth", icon: "🔥" },
+    { id: "cookware", name: "Pots and pans", icon: "🍲" },
     { id: "drinks", name: "Drinks", icon: "🍺" },
     { id: "storage", name: "Storage", icon: "🗄️" },
     { id: "serving", name: "Serving", icon: "🍽️" },
@@ -95,7 +97,7 @@ function placedPiece(e) {
     const slots = e.type === "crafting" ? (e.slots ?? []).filter((sl) => !isHotDrinkSlot(sl))
         : e.type === "gear" ? [{ name: e.name, kinds: e.usedIn ?? [] }]
             : [];
-    const kind = STORAGE_KIND[holds[0] ?? ""];
+    const kind = e.hearth ? "fireplace" : STORAGE_KIND[holds[0] ?? ""];
     return {
         id: e.id, name: e.name, label: e.label ?? e.name, icon: e.icon,
         w: shape[0].length, h: shape.length, slots, blurb: e.text?.shopCard ?? "",
@@ -104,6 +106,7 @@ function placedPiece(e) {
         hotSlots: (e.slots ?? []).filter(isHotDrinkSlot).length || undefined,
         kind, tap: kind === "tap" ? holds[0] : undefined,
         group: e.shopTab, fuel: e.fuel,
+        hearth: e.hearth, hearthOnly: e.hearthOnly, line: e.line, tier: e.tier,
     };
 }
 export const EQUIPMENT_PIECES = EQUIPMENT_DATA.equipment;
@@ -137,9 +140,9 @@ export const LEGACY_EQUIPMENT_ID = {
 };
 export const currentEquipmentId = (id) => LEGACY_EQUIPMENT_ID[id] ?? id;
 /** Where the first equipment stands, by map letter. */
-export const EQUIPMENT_OF_TILE = { S: "woodStove", T: "twoHobStove", O: "breadOven", K: "prepTable", H: "teaKettle", V: "coffeePot", Z: "pieSafe", A: "aleBarrel", Y: "ciderBarrel" };
+export const EQUIPMENT_OF_TILE = { F: "openHearth", S: "woodStove", T: "twoHobStove", O: "breadOven", K: "prepTable", H: "teaKettle", V: "coffeePot", Z: "pieSafe", A: "aleBarrel", Y: "ciderBarrel" };
 /** What's under an equipment letter once it's lifted off the map. */
-export const UNDER_EQUIPMENT = { S: ",", T: ",", R: ",", O: ",", K: ",", H: "n", V: "n", Z: "n", A: "n", Y: "n" };
+export const UNDER_EQUIPMENT = { F: "F", S: ",", T: ",", R: ",", O: ",", K: ",", H: "n", V: "n", Z: "n", A: "n", Y: "n" };
 /** Tiles equipment can stand on: the kitchen floor, behind the bar, and the nooks in the counter wall. */
 export const PLACEABLE_ON = [",", "_", "n"];
 /** Which drink each tap letter pours. */

@@ -25,7 +25,7 @@ function tabOf(r) {
     return "meals";
 }
 const BOOK = RECIPES.filter((r) => !r.internal && r.station !== "tap" && (costOf(r.id) > 0 || SKILLS.startKnown.includes(r.id)));
-const ROMAN = ["", "I", "II", "III", "IV", "V"];
+export const ROMAN = ["", "I", "II", "III", "IV", "V"];
 const pts = (n) => `${n} point${n === 1 ? "" : "s"}`;
 let lastTab = "meals";
 export function openSkills(g, changed) {

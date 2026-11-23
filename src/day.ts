@@ -168,6 +168,12 @@ export function load(g: Game): void {
         g.layout = g.layout.filter((p) => p !== q);
         if (!setOnStove(q, g.layout)) g.toPlace.push(q.type);
       }
+      // Saved before the hearth took hooks: it's the plain one. Gear past a smaller stove's spots waits on the shelf.
+      if (!g.layout.some((p) => EQUIPMENT.find((e) => e.id === p.type)?.hearth)) g.layout.push(...defaultLayout(g.inn).filter((p) => EQUIPMENT.find((e) => e.id === p.type)?.hearth));
+      for (const p of g.layout) {
+        const spots = EQUIPMENT.find((e) => e.id === p.type)?.hotSlots ?? 0;
+        for (const q of g.layout.filter((x) => x.on === p.uid).slice(spots)) { g.layout = g.layout.filter((x) => x !== q); g.toPlace.push(q.type); }
+      }
       // Saved before barrels could be bought: they were part of the inn then, so they stand where they were.
       if (g.inn === "medium" && !g.layout.some((p) => p.type === "aleBarrel" || p.type === "ciderBarrel")) {
         for (const p of defaultLayout()) if (p.type === "aleBarrel" || p.type === "ciderBarrel") g.layout.push(p);

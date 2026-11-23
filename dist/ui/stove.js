@@ -10,7 +10,7 @@ const gearOf = (id) => EQUIPMENT.find((e) => e.id === id && e.gear);
 export const hasBackSpots = (f) => (f.equip?.hotSlots ?? 0) > 0;
 /** The tabs on a stove's screens: whatever its own tabs are, then Manage stove. */
 export function stoveTabs(own, current, pick) {
-    return { list: [...own, { id: "manage", name: "🔧 Manage stove" }].map((t) => ({ id: t.id, label: t.name })), current, pick };
+    return { list: [...own, { id: "manage", name: "🔧 Manage" }].map((t) => ({ id: t.id, label: t.name })), current, pick };
 }
 /** Spare gear on the shelf: bought or taken off, not on a stove. */
 const spares = (g) => [...new Set(g.toPlace.filter((id) => gearOf(id)))];
@@ -20,7 +20,9 @@ export function manageStoveSpec(g, stoveId, own, leave, st = { focus: 0, holding
     const placed = g.layout.find((p) => p.uid === stoveId);
     const spots = f.equip?.hotSlots ?? 0;
     const on = g.layout.filter((p) => p.on === stoveId);
-    const spare = spares(g);
+    const hearth = !!f.equip?.hearth;
+    const spare = spares(g).filter((id) => hearth || !gearOf(id)?.hearthOnly);
+    const spotWord = hearth ? "hook" : "spot";
     const redraw = () => replaceMenu(manageStoveSpec(g, stoveId, own, leave, st));
     const rebuild = () => { g.rebuildWorld(); redraw(); };
     /** What's keeping a spot busy, if anything. */
@@ -67,8 +69,8 @@ export function manageStoveSpec(g, stoveId, own, leave, st = { focus: 0, holding
         const why = q ? busy(q.uid) : null;
         const pot = q ? g.pots.get(q.uid) : undefined;
         return {
-            pick: `spot:${i}`, icon: gear?.icon ?? "⬚", name: gear?.name ?? "Empty spot",
-            fact: `Spot ${i + 1}`,
+            pick: `spot:${i}`, icon: gear?.icon ?? "⬚", name: gear?.name ?? `Empty ${spotWord}`,
+            fact: `${hearth ? "Hook" : "Spot"} ${i + 1}`,
             status: st.holding ? (q ? `swap for the ${lowerName(gearOf(st.holding).name)}` : `put the ${lowerName(gearOf(st.holding).name)} here`) : !q ? "free" : why ? why : pot ? `${pot.left} left in it` : "take it off",
             tone: st.holding ? "good" : why ? "warn" : q ? undefined : "muted",
             does: st.holding ? (q ? "Swap them" : "Set it here") : q ? "Take it off, onto the shelf" : "Pick something from the shelf to set here",
@@ -82,7 +84,7 @@ export function manageStoveSpec(g, stoveId, own, leave, st = { focus: 0, holding
             fact: n > 1 ? `${n} on the shelf` : "on the shelf",
             status: st.holding === id ? "now pick a spot" : on.length < spots ? "set it on" : "swap it in",
             tone: "good",
-            does: on.length < spots ? "Set it on the stove" : "Choose which to swap it for",
+            does: on.length < spots ? (hearth ? "Hang it over the fire" : "Set it on the stove") : "Choose which to swap it for",
         };
     });
     const cards = [...spotCards, ...spareCards];
@@ -120,16 +122,18 @@ export function manageStoveSpec(g, stoveId, own, leave, st = { focus: 0, holding
         if (q)
             takeOff(q.uid, () => { g.say(`You take the ${lowerName(gearOf(q.type).name)} off and set it on the shelf.`); g.bus.emit({ type: "MenuSound", sound: "tick" }); rebuild(); });
     };
-    const hint = st.holding ? `Where should the ${lowerName(gearOf(st.holding).name)} go? Pick a spot on the stove.`
-        : spareCards.length ? "Pick something on the stove to take it off, or something on the shelf to set it on."
-            : "Pick something on the stove to take it off. Nothing spare on the shelf: kettles, coffee pots and a Dutch oven are bought at the desk.";
+    const where = hearth ? "over the fire" : "on the stove";
+    const hint = st.holding ? `Where should the ${lowerName(gearOf(st.holding).name)} go? Pick a ${spotWord} ${where}.`
+        : spareCards.length ? `Pick something ${where} to take it off, or something on the shelf to ${hearth ? "hang" : "set"} it on.`
+            : `Pick something ${where} to take it off. Nothing spare on the shelf: kettles, coffee pots, a Dutch oven${hearth ? " and a hanging pot" : ""} are bought at the desk.`;
     return {
         title: f.name,
         holdsClock: true,
-        subtitle: `${spots} spot${spots === 1 ? "" : "s"} at the back for a kettle, a coffee pot or a Dutch oven`,
+        subtitle: hearth ? `${spots} hook${spots === 1 ? "" : "s"} over the fire for a kettle, a coffee pot, a Dutch oven or a hanging pot · they cook while the fire's lit`
+            : `${spots} spot${spots === 1 ? "" : "s"} at the back for a kettle, a coffee pot or a Dutch oven`,
         tabs: own.length ? stoveTabs(own, "manage", (id) => { if (id !== "manage")
             leave(id); }) : undefined,
-        cards: `${heading(`On the stove, and on the shelf`, `${hint}`)}${grid(cards)}`,
+        cards: `${heading(hearth ? "Over the fire, and on the shelf" : "On the stove, and on the shelf", `${hint}`)}${grid(cards)}`,
         nav: { count: () => cards.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; redraw(); }, use: (i) => pick(cards[i].pick) },
         onPick: pick,
         cancel: st.holding ? { label: "Put it back", run: () => { st.holding = undefined; redraw(); } } : undefined,

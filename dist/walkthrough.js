@@ -148,7 +148,7 @@ export function worldGuide(g) {
         if (crate)
             return { at: { x: crate.x + 0.5, y: crate.y + 0.5 }, z: 0.9, size: 0.8, label: g.crates.length > 1 ? `📦 Unpack supplies (${g.crates.length})` : "📦 Unpack supplies" };
         const gear = g.newGear.find((id) => g.toPlace.includes(id));
-        const stove = gear ? g.world.furniture.find((f) => (f.equip?.hotSlots ?? 0) > 0) : undefined;
+        const stove = gear ? g.world.furniture.find((f) => (f.equip?.hotSlots ?? 0) > 0 && !!f.equip?.hearth === !!pieceById(gear)?.hearthOnly) : undefined;
         if (gear && stove)
             return { at: stove.center, z: 1.1, size: Math.max(1, stove.tiles.length * 0.6), label: `🔧 Set out the ${lowerName(pieceById(gear).name)}` };
         return null;
@@ -172,7 +172,7 @@ export function menuGuide(g, title, root) {
     const w = g.walkthrough, s = currentStep(g);
     if (!w || !s) {
         const gear = g.newGear.find((id) => g.toPlace.includes(id));
-        const stove = gear ? g.world.furniture.find((f) => (f.equip?.hotSlots ?? 0) > 0) : undefined;
+        const stove = gear ? g.world.furniture.find((f) => (f.equip?.hotSlots ?? 0) > 0 && !!f.equip?.hearth === !!pieceById(gear)?.hearthOnly) : undefined;
         if (gear && stove && title.startsWith(stove.name))
             return [{ sel: `[data-pick="spare:${gear}"]` }, { sel: '[data-pick="tab:manage"]' }];
         if (title !== "🕯️ Desk")

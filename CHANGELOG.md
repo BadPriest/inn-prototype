@@ -11,6 +11,11 @@ From build 92 on, every build that changes the game gets an entry here, with the
 ### Added
 - **Wear.** When you turn in, the day's small mishaps take a share of the takings and tips: 0.4% for each messy guest who came in, up to 10%. The purse placard lists them under a Wear line, up to four with a cost each ("a candle, eaten on a dare: 4d"), drawn from 81. In an autopilot week it came to 2.5–7.5s a day.
 - **Keen eye**, a new knack: wear is ¾, ½, then ¼ of what it would be (1, 1 and 2 points).
+- **Hearth cooking.** The fireplace has a hook over the fire for a kettle, a coffee pot, a Dutch oven or the new hanging pot (60 pence; stew, porridge or soup at three quarters of a hob's speed). What hangs there cooks only while the fire's lit, on the fire's own wood. An iron crane (250) gives two hooks, a cooking hearth (700) three; each replaces the last. With the fire lit, Space at the fireplace asks whether to bank it or see to the hooks.
+
+### Changed
+- **Stoves come in three tiers**: the wood stove has one hob and one small spot at the back (was two small spots), the two-hob stove two and two, and the range stove two hobs, two small spots and an oven (was one hob). In an older save, gear that no longer fits waits on the shelf.
+- **The equipment shop** is sorted into Stoves and ovens, Hearth, Pots and pans, Drinks, Storage and Serving, each line from its first tier up, with the tier on the card.
 
 ## Build 122 · Nov 23, 2026 · deployed
 

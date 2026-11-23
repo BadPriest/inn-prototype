@@ -100,13 +100,15 @@ export interface EquipmentPiece {
   type: EquipmentType;
   label?: string;
   shape?: string[];
-  shopTab: "cooking" | "drinks" | "storage" | "serving";
+  shopTab: "stoves" | "hearth" | "cookware" | "drinks" | "storage" | "serving";
   price: Pence;
   line?: string;
   tier?: number;
   slots?: { name: string; kinds: StationKind[] }[];
   craftingSpeed?: number;
   fuel?: "wood";
+  hearth?: boolean;
+  hearthOnly?: boolean;
   usedIn?: StationKind[];
   servingsBonus?: number;
   holds?: string[];

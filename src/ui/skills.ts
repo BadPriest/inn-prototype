@@ -29,7 +29,7 @@ function tabOf(r: Recipe): Tab {
 }
 
 const BOOK = RECIPES.filter((r) => !r.internal && r.station !== "tap" && (costOf(r.id) > 0 || SKILLS.startKnown.includes(r.id)));
-const ROMAN = ["", "I", "II", "III", "IV", "V"];
+export const ROMAN = ["", "I", "II", "III", "IV", "V"];
 const pts = (n: number) => `${n} point${n === 1 ? "" : "s"}`;
 let lastTab: Tab = "meals";
 

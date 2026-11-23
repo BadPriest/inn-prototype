@@ -3,27 +3,27 @@
 
   "equipment": [
     { "id": "woodStove", "name": "Wood stove", "icon": "🔥", "type": "crafting", "label": "Stove",
-      "shape": ["##"], "shopTab": "cooking", "price": 300,
-      "slots": [ { "name": "Hob", "kinds": ["stove", "griddle"] }, { "name": "Hot drinks", "kinds": ["kettle", "coffee"] }, { "name": "Hot drinks", "kinds": ["kettle", "coffee"] } ], "craftingSpeed": 1, "fuel": "wood",
-      "text": { "shopCard": "A small stove with one hob: a pot of stew or porridge, or a pan for eggs, toast or fish. Room at the back for a kettle and a coffee pot." } },
+      "shape": ["##"], "shopTab": "stoves", "line": "stove", "tier": 1, "price": 300,
+      "slots": [ { "name": "Hob", "kinds": ["stove", "griddle"] }, { "name": "Hot drinks", "kinds": ["kettle", "coffee"] } ], "craftingSpeed": 1, "fuel": "wood",
+      "text": { "shopCard": "A small stove with one hob: a pot of stew or porridge, or a pan for eggs, toast or fish. A small spot at the back for a kettle or a coffee pot." } },
 
     { "id": "twoHobStove", "name": "Two-hob stove", "icon": "🍳", "type": "crafting", "label": "Stove ⚬⚬",
-      "shape": ["##"], "shopTab": "cooking", "price": 600,
+      "shape": ["##"], "shopTab": "stoves", "line": "stove", "tier": 2, "price": 600,
       "slots": [ { "name": "Hob", "kinds": ["stove", "griddle"] }, { "name": "Hob", "kinds": ["stove", "griddle"] }, { "name": "Hot drinks", "kinds": ["kettle", "coffee"] }, { "name": "Hot drinks", "kinds": ["kettle", "coffee"] } ], "craftingSpeed": 1, "fuel": "wood",
-      "text": { "shopCard": "Two hobs: a pot and a pan, two pots, two pans, whatever the day needs. Room at the back for a kettle and a coffee pot." } },
+      "text": { "shopCard": "Two hobs: a pot and a pan, two pots, two pans, whatever the day needs. Two small spots at the back for a kettle and a coffee pot." } },
 
     { "id": "rangeStove", "name": "Range stove", "icon": "🥧", "type": "crafting", "label": "Range stove",
-      "shape": ["##"], "shopTab": "cooking", "price": 1200,
-      "slots": [ { "name": "Hob", "kinds": ["stove", "griddle"] }, { "name": "Oven", "kinds": ["oven"] }, { "name": "Hot drinks", "kinds": ["kettle", "coffee"] }, { "name": "Hot drinks", "kinds": ["kettle", "coffee"] } ], "craftingSpeed": 1, "fuel": "wood",
-      "text": { "shopCard": "A range stove: one hob on top and an oven below, for pies and roasts. Room at the back for a kettle and a coffee pot." } },
+      "shape": ["##"], "shopTab": "stoves", "line": "stove", "tier": 3, "price": 1200,
+      "slots": [ { "name": "Hob", "kinds": ["stove", "griddle"] }, { "name": "Hob", "kinds": ["stove", "griddle"] }, { "name": "Oven", "kinds": ["oven"] }, { "name": "Hot drinks", "kinds": ["kettle", "coffee"] }, { "name": "Hot drinks", "kinds": ["kettle", "coffee"] } ], "craftingSpeed": 1, "fuel": "wood",
+      "text": { "shopCard": "A range stove: two hobs on top and an oven below, for pies and roasts. Two small spots at the back for a kettle and a coffee pot." } },
 
     { "id": "breadOven", "name": "Bread oven", "icon": "🍞", "type": "crafting", "label": "Oven",
-      "shape": ["##"], "shopTab": "cooking", "price": 1500,
+      "shape": ["##"], "shopTab": "stoves", "price": 1500,
       "slots": [ { "name": "Oven", "kinds": ["oven"] }, { "name": "Oven", "kinds": ["oven"] } ], "craftingSpeed": 1, "fuel": "wood",
       "text": { "shopCard": "A big brick oven with room for two bakes at once: bread, pies, a roast, in any pair." } },
 
     { "id": "prepTable", "name": "Prep table", "icon": "🔪", "type": "crafting", "label": "Prep",
-      "shape": ["##"], "shopTab": "cooking", "price": 150,
+      "shape": ["##"], "shopTab": "stoves", "price": 150,
       "slots": [ { "name": "Table", "kinds": ["prep"] } ], "craftingSpeed": 1,
       "text": { "shopCard": "A scrubbed table and a good knife, for cold dishes put together by hand." } },
 
@@ -48,37 +48,57 @@
       "text": { "shopCard": "Set it on a stove. Brews twice as fast as the plain pot." } },
 
     { "id": "dutchOven", "name": "Dutch oven", "icon": "🫕", "label": "Dutch", "type": "gear", "line": "dutchOven", "tier": 1,
-      "shopTab": "cooking", "price": 120,
+      "shopTab": "hearth", "price": 120,
       "usedIn": ["oven"], "craftingSpeed": 0.6,
-      "text": { "shopCard": "A heavy lidded pot for the back of the stove, with embers on the lid. Bakes what an oven does (bread, pies, a roast), only slower, and it takes a hot-drink spot." } },
+      "text": { "shopCard": "A heavy lidded pot with embers on the lid, for a small spot on a stove or a hook over the fire. Bakes what an oven does (bread, pies, a roast), only slower." } },
+
+    { "id": "hangingPot", "name": "Hanging pot", "icon": "🪝", "label": "Pot", "type": "gear", "line": "hangingPot", "tier": 1,
+      "shopTab": "hearth", "price": 60, "hearthOnly": true,
+      "usedIn": ["stove"], "craftingSpeed": 0.75,
+      "text": { "shopCard": "An iron pot on a hook over the fire: stew, porridge or soup while the fire's lit, a little slower than a hob." } },
+
+    { "id": "openHearth", "name": "Pot hook", "icon": "🔥", "type": "crafting", "label": "Fire", "hearth": true, "line": "hearth", "tier": 1,
+      "shape": ["#", "#"], "shopTab": "hearth", "price": 0,
+      "slots": [ { "name": "Hook", "kinds": ["kettle", "coffee"] } ], "craftingSpeed": 1,
+      "text": { "shopCard": "The hearth as the inn came: one hook over the fire, for a kettle, a coffee pot, a Dutch oven or a hanging pot. It cooks only while the fire's lit." } },
+
+    { "id": "hearthCrane", "name": "Iron crane", "icon": "🔥", "type": "crafting", "label": "Fire", "hearth": true, "line": "hearth", "tier": 2,
+      "shape": ["#", "#"], "shopTab": "hearth", "price": 250,
+      "slots": [ { "name": "Hook", "kinds": ["kettle", "coffee"] }, { "name": "Hook", "kinds": ["kettle", "coffee"] } ], "craftingSpeed": 1,
+      "text": { "shopCard": "A swinging iron arm in the hearth: two hooks over the fire. It cooks only while the fire's lit." } },
+
+    { "id": "cookingHearth", "name": "Cooking hearth", "icon": "🔥", "type": "crafting", "label": "Fire", "hearth": true, "line": "hearth", "tier": 3,
+      "shape": ["#", "#"], "shopTab": "hearth", "price": 700,
+      "slots": [ { "name": "Hook", "kinds": ["kettle", "coffee"] }, { "name": "Hook", "kinds": ["kettle", "coffee"] }, { "name": "Hook", "kinds": ["kettle", "coffee"] } ], "craftingSpeed": 1,
+      "text": { "shopCard": "The hearth rebuilt for cooking: a crane, a trivet and a bar across, three hooks over the fire. It cooks only while the fire's lit." } },
 
     { "id": "stewPot", "name": "Stew pot", "icon": "🍲", "type": "utensil", "line": "pot", "tier": 1,
-      "shopTab": "cooking", "price": 40,
+      "shopTab": "cookware", "price": 40,
       "usedIn": ["stove"], "servingsBonus": 0,
       "text": { "shopCard": "A plain iron pot for stew, porridge or soup." } },
 
     { "id": "bigStewPot", "name": "Big stew pot", "icon": "🍲", "type": "utensil", "line": "pot", "tier": 2,
-      "shopTab": "cooking", "price": 250,
+      "shopTab": "cookware", "price": 250,
       "usedIn": ["stove"], "servingsBonus": 2,
       "text": { "shopCard": "Room for two more bowls in every pot." } },
 
     { "id": "pan", "name": "Frying pan", "icon": "🍳", "type": "utensil", "line": "pan", "tier": 1,
-      "shopTab": "cooking", "price": 40,
+      "shopTab": "cookware", "price": 40,
       "usedIn": ["griddle"], "craftingSpeed": 1,
       "text": { "shopCard": "A plain pan for eggs, toast or fish." } },
 
     { "id": "skillet", "name": "Cast-iron skillet", "icon": "🍳", "type": "utensil", "line": "pan", "tier": 2,
-      "shopTab": "cooking", "price": 200,
+      "shopTab": "cookware", "price": 200,
       "usedIn": ["griddle"], "craftingSpeed": 1.25,
       "text": { "shopCard": "Holds its heat: everything in the pan cooks a quarter faster." } },
 
     { "id": "kitchenKnife", "name": "Kitchen knife", "icon": "🔪", "type": "utensil", "line": "knife", "tier": 1,
-      "shopTab": "cooking", "price": 20,
+      "shopTab": "cookware", "price": 20,
       "usedIn": ["prep"], "craftingSpeed": 1,
       "text": { "shopCard": "Does the job." } },
 
     { "id": "chefsKnife", "name": "Chef's knife", "icon": "🔪", "type": "utensil", "line": "knife", "tier": 2,
-      "shopTab": "cooking", "price": 150,
+      "shopTab": "cookware", "price": 150,
       "usedIn": ["prep"], "craftingSpeed": 1.25,
       "text": { "shopCard": "Balanced and sharp: prep goes a quarter faster." } },
 

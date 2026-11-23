@@ -71,6 +71,11 @@ export function arrangeClick(g: Game, p: Vec): void {
     const placed = g.layout.find((x) => x.uid === uid);
     if (!placed) return;
     const gear = g.layout.filter((x) => x.on === placed.uid);
+    if (eqOf(placed.type).hearth) {
+      if (gear.length) chooseStoveOrGear(g, placed, gear, { x: 0, y: 0 });
+      else g.say("The hearth is built into the wall. Hang things over the fire from its hooks.");
+      return;
+    }
     if (gear.length) { chooseStoveOrGear(g, placed, gear, { x: tx - placed.x, y: ty - placed.y }); return; }
     pickUp(g, placed, { x: tx - placed.x, y: ty - placed.y });
     return;
@@ -110,8 +115,8 @@ function chooseStoveOrGear(g: Game, stove: Placed, gear: Placed[], at: Vec): voi
     title: `${eqOf(stove.type).icon} ${eqOf(stove.type).name}`,
     holdsClock: true,
     items: [
-      { label: `Move the ${eqOf(stove.type).name.toLowerCase()}`, sub: gear.length > 1 ? "what's on it goes with it" : `the ${eqOf(gear[0].type).name.toLowerCase()} goes with it`,
-        action: () => { closeAll(); pickUp(g, stove, at); } },
+      ...(eqOf(stove.type).hearth ? [] : [{ label: `Move the ${eqOf(stove.type).name.toLowerCase()}`, sub: gear.length > 1 ? "what's on it goes with it" : `the ${eqOf(gear[0].type).name.toLowerCase()} goes with it`,
+        action: () => { closeAll(); pickUp(g, stove, at); } }]),
       ...gear.map((q) => ({ label: `Take the ${eqOf(q.type).name.toLowerCase()} off`, sub: "to set it on another stove, or sell it",
         action: () => { closeAll(); pickUp(g, q, { x: 0, y: 0 }); } })),
       { label: "Not now", button: "secondary", cancel: true as const, action: () => closeAll() },
@@ -122,9 +127,9 @@ function chooseStoveOrGear(g: Game, stove: Placed, gear: Placed[], at: Vec): voi
 /** Set the kettle or coffee pot in hand on the stove under the pointer. */
 function setGearDown(g: Game, tx: number, ty: number): void {
   const h = g.arranging!.holding!;
-  const stove = g.world.stoveWithRoom(tx, ty, h.isNew ? null : h.uid, g.layout);
+  const stove = g.world.stoveWithRoom(tx, ty, h.isNew ? null : h.uid, g.layout, h.type);
   const name = eqOf(h.type).name.toLowerCase();
-  if (!stove) { g.say(`The ${name} goes on a stove with a free spot at the back.`); return; }
+  if (!stove) { g.say(eqOf(h.type).hearthOnly ? `The ${name} hangs on a free hook over the fire.` : `The ${name} goes on a stove with a free spot at the back, or a hook over the fire.`); return; }
   const stoveName = eqOf(stove.type).name.toLowerCase();
   if (h.isNew) {
     g.layout.push({ uid: h.uid, type: h.type, x: stove.x, y: stove.y, on: stove.uid });
@@ -253,7 +258,7 @@ export function drawArrange(ctx: CanvasRenderingContext2D, g: Game, view: View):
   if (a.holding && at && eqOf(a.holding.type).gear) {
     // A kettle or coffee pot in hand: the stove under the pointer lights up if there's room on it.
     const eq = eqOf(a.holding.type);
-    const stove = g.world.stoveWithRoom(at.x, at.y, a.holding.isNew ? null : a.holding.uid, g.layout);
+    const stove = g.world.stoveWithRoom(at.x, at.y, a.holding.isNew ? null : a.holding.uid, g.layout, a.holding.type);
     const box = stove ? { x: stove.x, y: stove.y, w: eqOf(stove.type).w, h: eqOf(stove.type).h } : { x: at.x, y: at.y, w: 1, h: 1 };
     ctx.fillStyle = stove ? "rgba(110,190,110,0.55)" : "rgba(210,90,80,0.5)";
     ctx.strokeStyle = stove ? "#9be27a" : "#e07060";

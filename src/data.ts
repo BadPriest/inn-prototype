@@ -124,15 +124,23 @@ export interface Equipment {
   gear?: boolean;
   /** Hot-drink slots a stove has for gear. */
   hotSlots?: number;
-  kind?: "piesafe" | "tap" | "urn" | "breadcase";
+  kind?: "piesafe" | "tap" | "urn" | "breadcase" | "fireplace";
+  /** The fireplace: stays where the map has it; its hooks cook while the fire's lit. */
+  hearth?: boolean;
+  /** Gear for a hook over the fire only. */
+  hearthOnly?: boolean;
+  line?: string;
+  tier?: number;
   tap?: string;
   group: EquipGroup;
   fuel?: Fuel;
 }
 
-export type EquipGroup = "cooking" | "drinks" | "storage" | "serving";
+export type EquipGroup = "stoves" | "hearth" | "cookware" | "drinks" | "storage" | "serving";
 export const EQUIP_GROUPS: { id: EquipGroup; name: string; icon: string }[] = [
-  { id: "cooking", name: "Cooking", icon: "🔥" },
+  { id: "stoves", name: "Stoves and ovens", icon: "🍳" },
+  { id: "hearth", name: "Hearth", icon: "🔥" },
+  { id: "cookware", name: "Pots and pans", icon: "🍲" },
   { id: "drinks", name: "Drinks", icon: "🍺" },
   { id: "storage", name: "Storage", icon: "🗄️" },
   { id: "serving", name: "Serving", icon: "🍽️" },
@@ -151,7 +159,7 @@ function placedPiece(e: EquipmentPiece): Equipment {
     e.type === "crafting" ? (e.slots ?? []).filter((sl) => !isHotDrinkSlot(sl))
     : e.type === "gear" ? [{ name: e.name, kinds: e.usedIn ?? [] }]
     : [];
-  const kind = STORAGE_KIND[holds[0] ?? ""];
+  const kind = e.hearth ? "fireplace" : STORAGE_KIND[holds[0] ?? ""];
   return {
     id: e.id, name: e.name, label: e.label ?? e.name, icon: e.icon,
     w: shape[0].length, h: shape.length, slots, blurb: e.text?.shopCard ?? "",
@@ -160,6 +168,7 @@ function placedPiece(e: EquipmentPiece): Equipment {
     hotSlots: (e.slots ?? []).filter(isHotDrinkSlot).length || undefined,
     kind, tap: kind === "tap" ? holds[0] : undefined,
     group: e.shopTab, fuel: e.fuel,
+    hearth: e.hearth, hearthOnly: e.hearthOnly, line: e.line, tier: e.tier,
   };
 }
 
@@ -198,9 +207,9 @@ export const LEGACY_EQUIPMENT_ID: Record<string, string> = {
 export const currentEquipmentId = (id: string) => LEGACY_EQUIPMENT_ID[id] ?? id;
 
 /** Where the first equipment stands, by map letter. */
-export const EQUIPMENT_OF_TILE: Record<string, string> = { S: "woodStove", T: "twoHobStove", O: "breadOven", K: "prepTable", H: "teaKettle", V: "coffeePot", Z: "pieSafe", A: "aleBarrel", Y: "ciderBarrel" };
+export const EQUIPMENT_OF_TILE: Record<string, string> = { F: "openHearth", S: "woodStove", T: "twoHobStove", O: "breadOven", K: "prepTable", H: "teaKettle", V: "coffeePot", Z: "pieSafe", A: "aleBarrel", Y: "ciderBarrel" };
 /** What's under an equipment letter once it's lifted off the map. */
-export const UNDER_EQUIPMENT: Record<string, string> = { S: ",", T: ",", R: ",", O: ",", K: ",", H: "n", V: "n", Z: "n", A: "n", Y: "n" };
+export const UNDER_EQUIPMENT: Record<string, string> = { F: "F", S: ",", T: ",", R: ",", O: ",", K: ",", H: "n", V: "n", Z: "n", A: "n", Y: "n" };
 /** Tiles equipment can stand on: the kitchen floor, behind the bar, and the nooks in the counter wall. */
 export const PLACEABLE_ON = [",", "_", "n"];
 

@@ -12,9 +12,9 @@ import { whenText } from "../supplies.js";
 import { SUPPLIERS_DATA } from "../gamedata.gen.js";
 import { ingredientsHtml } from "./cook.js";
 import { knows, levelOf, levelProgress, pointsLeft } from "../skills.js";
-import { openSkills } from "./skills.js";
+import { openSkills, ROMAN } from "./skills.js";
 import { needs, whereFull, whereShort } from "./where.js";
-import { canFetch, fetchThing, FETCH_MINUTES, hasOrBetter, onOrderCount, orderThing, priceOfThing, SELL_BACK_SHARE_WORDS, toPlaceCount } from "../shop.js";
+import { canFetch, fetchThing, FETCH_MINUTES, hasOrBetter, hearthPiece, onOrderCount, orderThing, priceOfThing, SELL_BACK_SHARE_WORDS, toPlaceCount } from "../shop.js";
 import { fmtMoney, moneyHtml, priceLevel, priceOfRecipe, readyMadePrice, PRICE_LEVELS } from "../money.js";
 export function openDeskScreen(g, openJournal) {
     const st = { focus: 0 };
@@ -332,18 +332,18 @@ export function openBillOfFare(g) {
 }
 // ---------------------------------------------------------------------------
 // Equipment: buy a piece and place it. Utensils and trays are kept, not placed: one of each, and a better one replaces a worse.
-let shopTab = "cooking"; // the shop opens where you left it
+let shopTab = "stoves"; // the shop opens where you left it
 export function openShop(g) {
     const st = { focus: 0 };
     const all = [
-        ...EQUIPMENT.map((e) => ({ id: e.id, icon: e.icon, name: e.name, blurb: e.blurb, goods: false, group: e.group, fuel: e.fuel })),
-        ...CARRIED.map((x) => ({ id: x.id, icon: x.icon, name: x.name, blurb: x.text?.shopCard ?? "", goods: true, group: x.shopTab, fuel: undefined })),
+        ...EQUIPMENT.map((e) => ({ id: e.id, icon: e.icon, name: e.name, blurb: e.blurb, goods: !!e.hearth, group: e.group, fuel: e.fuel, line: e.line, tier: e.tier })),
+        ...CARRIED.map((x) => ({ id: x.id, icon: x.icon, name: x.name, blurb: x.text?.shopCard ?? "", goods: true, group: x.shopTab, fuel: undefined, line: x.line, tier: x.tier })),
     ];
-    const isBest = (id) => { const p = pieceById(id); return !!p?.line && bestInLine(g.upgrades, p.line)?.id === id; };
+    const isBest = (id) => { const p = pieceById(id); return !!p?.line && (p.hearth ? hearthPiece(g)?.type === id : bestInLine(g.upgrades, p.line)?.id === id); };
     const ownedOf = (it) => (it.goods ? (hasOrBetter(g, it.id) ? 1 : 0) : g.layout.filter((p) => p.type === it.id).length + toPlaceCount(g, it.id));
     const build = () => {
-        // What you have comes first, so you can see your kitchen at a glance.
-        const items = all.filter((it) => it.group === shopTab).sort((a, b) => Number(ownedOf(b) > 0) - Number(ownedOf(a) > 0));
+        // In lines, each from its first tier up.
+        const items = all.filter((it) => it.group === shopTab).sort((a, b) => (a.line ?? a.id).localeCompare(b.line ?? b.id) || (a.tier ?? 0) - (b.tier ?? 0));
         const buy = (i) => {
             const it = items[i];
             if (!it)
@@ -401,7 +401,7 @@ export function openShop(g) {
                 fact: done ? "" : moneyHtml(price),
                 status, tone: done || coming ? "good" : short > 0 ? "warn" : undefined,
                 have: it.goods ? 0 : owned, on: done, off: !done && short > 0,
-                tags: fuel ? [`${fuel.icon} ${fuel.name}`] : undefined,
+                tags: [...(it.tier && all.some((x) => x.line === it.line && x.id !== it.id) ? [`tier ${ROMAN[it.tier]}`] : []), ...(fuel ? [`${fuel.icon} ${fuel.name}`] : [])],
                 detail: it.blurb,
                 does: done ? (owned ? (isBest(it.id) ? "You have this" : "You have a better one") : "It's on the carter's cart") : short > 0 ? `You need ${fmtMoney(short)} more` : owned ? "Buy another: order it or fetch it" : "Buy it: order it or fetch it",
             };

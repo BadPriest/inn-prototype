@@ -73,8 +73,8 @@ export class World {
         return { x, y, ch, def, keeperWalk, patronWalk, base: ch };
       }),
     );
-    this.buildFurniture();
     this.placeEquipment(placed);
+    this.buildFurniture();
     this.buildSeats();
     // Tables can span several tiles; each is keyed by its first (top-left) tile.
     for (const f of this.furniture) {
@@ -104,13 +104,13 @@ export class World {
       if (!tiles.every((t) => this.tile(t.x, t.y))) continue;
       tiles.forEach((t, i) => {
         const tile = this.tile(t.x, t.y)!;
-        tile.def = { kind: "furniture", floor: tile.def.floor, label: i === 0 ? eq.label : "", name: eq.name, interact: eq.kind ?? "station" };
+        tile.def = { kind: "furniture", floor: tile.def.floor, label: i === 0 ? eq.label : "", name: eq.hearth ? "Fireplace" : eq.name, interact: eq.kind ?? "station" };
         tile.keeperWalk = false;
         tile.patronWalk = false;
         tile.equip = p.uid;
       });
       const f: Furniture = {
-        id: p.uid, kind: eq.kind ?? "station", name: eq.name, tiles,
+        id: p.uid, kind: eq.kind ?? "station", name: eq.hearth ? "Fireplace" : eq.name, tiles,
         center: { x: p.x + eq.w / 2, y: p.y + eq.h / 2 }, equip: eq, tap: eq.tap,
       };
       const counts = new Map<string, number>();
@@ -140,7 +140,8 @@ export class World {
   canPlace(type: string, x: number, y: number, moving: string | null, layout: Placed[], keeper: Vec): boolean {
     const eq = EQUIPMENT.find((e) => e.id === type);
     if (!eq) return false;
-    if (eq.gear) return !!this.stoveWithRoom(x, y, moving, layout);
+    if (eq.gear) return !!this.stoveWithRoom(x, y, moving, layout, type);
+    if (eq.hearth) return false;
     const kx = Math.floor(keeper.x), ky = Math.floor(keeper.y);
     for (let dy = 0; dy < eq.h; dy++) for (let dx = 0; dx < eq.w; dx++) {
       const t = this.tile(x + dx, y + dy);
@@ -170,12 +171,12 @@ export class World {
     return true;
   }
 
-  /** The stove standing on this tile, if it has a free hot-drink slot (the gear being moved doesn't count). */
-  stoveWithRoom(x: number, y: number, moving: string | null, layout: Placed[]): Placed | undefined {
+  /** The stove or hearth standing on this tile, if it has a free spot for this gear (the gear being moved doesn't count). */
+  stoveWithRoom(x: number, y: number, moving: string | null, layout: Placed[], type?: string): Placed | undefined {
     const uid = this.tile(x, y)?.equip;
     const stove = layout.find((p) => p.uid === uid);
     const eq = stove && EQUIPMENT.find((e) => e.id === stove.type);
-    if (!stove || !eq?.hotSlots) return undefined;
+    if (!stove || !eq?.hotSlots || !gearFits(type, eq)) return undefined;
     const used = layout.filter((p) => p.on === stove.uid && p.uid !== moving).length;
     return used < eq.hotSlots ? stove : undefined;
   }
@@ -196,7 +197,7 @@ export class World {
       for (const t of row) {
         if (t.ch === "E") this.frontDoor = { x: t.x, y: t.y };
         const kind = t.def.interact;
-        if (!kind || seen.has(`${t.x},${t.y}`)) continue;
+        if (!kind || t.equip || seen.has(`${t.x},${t.y}`)) continue;
         // Flood-fill identical neighbouring letters into one piece of furniture.
         const group: Vec[] = [];
         const stack: Vec[] = [{ x: t.x, y: t.y }];
@@ -363,11 +364,18 @@ export function dist(a: Vec, b: Vec): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-/** Set a kettle or coffee pot on the first stove with a free hot-drink slot. False if there's none. */
+/** Can this gear go on this stove or hearth? Hanging pots only go over the fire. */
+export function gearFits(type: string | undefined, on: Equipment): boolean {
+  const gear = type ? EQUIPMENT.find((e) => e.id === type) : undefined;
+  return !gear?.hearthOnly || !!on.hearth;
+}
+
+/** Set a kettle or coffee pot on the first stove with a free spot, then the hearth. False if there's none. */
 export function setOnStove(q: Placed, layout: Placed[]): boolean {
-  for (const p of layout) {
-    const eq = EQUIPMENT.find((e) => e.id === p.type);
-    if (!eq?.hotSlots || layout.filter((x) => x.on === p.uid).length >= eq.hotSlots) continue;
+  const eqOf = (p: Placed) => EQUIPMENT.find((e) => e.id === p.type);
+  for (const p of [...layout].sort((a, b) => Number(!!eqOf(a)?.hearth) - Number(!!eqOf(b)?.hearth))) {
+    const eq = eqOf(p);
+    if (!eq?.hotSlots || !gearFits(q.type, eq) || layout.filter((x) => x.on === p.uid).length >= eq.hotSlots) continue;
     q.on = p.uid; q.x = p.x; q.y = p.y;
     if (!layout.includes(q)) layout.push(q);
     return true;
