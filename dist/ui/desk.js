@@ -343,6 +343,16 @@ function whereItGoes(id) {
     if (!p)
         return { short: "", long: "" };
     const kind = p.usedIn?.[0];
+    if (p.seat) {
+        const empty = " Place it from the desk (Arrange the kitchen) while the room's empty.";
+        if (p.seat === "stool")
+            return { short: "Against the bar", long: `Stands on the taproom floor against the bar.${empty}` };
+        if (p.seat === "bench")
+            return { short: "Taproom or entry", long: `Stands anywhere on the taproom or entry floor.${empty}` };
+        if (p.seat === "chair")
+            return { short: "Against a table", long: `Stands on the taproom floor; against a table, it seats a guest there.${empty}` };
+        return { short: p.standing ? `${p.standing} stand at it` : `Seats ${p.seats}`, long: `Stands on the taproom floor.${p.standing ? ` ${p.standing} guests stand beside it.` : ` Chairs against it seat up to ${p.seats}.`}${empty}` };
+    }
     if (p.hearth)
         return { short: "In the fireplace", long: "Built into the fireplace in the taproom. Buying it replaces the hooks you have now." };
     if (p.type === "crafting")

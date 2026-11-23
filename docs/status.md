@@ -33,6 +33,7 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - #66 (1 of 3) equipment wears in: levels at 100/250/500/900/1,500 servings, a trait each (speed, servings; tastes rare, from level 4, hardware-only tags by piece kind; guests sometimes love them); Manage tab on everything that cooks
 - #66 (2 of 3) breakdowns: health by tier, wears per serving, breaks more as it wears; tinker (15% of price, ~2 h), look over (+15, daily), Handy and Gentle hands knacks; 5 s bar for now
 - #66 (3 of 3) tinker's cart: 3 used pieces a week (Mondays), 40–60% price, 35–70% health, already worn in, half with an odd used-only trait; wear follows gear between stoves
+- #104 tables and seats: bought and placed in the taproom (room empty); standing/small/square/six-seat tables, chairs, stools, benches in quality tiers with comfort and feel values (unused yet); chairs count up to a table's seats; seats must stay reachable
 
 ## Built and deployed (Nov 23, build 122)
 

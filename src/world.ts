@@ -42,6 +42,7 @@ export interface Seat {
   kind: "stool" | "chair" | "bench";
   table?: Vec; // for chairs: the table tile next to it
   occupant: number | null; // patron id
+  standing?: boolean; // a place to stand at a standing table, not a chair
 }
 
 export interface Table { key: string; tile: Vec; chairs: Seat[] }
@@ -102,6 +103,7 @@ export class World {
       const tiles: Vec[] = [];
       for (let dy = 0; dy < eq.h; dy++) for (let dx = 0; dx < eq.w; dx++) tiles.push({ x: p.x + dx, y: p.y + dy });
       if (!tiles.every((t) => this.tile(t.x, t.y))) continue;
+      if (eq.seat) { this.placeFurniture(p, eq, tiles); continue; }
       tiles.forEach((t, i) => {
         const tile = this.tile(t.x, t.y)!;
         tile.def = { kind: "furniture", floor: tile.def.floor, label: i === 0 ? eq.label : "", name: eq.hearth ? "Fireplace" : eq.name, interact: eq.kind ?? "station" };
@@ -136,6 +138,34 @@ export class World {
     }
   }
 
+  /** A table or a seat on the taproom floor: the tiles take its kind, and a table becomes something to serve at. */
+  private placeFurniture(p: Placed, eq: Equipment, tiles: Vec[]): void {
+    const letter = { table: "t", chair: "c", stool: "s", bench: "b" }[eq.seat!];
+    const def = TILE_LEGEND[letter];
+    for (const v of tiles) {
+      const t = this.tile(v.x, v.y)!;
+      t.def = { ...def, floor: t.def.floor, name: eq.name };
+      t.keeperWalk = eq.seat !== "table";
+      t.patronWalk = eq.seat !== "table";
+      t.equip = p.uid;
+    }
+    if (eq.seat !== "table") return;
+    const cx = tiles.reduce((a, v) => a + v.x, 0) / tiles.length + 0.5, cy = tiles.reduce((a, v) => a + v.y, 0) / tiles.length + 0.5;
+    this.furniture.push({ id: p.uid, kind: "table", name: eq.name, tiles, center: { x: cx, y: cy }, equip: eq });
+  }
+
+  /** Where a piece may stand: kitchen gear in the kitchen and behind the bar; tables and seats on the taproom floor
+   * (a bench in the entry too, a stool only against the bar). */
+  placeableAt(eq: Equipment, x: number, y: number): boolean {
+    const t = this.tile(x, y);
+    if (!t) return false;
+    if (!eq.seat) return PLACEABLE_ON.includes(t.base);
+    if (eq.seat === "bench") return t.base === "." || t.base === ";";
+    if (t.base !== ".") return false;
+    if (eq.seat === "stool") return [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => this.tile(x + dx, y + dy)?.def.kind === "counter");
+    return true;
+  }
+
   /** Can this piece stand here? Floor it's allowed on, nothing else there, and everything still within reach. */
   canPlace(type: string, x: number, y: number, moving: string | null, layout: Placed[], keeper: Vec): boolean {
     const eq = EQUIPMENT.find((e) => e.id === type);
@@ -145,7 +175,7 @@ export class World {
     const kx = Math.floor(keeper.x), ky = Math.floor(keeper.y);
     for (let dy = 0; dy < eq.h; dy++) for (let dx = 0; dx < eq.w; dx++) {
       const t = this.tile(x + dx, y + dy);
-      if (!t || !PLACEABLE_ON.includes(t.base)) return false;
+      if (!t || !this.placeableAt(eq, x + dx, y + dy)) return false;
       if (t.equip && t.equip !== moving) return false;
       if (t.x === kx && t.y === ky) return false;
     }
@@ -168,6 +198,7 @@ export class World {
     const reached = (v: Vec) => seen.has(v.y * trial.w + v.x);
     for (const f of trial.furniture) if (!trial.approachTiles(f).some(reached)) return false;
     for (const row of trial.tiles) for (const t of row) if ((t.def.kind === "door" || t.def.kind === "front") && !reached(t)) return false;
+    if (eq.seat && !trial.seatsReachable()) return false;
     return true;
   }
 
@@ -228,6 +259,9 @@ export class World {
 
   private buildSeats(): void {
     let id = 1;
+    const tableOf = (x: number, y: number) => this.furniture.find((f) => f.kind === "table" && f.tiles.some((v) => v.x === x && v.y === y));
+    const counted = new Map<Furniture, number>();
+    const room = (f: Furniture | undefined) => !f?.equip || (counted.get(f) ?? 0) < (f.equip.seats ?? 4);
     for (const row of this.tiles) {
       for (const t of row) {
         if (t.def.kind === "bench") this.seats.push({ id: id++, tile: { x: t.x, y: t.y }, kind: "bench", occupant: null });
@@ -235,11 +269,40 @@ export class World {
         if (t.def.kind === "chair") {
           const nb = [[1, 0], [-1, 0], [0, 1], [0, -1]]
             .map(([dx, dy]) => this.tile(t.x + dx, t.y + dy))
-            .find((n) => n?.def.kind === "table");
+            .find((n) => n?.def.kind === "table" && room(tableOf(n.x, n.y)));
+          const f = nb ? tableOf(nb.x, nb.y) : undefined;
+          if (f) counted.set(f, (counted.get(f) ?? 0) + 1);
           this.seats.push({ id: id++, tile: { x: t.x, y: t.y }, kind: "chair", table: nb ? { x: nb.x, y: nb.y } : undefined, occupant: null });
         }
       }
     }
+    // Standing tables: guests stand on the free floor beside them.
+    for (const f of this.furniture) {
+      const n = f.equip?.standing ?? 0;
+      if (!n) continue;
+      const spots = f.tiles.flatMap((v) => [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => this.tile(v.x + dx, v.y + dy)))
+        .filter((t): t is Tile => !!t && t.def.kind === "floor" && t.patronWalk && !t.equip && !this.seats.some((s) => s.tile.x === t.x && s.tile.y === t.y));
+      for (const t of spots.slice(0, n)) this.seats.push({ id: id++, tile: { x: t.x, y: t.y }, kind: "chair", table: { ...f.tiles[0] }, occupant: null, standing: true });
+    }
+  }
+
+  /** Can guests get from the front door to every seat? */
+  seatsReachable(): boolean {
+    const seen = new Set<string>();
+    const start = this.frontDoor;
+    const queue: Vec[] = [start];
+    seen.add(`${start.x},${start.y}`);
+    const seatTile = (t: Tile) => t.def.kind === "stool" || t.def.kind === "chair" || t.def.kind === "bench";
+    while (queue.length) {
+      const c = queue.shift()!;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+        const n = this.tile(c.x + dx, c.y + dy);
+        if (!n || !n.patronWalk || seen.has(`${n.x},${n.y}`)) continue;
+        seen.add(`${n.x},${n.y}`);
+        if (!seatTile(n)) queue.push({ x: n.x, y: n.y });
+      }
+    }
+    return this.seats.every((s) => seen.has(`${s.tile.x},${s.tile.y}`));
   }
 
   private walkFn(who: "keeper" | "patron", tx: number, ty: number): (x: number, y: number) => boolean {
@@ -353,6 +416,7 @@ export function defaultLayout(inn: InnId = "medium"): Placed[] {
     if (!type || seen.has(`${x},${y}`)) return;
     const eq = EQUIPMENT.find((e) => e.id === type)!;
     if (eq.gear) { gear.push({ uid: `eq-${ch}${x},${y}`, type, x, y }); return; }
+    if (ch === "t" && row[x + 1] === "t") { for (let dx = 0; dx < 2; dx++) seen.add(`${x + dx},${y}`); out.push({ uid: `eq-${ch}${x},${y}`, type: "sixSeater", x, y }); return; }
     for (let dy = 0; dy < eq.h; dy++) for (let dx = 0; dx < eq.w; dx++) seen.add(`${x + dx},${y + dy}`);
     out.push({ uid: `eq-${ch}${x},${y}`, type, x, y });
   }));

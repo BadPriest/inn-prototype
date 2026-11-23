@@ -20,9 +20,9 @@ export const MAP = [
     "#.........ctc..ctc..ctc..ctc.....#",
     "#...............c....c..........F#",
     "#...............................F#",
-    "###..###........c....c....ccc....#",
-    "#X;;;;;#..ctc..ctc..ctc..ctttc...#",
-    "#b;;;;b#........c....c....ccc....o",
+    "###..###........c....c....cc.....#",
+    "#X;;;;;#..ctc..ctc..ctc..cttc....#",
+    "#b;;;;b#........c....c....cc.....o",
     "#b;;;;b#.........................#",
     "#b;;;;b#.........................#",
     "###E########o#######o#######o#####",
@@ -86,6 +86,7 @@ export const EQUIP_GROUPS = [
     { id: "drinks", name: "Drinks", icon: "🍺" },
     { id: "storage", name: "Storage", icon: "🗄️" },
     { id: "serving", name: "Serving", icon: "🍽️" },
+    { id: "taproom", name: "Tables and seats", icon: "🪑" },
 ];
 export const FUELS = { wood: { icon: "🪵", name: "wood" } };
 const HOT_DRINK_KINDS = ["kettle", "coffee"];
@@ -97,7 +98,7 @@ function placedPiece(e) {
     const slots = e.type === "crafting" ? (e.slots ?? []).filter((sl) => !isHotDrinkSlot(sl))
         : e.type === "gear" ? [{ name: e.name, kinds: e.usedIn ?? [] }]
             : [];
-    const kind = e.hearth ? "fireplace" : STORAGE_KIND[holds[0] ?? ""];
+    const kind = e.hearth ? "fireplace" : e.seat === "table" ? "table" : STORAGE_KIND[holds[0] ?? ""];
     return {
         id: e.id, name: e.name, label: e.label ?? e.name, icon: e.icon,
         w: shape[0].length, h: shape.length, slots, blurb: e.text?.shopCard ?? "",
@@ -106,12 +107,12 @@ function placedPiece(e) {
         hotSlots: (e.slots ?? []).filter(isHotDrinkSlot).length || undefined,
         kind, tap: kind === "tap" ? holds[0] : undefined,
         group: e.shopTab, fuel: e.fuel,
-        hearth: e.hearth, hearthOnly: e.hearthOnly, line: e.line, tier: e.tier,
+        hearth: e.hearth, hearthOnly: e.hearthOnly, line: e.line, tier: e.tier, seat: e.seat, seats: e.seats, standing: e.standing,
     };
 }
 export const EQUIPMENT_PIECES = EQUIPMENT_DATA.equipment;
 export const EQUIPMENT = EQUIPMENT_PIECES
-    .filter((e) => e.type === "crafting" || e.type === "storage" || e.type === "gear")
+    .filter((e) => e.type === "crafting" || e.type === "storage" || e.type === "gear" || e.type === "furniture")
     .map(placedPiece);
 /** Owned and used, never placed: utensils and trays. */
 export const CARRIED = EQUIPMENT_PIECES.filter((e) => e.type === "utensil" || e.type === "tray");
@@ -140,9 +141,9 @@ export const LEGACY_EQUIPMENT_ID = {
 };
 export const currentEquipmentId = (id) => LEGACY_EQUIPMENT_ID[id] ?? id;
 /** Where the first equipment stands, by map letter. */
-export const EQUIPMENT_OF_TILE = { F: "openHearth", S: "woodStove", T: "twoHobStove", O: "breadOven", K: "prepTable", H: "teaKettle", V: "coffeePot", Z: "pieSafe", A: "aleBarrel", Y: "ciderBarrel" };
+export const EQUIPMENT_OF_TILE = { t: "squareTable", c: "chair", s: "stool", b: "bench", F: "openHearth", S: "woodStove", T: "twoHobStove", O: "breadOven", K: "prepTable", H: "teaKettle", V: "coffeePot", Z: "pieSafe", A: "aleBarrel", Y: "ciderBarrel" };
 /** What's under an equipment letter once it's lifted off the map. */
-export const UNDER_EQUIPMENT = { F: "F", S: ",", T: ",", R: ",", O: ",", K: ",", H: "n", V: "n", Z: "n", A: "n", Y: "n" };
+export const UNDER_EQUIPMENT = { t: ".", c: ".", s: ".", b: ";", F: "F", S: ",", T: ",", R: ",", O: ",", K: ",", H: "n", V: "n", Z: "n", A: "n", Y: "n" };
 /** Tiles equipment can stand on: the kitchen floor, behind the bar, and the nooks in the counter wall. */
 export const PLACEABLE_ON = [",", "_", "n"];
 /** Which drink each tap letter pours. */

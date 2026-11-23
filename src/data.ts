@@ -25,9 +25,9 @@ export const MAP: string[] = [
   "#.........ctc..ctc..ctc..ctc.....#",
   "#...............c....c..........F#",
   "#...............................F#",
-  "###..###........c....c....ccc....#",
-  "#X;;;;;#..ctc..ctc..ctc..ctttc...#",
-  "#b;;;;b#........c....c....ccc....o",
+  "###..###........c....c....cc.....#",
+  "#X;;;;;#..ctc..ctc..ctc..cttc....#",
+  "#b;;;;b#........c....c....cc.....o",
   "#b;;;;b#.........................#",
   "#b;;;;b#.........................#",
   "###E########o#######o#######o#####",
@@ -124,7 +124,12 @@ export interface Equipment {
   gear?: boolean;
   /** Hot-drink slots a stove has for gear. */
   hotSlots?: number;
-  kind?: "piesafe" | "tap" | "urn" | "breadcase" | "fireplace";
+  kind?: "piesafe" | "tap" | "urn" | "breadcase" | "fireplace" | "table";
+  /** Furniture in the taproom: a table or a seat. */
+  seat?: "table" | "chair" | "stool" | "bench";
+  /** Tables: chairs that count, and guests who stand at it. */
+  seats?: number;
+  standing?: number;
   /** The fireplace: stays where the map has it; its hooks cook while the fire's lit. */
   hearth?: boolean;
   /** Gear for a hook over the fire only. */
@@ -136,7 +141,7 @@ export interface Equipment {
   fuel?: Fuel;
 }
 
-export type EquipGroup = "stoves" | "hearth" | "cookware" | "drinks" | "storage" | "serving";
+export type EquipGroup = "stoves" | "hearth" | "cookware" | "drinks" | "storage" | "serving" | "taproom";
 export const EQUIP_GROUPS: { id: EquipGroup; name: string; icon: string }[] = [
   { id: "stoves", name: "Stoves and ovens", icon: "🍳" },
   { id: "hearth", name: "Hearth", icon: "🔥" },
@@ -144,6 +149,7 @@ export const EQUIP_GROUPS: { id: EquipGroup; name: string; icon: string }[] = [
   { id: "drinks", name: "Drinks", icon: "🍺" },
   { id: "storage", name: "Storage", icon: "🗄️" },
   { id: "serving", name: "Serving", icon: "🍽️" },
+  { id: "taproom", name: "Tables and seats", icon: "🪑" },
 ];
 export type Fuel = "wood";
 export const FUELS: Record<Fuel, { icon: string; name: string }> = { wood: { icon: "🪵", name: "wood" } };
@@ -159,7 +165,7 @@ function placedPiece(e: EquipmentPiece): Equipment {
     e.type === "crafting" ? (e.slots ?? []).filter((sl) => !isHotDrinkSlot(sl))
     : e.type === "gear" ? [{ name: e.name, kinds: e.usedIn ?? [] }]
     : [];
-  const kind = e.hearth ? "fireplace" : STORAGE_KIND[holds[0] ?? ""];
+  const kind = e.hearth ? "fireplace" : e.seat === "table" ? "table" : STORAGE_KIND[holds[0] ?? ""];
   return {
     id: e.id, name: e.name, label: e.label ?? e.name, icon: e.icon,
     w: shape[0].length, h: shape.length, slots, blurb: e.text?.shopCard ?? "",
@@ -168,13 +174,13 @@ function placedPiece(e: EquipmentPiece): Equipment {
     hotSlots: (e.slots ?? []).filter(isHotDrinkSlot).length || undefined,
     kind, tap: kind === "tap" ? holds[0] : undefined,
     group: e.shopTab, fuel: e.fuel,
-    hearth: e.hearth, hearthOnly: e.hearthOnly, line: e.line, tier: e.tier,
+    hearth: e.hearth, hearthOnly: e.hearthOnly, line: e.line, tier: e.tier, seat: e.seat, seats: e.seats, standing: e.standing,
   };
 }
 
 export const EQUIPMENT_PIECES: EquipmentPiece[] = EQUIPMENT_DATA.equipment;
 export const EQUIPMENT: Equipment[] = EQUIPMENT_PIECES
-  .filter((e) => e.type === "crafting" || e.type === "storage" || e.type === "gear")
+  .filter((e) => e.type === "crafting" || e.type === "storage" || e.type === "gear" || e.type === "furniture")
   .map(placedPiece);
 /** Owned and used, never placed: utensils and trays. */
 export const CARRIED: EquipmentPiece[] = EQUIPMENT_PIECES.filter((e) => e.type === "utensil" || e.type === "tray");
@@ -207,9 +213,9 @@ export const LEGACY_EQUIPMENT_ID: Record<string, string> = {
 export const currentEquipmentId = (id: string) => LEGACY_EQUIPMENT_ID[id] ?? id;
 
 /** Where the first equipment stands, by map letter. */
-export const EQUIPMENT_OF_TILE: Record<string, string> = { F: "openHearth", S: "woodStove", T: "twoHobStove", O: "breadOven", K: "prepTable", H: "teaKettle", V: "coffeePot", Z: "pieSafe", A: "aleBarrel", Y: "ciderBarrel" };
+export const EQUIPMENT_OF_TILE: Record<string, string> = { t: "squareTable", c: "chair", s: "stool", b: "bench", F: "openHearth", S: "woodStove", T: "twoHobStove", O: "breadOven", K: "prepTable", H: "teaKettle", V: "coffeePot", Z: "pieSafe", A: "aleBarrel", Y: "ciderBarrel" };
 /** What's under an equipment letter once it's lifted off the map. */
-export const UNDER_EQUIPMENT: Record<string, string> = { F: "F", S: ",", T: ",", R: ",", O: ",", K: ",", H: "n", V: "n", Z: "n", A: "n", Y: "n" };
+export const UNDER_EQUIPMENT: Record<string, string> = { t: ".", c: ".", s: ".", b: ";", F: "F", S: ",", T: ",", R: ",", O: ",", K: ",", H: "n", V: "n", Z: "n", A: "n", Y: "n" };
 /** Tiles equipment can stand on: the kitchen floor, behind the bar, and the nooks in the counter wall. */
 export const PLACEABLE_ON = [",", "_", "n"];
 

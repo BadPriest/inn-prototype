@@ -182,6 +182,36 @@
       "holds": ["bread"], "capacity": { "batches": 3 },
       "text": { "shopCard": "A glass-fronted case that keeps the day's bread and pastries, cut as they're asked for." } },
 
+    {"id":  "standingTable", "name":  "Standing table", "icon":  "🍺", "type":  "furniture", "seat":  "table", "line":  "standingTable", "tier":  1, "shape":  ["#"], "shopTab":  "taproom", "price":  40, "feel":  1, "seats":  0, "standing":  2, "text":  {"shopCard":  "A tall round table to lean on: two guests stand at it with a drink. No chairs needed."}},
+
+    {"id":  "standingTableOak", "name":  "Oak standing table", "icon":  "🍺", "type":  "furniture", "seat":  "table", "line":  "standingTable", "tier":  2, "shape":  ["#"], "shopTab":  "taproom", "price":  90, "feel":  2, "seats":  0, "standing":  2, "text":  {"shopCard":  "A tall oak table with a brass foot rail. Two guests stand at it with a drink."}},
+
+    {"id":  "smallTable", "name":  "Small table", "icon":  "🪵", "type":  "furniture", "seat":  "table", "line":  "smallTable", "tier":  1, "shape":  ["#"], "shopTab":  "taproom", "price":  50, "feel":  1, "seats":  2, "text":  {"shopCard":  "A small table for two: set a chair on each side."}},
+
+    {"id":  "smallTablePolished", "name":  "Polished small table", "icon":  "🪵", "type":  "furniture", "seat":  "table", "line":  "smallTable", "tier":  2, "shape":  ["#"], "shopTab":  "taproom", "price":  110, "feel":  2, "seats":  2, "text":  {"shopCard":  "A small polished table for two: set a chair on each side."}},
+
+    {"id":  "squareTable", "name":  "Square table", "icon":  "🪵", "type":  "furniture", "seat":  "table", "line":  "squareTable", "tier":  1, "shape":  ["#"], "shopTab":  "taproom", "price":  80, "feel":  1, "seats":  4, "text":  {"shopCard":  "A square table: chairs on every side seat four."}},
+
+    {"id":  "squareTablePolished", "name":  "Polished square table", "icon":  "🪵", "type":  "furniture", "seat":  "table", "line":  "squareTable", "tier":  2, "shape":  ["#"], "shopTab":  "taproom", "price":  170, "feel":  2, "seats":  4, "text":  {"shopCard":  "A polished square table: chairs on every side seat four."}},
+
+    {"id":  "sixSeater", "name":  "Six-seater", "icon":  "🪵", "type":  "furniture", "seat":  "table", "line":  "sixSeater", "tier":  1, "shape":  ["##"], "shopTab":  "taproom", "price":  150, "feel":  1, "seats":  6, "text":  {"shopCard":  "A long table, two tiles end to end: chairs all round seat six together."}},
+
+    {"id":  "sixSeaterOak", "name":  "Oak six-seater", "icon":  "🪵", "type":  "furniture", "seat":  "table", "line":  "sixSeater", "tier":  2, "shape":  ["##"], "shopTab":  "taproom", "price":  320, "feel":  2, "seats":  6, "text":  {"shopCard":  "A long oak table, two tiles end to end: chairs all round seat six together."}},
+
+    {"id":  "chair", "name":  "Chair", "icon":  "🪑", "type":  "furniture", "seat":  "chair", "line":  "chair", "tier":  1, "shape":  ["#"], "shopTab":  "taproom", "price":  20, "comfort":  1, "feel":  0, "text":  {"shopCard":  "A plain wooden chair. Set it against a table and it's a place to sit and be served there."}},
+
+    {"id":  "cushionedChair", "name":  "Cushioned chair", "icon":  "🪑", "type":  "furniture", "seat":  "chair", "line":  "chair", "tier":  2, "shape":  ["#"], "shopTab":  "taproom", "price":  45, "comfort":  2, "feel":  1, "text":  {"shopCard":  "A chair with a stuffed seat. Set it against a table."}},
+
+    {"id":  "armchair", "name":  "Carved armchair", "icon":  "🪑", "type":  "furniture", "seat":  "chair", "line":  "chair", "tier":  3, "shape":  ["#"], "shopTab":  "taproom", "price":  90, "comfort":  3, "feel":  2, "text":  {"shopCard":  "A carved chair with arms to rest on. Set it against a table."}},
+
+    {"id":  "stool", "name":  "Bar stool", "icon":  "🍄", "type":  "furniture", "seat":  "stool", "line":  "stool", "tier":  1, "shape":  ["#"], "shopTab":  "taproom", "price":  15, "comfort":  1, "feel":  0, "text":  {"shopCard":  "A stool against the bar: one guest, served across the counter."}},
+
+    {"id":  "paddedStool", "name":  "Padded bar stool", "icon":  "🍄", "type":  "furniture", "seat":  "stool", "line":  "stool", "tier":  2, "shape":  ["#"], "shopTab":  "taproom", "price":  35, "comfort":  2, "feel":  1, "text":  {"shopCard":  "A padded stool with a back, against the bar."}},
+
+    {"id":  "bench", "name":  "Bench", "icon":  "🛋️", "type":  "furniture", "seat":  "bench", "line":  "bench", "tier":  1, "shape":  ["#"], "shopTab":  "taproom", "price":  35, "comfort":  1, "feel":  0, "text":  {"shopCard":  "A plain bench by the wall, for someone waiting or sheltering from the weather."}},
+
+    {"id":  "settle", "name":  "Settle", "icon":  "🛋️", "type":  "furniture", "seat":  "bench", "line":  "bench", "tier":  2, "shape":  ["#"], "shopTab":  "taproom", "price":  80, "comfort":  2, "feel":  1, "text":  {"shopCard":  "A high-backed settle that keeps the draught off. Anywhere in the taproom or the entry."}},
+
     { "id": "plainTray", "name": "Plain tray", "icon": "🍽️", "type": "tray", "line": "tray", "tier": 1,
       "shopTab": "serving", "price": 0, "traySlots": 4,
       "text": { "shopCard": "A plain wooden tray: four slots." } },

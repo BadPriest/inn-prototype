@@ -92,7 +92,7 @@ export interface EconomyData {
   suppliers: { priceFactor: number };
 }
 
-export type EquipmentType = "crafting" | "storage" | "gear" | "utensil" | "tray";
+export type EquipmentType = "crafting" | "storage" | "gear" | "utensil" | "tray" | "furniture";
 export interface EquipmentPiece {
   id: string;
   name: string;
@@ -100,7 +100,12 @@ export interface EquipmentPiece {
   type: EquipmentType;
   label?: string;
   shape?: string[];
-  shopTab: "stoves" | "hearth" | "cookware" | "drinks" | "storage" | "serving";
+  shopTab: "stoves" | "hearth" | "cookware" | "drinks" | "storage" | "serving" | "taproom";
+  seat?: "table" | "chair" | "stool" | "bench";
+  comfort?: number;
+  feel?: number;
+  seats?: number;
+  standing?: number;
   price: Pence;
   line?: string;
   tier?: number;

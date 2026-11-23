@@ -65,6 +65,10 @@ export function arrangeClick(g, p) {
         const placed = g.layout.find((x) => x.uid === uid);
         if (!placed)
             return;
+        if (eqOf(placed.type).seat && g.patrons.length) {
+            g.say("Not while there are guests in: move tables and seats when the room's empty.");
+            return;
+        }
         const gear = g.layout.filter((x) => x.on === placed.uid);
         if (eqOf(placed.type).hearth) {
             if (gear.length)
@@ -92,8 +96,16 @@ export function arrangeClick(g, p) {
         bar(g);
         return;
     } // put back where it was
+    const seat = eqOf(h.type).seat;
+    if (seat && g.patrons.length) {
+        g.say("Not while there are guests in: place tables and seats when the room's empty.");
+        return;
+    }
     if (!allowed(g, h.type, at, h.isNew ? null : h.uid)) {
-        g.say("It won't go there: it needs kitchen floor, and room to get at everything.");
+        g.say(seat === "stool" ? "A stool goes against the bar, with room for guests to get to it."
+            : seat === "bench" ? "It won't go there: a bench needs taproom or entry floor, and room for everyone to get past."
+                : seat ? "It won't go there: it needs taproom floor, and room for guests to reach every seat."
+                    : "It won't go there: it needs kitchen floor, and room to get at everything.");
         return;
     }
     const name = eqOf(h.type).name.toLowerCase();
@@ -106,6 +118,14 @@ export function arrangeClick(g, p) {
         g.say(`The ${name} is in.`);
     }
     else if (placed) {
+        if (eqOf(placed.type).seat === "table") {
+            const from = `${placed.x},${placed.y}`, to = `${at.x},${at.y}`;
+            for (const m of [g.dirt, g.bowls])
+                if (m.has(from)) {
+                    m.set(to, m.get(from));
+                    m.delete(from);
+                }
+        }
         placed.x = at.x;
         placed.y = at.y;
         g.say(`You move the ${name}.`);
@@ -254,7 +274,7 @@ function bar(g) {
     const waiting = g.toPlace.length;
     el.innerHTML = `<span>🛠 <b>Arranging the kitchen</b> · the clock's stopped · ${h
         ? `${k.click === "click" ? "click" : padText("✕")} where the ${what} should go · ${k.esc} ${h.isNew ? "sets it aside for now" : "puts it back"} · ${k.del} sells it for ${moneyHtml(sellBackPrice(h.type, g.seasoning[h.uid]?.paid))}`
-        : `${k.click} a stove, oven, barrel or pie safe to move it; a stove's kettle comes off from there`}</span>${!h && waiting
+        : `${k.click} a stove, oven, barrel, pie safe, table or seat to move it; a stove's kettle comes off from there`}</span>${!h && waiting
         ? `<button class="ghost" data-act="another">📦 Place what the carter brought (${waiting}) <small>${k.another}</small></button>` : ""}<button class="ghost" data-act="buy">🛒 Buy <small>${k.buy}</small></button><button data-act="done">Done${pad ? " <small>○</small>" : ""}</button>`;
     const act = { done: () => stopArranging(g), buy: () => arrangeBuy(g), another: () => arrangeAnother(g) };
     el.querySelectorAll("button[data-act]").forEach((b) => { b.onclick = () => act[b.dataset.act](); });
@@ -270,7 +290,8 @@ export function drawArrange(ctx, g, view) {
     ctx.fillStyle = "rgba(160,220,140,0.08)";
     for (const row of g.world.tiles)
         for (const t of row) {
-            if (PLACEABLE_ON.includes(t.base) && !t.equip) {
+            const held = a.holding ? eqOf(a.holding.type) : undefined;
+            if ((held && !held.gear ? g.world.placeableAt(held, t.x, t.y) : PLACEABLE_ON.includes(t.base)) && !t.equip) {
                 floorPath(ctx, view, t.x, t.y, 1, 1, inset / 2);
                 ctx.fill();
             }

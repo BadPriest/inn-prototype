@@ -180,6 +180,9 @@ export function load(g) {
                 if (!setOnStove(q, g.layout))
                     g.toPlace.push(q.type);
             }
+            // Saved before tables and seats could be bought: they're where the map had them.
+            if (!g.layout.some((p) => EQUIPMENT.find((e) => e.id === p.type)?.seat))
+                g.layout.push(...defaultLayout(g.inn).filter((p) => EQUIPMENT.find((e) => e.id === p.type)?.seat));
             // Saved before the hearth took hooks: it's the plain one. Gear past a smaller stove's spots waits on the shelf.
             if (!g.layout.some((p) => EQUIPMENT.find((e) => e.id === p.type)?.hearth))
                 g.layout.push(...defaultLayout(g.inn).filter((p) => EQUIPMENT.find((e) => e.id === p.type)?.hearth));
