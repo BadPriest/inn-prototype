@@ -144,6 +144,25 @@ In build order. Each waits on the one it builds on.
 
 ### Design sessions (an agenda)
 
+**#92 Graded Delights** (this week)
+- **What's there now:** one kind of Delight. A serve Delights when its score clears the guest's threshold and it hits one of their loves or tonight's craving (for a veiled guest, when their true self would have). It pays a tip of half the price (at least 2d), 3 experience and 2 familiarity, and can inspire guests nearby. Each visitor loves 1 tag, likes 2, dislikes 1; one in five loves a rare hardware taste instead. Autopilot: 12–30% of serves Delight.
+- How many grades: a small Delight, a Delight, a big one? What lands each: a like, a love, the craving they said out loud, a craving they never said, a rare hardware love?
+- What each grade pays: tip, experience, familiarity, a card, the room noticing.
+- How the player tells them apart: the line, a sound, the ✦, the tally.
+- Does a guest have one big Delight per visit? Does serving them the same again fade it?
+- Tips, set again afterwards (they could come down).
+
+**#56 Staff**
+- **What's there now:** one keeper with two trays. The small tavern has 11 seats, the big one 43 and "needs staff". In the small tavern the keeper is busy about a third of opening hours.
+- Which roles, and which comes first: someone to serve, cook, pour, clear and wash up?
+- Hiring: where you find them (the desk, a notice, a regular asking for work), how many, a trial day?
+- Pay: a daily wage, a share of tips; paid at turn-in, a line in the tally like wear?
+- Do they have tastes, moods, knacks, levels? Do they wear in like hardware?
+- How you direct them: priorities you set, or they work it out? Their own trays? Tickets?
+- Do they make mistakes, and are they funny ones, like wear?
+- Days off, falling ill, leaving.
+- The smallest first version for the prototype.
+
 **#46 Economy and suppliers**: held Nov 17 ([journal](design-session-journal_economy_nov-17.md)), filed as #58–#69 (see "Next" above). Open from it:
 - How progression is gated ("earn the chance, then buy it" isn't agreed; alternatives to come).
 - Leftovers and reuse (its own session); room feel and reputation (its own spec); how Perks are structured.
