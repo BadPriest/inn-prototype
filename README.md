@@ -25,7 +25,7 @@ Design decisions live in [docs/design-session-journal.md](docs/design-session-jo
 7. **Keep the place nice.** Wipe tables, mop spills, keep the fire going and the lamps lit. Wind the gramophone for music.
 8. **Close and sleep.** Close the door when you're done, see out the last guests, and turn in. The next day starts with a new paper.
 
-Controls are listed in-game: press **H** (or the touchpad on a controller). A PS5 or Xbox controller works in Chrome and Edge, and prompts show its own buttons (✕ ○ □ △ or A B X Y): left stick walks, ✕ uses, D-pad ↓ puts down (a dish back where it came from, or a tray; hold: empty a pot), hold □ to hurry; in menus the D-pad moves over the cards, ✕ picks, □ presses the confirm button, ○ the negative one (or goes back), and △, L3, the touchpad and Create the other buttons, as each shows (1–4 on the keyboard). The keyboard and mouse basics:
+Controls are listed in-game: press **H** (or the touchpad on a controller). A PS5 or Xbox controller works in Chrome and Edge, and prompts show its own buttons (✕ ○ □ △ or A B X Y): left stick walks, ✕ uses, D-pad ↓ puts down (a dish back where it came from, or a tray; hold: empty a pot), hold □ to hurry; in menus the D-pad moves over the cards, ✕ picks a card, □ presses the confirm button, △ the alternative one and ○ cancels (or goes back); L3 takes one off a supply slip (Enter, 1 and Backspace on the keyboard; Delete takes one off). The keyboard and mouse basics:
 
 | | |
 | --- | --- |
@@ -137,6 +137,9 @@ The built `dist/` folder is committed, so a fresh clone runs with `npm start` wi
 | `src/ui/innsight.ts` | Innsight: hold L2 (Alt) to read the room, R2 (Shift+Alt) for the debug layer |
 | `src/walkthrough.ts` | The tutorial: its steps, rewards, the first guest, and what the guide points at |
 | `src/skills.ts` | Levels, the recipe book and knacks |
+| `src/money.ts`, `src/upkeep.ts`, `src/wear.ts` | Coin, prices and tips; upkeep (firewood, lamp oil, sundries, the licence); wear, the mishaps paid at turn-in |
+| `src/shop.ts`, `src/used.ts` | Buying equipment (order or fetch), the hearth's upgrades; the tinker's cart of used pieces |
+| `src/seasoning.ts`, `src/breakdowns.ts` | Equipment wearing in (levels and traits by servings made); health, breaking down, the tinker's repairs, mending and looking over |
 | `src/stock.ts`, `src/supplies.ts` | The pantry, and slips to the suppliers |
 | `src/door.ts` | The front door |
 | `src/day.ts` | Clock, meal times, open and close, turning in, saving |
@@ -145,10 +148,12 @@ The built `dist/` folder is committed, so a fresh clone runs with `npm start` wi
 | `src/ui/render.ts` | The top-down view |
 | `src/ui/render-iso.ts` | The isometric view (blocks sorted by depth, clicks that allow for height) |
 | `src/ui/proj.ts` | Tiles to screen and back for both views, camera turning |
-| `src/ui/` (others) | Light, tickets, side panel, menus and card screens (desk, bill of fare, shop, cooking, larder, trays), arranging the kitchen, calendar, newspaper, location picker |
+| `src/ui/menu.ts`, `src/ui/cards.ts` | The two shapes of menu (a list, and a card screen with at most confirm, alternative and cancel), and the cards themselves; see [docs/specs/ui.md](docs/specs/ui.md) |
+| `src/ui/stove.ts` | The Manage tab on anything that cooks: its wear, its spots or hooks, the shelf |
+| `src/ui/` (others) | Light, tickets, side panel, the card screens (desk, bill of fare, shop, supplies, cooking, larder, trays, skills), arranging the kitchen, calendar, newspaper, location picker |
 | `src/gamepad.ts` | The controller: read each frame and turned into the same keys and clicks as the keyboard and mouse |
 | `src/main.ts` | Input, settings, the pause and keys screens, the welcome screen and the main loop |
-| `tools/` | The build (`build.mjs`), the standalone packer (`standalone.mjs`), the deploy (`deploy.mjs`), the autopilot keeper that plays a week and reports the money (`sim/run.mjs`) |
+| `tools/` | The build (`build.mjs`), the standalone packer (`standalone.mjs`), the deploy (`deploy.mjs`), the autopilot keeper that plays a week and reports the money, guests, Delights and equipment wear (`sim/run.mjs`), and headless checks: screenshots and the controller crawl (`check/`, see [tools/check/README.md](tools/check/README.md)) |
 | `assets/sounds/` | Sound files, packed into `standalone.html` by the build |
 
 Systems talk through the event bus in `core.ts` rather than calling each other directly where possible.

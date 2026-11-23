@@ -137,7 +137,7 @@ In build order. Each waits on the one it builds on.
 2. ~~#59 equipment costs coin~~ (built, build 102; secondhand moved to #66) · ~~#60 upkeep~~ (built; wear still to design)
 3. ~~#61 supplies~~ (built, build 113): the pantry runs out; a Supplies card at the desk with a slip per supplier, sent for the carter or fetched yourself
 4. ~~#62 deliveries~~ (crates pile at the kitchen door; the carter in the world still waits on sounds) · ~~#63 shelf life~~ · ~~#64 ready-made goods~~ · ~~#74 snack effects~~
-5. Any time: #65 hearth cooking (bake kettle) · #66 the tinker and breakdowns
+5. ~~#65 hearth cooking~~ · ~~#66 the tinker and breakdowns~~ (built, builds 123–124)
 6. Later: #67 equipment character and cookware · #68 the catalogue · #69 ideas not yet tasks
 
 ## Waiting on Bruno
@@ -226,5 +226,5 @@ In build order. Each waits on the one it builds on.
 
 ## Picking up in a new session
 
-- **Building** (Claude Code, in this repo): "read docs/status.md and the Kanzo board". Everything else is in the code, the git log and the task comments.
+- **Building** (Claude Code, in this repo): [CLAUDE.md](../CLAUDE.md) loads by itself and holds the standing rules (git, building, shipping, menus, writing). Then read this page and the Kanzo board; everything else is in the code, the git log and the task comments. Headless checks (screenshots, the controller crawl) are in [tools/check](../tools/check/README.md).
 - **Designing** (the claude.ai Travelling Inn project): paste the agenda above for the topic, decide, and bring the result back as a journal like `design-session-journal.md` in `docs/`. Claude Code turns decisions into tasks from there.

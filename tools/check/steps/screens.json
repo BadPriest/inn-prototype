@@ -1,0 +1,15 @@
+[
+  { "eval": "(async()=>{const g=window.game;g.purse=50000;(await import('inn:ui/desk.js')).openDeskScreen(g,()=>{});return 1})()" },
+  { "wait": 500 }, { "shot": "desk" },
+  { "eval": "(async()=>{const g=window.game;(await import('inn:ui/menu.js')).closeAll();(await import('inn:ui/desk.js')).openShop(g);return 1})()" },
+  { "wait": 500 }, { "shot": "shop" },
+  { "eval": "(async()=>{const g=window.game;(await import('inn:ui/menu.js')).closeAll();(await import('inn:ui/supplies.js')).openSupplies(g);return 1})()" },
+  { "wait": 500 }, { "shot": "supplies" },
+  { "eval": "(async()=>{const g=window.game;(await import('inn:ui/menu.js')).closeAll();const f=g.world.furniture.find(f=>f.kind==='station'&&f.equip?.hotSlots);(await import('inn:ui/stove.js')).openManageStove(g,f.id);return 1})()" },
+  { "wait": 500 }, { "shot": "manage-stove" },
+  { "eval": "(async()=>{const g=window.game;(await import('inn:ui/menu.js')).closeAll();(await import('inn:ui/skills.js')).openSkills(g,()=>{});return 1})()" },
+  { "wait": 500 }, { "shot": "skills" },
+  { "eval": "(async()=>{(await import('inn:ui/menu.js')).closeAll();return 1})()" },
+  { "cdp": "Input.dispatchKeyEvent", "params": { "type": "rawKeyDown", "key": "Alt", "code": "AltLeft", "windowsVirtualKeyCode": 18, "modifiers": 1 } },
+  { "wait": 900 }, { "shot": "innsight" }
+]

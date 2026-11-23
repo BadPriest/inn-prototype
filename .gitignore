@@ -12,3 +12,6 @@ assets/sounds/music/
 
 # The single-file game: built by npm run build (and by Vercel on each deploy), too big to keep in git
 standalone.html
+
+# Screenshots from tools/check
+tools/check/out/
