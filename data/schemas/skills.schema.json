@@ -45,13 +45,13 @@
     },
     "knacks": {
       "type": "array",
-      "description": "Things the keeper gets better at, bought a tier at a time. `value` is what a tier does: for quickHands, how long wiping takes (times the usual); for charm, pence added to every tip.",
+      "description": "Things the keeper gets better at, bought a tier at a time. `value` is what a tier does: for quickHands, how long wiping takes (times the usual); for charm, pence added to every tip; for keenEye, the share of the day's wear still paid.",
       "items": {
         "type": "object",
         "additionalProperties": false,
         "required": ["id", "icon", "name", "text", "tiers"],
         "properties": {
-          "id": { "enum": ["quickHands", "charm"] },
+          "id": { "enum": ["quickHands", "charm", "keenEye"] },
           "icon": { "type": "string" },
           "name": { "type": "string" },
           "text": { "type": "string" },

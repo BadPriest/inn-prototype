@@ -61,10 +61,10 @@ try { rmSync(profile, { recursive: true, force: true }); } catch { /* Chrome may
 
 const pad = (v, n) => String(v).padStart(n);
 const sh = (pence) => `${(pence / 10).toFixed(1)}s`;
-console.log("\nday  guests served walked  taken  tips  supplies upkeep  purse      delight");
+console.log("\nday  guests served walked  taken  tips  supplies upkeep  wear(messy)  purse      delight");
 for (const r of results) {
   const o = r.outcomes;
-  console.log(`${r.wd} ${pad(r.day, 2)} ${pad(r.arrivals, 5)} ${pad(r.served, 6)} ${pad(r.leftEarly, 6)} ${pad(sh(r.taken), 7)} ${pad(sh(r.tips), 6)} ${pad(sh(r.supplies), 8)} ${pad(sh(r.upkeep), 6)}  ${pad(sh(r.purse0), 6)}→${pad(sh(r.purse1), 7)} ${pad(Math.round((100 * o.DELIGHT) / Math.max(1, r.served)), 4)}%`);
+  console.log(`${r.wd} ${pad(r.day, 2)} ${pad(r.arrivals, 5)} ${pad(r.served, 6)} ${pad(r.leftEarly, 6)} ${pad(sh(r.taken), 7)} ${pad(sh(r.tips), 6)} ${pad(sh(r.supplies), 8)} ${pad(sh(r.upkeep), 6)} ${pad(sh(r.wear), 6)}(${pad(r.messy, 2)})  ${pad(sh(r.purse0), 6)}→${pad(sh(r.purse1), 7)} ${pad(Math.round((100 * o.DELIGHT) / Math.max(1, r.served)), 4)}%`);
 }
 if (results.length) {
   const k = results.length;

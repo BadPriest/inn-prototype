@@ -108,6 +108,7 @@ function admit(g: Game, p: Patron, seat: Seat): Patron {
   seat.occupant = p.id;
   g.patrons.push(p);
   g.stats.arrivals++;
+  if (p.messiness >= ECONOMY_DATA.wear.messyFrom) g.stats.messy = (g.stats.messy ?? 0) + 1;
   g.bus.emit({ type: "PatronArrived", patronId: p.id });
   g.say(`${p.name} comes in.`);
   return p;

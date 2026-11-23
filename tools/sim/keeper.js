@@ -206,7 +206,7 @@
     return {
       day: T.day, wd: T.weekday.slice(0, 3), purse0: Math.round(T.purse0), purse1: Math.round(g.purse),
       arrivals: st.arrivals, served: st.served, leftEarly: st.leftEarly, taken: Math.round(st.taken), tips: st.tips,
-      supplies: Math.round(T.supplies ?? 0), upkeep: Math.round(st.upkeep ?? 0), pantry0: Math.round(pantry0), pantry1: Math.round(pantry1),
+      supplies: Math.round(T.supplies ?? 0), upkeep: Math.round(st.upkeep ?? 0), wear: st.wear ?? 0, messy: st.messy ?? 0, pantry0: Math.round(pantry0), pantry1: Math.round(pantry1),
       outcomes: st.outcomes, outs: T.outs, scrapped: T.scrapped, rain: Math.round(st.weather?.rainMinutes ?? 0),
       util: Math.round(100 * busyTotal / Math.max(1, openMin)),
       byHour: T.byHour.map((x) => ({ arrivals: x.arrivals, turnedAway: x.turnedAway, inRoom: x.samples ? +(x.inRoom / x.samples).toFixed(1) : 0, served: x.served, delights: x.delights })),

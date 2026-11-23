@@ -4,9 +4,22 @@
   "description": "Values used to work out prices and payments. Money is in pence.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["price", "houseLevels", "tips", "startingPurse", "startingPantry", "deliveryFee", "upkeep", "sellBackShare", "fetchMinutes", "suppliers"],
+  "required": ["price", "houseLevels", "tips", "startingPurse", "startingPantry", "deliveryFee", "upkeep", "wear", "sellBackShare", "fetchMinutes", "suppliers"],
   "properties": {
     "$schema": { "type": "string" },
+    "wear": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["messyFrom", "sharePerMessyGuest", "maxShare", "mostMishaps", "mishaps"],
+      "description": "Small mishaps, paid at the end of the day as a share of the day's takings and tips. Each guest who came in at messyFrom or messier adds sharePerMessyGuest, up to maxShare; the keenEye knack multiplies it. The sum is split into one mishap per messy guest, up to mostMishaps.",
+      "properties": {
+        "messyFrom": { "type": "number", "minimum": 0, "maximum": 1, "description": "A guest this messy or messier counts (messiness 0..1)." },
+        "sharePerMessyGuest": { "type": "number", "minimum": 0, "maximum": 1 },
+        "maxShare": { "type": "number", "minimum": 0, "maximum": 1 },
+        "mostMishaps": { "type": "integer", "minimum": 1, "description": "Most mishaps listed in the tally; the sum is shared among them." },
+        "mishaps": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "What went, as listed in the end-of-day tally." }
+      }
+    },
     "upkeep": {
       "type": "object",
       "additionalProperties": false,

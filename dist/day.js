@@ -1,5 +1,6 @@
 // The clock and the day cycle: open, last call, turn in, next morning. Days never end.
 import { payLicence } from "./upkeep.js";
+import { chargeWear } from "./wear.js";
 import { carterArrives } from "./shop.js";
 import { deliveriesArrive, placeStanding, supplierDays } from "./supplies.js";
 import { MEALS, TUNING, currentEquipmentId, pieceById, EQUIPMENT, currentDishId, RECIPES, DEFAULT_MENU } from "./data.js";
@@ -87,6 +88,7 @@ export function endDay(g) {
     finishAllJobs(g);
     g.open = false;
     g.lastCall = false;
+    chargeWear(g);
     const stats = g.stats;
     g.history.push(stats);
     g.bus.emit({ type: "DayEnded", day: g.day });

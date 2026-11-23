@@ -86,6 +86,7 @@ export interface EconomyData {
     lampOil: { item: string; pintsPerHour: number; darkFlow: number; darkPatience: number };
     sundries: { item: string; perGuest: number; tipShareWithout: number };
   };
+  wear: { messyFrom: number; sharePerMessyGuest: number; maxShare: number; mostMishaps: number; mishaps: string[] };
   sellBackShare: number;
   fetchMinutes: number;
   suppliers: { priceFactor: number };
@@ -149,7 +150,7 @@ export interface LocationsData { locations: LocationData[] }
 export type WalkthroughStepId = "desk" | "bill" | "cook" | "open" | "greet" | "make" | "carry" | "eat" | "buy";
 export interface WalkthroughData { steps: { id: WalkthroughStepId; text: string; reward: number }[] }
 
-export type KnackId = "quickHands" | "charm";
+export type KnackId = "quickHands" | "charm" | "keenEye";
 export interface KnackTier { points: number; value: number; text: string }
 export interface Knack { id: KnackId; icon: string; name: string; text: string; tiers: KnackTier[] }
 export interface SkillsData {

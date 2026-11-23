@@ -35,6 +35,14 @@
         { "points": 2, "value": 2, "text": "every tip two pence more" },
         { "points": 2, "value": 3, "text": "every tip three pence more" }
       ]
+    },
+    {
+      "id": "keenEye", "icon": "👀", "name": "Keen eye", "text": "Less gets broken or goes missing.",
+      "tiers": [
+        { "points": 1, "value": 0.75, "text": "a quarter less wear" },
+        { "points": 1, "value": 0.5, "text": "half the wear" },
+        { "points": 2, "value": 0.25, "text": "a quarter of the wear" }
+      ]
     }
   ]
 }

@@ -10,8 +10,8 @@ const OUTCOMES = [
 ];
 const line = (label, value, cls = "") => `<div class="de-line ${cls}"><span>${label}</span><b>${value}</b></div>`;
 function purse(g, s) {
-    const taken = s.taken ?? 0, tips = s.tips ?? 0, sold = s.sold ?? 0, spent = s.spent ?? 0, upkeep = Math.round(s.upkeep ?? 0);
-    const net = taken + tips + sold - spent - upkeep;
+    const taken = s.taken ?? 0, tips = s.tips ?? 0, sold = s.sold ?? 0, spent = s.spent ?? 0, upkeep = Math.round(s.upkeep ?? 0), wear = s.wear ?? 0;
+    const net = taken + tips + sold - spent - upkeep - wear;
     return `<section class="de-card de-purse">
     <h3>🪙 The purse</h3>
     <div class="de-big ${net < 0 ? "down" : "up"}">${net < 0 ? "" : "+"}${moneyHtml(net)}</div>
@@ -22,6 +22,7 @@ function purse(g, s) {
       ${sold ? line("Sold back", moneyHtml(sold)) : ""}
       ${spent ? line("Spent", `−${moneyHtml(spent)}`, "out") : ""}
       ${upkeep >= 1 ? line("Upkeep", `−${moneyHtml(upkeep)}`, "out") : ""}
+      ${wear ? line("Wear", `−${moneyHtml(wear)}`, "out") + `<ul class="de-wear">${(s.mishaps ?? []).map((m) => `<li><span>${m.text}</span><b>${moneyHtml(m.pence)}</b></li>`).join("")}</ul>` : ""}
     </div>
     <div class="de-foot">${line("In the purse", moneyHtml(g.purse))}</div>
   </section>`;

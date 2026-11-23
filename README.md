@@ -64,7 +64,7 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 - A purse in crowns, shillings and pence (10d = 1s, 10s = 1 crown), on the status card. You start with 2 crowns.
 - Guests always pay for what they ordered, when it's served. Tips follow how it went (a Delight tips well, Pleased a little) and build up over the visit; they're paid all at once when the guest leaves (half, if they walk out on an order). Unasked serves are on the house, though a Delight still tips.
 - Prices are worked out from what goes in (ingredients, the cook's time, a margin) and never inflate. One house-wide knob at the desk: Cheap, Fair or Dear, which also nudges how many come in.
-- Equipment, goods and supplies cost coin. **Upkeep** you can see: firewood for the hearth and stoves (the hearth shows the logs left), lamp oil, sundries for each guest (without them, tips halve), and a weekly licence. A red card under the objective warns when any runs low or out.
+- Equipment, goods and supplies cost coin. **Upkeep** you can see: firewood for the hearth and stoves (the hearth shows the logs left), lamp oil, sundries for each guest (without them, tips halve), and a weekly licence. A red card under the objective warns when any runs low or out. **Wear**: when you turn in, the day's small mishaps (a fork bitten through, a plate smashed for luck) take a share of the takings and tips, more on days with more messy guests; the Keen eye knack cuts it.
 - **Table snacks do things**: some make guests wait longer, some make them hungry or thirsty, some put them at ease. Pickled onions and the cheese board change how a taste lands (sweet tastes bright, bitter tastes rich), shown over the guest's head.
 
 **The kitchen.**

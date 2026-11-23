@@ -26,6 +26,10 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
 
+## Built, not deployed (Nov 23, build 123)
+
+- #81 wear: a share of takings and tips per messy guest (0.4%, up to 10%), listed as mishaps in the tally; Keen eye knack
+
 ## Built and deployed (Nov 23, build 122)
 
 - Build 122: Skills recipe cards show name, cost, where, what it is, tags and what it earns; backs list basic ingredients only; knacks as a stack with the next level on top; flipped cards no longer show a duplicate underneath
@@ -107,6 +111,15 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - #49 pause screen tabs with volume and UI size sliders; sound fades in as the keeper wakes
 - #43 guests show by role until they tell you their name; regulars by how open they are (Hedda takes a long while)
 - #38 order tickets: upright cards along the top, the number plaque on the bottom border; the same ringed plaque over the guest, both counting down together to a walkout (the plaque replaced the order bubble)
+
+## Next: the epics for a true vertical day (Bruno, Nov 23)
+
+Get in what the big epics are missing, then polish and iron out.
+
+- **Finish the economy (ready to build):** #81 wear as a line in the end-of-day tally; #66 the tinker, used hardware, equipment that earns tags, breakdowns and repair; #65 hearth cooking and the hardware shop in tiers
+- **Epics:** #100 finalise seasonal weather · #101 mood · #102 taproom card game · #103 taproom activities · #104 placing furniture · #56 staff · #44 expansion · #105 events · #45 reputation and its effects
+- **Later:** #87 advanced cooking (takes time); guests are good enough for now; day bookends (#40, #41) are for the future
+- **Design session this week:** graded Delights (#92)
 
 ## Next: the economy (from the Nov 17 session)
 

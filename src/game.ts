@@ -197,6 +197,11 @@ export interface DayStats {
   sold?: number;
   /** What keeping the inn open cost today: wood, oil and sundries used, the licence. Pence. */
   upkeep?: number;
+  /** Guests who came in messy enough to count towards wear. */
+  messy?: number;
+  /** Paid for the day's mishaps when the keeper turns in. Pence. */
+  wear?: number;
+  mishaps?: { text: string; pence: number }[];
   /** The day's weather, while the keeper was up: minutes of rain, a storm or not, minutes per sky. */
   weather?: { rainMinutes: number; storm: boolean; sky: Record<string, number> };
 }
