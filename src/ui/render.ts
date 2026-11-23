@@ -13,7 +13,7 @@ import { worldGuide } from "../walkthrough.js";
 import { P } from "./proj.js";
 import { drawLevelUp } from "./levelup.js";
 import { coatColor, eyeColor, underColor } from "./wardrobe.js";
-import { drawEquipmentCards, drawGuestCard, flushCards, guestColor, insightMix, washRoom } from "./innsight.js";
+import { drawEquipmentCards, drawGuestCard, flushCards, guestColor, insightLayer, insightMix } from "./innsight.js";
 import { gaitOf, keeperGait } from "../sound/footsteps.js";
 import { COINS, coinParts, type CoinId } from "../money.js";
 
@@ -342,7 +342,8 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
   }
 
   drawLight(ctx, g, (x, y) => ({ x: X(x), y: Y(y) }), ts);
-  if (insightMix() > 0) { washRoom(ctx); for (const p of g.patrons) drawPatron(ctx, g, p, X, Y, ts, "body"); }
+  const layer = insightLayer(ctx.canvas);
+  if (layer) { ctx = layer; ctx.textAlign = "center"; ctx.textBaseline = "middle"; for (const p of g.patrons) drawPatron(ctx, g, p, X, Y, ts, "body"); }
   for (const p of g.patrons) drawPatron(ctx, g, p, X, Y, ts, "words");
   drawEquipmentCards(ctx, g, (x, y) => ({ x: X(x), y: Y(y) }), ts);
   for (const p of g.patrons) drawGuestCard(ctx, g, p, X(p.pos.x), Y(p.pos.y) + ts * 0.4, ts);

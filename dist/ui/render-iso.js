@@ -14,7 +14,7 @@ import { iconFor, TRAY_COLOUR, trayLook } from "../serving.js";
 import { drawLight, windowColor } from "./light.js";
 import { drawLevelUp } from "./levelup.js";
 import { coatColor, eyeColor, underColor } from "./wardrobe.js";
-import { drawEquipmentCards, drawGuestCard, flushCards, guestColor, guestHead, insightMix, washRoom } from "./innsight.js";
+import { drawEquipmentCards, drawGuestCard, flushCards, guestColor, guestHead, insightLayer } from "./innsight.js";
 import { gaitOf, keeperGait } from "../sound/footsteps.js";
 import { ISO, P, Pt, floorPath, turn, turnedSize, unproject, unturn } from "./proj.js";
 import { badge, barLabel, drawBowlFlip, drawTagFlips, crateCounts, drawEyes, busyWord, jobWord, drawCoinPops, drawGuide, drawPatronWords, drawSpeech, say } from "./render.js";
@@ -320,8 +320,11 @@ export function drawIso(ctx, g, v, target, clickDest) {
         it.draw();
     drawReadables(ctx, g, v, byTile, target);
     drawLight(ctx, g, (x, y) => P(v, x, y), ts * ISO.a * Math.SQRT2, ISO.b / ISO.a, false);
-    if (insightMix() > 0) {
-        washRoom(ctx);
+    const layer = insightLayer(ctx.canvas);
+    if (layer) {
+        ctx = layer;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
         for (const p of [...g.patrons].sort((a, b) => depth(v, a.pos) - depth(v, b.pos)))
             guestBody(p);
     }

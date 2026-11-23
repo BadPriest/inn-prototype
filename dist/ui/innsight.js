@@ -31,18 +31,36 @@ function lerp(a, b, t) {
 /** Everyday clothes, like the keeper's; their occupation's colour shows through under Innsight. */
 export const guestColor = (p) => lerp(COATS[seedOf(p) % COATS.length].color, p.color, mix);
 export const guestHead = (p) => lerp(COATS[(seedOf(p) >>> 8) % COATS.length].color, p.color, mix);
-/** Grey the room out (everything drawn so far). */
-export function washRoom(ctx) {
-    if (mix <= 0)
-        return;
-    ctx.save();
-    ctx.globalCompositeOperation = "saturation";
-    ctx.fillStyle = `rgba(128,128,128,${INSIGHT.saturation * mix})`;
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.globalCompositeOperation = "source-over";
-    ctx.fillStyle = `rgba(14,10,8,${INSIGHT.dim * mix})`;
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.restore();
+let layer = null;
+let layerUsed = false;
+/** Grey the room out: a filter on the room's canvas, which the GPU applies. What's drawn after (the guests in
+ * their colours, the cards) goes on a clear canvas laid over it, returned here; null while Innsight is off. */
+export function insightLayer(room) {
+    if (mix <= 0) {
+        if (layerUsed && layer) {
+            layer.getContext("2d").clearRect(0, 0, layer.width, layer.height);
+            layer.style.display = "none";
+            layerUsed = false;
+        }
+        if (room.style.filter)
+            room.style.filter = "";
+        return null;
+    }
+    if (!layer) {
+        layer = document.createElement("canvas");
+        layer.style.cssText = "position:absolute;pointer-events:none;";
+        room.parentElement?.appendChild(layer);
+    }
+    if (layer.width !== room.width)
+        layer.width = room.width;
+    if (layer.height !== room.height)
+        layer.height = room.height;
+    Object.assign(layer.style, { display: "block", left: `${room.offsetLeft}px`, top: `${room.offsetTop}px`, width: `${room.clientWidth}px`, height: `${room.clientHeight}px` });
+    room.style.filter = `saturate(${1 - INSIGHT.saturation * mix}) brightness(${1 - INSIGHT.dim * mix})`;
+    const c = layer.getContext("2d");
+    c.clearRect(0, 0, layer.width, layer.height);
+    layerUsed = true;
+    return c;
 }
 const FACE = { DELIGHT: "😍", PLEASED: "🙂", FULFILLED: "😐", UNFINISHED: "😕", COMPLAINS: "😠", LEAVING: "🚪" };
 function needWords(p) {
@@ -75,6 +93,20 @@ function lines(g, p, debug) {
 const queued = [];
 /** Queue a card; flushCards lays them all out so none overlap, then draws them. */
 function plate(rows, x, top, ts) { queued.push({ rows, x, top, ts }); }
+/** Text widths, kept: the same lines are measured frame after frame. */
+const widths = new Map();
+function widthOf(ctx, font, text) {
+    const key = `${font}|${text}`;
+    let w = widths.get(key);
+    if (w === undefined) {
+        if (widths.size > 2000)
+            widths.clear();
+        ctx.font = font;
+        w = ctx.measureText(text).width;
+        widths.set(key, w);
+    }
+    return w;
+}
 export function flushCards(ctx) {
     if (!queued.length)
         return;
@@ -84,7 +116,7 @@ export function flushCards(ctx) {
         const size = Math.max(9, Math.floor(q.ts * 0.2));
         const lh = size * 1.3, pad = size * 0.5;
         const font = (bold) => `${bold ? "600 " : ""}${size}px system-ui, sans-serif`;
-        const w = Math.max(...q.rows.map((r) => { ctx.font = font(r.bold); return ctx.measureText(r.text).width; })) + pad * 2;
+        const w = Math.max(...q.rows.map((r) => widthOf(ctx, font(r.bold), r.text))) + pad * 2;
         const h = q.rows.length * lh + pad;
         return { ...q, size, lh, pad, font, w, h, left: Math.max(2, Math.min(ctx.canvas.width - w - 2, q.x - w / 2)) };
     }).sort((a, b) => a.top - b.top);

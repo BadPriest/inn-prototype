@@ -11,7 +11,7 @@ import { worldGuide } from "../walkthrough.js";
 import { P } from "./proj.js";
 import { drawLevelUp } from "./levelup.js";
 import { coatColor, eyeColor, underColor } from "./wardrobe.js";
-import { drawEquipmentCards, drawGuestCard, flushCards, guestColor, insightMix, washRoom } from "./innsight.js";
+import { drawEquipmentCards, drawGuestCard, flushCards, guestColor, insightLayer, insightMix } from "./innsight.js";
 import { gaitOf, keeperGait } from "../sound/footsteps.js";
 import { COINS, coinParts } from "../money.js";
 /** Fit the whole inn if it's big enough to read; otherwise zoom in and follow the keeper. */
@@ -413,8 +413,11 @@ export function draw(ctx, g, v, target, clickDest) {
         drawEyes(ctx, at(-1), at(1), ts, eyeColor(underColor(g)));
     }
     drawLight(ctx, g, (x, y) => ({ x: X(x), y: Y(y) }), ts);
-    if (insightMix() > 0) {
-        washRoom(ctx);
+    const layer = insightLayer(ctx.canvas);
+    if (layer) {
+        ctx = layer;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
         for (const p of g.patrons)
             drawPatron(ctx, g, p, X, Y, ts, "body");
     }
