@@ -122,10 +122,10 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 
 Get in what the big epics are missing, then polish and iron out.
 
-- **Finish the economy (ready to build):** #81 wear as a line in the end-of-day tally; #66 the tinker, used hardware, equipment that earns tags, breakdowns and repair; #65 hearth cooking and the hardware shop in tiers
-- **Epics:** #100 finalise seasonal weather · #101 mood · #102 taproom card game · #103 taproom activities · #104 placing furniture · #56 staff · #44 expansion · #105 events · #45 reputation and its effects
+- **Finished the economy (builds 123–124, in review):** #81 wear; #65 hearth cooking and the shop in tiers; #66 equipment that wears in, breakdowns and the tinker, used hardware; #104 tables and seats
+- **Epics:** #101 mood · #100 weather through the full seasons (weather and climate, lighting) · #56 staff (soon) · #18 patron schedules (waits on #10) · #102 taproom card game · #103 taproom activities · #105 events · progression: #44 expansion and #45 reputation
 - **Later:** #87 advanced cooking (takes time); guests are good enough for now; day bookends (#40, #41) are for the future
-- **Design session this week:** graded Delights (#92)
+- **Design sessions this week:** graded Delights (#92) and staff (#56); agendas below
 
 ## Next: the economy (from the Nov 17 session)
 
