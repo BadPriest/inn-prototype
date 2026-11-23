@@ -6,7 +6,7 @@ export function pieceOf(g, slotId) {
     const sl = g.world.slot(slotId);
     if (!sl)
         return undefined;
-    return sl.gear ? { uid: sl.id, name: sl.gear.name } : { uid: sl.f.id, name: sl.f.name };
+    return sl.gear ? { uid: sl.id, name: sl.gear.name, type: sl.gear.id } : { uid: sl.f.id, name: sl.f.name, type: sl.f.equip?.id ?? "" };
 }
 /** Level 1 to start; one more at each of `levelsAt`. */
 export const seasonLevel = (made) => 1 + S.levelsAt.filter((n) => made >= n).length;
@@ -23,8 +23,9 @@ const traitsAt = (g, slotId) => {
 export const seasonedSpeed = (g, slotId) => traitsAt(g, slotId).reduce((a, t) => a * (t.speed ?? 1), 1);
 export const seasonedServings = (g, slotId) => traitsAt(g, slotId).reduce((a, t) => a + (t.servings ?? 0), 0);
 export const seasonedTags = (g, slotId) => traitsAt(g, slotId).flatMap((t) => (t.tag ? [t.tag] : []));
-function roll(level, have, batches) {
-    const pool = S.traits.filter((t) => !have.includes(t.id) && (!t.tag || level >= S.tastesFromLevel) && (!t.batchesOnly || batches));
+function roll(level, have, batches, type) {
+    const pool = S.traits.filter((t) => !have.includes(t.id) && (!t.tag || level >= S.tastesFromLevel) && (!t.batchesOnly || batches)
+        && !t.usedOnly && (!t.fits || t.fits.includes(type)));
     let r = Math.random() * pool.reduce((a, t) => a + t.weight, 0);
     return pool.find((t) => (r -= t.weight) < 0) ?? pool[pool.length - 1];
 }
@@ -39,7 +40,7 @@ export function countMade(g, slotId, servings, batch) {
     const before = seasonLevel(s.made);
     s.made += servings;
     for (let level = before + 1; level <= seasonLevel(s.made); level++) {
-        const t = roll(level, s.traits, !!s.batches);
+        const t = roll(level, s.traits, !!s.batches, p.type);
         if (!t)
             continue;
         s.traits.push(t.id);

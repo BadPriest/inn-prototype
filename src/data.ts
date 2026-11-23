@@ -436,6 +436,7 @@ export interface Archetype {
   weather: WeatherTaste; // weather they love or dislike (by weather tag)
   tastes: TasteSet; // what each visitor's own tastes are drawn from (VISITOR_TASTES: how many of each)
   extraLikes: string[]; // drawn from with the likes
+  rareLoves: string[]; // now and then a visitor loves one of these instead (RARE_LOVE_CHANCE): tastes mostly from worn-in hardware
   fussiness: Organic; // 0..1
   patience: Organic; // minutes they'll wait for an order before it starts to wear
   stay: Organic; // minutes they intend to stay
@@ -448,34 +449,35 @@ export interface Archetype {
 
 /** Each visitor draws their own tastes from their kind's, food and drink apart: this many of each. */
 export const VISITOR_TASTES = { love: 1, like: 2, dislike: 1 };
+export const RARE_LOVE_CHANCE = 0.2;
 
 export const ARCHETYPES: Archetype[] = [
   { id: "dock", openness: 0.45, name: "Dockworker", color: "#b5651d", weight: 3,
     weather: { love: [], dislike: ["stormy", "cold"] },
     needs: { hunger: [0.5, 0.15], thirst: [0.75, 0.15], warmth: [0.3, 0.15] },
     tastes: { love: ["rich", "hearty"], like: ["smoky", "savoury", "bitter", "salty"], dislike: ["light", "fragrant"] },
-    extraLikes: ["fiery", "briny", "warm"],
+    extraLikes: ["fiery", "briny", "warm"], rareLoves: ["ember-kissed", "cast-iron", "warming"],
     fussiness: [0.5, 0.2], patience: [40, 10], stay: [120, 40], consume: [22, 6], walk: [2.6, 0.4],
     foodBias: 0.6, garnishAsk: 0.15, messiness: [0.7, 0.2] },
   { id: "scholar", openness: 0.2, name: "Scholar", color: "#5b7fb5", weight: 2,
     weather: { love: ["rain", "light-rain"], dislike: ["sunny"] },
     needs: { hunger: [0.35, 0.15], thirst: [0.45, 0.15], warmth: [0.4, 0.15] },
     tastes: { love: ["fragrant"], like: ["mild", "homely", "bright"], dislike: ["fiery", "smoky", "salty"] },
-    extraLikes: ["tart", "crisp", "warm", "fresh"],
+    extraLikes: ["tart", "crisp", "warm", "fresh"], rareLoves: ["floral", "wistful", "copper-bright"],
     fussiness: [0.7, 0.15], patience: [32, 8], stay: [100, 30], consume: [26, 6], walk: [2.0, 0.3],
     foodBias: 0.4, garnishAsk: 0.4, messiness: [0.15, 0.1] },
   { id: "traveller", openness: 0.55, name: "Traveller", color: "#6f9e5a", weight: 3,
     weather: { love: ["sunny"], dislike: ["rain", "stormy"] },
     needs: { hunger: [0.75, 0.15], thirst: [0.5, 0.15], warmth: [0.45, 0.15] },
     tastes: { love: ["hearty", "savoury", "sweet"], like: ["warm", "homely", "crisp"], dislike: ["bitter", "briny"] },
-    extraLikes: ["earthy", "rich", "bright"],
+    extraLikes: ["earthy", "rich", "bright"], rareLoves: ["taste-of-summer", "comforting", "old-house"],
     fussiness: [0.2, 0.15], patience: [55, 15], stay: [90, 30], consume: [20, 5], walk: [2.4, 0.4],
     foodBias: 0.55, garnishAsk: 0.2, messiness: [0.4, 0.2] },
   { id: "farmer", openness: 0.7, name: "Farmhand", color: "#a89a3c", weight: 2,
     weather: { love: ["light-rain"], dislike: ["cold"] },
     needs: { hunger: [0.6, 0.15], thirst: [0.55, 0.15], warmth: [0.3, 0.15] },
     tastes: { love: ["earthy"], like: ["homely", "tart", "crisp"], dislike: ["sweet", "briny"] },
-    extraLikes: ["hearty", "smoky", "fresh"],
+    extraLikes: ["hearty", "smoky", "fresh"], rareLoves: ["yeasty", "tender", "nutty"],
     fussiness: [0.4, 0.2], patience: [45, 10], stay: [110, 35], consume: [20, 5], walk: [2.2, 0.4],
     foodBias: 0.5, garnishAsk: 0.15, messiness: [0.5, 0.2] },
 ];
@@ -538,7 +540,7 @@ export const REGULARS: Regular[] = [
     blurb: "The miller's widow. Says little.",
     food: { love: ["savoury"], like: ["warm", "earthy"], dislike: ["sweet", "tart", "fiery"] },
     drink: { love: ["homely"], like: ["mild", "warm", "fragrant", "bitter"], dislike: [] },
-    cravings: ["earthy", "homely", "rich"],
+    cravings: ["earthy", "homely", "rich", "jolly"],
     fussiness: 0, patience: [80, 10], stay: [90, 20], consume: [28, 5], walk: [1.6, 0.2],
     foodBias: 0.7, garnishAsk: 0, messiness: 0.1 },
   { id: "tobin", role: "Newcomer", name: "Tobin", color: "#e07b5f", schema: "unformed", joinsOnDay: 1, habit: [18, 20],
@@ -547,7 +549,7 @@ export const REGULARS: Regular[] = [
     blurb: "New in town. Doesn't seem to know what he likes.",
     food: { love: [], like: [], dislike: [] }, drink: { love: [], like: [], dislike: [] },
     target: { food: 7, drink: 4 },
-    cravings: ["sweet", "smoky", "fiery", "tart", "rich", "briny", "crisp", "earthy"],
+    cravings: ["sweet", "smoky", "fiery", "tart", "rich", "briny", "crisp", "earthy", "odd"],
     fussiness: 0.2, patience: [50, 10], stay: [150, 30], consume: [18, 5], walk: [2.8, 0.3],
     foodBias: 0.55, garnishAsk: 0.3, messiness: 0.8 },
   { id: "maren", role: "Baker", name: "Maren", color: "#f0c05a", schema: "open", joinsOnDay: 3, habit: [15, 17],
@@ -556,7 +558,7 @@ export const REGULARS: Regular[] = [
     blurb: "Bakes for half the street. Hopeful about most things.",
     food: { love: ["sweet", "warm"], like: ["homely", "crisp"], dislike: ["bitter", "briny"] },
     drink: { love: ["sweet"], like: ["warm", "fragrant"], dislike: ["bitter"] },
-    cravings: ["tart", "fragrant", "homely"],
+    cravings: ["tart", "fragrant", "homely", "refreshing"],
     fussiness: 0.3, patience: [50, 10], stay: [80, 20], consume: [20, 5], walk: [2.2, 0.3],
     foodBias: 0.5, garnishAsk: 0.4, messiness: 0.3 },
   { id: "ferryman", name: "The ferryman", color: "#4f8a8b", schema: "veiled", joinsOnDay: 5, habit: [20, 22],
@@ -565,7 +567,7 @@ export const REGULARS: Regular[] = [
     blurb: "Takes the night crossing. Hard to read.",
     food: { love: ["smoky", "briny"], like: ["hearty"], dislike: ["light", "sweet"] },
     drink: { love: ["bitter"], like: ["smoky", "warm"], dislike: ["sweet", "fragrant"] },
-    cravings: ["smoky", "briny", "fiery", "rich"],
+    cravings: ["smoky", "briny", "fiery", "rich", "gamey"],
     fussiness: 0.55, patience: [40, 8], stay: [120, 30], consume: [20, 5], walk: [2.0, 0.3],
     foodBias: 0.6, garnishAsk: 0.2, messiness: 0.4 },
   { id: "wil", role: "Old-timer", name: "Old Wil", color: "#b0b0a0", schema: "open", joinsOnDay: 7, habit: [9, 11],
@@ -574,7 +576,7 @@ export const REGULARS: Regular[] = [
     blurb: "Eats anything, says so loudly. Hard to surprise.",
     food: { love: ["rich"], like: ["warm", "hearty", "savoury", "smoky", "earthy", "homely", "crisp", "sweet"], dislike: [] },
     drink: { love: ["hearty"], like: ["bitter", "cold", "sweet", "warm", "crisp"], dislike: [] },
-    cravings: ["fiery", "briny"],
+    cravings: ["fiery", "briny", "festive"],
     fussiness: 0.1, patience: [70, 10], stay: [140, 30], consume: [15, 4], walk: [1.5, 0.2],
     foodBias: 0.6, garnishAsk: 0.1, messiness: 0.6 },
   { id: "ysolde", role: "Courier", name: "Ysolde", color: "#9db4ff", schema: "unformed", joinsOnDay: 9, habit: [16, 19],
@@ -583,7 +585,7 @@ export const REGULARS: Regular[] = [
     blurb: "A courier between towns. Picky, or maybe just unsure.",
     food: { love: [], like: [], dislike: [] }, drink: { love: [], like: [], dislike: [] },
     target: { food: 4, drink: 3 },
-    cravings: ["bright", "crisp", "fragrant", "tart", "light", "fiery"],
+    cravings: ["bright", "crisp", "fragrant", "tart", "light", "fiery", "creamy"],
     fussiness: 0.6, patience: [35, 8], stay: [70, 20], consume: [18, 5], walk: [2.6, 0.3],
     foodBias: 0.5, garnishAsk: 0.5, messiness: 0.2 },
 ];

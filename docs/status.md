@@ -30,7 +30,7 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 
 - #81 wear: a share of takings and tips per messy guest (0.4%, up to 10%), listed as mishaps in the tally; Keen eye knack
 - #65 hearth cooking: hooks over the fire (1/2/3 by tier), hanging pot, cooks while lit; stoves in three tiers (1+1, 2+2, 2+2+oven); shop sorted into six categories by line and tier
-- #66 (1 of 3) equipment wears in: levels at 100/250/500/900/1,500 servings, a trait each (speed, servings; tastes rare, from level 4); Manage tab on everything that cooks
+- #66 (1 of 3) equipment wears in: levels at 100/250/500/900/1,500 servings, a trait each (speed, servings; tastes rare, from level 4, hardware-only tags by piece kind; guests sometimes love them); Manage tab on everything that cooks
 
 ## Built and deployed (Nov 23, build 122)
 

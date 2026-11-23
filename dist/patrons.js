@@ -3,7 +3,7 @@ import { ECONOMY_DATA } from "./gamedata.gen.js";
 import { opennessOf, patienceOf, showFlip } from "./snacks.js";
 import { orderable } from "./readymade.js";
 import { chance, organic, pick, uid, weightedPick } from "./core.js";
-import { ARCHETYPES, CHATTER, NAMES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING, SHELTER, SEASONAL_TASTES, MARKET, SPECIFIC_ORDERS, VISITOR_TASTES, garnishesFor, garnishById } from "./data.js";
+import { ARCHETYPES, CHATTER, NAMES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING, SHELTER, SEASONAL_TASTES, MARKET, SPECIFIC_ORDERS, VISITOR_TASTES, RARE_LOVE_CHANCE, garnishesFor, garnishById } from "./data.js";
 import { emptyTastes } from "./game.js";
 import { appeal, prepareVisit, sample, tagScore } from "./tastes.js";
 import { arrivalNeeds, closeAllStretches } from "./needs.js";
@@ -150,7 +150,7 @@ export function spawnPatron(g, archetype, forced) {
     if (!seat)
         return null;
     const draw = () => {
-        const love = sample(a.tastes.love, VISITOR_TASTES.love);
+        const love = a.rareLoves.length && chance(RARE_LOVE_CHANCE) ? [pick(a.rareLoves)] : sample(a.tastes.love, VISITOR_TASTES.love);
         const like = sample([...new Set([...a.tastes.like, ...a.extraLikes])].filter((x) => !love.includes(x)), VISITOR_TASTES.like);
         return { love, like, dislike: sample(a.tastes.dislike.filter((x) => !love.includes(x) && !like.includes(x)), VISITOR_TASTES.dislike) };
     };

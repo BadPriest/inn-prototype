@@ -23,7 +23,9 @@
               "speed": { "type": "number", "exclusiveMinimum": 0, "description": "Cooking speed multiplier." },
               "servings": { "type": "integer", "minimum": 1, "description": "Servings added to each batch." },
               "batchesOnly": { "type": "boolean", "description": "Only rolled on a piece that has made a batch." },
-              "tag": { "type": "string", "description": "A taste tag everything made on it carries." }
+              "tag": { "type": "string", "description": "A taste tag everything made on it carries." },
+              "fits": { "type": "array", "items": { "type": "string" }, "description": "Equipment ids that can roll it. Absent: any." },
+              "usedOnly": { "type": "boolean", "description": "Only on used hardware from the tinker." }
             }
           }
         }

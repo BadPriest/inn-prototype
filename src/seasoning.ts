@@ -6,10 +6,10 @@ import { lowerName } from "./data.js";
 const S = EQUIPMENT_DATA.seasoning;
 
 /** The piece a place to cook belongs to: the gear hanging or standing there, or the stove or oven itself. */
-export function pieceOf(g: Game, slotId: string): { uid: string; name: string } | undefined {
+export function pieceOf(g: Game, slotId: string): { uid: string; name: string; type: string } | undefined {
   const sl = g.world.slot(slotId);
   if (!sl) return undefined;
-  return sl.gear ? { uid: sl.id, name: sl.gear.name } : { uid: sl.f.id, name: sl.f.name };
+  return sl.gear ? { uid: sl.id, name: sl.gear.name, type: sl.gear.id } : { uid: sl.f.id, name: sl.f.name, type: sl.f.equip?.id ?? "" };
 }
 
 /** Level 1 to start; one more at each of `levelsAt`. */
@@ -30,8 +30,9 @@ export const seasonedSpeed = (g: Game, slotId: string): number => traitsAt(g, sl
 export const seasonedServings = (g: Game, slotId: string): number => traitsAt(g, slotId).reduce((a, t) => a + (t.servings ?? 0), 0);
 export const seasonedTags = (g: Game, slotId: string): string[] => traitsAt(g, slotId).flatMap((t) => (t.tag ? [t.tag] : []));
 
-function roll(level: number, have: string[], batches: boolean): SeasoningTrait | undefined {
-  const pool = S.traits.filter((t) => !have.includes(t.id) && (!t.tag || level >= S.tastesFromLevel) && (!t.batchesOnly || batches));
+function roll(level: number, have: string[], batches: boolean, type: string): SeasoningTrait | undefined {
+  const pool = S.traits.filter((t) => !have.includes(t.id) && (!t.tag || level >= S.tastesFromLevel) && (!t.batchesOnly || batches)
+    && !t.usedOnly && (!t.fits || t.fits.includes(type)));
   let r = Math.random() * pool.reduce((a, t) => a + t.weight, 0);
   return pool.find((t) => (r -= t.weight) < 0) ?? pool[pool.length - 1];
 }
@@ -45,7 +46,7 @@ export function countMade(g: Game, slotId: string, servings: number, batch: bool
   const before = seasonLevel(s.made);
   s.made += servings;
   for (let level = before + 1; level <= seasonLevel(s.made); level++) {
-    const t = roll(level, s.traits, !!s.batches);
+    const t = roll(level, s.traits, !!s.batches, p.type);
     if (!t) continue;
     s.traits.push(t.id);
     const line = `The ${lowerName(p.name)} has worn in (level ${level}): ${t.name.toLowerCase()}, ${t.text}.`;
