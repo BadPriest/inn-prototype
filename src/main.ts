@@ -1,5 +1,6 @@
 // Wiring: input, the main loop, and the order systems run in.
 
+import { updateMending, updateTinker } from "./breakdowns.js";
 import { holdInsight, updateInsight } from "./ui/innsight.js";
 import { grid, type CardSpec } from "./ui/cards.js";
 import { updateUpkeep } from "./upkeep.js";
@@ -1026,6 +1027,7 @@ function frame(now: number): void {
   else if (g.cleaning && (!cleaningWhat || targetId(cleaningWhat) !== g.cleaning.targetId)) g.cleaning = null;
   if (!g.paused) updatePour(g, realDt);
   updateWinding(g, realDt);
+  updateMending(g, realDt);
   const sim = simDelta(g, realDt);
   if (sim > 0) {
     updateCrafting(g, sim, target?.type === "furniture" ? target : null);
@@ -1034,6 +1036,7 @@ function frame(now: number): void {
     updateWeather(g, sim);
     updateLamps(g);
     updateUpkeep(g, sim);
+    updateTinker(g);
     updateFrontDoor(g, now);
     updateClock(g, sim, () => forcedTurnIn(g));
   }

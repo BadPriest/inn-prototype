@@ -130,6 +130,7 @@ export function findTarget(g: Game): Target | null {
 }
 
 export function promptFor(g: Game, t: Target | null): string {
+  if (g.mending) return `${g.mending.kind === "mend" ? "Mending" : "Looking it over"}… ${Math.round((g.mending.progress / g.mending.total) * 100)}% · walk away to stop`;
   if (!t) return "";
   if (t.type === "tray") {
     const table = g.world.tableAt(t.t.x, t.t.y);

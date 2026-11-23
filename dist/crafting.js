@@ -9,6 +9,7 @@ import { dist } from "./world.js";
 import { addToTray, removeFromTray, trayItems } from "./serving.js";
 import { knows } from "./skills.js";
 import { countMade, seasonedServings, seasonedSpeed, seasonedTags } from "./seasoning.js";
+import { brokenAt, wearDown } from "./breakdowns.js";
 export function recipesFor(g, slot) {
     // At a kettle, tea isn't made as a job: you boil the kettle, then steep cups from the hot water.
     // With an urn in the kitchen, the kettle can also brew a whole pot of one tea to keep hot in it.
@@ -60,6 +61,11 @@ export function effectiveRecipe(_g, recipe, batch = false) {
     return batch && recipe.id === "tea" ? urnTea(recipe) : recipe;
 }
 export function startJob(g, slot, recipeIn, ingredients, ticket, prefer = {}) {
+    const broken = brokenAt(g, slot.id);
+    if (broken) {
+        g.say(`The ${broken.toLowerCase()} is broken: nothing cooks on it until it's mended. Call the tinker from its Manage tab.`);
+        return false;
+    }
     const batch = recipeIn.id === "tea" && !!recipeIn.servings;
     const recipe = effectiveRecipe(g, RECIPES.find((r) => r.id === recipeIn.id), batch);
     const uses = usesOf(g, recipe, ingredients, prefer);
@@ -119,6 +125,7 @@ export function updateCrafting(g, simDt, target) {
                 else if (recipe.servings)
                     job.servings = Math.max(2, Math.round(organic(recipe.servings))) + (utensilFor(g.upgrades, recipe.station)?.servingsBonus ?? 0) + seasonedServings(g, fid);
                 countMade(g, fid, job.servings ?? 1, batch);
+                wearDown(g, fid, job.servings ?? 1);
                 g.stats.crafted++;
             }
         }

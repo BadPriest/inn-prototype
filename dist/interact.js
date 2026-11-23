@@ -127,6 +127,8 @@ export function findTarget(g) {
     return findTargets(g)[0] ?? null;
 }
 export function promptFor(g, t) {
+    if (g.mending)
+        return `${g.mending.kind === "mend" ? "Mending" : "Looking it over"}… ${Math.round((g.mending.progress / g.mending.total) * 100)}% · walk away to stop`;
     if (!t)
         return "";
     if (t.type === "tray") {

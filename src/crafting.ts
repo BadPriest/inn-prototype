@@ -12,6 +12,7 @@ import { addToTray, removeFromTray, trayItems } from "./serving.js";
 
 import { knows } from "./skills.js";
 import { countMade, seasonedServings, seasonedSpeed, seasonedTags } from "./seasoning.js";
+import { brokenAt, wearDown } from "./breakdowns.js";
 
 export function recipesFor(g: Game, slot: Slot): Recipe[] {
   // At a kettle, tea isn't made as a job: you boil the kettle, then steep cups from the hot water.
@@ -63,6 +64,8 @@ export function effectiveRecipe(_g: Game, recipe: Recipe, batch = false): Recipe
 }
 
 export function startJob(g: Game, slot: Slot, recipeIn: Recipe, ingredients: string[], ticket: { id: number; name: string } | null, prefer: Record<string, string> = {}): boolean {
+  const broken = brokenAt(g, slot.id);
+  if (broken) { g.say(`The ${broken.toLowerCase()} is broken: nothing cooks on it until it's mended. Call the tinker from its Manage tab.`); return false; }
   const batch = recipeIn.id === "tea" && !!recipeIn.servings;
   const recipe = effectiveRecipe(g, RECIPES.find((r) => r.id === recipeIn.id)!, batch);
   const uses = usesOf(g, recipe, ingredients, prefer);
@@ -106,6 +109,7 @@ export function updateCrafting(g: Game, simDt: number, target: { f: Furniture; p
         if (recipe.storedIn) job.servings = Math.max(2, Math.round(organic(recipe.servings ?? [6, 1]))) + seasonedServings(g, fid);
         else if (recipe.servings) job.servings = Math.max(2, Math.round(organic(recipe.servings))) + (utensilFor(g.upgrades, recipe.station)?.servingsBonus ?? 0) + seasonedServings(g, fid);
         countMade(g, fid, job.servings ?? 1, batch);
+        wearDown(g, fid, job.servings ?? 1);
         g.stats.crafted++;
       }
     }

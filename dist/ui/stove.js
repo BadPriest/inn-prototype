@@ -5,6 +5,11 @@ import { emptyPot } from "../crafting.js";
 import { askChoice, back, openMenu, replaceMenu } from "./menu.js";
 import { grid, heading } from "./cards.js";
 import { seasonLevel, toNextLevel, traitById } from "../seasoning.js";
+import { callTinker, canLookOver, healthOf, isBrokenPiece, mostHealth, startMending, tinkerComing, tinkerFee } from "../breakdowns.js";
+import { knack } from "../skills.js";
+import { closeAll } from "./menu.js";
+import { moneyHtml } from "../money.js";
+import { EQUIPMENT_DATA } from "../gamedata.gen.js";
 const newUid = () => `eq-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 const gearOf = (id) => EQUIPMENT.find((e) => e.id === id && e.gear);
 /** A stove with back spots for gear. */
@@ -90,18 +95,21 @@ export function manageStoveSpec(g, stoveId, own, leave, st = { focus: 0, holding
             does: on.length < spots ? (hearth ? "Hang it over the fire" : "Set it on the stove") : "Choose which to swap it for",
         };
     });
-    const pieces = [...((f.equip?.slots.length ?? 0) > 0 ? [{ uid: f.id, icon: f.equip.icon, name: f.name }] : []),
-        ...on.map((q) => ({ uid: q.uid, icon: gearOf(q.type)?.icon ?? "•", name: gearOf(q.type)?.name ?? q.type }))];
+    const pieces = [...((f.equip?.slots.length ?? 0) > 0 ? [{ uid: f.id, type: f.equip.id, icon: f.equip.icon, name: f.name }] : []),
+        ...on.map((q) => ({ uid: q.uid, type: q.type, icon: gearOf(q.type)?.icon ?? "•", name: gearOf(q.type)?.name ?? q.type }))];
     const pieceCards = pieces.map((p) => {
         const s = g.seasoning[p.uid] ?? { made: 0, traits: [] };
         const level = seasonLevel(s.made);
         const next = toNextLevel(s.made);
         const traits = s.traits.map(traitById).filter((t) => !!t);
+        const health = Math.round(healthOf(g, p.uid, p.type)), most = mostHealth(p.type);
+        const broken = isBrokenPiece(g, p.uid), coming = tinkerComing(g, p.uid);
         return {
             pick: `piece:${p.uid}`, icon: p.icon, name: p.name,
-            fact: `level ${level}`,
-            status: next ? `${next.left} more servings to level ${level + 1}` : "fully worn in",
-            tone: traits.length ? "good" : "muted",
+            fact: `level ${level} · health ${health} of ${most}`,
+            status: broken ? (coming ? "broken · the tinker's coming" : "broken: nothing cooks on it") : next ? `${next.left} more servings to level ${level + 1}` : "fully worn in",
+            tone: broken ? "warn" : traits.length ? "good" : "muted",
+            does: broken ? "Mend it, or send for the tinker" : "Look it over",
             body: traits.length ? traits.map((t) => `<div class="desc"><b>${t.name}</b>: ${t.text}</div>`).join("") : `<div class="desc">Nothing yet. It picks something up at each level.</div>`,
             detail: `${s.made} servings made on it. ${next ? `Level ${level + 1} at ${next.at}.` : "It's reached its last level."}`,
         };
@@ -109,10 +117,40 @@ export function manageStoveSpec(g, stoveId, own, leave, st = { focus: 0, holding
     const cards = [...pieceCards, ...spotCards, ...spareCards];
     st.focus = Math.min(st.focus, Math.max(0, cards.length - 1));
     cards.forEach((c, i) => { c.focus = i === st.focus; });
+    const pieceMenu = (uid) => {
+        const p = pieces.find((x) => x.uid === uid);
+        if (!p)
+            return;
+        const H = EQUIPMENT_DATA.health;
+        const handy = knack(g, "handy", 0);
+        const broken = isBrokenPiece(g, uid), coming = tinkerComing(g, uid);
+        openMenu({
+            title: `${p.icon} ${p.name}`,
+            subtitle: `health ${Math.round(healthOf(g, uid, p.type))} of ${mostHealth(p.type)}${broken ? " · broken" : ""}`,
+            holdsClock: true,
+            items: broken ? [
+                { label: "🔧 Send for the tinker", sub: coming ? "he's on his way" : `${moneyHtml(tinkerFee(p.type))} · he comes in about ${Math.round(H.tinker.minutes / 60)} hours and mends it good as new`,
+                    disabled: !!coming, action: () => { if (callTinker(g, uid, p.type, p.name)) {
+                        g.bus.emit({ type: "MenuSound", sound: "coins" });
+                        back();
+                        redraw();
+                    } } },
+                { label: "🛠️ Mend it yourself", sub: handy ? `about ${H.mendSeconds} seconds at it · mended to ${Math.round(handy * 100)}% of its health` : "needs the Handy knack (Skills, at the desk)",
+                    disabled: !handy, action: () => { closeAll(); startMending(g, uid, p.name, "mend"); } },
+                { label: "Not now", button: "secondary", cancel: true, action: () => back() },
+            ] : [
+                { label: "👀 Look it over", sub: canLookOver(g, uid) ? `about ${H.lookOver.seconds} seconds at it · ${H.lookOver.restores} health back · once a day` : "already looked over today",
+                    disabled: !canLookOver(g, uid), action: () => { closeAll(); startMending(g, uid, p.name, "look"); } },
+                { label: "Not now", button: "secondary", cancel: true, action: () => back() },
+            ],
+        });
+    };
     const pick = (v) => {
         st.focus = Math.max(0, cards.findIndex((c) => c.pick === v));
-        if (v.startsWith("piece:"))
+        if (v.startsWith("piece:")) {
+            pieceMenu(v.slice(6));
             return;
+        }
         if (v.startsWith("spare:")) {
             const id = v.slice(6);
             if (on.length < spots) {

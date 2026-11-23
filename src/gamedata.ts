@@ -118,7 +118,8 @@ export interface EquipmentPiece {
   text?: { shopCard?: string };
 }
 export interface SeasoningTrait { id: string; name: string; text: string; weight: number; speed?: number; servings?: number; batchesOnly?: boolean; tag?: string; fits?: string[]; usedOnly?: boolean }
-export interface EquipmentData { seasoning: { levelsAt: number[]; tastesFromLevel: number; traits: SeasoningTrait[] }; equipment: EquipmentPiece[] }
+export interface EquipmentHealth { base: number; perTier: number; lossPerServing: number; breakChanceAtZero: number; lookOver: { seconds: number; restores: number }; mendSeconds: number; tinker: { share: number; least: Pence; minutes: number } }
+export interface EquipmentData { health: EquipmentHealth; seasoning: { levelsAt: number[]; tastesFromLevel: number; traits: SeasoningTrait[] }; equipment: EquipmentPiece[] }
 
 export interface InventoryLine { item: string; pack?: { units: number; name: string } }
 export interface SupplierFields {
@@ -153,7 +154,7 @@ export interface LocationsData { locations: LocationData[] }
 export type WalkthroughStepId = "desk" | "bill" | "cook" | "open" | "greet" | "make" | "carry" | "eat" | "buy";
 export interface WalkthroughData { steps: { id: WalkthroughStepId; text: string; reward: number }[] }
 
-export type KnackId = "quickHands" | "charm" | "keenEye";
+export type KnackId = "quickHands" | "charm" | "keenEye" | "gentleHands" | "handy";
 export interface KnackTier { points: number; value: number; text: string }
 export interface Knack { id: KnackId; icon: string; name: string; text: string; tiers: KnackTier[] }
 export interface SkillsData {

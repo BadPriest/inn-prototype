@@ -4,9 +4,24 @@
   "description": "Every piece of kitchen and bar equipment, gear, utensil and tray.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["equipment", "seasoning"],
+  "required": ["equipment", "health", "seasoning"],
   "properties": {
     "$schema": { "type": "string" },
+    "health": {
+      "type": "object", "additionalProperties": false, "required": ["base", "perTier", "lossPerServing", "breakChanceAtZero", "lookOver", "mendSeconds", "tinker"],
+      "description": "Pieces that cook lose health as they're used. Each time something is finished on one, it may break: breakChanceAtZero x (1 - health/most)^3. A broken piece cooks nothing until it's mended.",
+      "properties": {
+        "base": { "type": "number", "minimum": 1, "description": "Most health of a tier 1 piece (or one with no tier)." },
+        "perTier": { "type": "number", "minimum": 0, "description": "Added to the most health for each tier above 1." },
+        "lossPerServing": { "type": "number", "minimum": 0, "description": "Health lost per serving made on it; the gentleHands knack multiplies it." },
+        "breakChanceAtZero": { "type": "number", "minimum": 0, "maximum": 1 },
+        "lookOver": { "type": "object", "additionalProperties": false, "required": ["seconds", "restores"], "description": "Looking a working piece over: real seconds standing at it, and health back. Once a day per piece.",
+          "properties": { "seconds": { "type": "number", "minimum": 0 }, "restores": { "type": "number", "minimum": 0 } } },
+        "mendSeconds": { "type": "number", "minimum": 0, "description": "Real seconds to mend a broken piece yourself (with the handy knack)." },
+        "tinker": { "type": "object", "additionalProperties": false, "required": ["share", "least", "minutes"], "description": "Calling the tinker: costs this share of the piece's price (at least `least` pence), and he mends it this many game minutes later (or first thing next morning).",
+          "properties": { "share": { "type": "number", "minimum": 0 }, "least": { "type": "number", "minimum": 0 }, "minutes": { "type": "number", "minimum": 0 } } }
+      }
+    },
     "seasoning": {
       "type": "object", "additionalProperties": false, "required": ["levelsAt", "tastesFromLevel", "traits"],
       "description": "Pieces that cook level up with use. Each level reached rolls one trait the piece doesn't have yet, by weight. Taste traits only from tastesFromLevel on.",

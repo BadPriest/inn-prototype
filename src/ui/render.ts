@@ -368,12 +368,12 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
   drawTagFlips(ctx, g, ts);
   drawCoinPops(ctx, g, v); // over the speech, so the coin always reads
 
-  const busy = g.cleaning ?? g.pouring ?? g.winding;
+  const busy = g.cleaning ?? g.pouring ?? g.winding ?? g.mending;
   if (busy) {
     const pct = Math.min(1, busy.progress / busy.total);
     const bx = X(k.pos.x) - ts * 0.5, by = Y(k.pos.y) - ts * 0.75;
     ctx.fillStyle = "rgba(0,0,0,0.65)"; ctx.fillRect(bx, by, ts, ts * 0.16);
-    ctx.fillStyle = g.winding ? "#c9a24a" : g.pouring ? "#e8b25a" : "#8fd3ff"; ctx.fillRect(bx, by, ts * pct, ts * 0.16);
+    ctx.fillStyle = g.mending ? "#b8c4cc" : g.winding ? "#c9a24a" : g.pouring ? "#e8b25a" : "#8fd3ff"; ctx.fillRect(bx, by, ts * pct, ts * 0.16);
     barLabel(ctx, busyWord(g), bx + ts / 2, by - 2, ts);
   }
 
@@ -669,7 +669,7 @@ export function drawGuide(ctx: CanvasRenderingContext2D, g: Game, v: View): void
 }
 
 /** What the keeper's busy bar is for. */
-export const busyWord = (g: Game): string => (g.winding ? "Winding…" : g.pouring ? "Pouring…" : "Cleaning…");
+export const busyWord = (g: Game): string => (g.mending ? (g.mending.kind === "mend" ? "Mending…" : "Looking it over…") : g.winding ? "Winding…" : g.pouring ? "Pouring…" : "Cleaning…");
 /** What a station's bar is doing, by where it's made. */
 export const jobWord = (station: string): string =>
   station === "kettle" ? "Boiling…" : station === "coffee" ? "Brewing…" : station === "oven" ? "Baking…" : station === "prep" ? "Preparing…" : "Cooking…";

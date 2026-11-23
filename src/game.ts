@@ -325,7 +325,11 @@ export class Game {
   coat = "slate"; // the keeper's coat, chosen at the wardrobe
   under = "linen"; // what shows under it: the head
   /** Each piece that cooks, by layout uid: servings made on it, and the traits it has picked up. */
-  seasoning: Record<string, { made: number; traits: string[]; batches?: boolean }> = {};
+  seasoning: Record<string, { made: number; traits: string[]; batches?: boolean; health?: number; broken?: boolean; lookedOver?: number }> = {};
+  /** The tinker, called to mend a piece: due at this game day and minute. */
+  tinkerCalls: { uid: string; name: string; day: number; minute: number }[] = [];
+  /** The keeper looking a piece over or mending it (real seconds; walking away stops it). */
+  mending: { uid: string; name: string; kind: "look" | "mend"; progress: number; total: number; at: { x: number; y: number } } | null = null;
   newGear: string[] = []; // kettles, coffee pots, Dutch ovens the carter brought, not yet set on a stove
   setDown: SetDownTray[] = [];
   groups: Group[] = [];

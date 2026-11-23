@@ -43,6 +43,22 @@
         { "points": 1, "value": 0.5, "text": "half the wear" },
         { "points": 2, "value": 0.25, "text": "a quarter of the wear" }
       ]
+    },
+    {
+      "id": "gentleHands", "icon": "🫳", "name": "Gentle hands", "text": "Equipment wears down more slowly.",
+      "tiers": [
+        { "points": 1, "value": 0.75, "text": "a quarter more slowly" },
+        { "points": 1, "value": 0.5, "text": "half as fast" },
+        { "points": 2, "value": 0.35, "text": "a third as fast" }
+      ]
+    },
+    {
+      "id": "handy", "icon": "🔧", "name": "Handy", "text": "Mend broken equipment yourself, without the tinker.",
+      "tiers": [
+        { "points": 1, "value": 0.5, "text": "mended to half its health" },
+        { "points": 1, "value": 0.75, "text": "mended to three quarters" },
+        { "points": 2, "value": 1, "text": "mended good as new" }
+      ]
     }
   ]
 }

@@ -89,6 +89,10 @@ export class Game {
     under = "linen"; // what shows under it: the head
     /** Each piece that cooks, by layout uid: servings made on it, and the traits it has picked up. */
     seasoning = {};
+    /** The tinker, called to mend a piece: due at this game day and minute. */
+    tinkerCalls = [];
+    /** The keeper looking a piece over or mending it (real seconds; walking away stops it). */
+    mending = null;
     newGear = []; // kettles, coffee pots, Dutch ovens the carter brought, not yet set on a stove
     setDown = [];
     groups = [];

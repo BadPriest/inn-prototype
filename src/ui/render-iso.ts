@@ -339,12 +339,12 @@ export function drawIso(ctx: CanvasRenderingContext2D, g: Game, v: View, target:
   drawTagFlips(ctx, g, ts);
   drawCoinPops(ctx, g, v); // over the speech, so the coin always reads
 
-  const busy = g.cleaning ?? g.pouring ?? g.winding;
+  const busy = g.cleaning ?? g.pouring ?? g.winding ?? g.mending;
   if (busy) {
     const pct = Math.min(1, busy.progress / busy.total);
     const bx = kh.x - ts * 0.5, by = kh.y - ts * 0.6;
     ctx.fillStyle = "rgba(0,0,0,0.65)"; ctx.fillRect(bx, by, ts, ts * 0.16);
-    ctx.fillStyle = g.winding ? "#c9a24a" : g.pouring ? "#e8b25a" : "#8fd3ff"; ctx.fillRect(bx, by, ts * pct, ts * 0.16);
+    ctx.fillStyle = g.mending ? "#b8c4cc" : g.winding ? "#c9a24a" : g.pouring ? "#e8b25a" : "#8fd3ff"; ctx.fillRect(bx, by, ts * pct, ts * 0.16);
     barLabel(ctx, busyWord(g), bx + ts / 2, by - 2, ts);
   }
 
