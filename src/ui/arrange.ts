@@ -15,6 +15,7 @@ import { padActive, padText } from "../gamepad.js";
 import { fmtMoney, moneyHtml } from "../money.js";
 import { sellBack, sellBackPrice } from "../shop.js";
 import { openMenu, closeAll } from "./menu.js";
+import { wearWords } from "./stove.js";
 
 let grab: Vec = { x: 0, y: 0 }; // where on the piece it was picked up
 const verdicts = new Map<string, boolean>();
@@ -115,11 +116,12 @@ function pickUp(g: Game, placed: Placed, at: Vec): void {
 function chooseStoveOrGear(g: Game, stove: Placed, gear: Placed[], at: Vec): void {
   openMenu({
     title: `${eqOf(stove.type).icon} ${eqOf(stove.type).name}`,
+    subtitle: eqOf(stove.type).hearth ? "what hangs over the fire" : `${wearWords(stove.type, g.seasoning[stove.uid]).short} · and what's on its spots`,
     holdsClock: true,
     items: [
       ...(eqOf(stove.type).hearth ? [] : [{ label: `Move the ${eqOf(stove.type).name.toLowerCase()}`, sub: gear.length > 1 ? "what's on it goes with it" : `the ${eqOf(gear[0].type).name.toLowerCase()} goes with it`,
         action: () => { closeAll(); pickUp(g, stove, at); } }]),
-      ...gear.map((q) => ({ label: `Take the ${eqOf(q.type).name.toLowerCase()} off`, sub: "to set it on another stove, or sell it",
+      ...gear.map((q, i) => ({ label: `${eqOf(q.type).icon} Take the ${eqOf(q.type).name.toLowerCase()} off (${eqOf(stove.type).hearth ? "hook" : "spot"} ${i + 1})`, sub: `${wearWords(q.type, g.seasoning[q.uid]).short} · to set it elsewhere, or sell it`,
         action: () => { closeAll(); pickUp(g, q, { x: 0, y: 0 }); } })),
       { label: "Not now", button: "secondary", cancel: true as const, action: () => closeAll() },
     ],
@@ -221,7 +223,8 @@ function bar(g: Game): void {
     document.getElementById("stage")?.appendChild(el);
   }
   const h = g.arranging?.holding;
-  const what = h ? eqOf(h.type).name.toLowerCase() : "";
+  const wear = h ? wearWords(h.type, h.isNew ? g.usedWaiting.find((x) => x.type === h.type)?.state : g.seasoning[h.uid]) : undefined;
+  const what = h ? `${eqOf(h.type).name.toLowerCase()} (${wear!.short})` : "";
   const pad = padActive(); // a controller: name its buttons
   const k = pad ? { esc: padText("○"), del: padText("L2"), buy: padText("□"), another: padText("△"), click: padText("✕") + " on" } : { esc: "Esc", del: "Delete", buy: "B", another: "A", click: "click" };
   const waiting = g.toPlace.length;

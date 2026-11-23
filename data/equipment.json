@@ -15,6 +15,10 @@
     "stock": 3,
     "weekday": "Monday",
     "price": [0.4, 0.6],
+    "perLevel": 0.35,
+    "perTaste": 0.2,
+    "healthWeight": 0.5,
+    "mostPrice": 1.5,
     "health": [0.35, 0.7],
     "made": [100, 700],
     "oddChance": 0.5

@@ -1,7 +1,7 @@
 import { EQUIPMENT_DATA } from "./gamedata.gen.js";
 import { EQUIPMENT, innOf, pieceById } from "./data.js";
 import { levelsAt } from "./seasoning.js";
-import { roll, seasonLevel, usedOnlyTraits } from "./seasoning.js";
+import { roll, seasonLevel, traitById, usedOnlyTraits } from "./seasoning.js";
 import { mostHealth } from "./breakdowns.js";
 import { spend, fmtMoney } from "./money.js";
 const U = EQUIPMENT_DATA.used;
@@ -19,10 +19,13 @@ function usedPiece(type) {
     const odd = usedOnlyTraits();
     if (odd.length && Math.random() < U.oddChance)
         traits.push(odd[Math.floor(Math.random() * odd.length)].id);
+    const health = Math.round(mostHealth(type) * between(U.health));
+    const tastes = traits.filter((id) => traitById(id)?.tag).length;
+    const worth = between(U.price) * (1 + U.perLevel * (seasonLevel(made) - 1) + U.perTaste * tastes) * (1 - U.healthWeight * (1 - health / mostHealth(type)));
     return {
         id: `used-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, type,
-        price: Math.max(1, Math.round((pieceById(type)?.price ?? 0) * between(U.price))),
-        state: { made, traits, batches: true, health: Math.round(mostHealth(type) * between(U.health)), paid: 0 },
+        price: Math.max(1, Math.round((pieceById(type)?.price ?? 0) * Math.min(U.mostPrice, worth))),
+        state: { made, traits, batches: true, health, paid: 0 },
     };
 }
 /** A fresh lot on the cart: on its weekday, or when there's never been one. */
@@ -50,10 +53,13 @@ export function buyUsed(g, id) {
     g.say(`You buy the used ${pieceById(it.type)?.name.toLowerCase()} off the tinker's cart for ${fmtMoney(it.price)}. Place it from the desk (Arrange the kitchen)${pieceById(it.type)?.type === "gear" ? ", or set it out from a stove's Manage tab" : ""}.`);
     return true;
 }
-/** A piece just placed: if a used one of its kind was waiting, this is it, with its wear. */
-export function claimUsed(g, uid, type) {
-    const i = g.usedWaiting.findIndex((x) => x.type === type);
-    if (i < 0)
+/** A piece just placed: if a used one of its kind was waiting, this is it, with its wear. `which`: that waiting one by
+ * its place in the list, or "new" for one with no wear; by default the first used one of its kind. */
+export function claimUsed(g, uid, type, which) {
+    if (which === "new")
+        return;
+    const i = which ?? g.usedWaiting.findIndex((x) => x.type === type);
+    if (i < 0 || g.usedWaiting[i]?.type !== type)
         return;
     g.seasoning[uid] = { ...g.usedWaiting[i].state, traits: [...g.usedWaiting[i].state.traits] };
     g.usedWaiting.splice(i, 1);
@@ -85,4 +91,19 @@ export function wearInStartingPieces(g) {
         const t = roll(2, [], true, type);
         g.seasoning[p.uid] = { made: two + Math.floor(Math.random() * (three - two)), traits: t ? [t.id] : [], batches: true, health: Math.round(mostHealth(type) * between(U.health)) };
     }
+}
+/** Gear on the shelf, each piece on its own: the used ones with their wear, then the new ones. */
+export function gearShelf(g) {
+    const out = [];
+    for (const type of [...new Set(g.toPlace)]) {
+        if (pieceById(type)?.type !== "gear")
+            continue;
+        const n = g.toPlace.filter((x) => x === type).length;
+        const worn = g.usedWaiting.map((w, i) => (w.type === type ? i : -1)).filter((i) => i >= 0).slice(0, n);
+        for (const i of worn)
+            out.push({ key: `worn:${i}`, type, worn: i });
+        for (let k = worn.length; k < n; k++)
+            out.push({ key: `new:${type}:${k}`, type });
+    }
+    return out;
 }
