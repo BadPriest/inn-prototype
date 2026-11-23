@@ -6,6 +6,15 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 122 · Nov 23, 2026 · deployed
+
+### Changed
+- **Skills recipe cards lead with what matters**: the name, the cost in points (or "known"), where it's made, what it is, its tags, and what it earns (a price each, a slice, or from a price when it varies, with how many a pie or pot makes). The "2 points, you have 1" line is gone. The back lists where it's made and its basic ingredients, without pantry amounts.
+- **Knacks show as a stack**: the next level sits on top, named with its level (II, III…), its cost and what it adds; the levels after it show as cards beneath. Mastered knacks say so.
+
+### Fixed
+- **A flipped card no longer shows a copy of itself underneath**: the card picked up is hidden in the grid while it's held, and each side of a flipped card hides properly.
+
 ## Build 121 · Nov 22, 2026 · deployed
 
 ### Changed

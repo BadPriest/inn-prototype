@@ -26,11 +26,11 @@ function effectText(index, e) {
 const ingName = (id) => INGREDIENTS.find((x) => x.id === id)?.name.toLowerCase() ?? id;
 /** What always goes in: "water, salt". */
 const alwaysIn = (r) => r.fundamental.map((u) => ingName(u.id)).join(", ");
-/** What a dish takes, and how much of each is in the pantry: what always goes in, then the choices. */
-export function ingredientsHtml(g, r) {
+/** What a dish takes: what always goes in, then the choices; with `pantry`, how much of each is in the pantry. */
+export function ingredientsHtml(g, r, pantry = true) {
     const one = (id, units) => {
         const ing = INGREDIENTS.find((x) => x.id === id);
-        const left = have(g, id);
+        const left = pantry ? have(g, id) : Infinity;
         const short = left !== Infinity && left < units;
         return `<span class="ing${short ? " short" : ""}">${ing?.icon ?? ""} ${ing?.name.toLowerCase() ?? id}${left === Infinity ? "" : ` <small>${amount(id, left)}</small>`}</span>`;
     };

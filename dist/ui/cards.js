@@ -127,13 +127,15 @@ export function settleCards(root) {
     const focused = () => root.querySelector(".icard.focus");
     const show = (c, animate = true) => {
         const more = c?.querySelector(".more");
-        root.querySelectorAll(".cards .icard").forEach((x) => x.style.removeProperty("--shift"));
+        root.querySelectorAll(".cards .icard").forEach((x) => { x.style.removeProperty("--shift"); x.classList.remove("held"); });
         if (!c) {
             zoom?.remove();
             zoom = null;
             shown = null;
             return;
         }
+        // Picked up: its place in the grid is left empty, so it's never seen twice.
+        c.classList.add("held");
         if (c === shown && animate)
             return;
         zoom?.remove();
@@ -141,7 +143,7 @@ export function settleCards(root) {
         const z = Number(getComputedStyle(document.documentElement).getPropertyValue("--ui")) || 1;
         const r = c.getBoundingClientRect(), box = root.getBoundingClientRect();
         const el = document.createElement("div");
-        el.className = `${c.className} zoomed`;
+        el.className = `${c.className.replace(/\bheld\b/, "")} zoomed`;
         el.dataset.pick = c.dataset.pick;
         // Picked up: the front as it lies, with what picking it does; the back has the rest to read.
         const box2 = document.createElement("div");

@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 22, 2026 · build 121 (deployed) · https://inn-prototype.vercel.app
+Updated Nov 23, 2026 · build 122 (deployed) · https://inn-prototype.vercel.app
 
 History by build: [../CHANGELOG.md](../CHANGELOG.md). What the prototype is and how to play: [../README.md](../README.md).
 
@@ -25,6 +25,10 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - #9 gramophone: horn and turntable tone; winding has a progress bar; the spring runs ~4 min (short for testing) and sags the record when it gives out (per [specs/sound.md](specs/sound.md))
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
+
+## Built and deployed (Nov 23, build 122)
+
+- Build 122: Skills recipe cards show name, cost, where, what it is, tags and what it earns; backs list basic ingredients only; knacks as a stack with the next level on top; flipped cards no longer show a duplicate underneath
 
 ## Built and deployed (Nov 22, builds 119–121)
 

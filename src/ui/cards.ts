@@ -46,8 +46,8 @@ export interface CardSpec {
 /** A section of a card screen: its name, and a line on what to do there. Cards (grid()) follow it. */
 export const heading = (title: string, note: string): string => `<div class="sec-h"><h4>${title}</h4><small>${note}</small></div>`;
 
-/** fresh: as good as it gets · past: past fresh, does no harm · cost: costs the dish something (taste, price). */
-export type BandTone = "fresh" | "past" | "cost";
+/** fresh: as good as it gets · past: past fresh, does no harm · cost: costs the dish something (taste, price) · plain: no band (a knack's later levels). */
+export type BandTone = "fresh" | "past" | "cost" | "plain";
 export interface Band { label: string; tone: BandTone; at?: string; shuffle?: string }
 /** A stage's colour, by what it does to a dish: costs it (taste or price), fresh, or past fresh but harmless. */
 export const stageTone = (index: number, e: { tastePenalty: number; priceFactor: number }): BandTone => (e.tastePenalty < 0 || e.priceFactor < 1 ? "cost" : index === 0 ? "fresh" : "past");
@@ -164,15 +164,17 @@ export function settleCards(root: HTMLElement): void {
   const focused = () => root.querySelector<HTMLElement>(".icard.focus");
   const show = (c: HTMLElement | null, animate = true) => {
     const more = c?.querySelector<HTMLElement>(".more");
-    root.querySelectorAll<HTMLElement>(".cards .icard").forEach((x) => x.style.removeProperty("--shift"));
+    root.querySelectorAll<HTMLElement>(".cards .icard").forEach((x) => { x.style.removeProperty("--shift"); x.classList.remove("held"); });
     if (!c) { zoom?.remove(); zoom = null; shown = null; return; }
+    // Picked up: its place in the grid is left empty, so it's never seen twice.
+    c.classList.add("held");
     if (c === shown && animate) return;
     zoom?.remove();
     shown = c;
     const z = Number(getComputedStyle(document.documentElement).getPropertyValue("--ui")) || 1;
     const r = c.getBoundingClientRect(), box = root.getBoundingClientRect();
     const el = document.createElement("div");
-    el.className = `${c.className} zoomed`;
+    el.className = `${c.className.replace(/\bheld\b/, "")} zoomed`;
     el.dataset.pick = c.dataset.pick;
     // Picked up: the front as it lies, with what picking it does; the back has the rest to read.
     const box2 = document.createElement("div"); box2.innerHTML = more?.innerHTML ?? "";

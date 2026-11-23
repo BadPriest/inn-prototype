@@ -1,5 +1,6 @@
 // Skills at the desk: the keeper's level, and what its points buy: recipes, by kind, and knacks.
 import { EQUIPMENT, RECIPES, dishData } from "../data.js";
+import { moneyHtml, priceOfRecipe } from "../money.js";
 import { SKILLS, buyKnack, costOf, learn, levelOf, levelProgress, nextTier, pointsLeft, tierOf } from "../skills.js";
 import { openMenu, replaceMenu } from "./menu.js";
 import { grid } from "./cards.js";
@@ -46,12 +47,14 @@ export function openSkills(g, changed) {
                 const tier = tierOf(g, k.id), next = nextTier(g, k.id);
                 const afford = !!next && left >= next.points;
                 const tiers = k.tiers.map((t, i) => `<div>${i < tier ? "✓" : "·"} ${k.name} ${ROMAN[i + 1]}: ${t.text} (${pts(t.points)})</div>`).join("");
+                // A stack: the next level on top, the levels after it underneath.
                 return {
                     card: {
-                        pick: "", icon: k.icon, name: tier ? `${k.name} ${ROMAN[tier]}` : k.name, on: !next, off: !!next && !afford,
-                        fact: `${tier} of ${k.tiers.length}`,
-                        status: !next ? "mastered" : afford ? `${ROMAN[tier + 1]}: ${next.text} · ${pts(next.points)}` : `${ROMAN[tier + 1]}: ${pts(next.points - left)} more`,
-                        tone: !next || afford ? "good" : "muted",
+                        pick: "", icon: k.icon, name: next ? `${k.name} ${ROMAN[tier + 1]}` : `${k.name} ${ROMAN[tier]}`, on: !next, off: !!next && !afford,
+                        fact: next ? pts(next.points) : "mastered",
+                        status: next ? next.text : "", tone: "good",
+                        body: `<div class="desc">${k.text}</div>`,
+                        under: next ? k.tiers.slice(tier + 1).map(() => "plain") : [],
                         detail: `${k.text}${tiers}`,
                         does: !next ? "You've learned all of it" : afford ? `Learn ${k.name} ${ROMAN[tier + 1]}: ${pts(next.points)}` : "Level up to earn points",
                     },
@@ -72,15 +75,19 @@ export function openSkills(g, changed) {
                 const afford = left >= cost;
                 const here = canMakeHere(r);
                 const note = kitchenNote(r);
+                const unit = r.storedIn === "piesafe" ? "a slice" : "each";
+                const batch = r.storedIn === "piesafe" ? `${r.servings?.[0] ?? 6} a pie` : r.servings ? `~${r.servings[0]} a pot` : "";
+                const varies = r.base.options.length > 1 || r.optional.pick[1] > 0;
                 return {
                     card: {
                         pick: "", icon: r.icon, name: r.name, on: has, off: !has && !afford,
                         fact: has ? "known" : pts(cost),
-                        status: has ? note || "ready to cook" : `${afford ? `learn it: ${pts(cost)}` : `${pts(cost)}: you have ${left}`}${note ? ` · ${note}` : ""}`,
-                        tone: has ? (note ? "warn" : "good") : afford ? "good" : "muted",
+                        status: whereShort(r),
+                        tone: here ? undefined : "warn",
+                        body: `<div class="earns">${varies ? "from " : ""}${moneyHtml(priceOfRecipe(g, r.id))} ${unit}${batch ? ` · ${batch}` : ""}</div>${r.blurb ? `<div class="desc">${r.blurb}</div>` : ""}`,
                         tags: r.baseTags,
-                        detail: `${r.blurb ?? ""}<div class="where-full">${whereShort(r)}${whereFull(r) ? ` · ${whereFull(r)}` : ""}</div>${ingredientsHtml(g, r)}`,
-                        does: has ? "You know this one" : afford ? `Learn it: ${pts(cost)}${note ? ` (you can learn it now; ${note})` : ""}` : `Level up to earn ${pts(cost - left)} more`,
+                        detail: `${r.blurb ?? ""}${note ? `<div class="where-full">To cook it: ${note}.</div>` : ""}<div class="where-full">${whereFull(r)}</div>${ingredientsHtml(g, r, false)}`,
+                        does: has ? "You know this one" : afford ? `Learn it: ${pts(cost)}` : `Level up to earn ${pts(cost - left)} more`,
                     },
                     use: () => {
                         if (!learn(g, r.id))

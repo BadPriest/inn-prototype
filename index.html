@@ -177,6 +177,8 @@
     box-shadow:inset 0 0 0 5px var(--frame), 0 2px 5px rgba(0,0,0,.45);
     transform:translate(calc(var(--k) * 4px), calc(var(--k) * -7px)) rotate(calc(var(--k) * 2.5deg)); transform-origin:50% 100%; }
   .icard .uc.b-fresh { --band:#79c062; } .icard .uc.b-past { --band:#e2b445; } .icard .uc.b-cost { --band:#cf6442; }
+  .icard .uc.b-plain { background:radial-gradient(130% 90% at 30% 0%, #f5ead3 0%, #e6d7b8 60%, #d8c49d 100%); }
+  .icard .body .earns { font:600 11px system-ui; color:#2f6a1e; white-space:nowrap; }
   .icard.deck { margin-top:10px; }
   body:not(.pad) .icard:hover, .icard.focus { --lift:-5px; --sheen:1; z-index:2; box-shadow:0 12px 18px rgba(0,0,0,.55); }
   .icard.focus { box-shadow:0 0 0 2px var(--accent), 0 0 14px rgba(255,211,77,.45), 0 14px 20px rgba(0,0,0,.55); }
@@ -230,6 +232,7 @@
   .icard .face .note { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; overflow:hidden; }
   .icard .face > * { flex-shrink:0; }
   .icard .face > .body { flex-shrink:1; min-height:0; overflow:hidden; }
+  .icard .face > .body > * { flex-shrink:0; }
   .icard .face > .body.clipped { -webkit-mask-image:linear-gradient(#000 calc(100% - 14px), transparent); mask-image:linear-gradient(#000 calc(100% - 14px), transparent); }
   .icard.zoomed .face > .body { -webkit-mask-image:none; mask-image:none; }
   .icard .fact { font:600 12px system-ui; color:var(--ink-card); margin-top:2px; }
@@ -279,10 +282,14 @@
   .icard.zoomed { position:absolute; z-index:7; zoom:var(--ui, 1); min-height:0; background:none; box-shadow:none; overflow:visible; --lift:0px; --sheen:1;
     transition:left .17s cubic-bezier(.2,.8,.3,1), top .17s cubic-bezier(.2,.8,.3,1), width .17s cubic-bezier(.2,.8,.3,1), height .17s cubic-bezier(.2,.8,.3,1), transform .2s cubic-bezier(.2,.8,.3,1); }
   .icard.zoomed::after, .icard.zoomed::before { display:none; }
+  .cards .icard.held { visibility:hidden; }
   .icard.zoomed .seal { z-index:8; top:-9px; right:-9px; width:26px; height:26px; font-size:15px; }
   .icard.zoomed .uc { transform:translate(calc(var(--k) * 11px), calc(var(--k) * -9px)) rotate(calc(var(--k) * 3deg)); border-radius:12px; background-size:auto, auto; }
   .icard.zoomed .flipper { position:relative; display:grid; width:100%; height:100%; transform-style:preserve-3d; transition:transform .45s cubic-bezier(.3,.7,.3,1.15); }
   .icard.zoomed.flipped .flipper { transform:rotateY(180deg); }
+  /* Each side hides itself halfway through the turn: backface-visibility alone lets parts of the front show through the back on some GPUs. */
+  .icard.zoomed .side { transition:visibility 0s linear .2s; }
+  .icard.zoomed.flipped .side.front, .icard.zoomed:not(.flipped) .side.back { visibility:hidden; }
   .icard.zoomed .side { grid-area:1 / 1; display:flex; flex-direction:column; border-radius:12px; backface-visibility:hidden; -webkit-backface-visibility:hidden; position:relative; overflow:hidden;
     background:radial-gradient(130% 90% at 30% 0%, var(--stock-hi) 0%, var(--stock) 55%, var(--stock-lo) 100%);
     box-shadow:inset 0 0 0 5px transparent, inset 0 0 0 6px rgba(154,122,80,.6), 0 18px 34px rgba(0,0,0,.65); }
