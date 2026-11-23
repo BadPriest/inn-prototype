@@ -159,7 +159,7 @@ export function promptFor(g: Game, t: Target | null): string {
       return n && !trayItems(g).length ? `${n} waiting here · ${tap}` : tap;
     }
     case "fireplace":
-      if (!t.part) return `${g.fireLit ? (hasBackSpots(f) ? "Space: bank the fire, or see to the hooks" : "Space: put out the fire") : hasFirewood(g) ? "Space: light the fire" : "No firewood to light it"} · 🪵 ${Math.floor(have(g, "firewood"))} logs`;
+      if (!t.part) return `${g.fireLit ? (hasBackSpots(f) ? "Space: put out the fire, or see to the hooks" : "Space: put out the fire") : hasFirewood(g) ? "Space: light the fire" : "No firewood to light it"} · 🪵 ${Math.floor(have(g, "firewood"))} logs`;
       if (!g.fireLit && g.jobs.has(t.part.id)) return `${t.part.name}: waiting for the fire to be lit`;
     // falls through: a hook over the fire is used like any place to cook
     case "station": {
@@ -279,11 +279,11 @@ export function interact(g: Game, t: Target | null): void {
       const toggle = () => {
         if (!g.fireLit && !hasFirewood(g)) { g.say("🪵 No firewood to light it with. Order some at the desk (Supplies)."); return; }
         g.fireLit = !g.fireLit;
-        g.say(g.fireLit ? "The fire catches and crackles." : (f.slots ?? []).some((sl) => g.jobs.get(sl.id) && !g.jobs.get(sl.id)!.done) ? "You bank the fire. What's over it stops cooking until it's lit again." : "You bank the fire.");
+        g.say(g.fireLit ? "The fire catches and crackles." : (f.slots ?? []).some((sl) => g.jobs.get(sl.id) && !g.jobs.get(sl.id)!.done) ? "You put out the fire. What's over it stops cooking until you light it again." : "You put out the fire.");
       };
       if (!g.fireLit || !hasBackSpots(f)) { toggle(); return; }
       const plan = stationPlan(g, f);
-      const bank: StationAct = { label: "🔥 Bank the fire", sub: "saves firewood; the hooks stop cooking", short: "bank", main: true, run: toggle };
+      const bank: StationAct = { label: "🔥 Put out the fire", sub: "saves firewood; nothing over it cooks", short: "put out", main: true, run: toggle };
       openActCards(g, f, "The fire's lit", [bank, ...(plan.direct ? [plan.direct] : plan.choices)]);
       return;
     }
