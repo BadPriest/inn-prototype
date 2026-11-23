@@ -4,9 +4,31 @@
   "description": "Every piece of kitchen and bar equipment, gear, utensil and tray.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["equipment"],
+  "required": ["equipment", "seasoning"],
   "properties": {
     "$schema": { "type": "string" },
+    "seasoning": {
+      "type": "object", "additionalProperties": false, "required": ["levelsAt", "tastesFromLevel", "traits"],
+      "description": "Pieces that cook level up with use. Each level reached rolls one trait the piece doesn't have yet, by weight. Taste traits only from tastesFromLevel on.",
+      "properties": {
+        "levelsAt": { "type": "array", "items": { "type": "integer", "minimum": 1 }, "description": "Servings made on the piece to reach level 2, 3, and so on." },
+        "tastesFromLevel": { "type": "integer", "minimum": 2, "description": "The first level that can roll a taste trait." },
+        "traits": {
+          "type": "array",
+          "items": {
+            "type": "object", "additionalProperties": false, "required": ["id", "name", "text", "weight"],
+            "properties": {
+              "id": { "type": "string" }, "name": { "type": "string" }, "text": { "type": "string", "description": "What it does, in a few words." },
+              "weight": { "type": "number", "exclusiveMinimum": 0 },
+              "speed": { "type": "number", "exclusiveMinimum": 0, "description": "Cooking speed multiplier." },
+              "servings": { "type": "integer", "minimum": 1, "description": "Servings added to each batch." },
+              "batchesOnly": { "type": "boolean", "description": "Only rolled on a piece that has made a batch." },
+              "tag": { "type": "string", "description": "A taste tag everything made on it carries." }
+            }
+          }
+        }
+      }
+    },
     "equipment": { "type": "array", "items": { "$ref": "#/definitions/piece" } }
   },
   "definitions": {

@@ -8,6 +8,7 @@ import { BREAD_CASE_BATCHES, INGREDIENTS, RECIPES, TUNING, URN_CAPACITY, utensil
 import { dist } from "./world.js";
 import { addToTray, removeFromTray, trayItems } from "./serving.js";
 import { knows } from "./skills.js";
+import { countMade, seasonedServings, seasonedSpeed, seasonedTags } from "./seasoning.js";
 export function recipesFor(g, slot) {
     // At a kettle, tea isn't made as a job: you boil the kettle, then steep cups from the hot water.
     // With an urn in the kitchen, the kettle can also brew a whole pot of one tea to keep hot in it.
@@ -98,16 +99,26 @@ export function updateCrafting(g, simDt, target) {
                 rate = 0;
             if (f.equip?.hearth && !g.fireLit)
                 rate = 0;
+            rate *= seasonedSpeed(g, fid);
             if (near && (g.holdingSpace || g.hurrying) && target?.f.id === f.id && (!target.part || target.part.id === fid))
                 rate *= TUNING.speedUpFactor;
             job.progress += simDt * rate;
             if (job.progress >= job.total) {
                 job.done = true;
                 job.item = makeItem(recipe, job.ingredients, job.taken);
+                for (const t of seasonedTags(g, fid))
+                    if (!job.item.tags.includes(t))
+                        job.item.tags.push(t);
                 if (job.ticket) {
                     job.item.ticket = job.ticket;
                     job.item.ticketName = job.ticketName;
                 }
+                const batch = !!(recipe.storedIn || recipe.servings);
+                if (recipe.storedIn)
+                    job.servings = Math.max(2, Math.round(organic(recipe.servings ?? [6, 1]))) + seasonedServings(g, fid);
+                else if (recipe.servings)
+                    job.servings = Math.max(2, Math.round(organic(recipe.servings))) + (utensilFor(g.upgrades, recipe.station)?.servingsBonus ?? 0) + seasonedServings(g, fid);
+                countMade(g, fid, job.servings ?? 1, batch);
                 g.stats.crafted++;
             }
         }
@@ -119,9 +130,9 @@ function finish(g, fid, job, recipe) {
     job.item.madeDay = g.day;
     // Whole pies and pots of tea for the urn wait on the shelf like any dish; the keeper carries them where they're kept.
     if (recipe.storedIn)
-        job.item.whole = Math.max(2, Math.round(organic(recipe.servings ?? [6, 1])));
+        job.item.whole = job.servings ?? Math.max(2, Math.round(organic(recipe.servings ?? [6, 1])));
     else if (recipe.servings) {
-        const n = Math.max(2, Math.round(organic(recipe.servings))) + (utensilFor(g.upgrades, recipe.station)?.servingsBonus ?? 0);
+        const n = job.servings ?? Math.max(2, Math.round(organic(recipe.servings))) + (utensilFor(g.upgrades, recipe.station)?.servingsBonus ?? 0);
         g.pots.set(fid, { item: job.item, left: n, total: n });
         g.jobs.delete(fid);
         const what = recipe.batch

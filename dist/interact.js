@@ -8,7 +8,7 @@ import { dayEndBody } from "./ui/dayend.js";
 import { GRAMOPHONE, RECIPES, REGULARS, TUNING } from "./data.js";
 import { unpackCrate } from "./supplies.js";
 import { openWardrobe } from "./ui/wardrobe.js";
-import { hasBackSpots, manageStoveSpec, openManageStove, stoveTabs } from "./ui/stove.js";
+import { hasBackSpots, hasManage, manageStoveSpec, openManageStove, stoveTabs } from "./ui/stove.js";
 import { dist } from "./world.js";
 import { canPutBack, collectShelf, emptyPot, putBack, recipesFor, serveFromPot, fillUrn, breadCaseKeys, breadCaseWithRoom, storeBread, takeBatch } from "./crafting.js";
 import { tableKey } from "./patrons.js";
@@ -569,7 +569,7 @@ function openActCards(g, f, subtitle, acts) {
     const run = (i) => { const a = acts[i]; if (!a)
         return; closeAll(); g.bus.emit({ type: "MenuSound", sound: "tick" }); a.run(); };
     // A stove with back spots: Use, and Manage stove.
-    const manage = hasBackSpots(f);
+    const manage = hasManage(f);
     const own = [{ id: "use", name: "🔥 Use" }];
     const leave = () => {
         back();
@@ -656,7 +656,7 @@ function useStation(g, f) {
         return;
     }
     if (!plan.choices.length) {
-        if (hasBackSpots(f)) {
+        if (hasManage(f)) {
             openManageStove(g, f.id);
             return;
         }

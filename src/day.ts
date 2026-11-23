@@ -144,7 +144,7 @@ export function save(g: Game): void {
     const history = g.history.map((d, i) => (i < g.history.length - 14 ? { ...d, unmet: undefined } : d));
     localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, calendarStart: g.calendarStart, location: g.location, inn: g.inn, weather: g.weather, history, regulars, visitorNotes: g.visitorNotes,
       menu: [...g.menu], menuChosen: g.menuChosen,
-      layout: g.layout, mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives, walkthroughStep: g.walkthrough?.step, known: [...g.known], pointsSpent: g.pointsSpent, xp: g.xp, knacks: g.knacks, newSkills: g.newSkills, crates: g.crates, coat: g.coat, under: g.under, newGear: g.newGear,
+      layout: g.layout, mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives, walkthroughStep: g.walkthrough?.step, known: [...g.known], pointsSpent: g.pointsSpent, xp: g.xp, knacks: g.knacks, seasoning: g.seasoning, newSkills: g.newSkills, crates: g.crates, coat: g.coat, under: g.under, newGear: g.newGear,
       purse: g.purse, priceLevel: g.priceLevel, onOrder: g.onOrder, toPlace: g.toPlace, lots: g.lots, slips: g.slips, lastSlips: g.lastSlips, deliveries: g.deliveries, standing: g.standing, standingSkips: g.standingSkips, deliveryLog: g.deliveryLog }));
   } catch { /* storage unavailable: carry on */ }
 }
@@ -154,7 +154,7 @@ export function load(g: Game): void {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) { save(g); return; } // a new save: keep the calendar season it starts in, even before day 1 ends
     const s = JSON.parse(raw) as { day: number; calendarStart?: number; location?: Game["location"]; inn?: Game["inn"]; weather?: WeatherState; history: DayStats[]; regulars?: RegularState[]; visitorNotes?: Game["visitorNotes"];
-      menu?: string[]; menuChosen?: boolean; layout?: Game["layout"]; mealMode?: boolean; meals?: unknown; betweenMenu?: string[]; upgrades?: string[]; totalServed?: number; showObjectives?: boolean; walkthroughStep?: number; known?: string[]; pointsSpent?: number; xp?: number; knacks?: Game["knacks"]; newSkills?: boolean; crates?: Game["crates"]; coat?: string; under?: string; newGear?: string[];
+      menu?: string[]; menuChosen?: boolean; layout?: Game["layout"]; mealMode?: boolean; meals?: unknown; betweenMenu?: string[]; upgrades?: string[]; totalServed?: number; showObjectives?: boolean; walkthroughStep?: number; known?: string[]; pointsSpent?: number; xp?: number; knacks?: Game["knacks"]; newSkills?: boolean; crates?: Game["crates"]; coat?: string; under?: string; newGear?: string[]; seasoning?: Game["seasoning"];
       purse?: number; priceLevel?: Game["priceLevel"]; onOrder?: string[]; toPlace?: string[]; stock?: Record<string, number>; lots?: Game["lots"]; slips?: Game["slips"]; lastSlips?: Game["lastSlips"]; deliveries?: Game["deliveries"]; standing?: Game["standing"]; standingSkips?: string[]; standingPaused?: string[]; deliveryLog?: Game["deliveryLog"] };
     const dishes = (ids: string[]) => new Set(ids.map(currentDishId).filter((id) => RECIPES.some((r) => r.id === id)));
     if (s.menu) g.menu = dishes(s.menu);
@@ -199,6 +199,7 @@ export function load(g: Game): void {
     g.coat = s.coat ?? "slate";
     g.under = s.under ?? "linen";
     g.newGear = Array.isArray(s.newGear) ? s.newGear : [];
+    g.seasoning = s.seasoning ?? {};
     // A tutorial still going in the save is offered again on the welcome, never resumed on its own.
     g.walkthrough = undefined;
     savedTutorialStep = typeof s.walkthroughStep === "number" && s.walkthroughStep < STEPS.length ? s.walkthroughStep : undefined;

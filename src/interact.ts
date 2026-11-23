@@ -11,7 +11,7 @@ import { GARNISHES, GRAMOPHONE, INGREDIENTS, RECIPES, REGULARS, SNACKS, TUNING, 
 import type { Crate, Game, Patron, SetDownTray, Spill } from "./game.js";
 import { unpackCrate } from "./supplies.js";
 import { openWardrobe } from "./ui/wardrobe.js";
-import { hasBackSpots, manageStoveSpec, openManageStove, stoveTabs } from "./ui/stove.js";
+import { hasBackSpots, hasManage, manageStoveSpec, openManageStove, stoveTabs } from "./ui/stove.js";
 import { dist, type Furniture, type Slot } from "./world.js";
 import { canPutBack, collectShelf, emptyPot, putBack, recipesFor, returnSlice, startJob, makeItem, serveFromPot, takeSlice, ticketFor, fillUrn, breadCaseKeys, breadCaseWithRoom, storeBread, takeBatch } from "./crafting.js";
 import { tableKey } from "./patrons.js";
@@ -459,7 +459,7 @@ function openActCards(g: Game, f: Furniture, subtitle: string, acts: StationAct[
   const st = { focus: 0 };
   const run = (i: number) => { const a = acts[i]; if (!a) return; closeAll(); g.bus.emit({ type: "MenuSound", sound: "tick" }); a.run(); };
   // A stove with back spots: Use, and Manage stove.
-  const manage = hasBackSpots(f);
+  const manage = hasManage(f);
   const own = [{ id: "use", name: "🔥 Use" }];
   const leave = () => {
     back();
@@ -531,7 +531,7 @@ function useStation(g: Game, f: Furniture): void {
   const plan = stationPlan(g, f);
   if (plan.direct) { plan.direct.run(); return; }
   if (!plan.choices.length) {
-    if (hasBackSpots(f)) { openManageStove(g, f.id); return; }
+    if (hasManage(f)) { openManageStove(g, f.id); return; }
     const job = (f.slots ?? []).map((sl) => g.jobs.get(sl.id)).find(Boolean);
     g.say(job?.done ? "It's done, waiting for room on the shelf." : "Still cooking. Hold F here to hurry it a little.");
     return;

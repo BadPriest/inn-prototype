@@ -160,6 +160,7 @@ export interface Job {
   ticket?: number;
   ticketName?: string;
   batch?: boolean; // made as a batch (the tea urn)
+  servings?: number; // a pot, batch or whole pie: how many it came to
 }
 
 export interface Pot { item: Item; left: number; total: number }
@@ -323,6 +324,8 @@ export class Game {
   tagFlips: { patronId: number; from: string; to: string; at: number }[] = [];
   coat = "slate"; // the keeper's coat, chosen at the wardrobe
   under = "linen"; // what shows under it: the head
+  /** Each piece that cooks, by layout uid: servings made on it, and the traits it has picked up. */
+  seasoning: Record<string, { made: number; traits: string[]; batches?: boolean }> = {};
   newGear: string[] = []; // kettles, coffee pots, Dutch ovens the carter brought, not yet set on a stove
   setDown: SetDownTray[] = [];
   groups: Group[] = [];

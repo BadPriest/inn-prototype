@@ -4,10 +4,13 @@ import { EQUIPMENT, lowerName } from "../data.js";
 import { emptyPot } from "../crafting.js";
 import { askChoice, back, openMenu, replaceMenu } from "./menu.js";
 import { grid, heading } from "./cards.js";
+import { seasonLevel, toNextLevel, traitById } from "../seasoning.js";
 const newUid = () => `eq-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 const gearOf = (id) => EQUIPMENT.find((e) => e.id === id && e.gear);
 /** A stove with back spots for gear. */
 export const hasBackSpots = (f) => (f.equip?.hotSlots ?? 0) > 0;
+/** Anything that cooks has a Manage tab: how it's wearing in, and its back spots or hooks if it has them. */
+export const hasManage = (f) => (f.kind === "station" || f.kind === "fireplace") && !!f.equip;
 /** The tabs on a stove's screens: whatever its own tabs are, then Manage stove. */
 export function stoveTabs(own, current, pick) {
     return { list: [...own, { id: "manage", name: "🔧 Manage" }].map((t) => ({ id: t.id, label: t.name })), current, pick };
@@ -87,11 +90,29 @@ export function manageStoveSpec(g, stoveId, own, leave, st = { focus: 0, holding
             does: on.length < spots ? (hearth ? "Hang it over the fire" : "Set it on the stove") : "Choose which to swap it for",
         };
     });
-    const cards = [...spotCards, ...spareCards];
+    const pieces = [...((f.equip?.slots.length ?? 0) > 0 ? [{ uid: f.id, icon: f.equip.icon, name: f.name }] : []),
+        ...on.map((q) => ({ uid: q.uid, icon: gearOf(q.type)?.icon ?? "•", name: gearOf(q.type)?.name ?? q.type }))];
+    const pieceCards = pieces.map((p) => {
+        const s = g.seasoning[p.uid] ?? { made: 0, traits: [] };
+        const level = seasonLevel(s.made);
+        const next = toNextLevel(s.made);
+        const traits = s.traits.map(traitById).filter((t) => !!t);
+        return {
+            pick: `piece:${p.uid}`, icon: p.icon, name: p.name,
+            fact: `level ${level}`,
+            status: next ? `${next.left} more servings to level ${level + 1}` : "fully worn in",
+            tone: traits.length ? "good" : "muted",
+            body: traits.length ? traits.map((t) => `<div class="desc"><b>${t.name}</b>: ${t.text}</div>`).join("") : `<div class="desc">Nothing yet. It picks something up at each level.</div>`,
+            detail: `${s.made} servings made on it. ${next ? `Level ${level + 1} at ${next.at}.` : "It's reached its last level."}`,
+        };
+    });
+    const cards = [...pieceCards, ...spotCards, ...spareCards];
     st.focus = Math.min(st.focus, Math.max(0, cards.length - 1));
     cards.forEach((c, i) => { c.focus = i === st.focus; });
     const pick = (v) => {
         st.focus = Math.max(0, cards.findIndex((c) => c.pick === v));
+        if (v.startsWith("piece:"))
+            return;
         if (v.startsWith("spare:")) {
             const id = v.slice(6);
             if (on.length < spots) {
@@ -126,14 +147,16 @@ export function manageStoveSpec(g, stoveId, own, leave, st = { focus: 0, holding
     const hint = st.holding ? `Where should the ${lowerName(gearOf(st.holding).name)} go? Pick a ${spotWord} ${where}.`
         : spareCards.length ? `Pick something ${where} to take it off, or something on the shelf to ${hearth ? "hang" : "set"} it on.`
             : `Pick something ${where} to take it off. Nothing spare on the shelf: kettles, coffee pots, a Dutch oven${hearth ? " and a hanging pot" : ""} are bought at the desk.`;
+    const wornIn = pieceCards.length ? `${heading("Worn in with use", "each level, it picks something up")}${grid(pieceCards)}` : "";
+    const spotsHtml = spots ? `${heading(hearth ? "Over the fire, and on the shelf" : "On the stove, and on the shelf", `${hint}`)}${grid([...spotCards, ...spareCards])}` : "";
     return {
         title: f.name,
         holdsClock: true,
-        subtitle: hearth ? `${spots} hook${spots === 1 ? "" : "s"} over the fire for a kettle, a coffee pot, a Dutch oven or a hanging pot · they cook while the fire's lit`
+        subtitle: !spots ? "How it's wearing in: the more you make on it, the more it picks up" : hearth ? `${spots} hook${spots === 1 ? "" : "s"} over the fire for a kettle, a coffee pot, a Dutch oven or a hanging pot · they cook while the fire's lit`
             : `${spots} spot${spots === 1 ? "" : "s"} at the back for a kettle, a coffee pot or a Dutch oven`,
         tabs: own.length ? stoveTabs(own, "manage", (id) => { if (id !== "manage")
             leave(id); }) : undefined,
-        cards: `${heading(hearth ? "Over the fire, and on the shelf" : "On the stove, and on the shelf", `${hint}`)}${grid(cards)}`,
+        cards: `${wornIn}${spotsHtml}`,
         nav: { count: () => cards.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; redraw(); }, use: (i) => pick(cards[i].pick) },
         onPick: pick,
         cancel: st.holding ? { label: "Put it back", run: () => { st.holding = undefined; redraw(); } } : undefined,

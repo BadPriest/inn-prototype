@@ -1,6 +1,21 @@
 {
   "$schema": "./schemas/equipment.schema.json",
 
+  "seasoning": {
+    "levelsAt": [100, 250, 500, 900, 1500],
+    "tastesFromLevel": 4,
+    "traits": [
+      { "id": "runsHot", "name": "Runs hot", "text": "cooks a tenth faster", "weight": 6, "speed": 1.1 },
+      { "id": "quickToHeat", "name": "Quick to heat", "text": "cooks a sixth faster", "weight": 3, "speed": 1.15 },
+      { "id": "generous", "name": "Generous", "text": "one more serving in every batch", "weight": 5, "servings": 1, "batchesOnly": true },
+      { "id": "bottomless", "name": "Bottomless", "text": "two more servings in every batch", "weight": 2, "servings": 2, "batchesOnly": true },
+      { "id": "smoky", "name": "Smoky", "text": "what's made on it tastes smoky", "weight": 1, "tag": "smoky" },
+      { "id": "homely", "name": "Homely", "text": "what's made on it tastes homely", "weight": 1, "tag": "homely" },
+      { "id": "seasoned", "name": "Well seasoned", "text": "what's made on it tastes rich", "weight": 1, "tag": "rich" },
+      { "id": "earthy", "name": "Earthy", "text": "what's made on it tastes earthy", "weight": 1, "tag": "earthy" }
+    ]
+  },
+
   "equipment": [
     { "id": "woodStove", "name": "Wood stove", "icon": "🔥", "type": "crafting", "label": "Stove",
       "shape": ["##"], "shopTab": "stoves", "line": "stove", "tier": 1, "price": 300,

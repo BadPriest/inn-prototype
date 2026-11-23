@@ -9,7 +9,7 @@ import { INGREDIENTS, RECIPES, defaultForRole } from "../data.js";
 import { startPour } from "../serving.js";
 import { makeItem, recipesFor, slotName, startJob, ticketFor } from "../crafting.js";
 import { back, closeAll, openMenu, replaceMenu } from "./menu.js";
-import { hasBackSpots, manageStoveSpec, stoveTabs } from "./stove.js";
+import { hasManage, manageStoveSpec, stoveTabs } from "./stove.js";
 import { chip, grid, stageTone, heading } from "./cards.js";
 const toneOf = stageTone;
 /** What a stage does to the dish, in a few words: "keeps it fresh", "not fresh", "day-old, −1 taste". */
@@ -86,7 +86,7 @@ export function openRecipeScreen(g, slot) {
     const hasSnacks = recipes.some((r) => r.tableSnack) && recipes.some((r) => !r.tableSnack);
     if (!hasSnacks)
         recipeTab = recipes.some((r) => !r.tableSnack) ? "dishes" : "snacks";
-    const manage = hasBackSpots(slot.f);
+    const manage = hasManage(slot.f);
     if (recipes.length === 1 && !manage) {
         openCookScreen(g, slot, recipes[0]);
         return;

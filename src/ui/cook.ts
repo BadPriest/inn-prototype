@@ -13,7 +13,7 @@ import type { Game } from "../game.js";
 import type { Slot } from "../world.js";
 import { makeItem, recipesFor, slotName, startJob, ticketFor } from "../crafting.js";
 import { back, closeAll, openMenu, replaceMenu, type CardScreen } from "./menu.js";
-import { hasBackSpots, manageStoveSpec, stoveTabs } from "./stove.js";
+import { hasManage, manageStoveSpec, stoveTabs } from "./stove.js";
 import { chip, grid, stageTone, type CardSpec, heading } from "./cards.js";
 
 /** `stage`: the stage the cook put on top of an ingredient's deck, by ingredient. */
@@ -95,7 +95,7 @@ export function openRecipeScreen(g: Game, slot: Slot): void {
   const waiting = (r: Recipe) => g.orders.filter((o) => o.open && o.recipeId === r.id).length;
   const hasSnacks = recipes.some((r) => r.tableSnack) && recipes.some((r) => !r.tableSnack);
   if (!hasSnacks) recipeTab = recipes.some((r) => !r.tableSnack) ? "dishes" : "snacks";
-  const manage = hasBackSpots(slot.f);
+  const manage = hasManage(slot.f);
   if (recipes.length === 1 && !manage) { openCookScreen(g, slot, recipes[0]); return; }
   const st = { focus: 0 };
   const own = hasSnacks ? [{ id: "dishes", name: "🍲 Dishes" }, { id: "snacks", name: "🥜 Table snacks" }] : [{ id: "cook", name: "🔥 Cook" }];

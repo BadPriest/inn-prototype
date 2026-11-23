@@ -87,6 +87,8 @@ export class Game {
     tagFlips = [];
     coat = "slate"; // the keeper's coat, chosen at the wardrobe
     under = "linen"; // what shows under it: the head
+    /** Each piece that cooks, by layout uid: servings made on it, and the traits it has picked up. */
+    seasoning = {};
     newGear = []; // kettles, coffee pots, Dutch ovens the carter brought, not yet set on a stove
     setDown = [];
     groups = [];

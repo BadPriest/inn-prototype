@@ -117,7 +117,8 @@ export interface EquipmentPiece {
   traySlots?: number;
   text?: { shopCard?: string };
 }
-export interface EquipmentData { equipment: EquipmentPiece[] }
+export interface SeasoningTrait { id: string; name: string; text: string; weight: number; speed?: number; servings?: number; batchesOnly?: boolean; tag?: string }
+export interface EquipmentData { seasoning: { levelsAt: number[]; tastesFromLevel: number; traits: SeasoningTrait[] }; equipment: EquipmentPiece[] }
 
 export interface InventoryLine { item: string; pack?: { units: number; name: string } }
 export interface SupplierFields {

@@ -54,6 +54,7 @@ for (let d = 0; d < days; d++) {
   if (typeof r !== "string" || r.startsWith("ERR")) { console.log(r); break; }
   results.push(JSON.parse(r));
 }
+const seasoning = await evaluate("JSON.stringify(Object.fromEntries(Object.entries(window.game.seasoning).map(([k, v]) => [window.game.world.slot(k)?.gear?.name ?? window.game.world.furniture.find((f) => f.id === k)?.name ?? k, v])))");
 ws.close();
 chrome.kill();
 await sleep(500);
@@ -70,6 +71,7 @@ if (results.length) {
   const k = results.length;
   const net = (results[k - 1].purse1 - results[0].purse0) / k;
   const served = results.reduce((a, r) => a + r.served, 0), delights = results.reduce((a, r) => a + r.outcomes.DELIGHT, 0);
+  console.log(`\nworn in: ${seasoning}`);
   console.log(`\nnet ${sh(net)} a day · keeper busy ${Math.round(results.reduce((a, r) => a + r.util, 0) / k)}% of opening hours · delight ${Math.round((100 * delights) / Math.max(1, served))}% of serves`);
   console.log("\nhour  guests  away  in room  delight   (averaged over the days)");
   for (let h = 6; h < 30; h++) {
