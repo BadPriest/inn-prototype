@@ -9,7 +9,8 @@ import { CARRIED, TUNING, bestInLine, pieceById } from "./data.js";
 import { spend } from "./money.js";
 import { ECONOMY_DATA } from "./gamedata.gen.js";
 export const priceOfThing = (id) => pieceById(id)?.price ?? 100;
-export const sellBackPrice = (id) => Math.floor(priceOfThing(id) * ECONOMY_DATA.sellBackShare);
+/** Half what it cost: a used piece, half what you paid for it. */
+export const sellBackPrice = (id, paid) => Math.floor((paid || priceOfThing(id)) * ECONOMY_DATA.sellBackShare);
 export const FETCH_MINUTES = ECONOMY_DATA.fetchMinutes;
 export const SELL_BACK_SHARE_WORDS = ECONOMY_DATA.sellBackShare === 0.5 ? "half" : `${Math.round(ECONOMY_DATA.sellBackShare * 100)}% of`;
 const nameOf = (id) => pieceById(id)?.name ?? id;
@@ -79,8 +80,8 @@ export function carterArrives(g) {
     const place = came.some((id) => !isUpgrade(id) && !gear.includes(id)) ? " Place it from the desk: Arrange the kitchen." : gear.length ? " Set it on a stove from the stove's Manage stove tab." : "";
     g.say(`🛻 The carter's been: ${list}.${place}`);
 }
-export function sellBack(g, id) {
-    const back = sellBackPrice(id);
+export function sellBack(g, id, paid) {
+    const back = sellBackPrice(id, paid);
     g.purse += back;
     g.stats.sold = (g.stats.sold ?? 0) + back;
     return back;

@@ -3,6 +3,7 @@
 // Delete sells the piece in hand. The clock stops while you do. What's cooking on it moves with it (its
 // slots keep their ids). A spot is allowed when it's kitchen floor, behind the bar or a nook in the
 // counter wall, nothing else stands there, and the keeper can still reach everything.
+import { claimUsed, shelveWear, unplacedPaid } from "../used.js";
 import { EQUIPMENT, PIE_SAFE_CAPACITY, PLACEABLE_ON } from "../data.js";
 import { P, floorPath } from "./proj.js";
 import { openShop } from "./desk.js";
@@ -97,6 +98,7 @@ export function arrangeClick(g, p) {
     const name = eqOf(h.type).name.toLowerCase();
     if (h.isNew) {
         g.layout.push({ uid: h.uid, type: h.type, x: at.x, y: at.y });
+        claimUsed(g, h.uid, h.type);
         const i = g.toPlace.indexOf(h.type);
         if (i >= 0)
             g.toPlace.splice(i, 1);
@@ -146,6 +148,7 @@ function setGearDown(g, tx, ty) {
     const stoveName = eqOf(stove.type).name.toLowerCase();
     if (h.isNew) {
         g.layout.push({ uid: h.uid, type: h.type, x: stove.x, y: stove.y, on: stove.uid });
+        claimUsed(g, h.uid, h.type);
         const i = g.toPlace.indexOf(h.type);
         if (i >= 0)
             g.toPlace.splice(i, 1);
@@ -189,7 +192,7 @@ export function arrangeRemove(g) {
         const i = g.toPlace.indexOf(h.type);
         if (i >= 0)
             g.toPlace.splice(i, 1);
-        const got = sellBack(g, h.type);
+        const got = sellBack(g, h.type, unplacedPaid(g, h.type));
         g.bus.emit({ type: "MenuSound", sound: "coins" });
         g.say(`You sell the ${eqOf(h.type).name.toLowerCase()} back for ${fmtMoney(got)}.`);
         g.arranging.holding = undefined;
@@ -210,9 +213,11 @@ export function arrangeRemove(g) {
     const riders = g.layout.filter((x) => x.on === h.uid);
     g.layout = g.layout.filter((x) => x.uid !== h.uid && x.on !== h.uid);
     g.toPlace.push(...riders.map((x) => x.type));
+    for (const r of riders)
+        shelveWear(g, r.uid, r.type);
     if (riders.length)
         g.say(`The ${riders.map((x) => eqOf(x.type).name.toLowerCase()).join(" and ")} wait${riders.length > 1 ? "" : "s"} by the door for another stove.`);
-    const got = sellBack(g, h.type);
+    const got = sellBack(g, h.type, g.seasoning[h.uid]?.paid);
     g.bus.emit({ type: "MenuSound", sound: "coins" });
     g.say(`You sell the ${eqOf(h.type).name.toLowerCase()} for ${fmtMoney(got)}.`);
     g.arranging.holding = undefined;
@@ -245,7 +250,7 @@ function bar(g) {
     const k = pad ? { esc: padText("○"), del: padText("L2"), buy: padText("□"), another: padText("△"), click: padText("✕") + " on" } : { esc: "Esc", del: "Delete", buy: "B", another: "A", click: "click" };
     const waiting = g.toPlace.length;
     el.innerHTML = `<span>🛠 <b>Arranging the kitchen</b> · the clock's stopped · ${h
-        ? `${k.click === "click" ? "click" : padText("✕")} where the ${what} should go · ${k.esc} ${h.isNew ? "sets it aside for now" : "puts it back"} · ${k.del} sells it for ${moneyHtml(sellBackPrice(h.type))}`
+        ? `${k.click === "click" ? "click" : padText("✕")} where the ${what} should go · ${k.esc} ${h.isNew ? "sets it aside for now" : "puts it back"} · ${k.del} sells it for ${moneyHtml(sellBackPrice(h.type, g.seasoning[h.uid]?.paid))}`
         : `${k.click} a stove, oven, barrel or pie safe to move it; a stove's kettle comes off from there`}</span>${!h && waiting
         ? `<button class="ghost" data-act="another">📦 Place what the carter brought (${waiting}) <small>${k.another}</small></button>` : ""}<button class="ghost" data-act="buy">🛒 Buy <small>${k.buy}</small></button><button data-act="done">Done${pad ? " <small>○</small>" : ""}</button>`;
     const act = { done: () => stopArranging(g), buy: () => arrangeBuy(g), another: () => arrangeAnother(g) };

@@ -1,5 +1,6 @@
 // Manage stove: what stands on a stove's back spots (kettles, coffee pots, a Dutch oven), and the spares
 // waiting to go on. Swapping is instant. A tab on the stove's menus.
+import { claimUsed, shelveWear } from "../used.js";
 import { EQUIPMENT, lowerName } from "../data.js";
 import { emptyPot } from "../crafting.js";
 import { askChoice, back, openMenu, replaceMenu } from "./menu.js";
@@ -49,7 +50,7 @@ export function manageStoveSpec(g, stoveId, own, leave, st = { focus: 0, holding
             g.say(`The ${name} is ${why}.`);
             return;
         }
-        const remove = () => { g.layout = g.layout.filter((p) => p !== q); g.toPlace.push(q.type); then(); };
+        const remove = () => { g.layout = g.layout.filter((p) => p !== q); g.toPlace.push(q.type); shelveWear(g, q.uid, q.type); then(); };
         const pot = g.pots.get(uid);
         if (!pot) {
             remove();
@@ -64,7 +65,9 @@ export function manageStoveSpec(g, stoveId, own, leave, st = { focus: 0, holding
         });
     };
     const putOn = (type) => {
-        g.layout.push({ uid: newUid(), type, x: placed.x, y: placed.y, on: stoveId });
+        const uid = newUid();
+        g.layout.push({ uid, type, x: placed.x, y: placed.y, on: stoveId });
+        claimUsed(g, uid, type);
         g.toPlace.splice(g.toPlace.indexOf(type), 1);
         const n = g.newGear.indexOf(type);
         if (n >= 0)

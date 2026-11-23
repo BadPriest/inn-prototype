@@ -119,7 +119,8 @@ export interface EquipmentPiece {
 }
 export interface SeasoningTrait { id: string; name: string; text: string; weight: number; speed?: number; servings?: number; batchesOnly?: boolean; tag?: string; fits?: string[]; usedOnly?: boolean }
 export interface EquipmentHealth { base: number; perTier: number; lossPerServing: number; breakChanceAtZero: number; lookOver: { seconds: number; restores: number }; mendSeconds: number; tinker: { share: number; least: Pence; minutes: number } }
-export interface EquipmentData { health: EquipmentHealth; seasoning: { levelsAt: number[]; tastesFromLevel: number; traits: SeasoningTrait[] }; equipment: EquipmentPiece[] }
+export interface UsedHardware { stock: number; weekday: string; price: [number, number]; health: [number, number]; made: [number, number]; oddChance: number }
+export interface EquipmentData { health: EquipmentHealth; used: UsedHardware; seasoning: { levelsAt: number[]; tastesFromLevel: number; traits: SeasoningTrait[] }; equipment: EquipmentPiece[] }
 
 export interface InventoryLine { item: string; pack?: { units: number; name: string } }
 export interface SupplierFields {

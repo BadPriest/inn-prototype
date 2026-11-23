@@ -1,4 +1,8 @@
 // The desk in your room: the bill of fare, equipment to buy and arrange, and the way to the journal. Card screens (cards.ts).
+import { buyUsed, restockTinker } from "../used.js";
+import { seasonLevel, traitById } from "../seasoning.js";
+import { mostHealth } from "../breakdowns.js";
+import { EQUIPMENT_DATA } from "../gamedata.gen.js";
 import { READY_MADE, servedReadyMade } from "../readymade.js";
 import { CARRIED, EQUIP_GROUPS, EQUIPMENT, FUELS, MEALS, RECIPES, TUNING, bestInLine, pieceById } from "../data.js";
 import { back, closeAll, openMenu, replaceMenu } from "./menu.js";
@@ -335,13 +339,75 @@ export function openBillOfFare(g) {
 let shopTab = "stoves"; // the shop opens where you left it
 export function openShop(g) {
     const st = { focus: 0 };
+    restockTinker(g);
     const all = [
         ...EQUIPMENT.map((e) => ({ id: e.id, icon: e.icon, name: e.name, blurb: e.blurb, goods: !!e.hearth, group: e.group, fuel: e.fuel, line: e.line, tier: e.tier })),
         ...CARRIED.map((x) => ({ id: x.id, icon: x.icon, name: x.name, blurb: x.text?.shopCard ?? "", goods: true, group: x.shopTab, fuel: undefined, line: x.line, tier: x.tier })),
     ];
     const isBest = (id) => { const p = pieceById(id); return !!p?.line && (p.hearth ? hearthPiece(g)?.type === id : bestInLine(g.upgrades, p.line)?.id === id); };
     const ownedOf = (it) => (it.goods ? (hasOrBetter(g, it.id) ? 1 : 0) : g.layout.filter((p) => p.type === it.id).length + toPlaceCount(g, it.id));
+    const tabs = () => ({
+        list: [...EQUIP_GROUPS.map((t) => {
+                const n = all.filter((it) => it.group === t.id).reduce((a, it) => a + (it.goods ? 0 : ownedOf(it)), 0);
+                return { id: t.id, label: `${t.icon} ${t.name}${n ? ` <small>${n}</small>` : ""}` };
+            }), { id: "used", label: `🛠️ Tinker's cart${g.tinkerStock.length ? ` <small>${g.tinkerStock.length}</small>` : ""}` }],
+        current: shopTab,
+        pick: (id) => { g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); shopTab = id; st.focus = 0; replaceMenu(build()); },
+    });
+    const cart = () => {
+        const stock = g.tinkerStock;
+        const buyUsedAt = (i) => {
+            const it = stock[i];
+            if (!it)
+                return;
+            st.focus = i;
+            const p = pieceById(it.type);
+            if (g.purse < it.price) {
+                g.say(`The tinker wants ${fmtMoney(it.price)} for it; you have ${fmtMoney(g.purse)}.`);
+                return;
+            }
+            openMenu({
+                title: `${p.icon} Used ${p.name.toLowerCase()}`,
+                subtitle: `${fmtMoney(it.price)} · new, ${fmtMoney(p.price)} · you have ${fmtMoney(g.purse)}`,
+                holdsClock: true,
+                items: [
+                    { label: "🛠️ Buy it off the cart", sub: "he leaves it with you now; place it from the desk", action: () => { if (buyUsed(g, it.id)) {
+                            g.bus.emit({ type: "MenuSound", sound: "coins" });
+                            back();
+                            st.focus = 0;
+                            replaceMenu(build());
+                        } } },
+                    { label: "Not now", button: "secondary", cancel: true, action: () => back() },
+                ],
+            });
+        };
+        const cards = stock.map((it, i) => {
+            const p = pieceById(it.type);
+            const traits = it.state.traits.map(traitById).filter((t) => !!t);
+            const short = it.price - g.purse;
+            return {
+                pick: String(i), icon: p.icon, name: `Used ${p.name.toLowerCase()}`, focus: i === st.focus,
+                fact: moneyHtml(it.price),
+                status: short > 0 ? `short ${moneyHtml(short)}` : `level ${seasonLevel(it.state.made)} · health ${it.state.health} of ${mostHealth(it.type)}`,
+                tone: short > 0 ? "warn" : undefined, off: short > 0,
+                body: traits.length ? traits.map((t) => `<div class="desc"><b>${t.name}</b>: ${t.text}</div>`).join("") : `<div class="desc">Nothing it's picked up yet.</div>`,
+                detail: `${p.text?.shopCard ?? ""} Made ${it.state.made} servings before it came to the cart. New, it's ${fmtMoney(p.price)}. Worn things break down more often.`,
+                does: short > 0 ? `You need ${fmtMoney(short)} more` : "Buy it off the cart",
+            };
+        });
+        return {
+            title: "🛒 Equipment",
+            subtitle: `${moneyHtml(g.purse)} in the purse · used pieces, cheaper and already worn in · a new lot every ${EQUIPMENT_DATA.used.weekday}`,
+            holdsClock: true,
+            tabs: tabs(),
+            cards: cards.length ? grid(cards) : `<p class="empty">The cart's empty until ${EQUIPMENT_DATA.used.weekday}.</p>`,
+            onPick: (v) => buyUsedAt(Number(v)),
+            nav: { count: () => stock.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; replaceMenu(build()); }, use: buyUsedAt },
+        };
+    };
     const build = () => {
+        if (shopTab === "used")
+            return cart();
         // In lines, each from its first tier up.
         const items = all.filter((it) => it.group === shopTab).sort((a, b) => (a.line ?? a.id).localeCompare(b.line ?? b.id) || (a.tier ?? 0) - (b.tier ?? 0));
         const buy = (i) => {
@@ -410,14 +476,7 @@ export function openShop(g) {
             title: "🛒 Equipment",
             subtitle: `${moneyHtml(g.purse)} in the purse · pick something to buy · the carter brings orders next morning`,
             holdsClock: true,
-            tabs: {
-                list: EQUIP_GROUPS.map((t) => {
-                    const n = all.filter((it) => it.group === t.id).reduce((a, it) => a + (it.goods ? 0 : ownedOf(it)), 0);
-                    return { id: t.id, label: `${t.icon} ${t.name}${n ? ` <small>${n}</small>` : ""}` };
-                }),
-                current: shopTab,
-                pick: (id) => { g.bus.emit({ type: "MenuSound", sound: "pageTurn" }); shopTab = id; st.focus = 0; replaceMenu(build()); },
-            },
+            tabs: tabs(),
             cards: grid(cards),
             onPick: (v) => buy(Number(v)),
             nav: { count: () => items.length, focus: () => st.focus, setFocus: (i) => { st.focus = i; replaceMenu(build()); }, use: buy },

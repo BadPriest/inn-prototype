@@ -1,4 +1,5 @@
 // The clock and the day cycle: open, last call, turn in, next morning. Days never end.
+import { restockTinker } from "./used.js";
 import { payLicence } from "./upkeep.js";
 import { chargeWear } from "./wear.js";
 import { carterArrives } from "./shop.js";
@@ -120,6 +121,7 @@ export function startNextDay(g) {
     deliveriesArrive(g);
     placeStanding(g);
     payLicence(g);
+    restockTinker(g);
     const pantry = pantryNews(g);
     if (pantry)
         g.say(pantry);
@@ -150,7 +152,7 @@ export function save(g) {
         const history = g.history.map((d, i) => (i < g.history.length - 14 ? { ...d, unmet: undefined } : d));
         localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, calendarStart: g.calendarStart, location: g.location, inn: g.inn, weather: g.weather, history, regulars, visitorNotes: g.visitorNotes,
             menu: [...g.menu], menuChosen: g.menuChosen,
-            layout: g.layout, mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives, walkthroughStep: g.walkthrough?.step, known: [...g.known], pointsSpent: g.pointsSpent, xp: g.xp, knacks: g.knacks, seasoning: g.seasoning, tinkerCalls: g.tinkerCalls, newSkills: g.newSkills, crates: g.crates, coat: g.coat, under: g.under, newGear: g.newGear,
+            layout: g.layout, mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives, walkthroughStep: g.walkthrough?.step, known: [...g.known], pointsSpent: g.pointsSpent, xp: g.xp, knacks: g.knacks, seasoning: g.seasoning, tinkerCalls: g.tinkerCalls, tinkerStock: g.tinkerStock, usedWaiting: g.usedWaiting, tinkerStockedDay: g.tinkerStockedDay, newSkills: g.newSkills, crates: g.crates, coat: g.coat, under: g.under, newGear: g.newGear,
             purse: g.purse, priceLevel: g.priceLevel, onOrder: g.onOrder, toPlace: g.toPlace, lots: g.lots, slips: g.slips, lastSlips: g.lastSlips, deliveries: g.deliveries, standing: g.standing, standingSkips: g.standingSkips, deliveryLog: g.deliveryLog }));
     }
     catch { /* storage unavailable: carry on */ }
@@ -223,6 +225,9 @@ export function load(g) {
         g.newGear = Array.isArray(s.newGear) ? s.newGear : [];
         g.seasoning = s.seasoning ?? {};
         g.tinkerCalls = s.tinkerCalls ?? [];
+        g.tinkerStock = s.tinkerStock ?? [];
+        g.usedWaiting = s.usedWaiting ?? [];
+        g.tinkerStockedDay = s.tinkerStockedDay;
         // A tutorial still going in the save is offered again on the welcome, never resumed on its own.
         g.walkthrough = undefined;
         savedTutorialStep = typeof s.walkthroughStep === "number" && s.walkthroughStep < STEPS.length ? s.walkthroughStep : undefined;

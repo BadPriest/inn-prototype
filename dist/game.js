@@ -89,6 +89,12 @@ export class Game {
     under = "linen"; // what shows under it: the head
     /** Each piece that cooks, by layout uid: servings made on it, and the traits it has picked up. */
     seasoning = {};
+    /** The tinker's cart this week: used pieces for sale, each with its wear and price. */
+    tinkerStock = [];
+    /** The day the cart last had a fresh lot. */
+    tinkerStockedDay;
+    /** Pieces with wear on them, bought used or taken off a stove, waiting to be placed: they take this wear when they are. */
+    usedWaiting = [];
     /** The tinker, called to mend a piece: due at this game day and minute. */
     tinkerCalls = [];
     /** The keeper looking a piece over or mending it (real seconds; walking away stops it). */

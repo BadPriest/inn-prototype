@@ -4,9 +4,21 @@
   "description": "Every piece of kitchen and bar equipment, gear, utensil and tray.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["equipment", "health", "seasoning"],
+  "required": ["equipment", "health", "used", "seasoning"],
   "properties": {
     "$schema": { "type": "string" },
+    "used": {
+      "type": "object", "additionalProperties": false, "required": ["stock", "weekday", "price", "health", "made", "oddChance"],
+      "description": "The tinker's cart: used pieces that cook, a fresh lot each week. Each is cheaper and more worn than new, comes already worn in (its servings made and the traits they rolled), and may have an odd trait only used hardware has.",
+      "properties": {
+        "stock": { "type": "integer", "minimum": 0, "description": "Pieces on the cart each week." },
+        "weekday": { "type": "string", "description": "The morning a new lot comes." },
+        "price": { "type": "array", "items": { "type": "number", "minimum": 0 }, "minItems": 2, "maxItems": 2, "description": "Share of the new price, least and most." },
+        "health": { "type": "array", "items": { "type": "number", "minimum": 0, "maximum": 1 }, "minItems": 2, "maxItems": 2, "description": "Share of its most health, least and most." },
+        "made": { "type": "array", "items": { "type": "integer", "minimum": 0 }, "minItems": 2, "maxItems": 2, "description": "Servings already made on it, least and most." },
+        "oddChance": { "type": "number", "minimum": 0, "maximum": 1, "description": "Chance it has one of the used-only traits." }
+      }
+    },
     "health": {
       "type": "object", "additionalProperties": false, "required": ["base", "perTier", "lossPerServing", "breakChanceAtZero", "lookOver", "mendSeconds", "tinker"],
       "description": "Pieces that cook lose health as they're used. Each time something is finished on one, it may break: breakChanceAtZero x (1 - health/most)^3. A broken piece cooks nothing until it's mended.",

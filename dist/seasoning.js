@@ -23,7 +23,7 @@ const traitsAt = (g, slotId) => {
 export const seasonedSpeed = (g, slotId) => traitsAt(g, slotId).reduce((a, t) => a * (t.speed ?? 1), 1);
 export const seasonedServings = (g, slotId) => traitsAt(g, slotId).reduce((a, t) => a + (t.servings ?? 0), 0);
 export const seasonedTags = (g, slotId) => traitsAt(g, slotId).flatMap((t) => (t.tag ? [t.tag] : []));
-function roll(level, have, batches, type) {
+export function roll(level, have, batches, type) {
     const pool = S.traits.filter((t) => !have.includes(t.id) && (!t.tag || level >= S.tastesFromLevel) && (!t.batchesOnly || batches)
         && !t.usedOnly && (!t.fits || t.fits.includes(type)));
     let r = Math.random() * pool.reduce((a, t) => a + t.weight, 0);
@@ -49,3 +49,5 @@ export function countMade(g, slotId, servings, batch) {
         g.stats.moments.push(line);
     }
 }
+/** The traits only used hardware has. */
+export const usedOnlyTraits = () => S.traits.filter((t) => t.usedOnly);

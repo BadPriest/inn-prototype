@@ -325,7 +325,13 @@ export class Game {
   coat = "slate"; // the keeper's coat, chosen at the wardrobe
   under = "linen"; // what shows under it: the head
   /** Each piece that cooks, by layout uid: servings made on it, and the traits it has picked up. */
-  seasoning: Record<string, { made: number; traits: string[]; batches?: boolean; health?: number; broken?: boolean; lookedOver?: number }> = {};
+  seasoning: Record<string, { made: number; traits: string[]; batches?: boolean; health?: number; broken?: boolean; lookedOver?: number; paid?: number }> = {};
+  /** The tinker's cart this week: used pieces for sale, each with its wear and price. */
+  tinkerStock: { id: string; type: string; price: number; state: { made: number; traits: string[]; batches?: boolean; health: number; paid: number } }[] = [];
+  /** The day the cart last had a fresh lot. */
+  tinkerStockedDay?: number;
+  /** Pieces with wear on them, bought used or taken off a stove, waiting to be placed: they take this wear when they are. */
+  usedWaiting: { type: string; state: { made: number; traits: string[]; batches?: boolean; health: number; paid: number; broken?: boolean } }[] = [];
   /** The tinker, called to mend a piece: due at this game day and minute. */
   tinkerCalls: { uid: string; name: string; day: number; minute: number }[] = [];
   /** The keeper looking a piece over or mending it (real seconds; walking away stops it). */

@@ -11,6 +11,15 @@
     "tinker": { "share": 0.15, "least": 10, "minutes": 120 }
   },
 
+  "used": {
+    "stock": 3,
+    "weekday": "Monday",
+    "price": [0.4, 0.6],
+    "health": [0.35, 0.7],
+    "made": [100, 700],
+    "oddChance": 0.5
+  },
+
   "seasoning": {
     "levelsAt": [100, 250, 500, 900, 1500],
     "tastesFromLevel": 4,

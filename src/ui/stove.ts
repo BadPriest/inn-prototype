@@ -1,6 +1,7 @@
 // Manage stove: what stands on a stove's back spots (kettles, coffee pots, a Dutch oven), and the spares
 // waiting to go on. Swapping is instant. A tab on the stove's menus.
 
+import { claimUsed, shelveWear } from "../used.js";
 import { EQUIPMENT, lowerName } from "../data.js";
 import type { Game } from "../game.js";
 import type { Furniture } from "../world.js";
@@ -54,7 +55,7 @@ export function manageStoveSpec(g: Game, stoveId: string, own: StoveTab[], leave
     const why = busy(uid);
     const name = lowerName(gearOf(q.type)?.name ?? "it");
     if (why) { g.say(`The ${name} is ${why}.`); return; }
-    const remove = () => { g.layout = g.layout.filter((p) => p !== q); g.toPlace.push(q.type); then(); };
+    const remove = () => { g.layout = g.layout.filter((p) => p !== q); g.toPlace.push(q.type); shelveWear(g, q.uid, q.type); then(); };
     const pot = g.pots.get(uid);
     if (!pot) { remove(); return; }
     askChoice({
@@ -66,7 +67,9 @@ export function manageStoveSpec(g: Game, stoveId: string, own: StoveTab[], leave
     });
   };
   const putOn = (type: string) => {
-    g.layout.push({ uid: newUid(), type, x: placed.x, y: placed.y, on: stoveId });
+    const uid = newUid();
+    g.layout.push({ uid, type, x: placed.x, y: placed.y, on: stoveId });
+    claimUsed(g, uid, type);
     g.toPlace.splice(g.toPlace.indexOf(type), 1);
     const n = g.newGear.indexOf(type);
     if (n >= 0) g.newGear.splice(n, 1);
