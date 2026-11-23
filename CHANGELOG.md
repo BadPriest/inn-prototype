@@ -24,6 +24,8 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ### Changed
 - **Stoves come in three tiers**: the wood stove has one hob and one small spot at the back (was two small spots), the two-hob stove two and two, and the range stove two hobs, two small spots and an oven (was one hob). In an older save, gear that no longer fits waits on the shelf.
+- **Pots show what's left as a ring** around the count, emptying as servings go (the urn too); the bar under a pot is gone. A bar still shows while something cooks.
+- **Shop cards say where a piece goes**, in a line on the face (stands in the kitchen, on a stove or over the fire, on the hobs, at the prep table, in your hands) and a sentence on the back.
 - **The equipment shop** is sorted into Stoves and ovens, Hearth, Pots and pans, Drinks, Storage and Serving, each line from its first tier up, with the tier on the card.
 
 ## Build 122 · Nov 23, 2026 · deployed

@@ -337,6 +337,32 @@ export function openBillOfFare(g) {
 // ---------------------------------------------------------------------------
 // Equipment: buy a piece and place it. Utensils and trays are kept, not placed: one of each, and a better one replaces a worse.
 let shopTab = "stoves"; // the shop opens where you left it
+/** Where a piece goes once you have it: a few words for the card's face, and a sentence for its back. */
+function whereItGoes(id) {
+    const p = pieceById(id);
+    if (!p)
+        return { short: "", long: "" };
+    const kind = p.usedIn?.[0];
+    if (p.hearth)
+        return { short: "In the fireplace", long: "Built into the fireplace in the taproom. Buying it replaces the hooks you have now." };
+    if (p.type === "crafting")
+        return { short: "Stands in the kitchen", long: "Stands on the kitchen floor. Place it from the desk: Arrange the kitchen." };
+    if (p.type === "storage")
+        return { short: "Behind the bar or in the kitchen", long: "Stands behind the bar, in a nook in the counter, or in the kitchen. Place it from the desk: Arrange the kitchen." };
+    if (p.type === "tray")
+        return { short: "In your hands", long: "Nothing to place: you carry two trays, one in each hand, and they're always your best size." };
+    if (p.type === "gear")
+        return p.hearthOnly
+            ? { short: "Hangs over the fire", long: "Hangs on a hook over the fire in the taproom. Set it there from the fireplace's Manage tab." }
+            : { short: "On a stove, or over the fire", long: "Sits on a small spot at the back of a stove, or hangs on a hook over the fire. Set it there from the stove's or the fireplace's Manage tab." };
+    if (kind === "stove")
+        return { short: "On the hobs", long: "Nothing to place: every hob makes its stew, porridge and soup in your best pot." };
+    if (kind === "griddle")
+        return { short: "On the hobs", long: "Nothing to place: every hob fries in your best pan." };
+    if (kind === "prep")
+        return { short: "At the prep table", long: "Nothing to place: you work at the prep table with your best knife." };
+    return { short: "", long: "" };
+}
 export function openShop(g) {
     const st = { focus: 0 };
     restockTinker(g);
@@ -390,8 +416,8 @@ export function openShop(g) {
                 fact: moneyHtml(it.price),
                 status: short > 0 ? `short ${moneyHtml(short)}` : `level ${seasonLevel(it.state.made)} · health ${it.state.health} of ${mostHealth(it.type)}`,
                 tone: short > 0 ? "warn" : undefined, off: short > 0,
-                body: traits.length ? traits.map((t) => `<div class="desc"><b>${t.name}</b>: ${t.text}</div>`).join("") : `<div class="desc">Nothing it's picked up yet.</div>`,
-                detail: `${p.text?.shopCard ?? ""} Made ${it.state.made} servings before it came to the cart. New, it's ${fmtMoney(p.price)}. Worn things break down more often.`,
+                body: `<div class="desc">📍 ${whereItGoes(it.type).short}</div>${traits.length ? traits.map((t) => `<div class="desc"><b>${t.name}</b>: ${t.text}</div>`).join("") : `<div class="desc">Nothing it's picked up yet.</div>`}`,
+                detail: `${p.text?.shopCard ?? ""} ${whereItGoes(it.type).long} Made ${it.state.made} servings before it came to the cart. New, it's ${fmtMoney(p.price)}. Worn things break down more often.`,
                 does: short > 0 ? `You need ${fmtMoney(short)} more` : "Buy it off the cart",
             };
         });
@@ -468,7 +494,8 @@ export function openShop(g) {
                 status, tone: done || coming ? "good" : short > 0 ? "warn" : undefined,
                 have: it.goods ? 0 : owned, on: done, off: !done && short > 0,
                 tags: [...(it.tier && all.some((x) => x.line === it.line && x.id !== it.id) ? [`tier ${ROMAN[it.tier]}`] : []), ...(fuel ? [`${fuel.icon} ${fuel.name}`] : [])],
-                detail: it.blurb,
+                body: whereItGoes(it.id).short ? `<div class="desc">📍 ${whereItGoes(it.id).short}</div>` : undefined,
+                detail: `${it.blurb} ${whereItGoes(it.id).long}`,
                 does: done ? (owned ? (isBest(it.id) ? "You have this" : "You have a better one") : "It's on the carter's cart") : short > 0 ? `You need ${fmtMoney(short)} more` : owned ? "Buy another: order it or fetch it" : "Buy it: order it or fetch it",
             };
         });

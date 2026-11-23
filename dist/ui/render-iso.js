@@ -491,11 +491,7 @@ function drawReadables(ctx, g, v, byTile, target) {
             }
             const pot = g.pots.get(sl.id);
             if (pot) {
-                ctx.fillStyle = "rgba(0,0,0,0.6)";
-                ctx.fillRect(sp.x - sw / 2, barY, sw, ts * 0.16);
-                ctx.fillStyle = "#e0b060";
-                ctx.fillRect(sp.x - sw / 2, barY, sw * (pot.left / pot.total), ts * 0.16);
-                badge(ctx, sp.x + sw / 2, sp.y - ts * 0.2, String(pot.left), ts);
+                badge(ctx, sp.x + sw / 2, sp.y - ts * 0.2, String(pot.left), ts, pot.left / pot.total);
                 if (slots.length > 1) {
                     ctx.fillStyle = "#fff";
                     ctx.font = `${Math.floor(ts * 0.24)}px system-ui, sans-serif`;
@@ -530,7 +526,7 @@ function drawReadables(ctx, g, v, byTile, target) {
         if (f.kind === "urn") {
             const pot = g.pots.get(f.id);
             if (pot)
-                badge(ctx, top.x + ts * 0.35, top.y - ts * 0.3, String(pot.left), ts);
+                badge(ctx, top.x + ts * 0.35, top.y - ts * 0.3, String(pot.left), ts, pot.left / pot.total);
         }
         if (f.kind === "piesafe" && g.pieSafe.length) {
             const safes = g.layout.filter((p) => p.type === "pieSafe").map((p) => p.uid);

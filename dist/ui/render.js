@@ -242,11 +242,7 @@ export function draw(ctx, g, v, target, clickDest) {
             }
             const pot = g.pots.get(sl.id);
             if (pot) {
-                ctx.fillStyle = "rgba(0,0,0,0.6)";
-                ctx.fillRect(sx + 1, py + ph + 2, sw - 2, ts * 0.18);
-                ctx.fillStyle = "#e0b060";
-                ctx.fillRect(sx + 1, py + ph + 2, (sw - 2) * (pot.left / pot.total), ts * 0.18);
-                badge(ctx, sx + sw - 2, py + 2, String(pot.left), ts);
+                badge(ctx, sx + sw - 2, py + 2, String(pot.left), ts, pot.left / pot.total);
                 if (slots.length > 1) {
                     ctx.font = `${Math.floor(ts * 0.24)}px system-ui, sans-serif`;
                     ctx.fillText(iconFor(pot.item.recipeId) || "🍲", sx + sw / 2, py + ph + ts * 0.45);
@@ -277,7 +273,7 @@ export function draw(ctx, g, v, target, clickDest) {
         if (f.kind === "urn") {
             const pot = g.pots.get(f.id);
             if (pot)
-                badge(ctx, px + pw - 2, py + 2, String(pot.left), ts);
+                badge(ctx, px + pw - 2, py + 2, String(pot.left), ts, pot.left / pot.total);
         }
         if (f.kind === "piesafe" && g.pieSafe.length) {
             // Pie safes share the pies, filling in order: each shows the slices in its own share.
@@ -950,7 +946,19 @@ export function drawBowlFlip(ctx, x, y, snackId, ts) {
     ctx.fillText(text, x, y + 1);
     ctx.restore();
 }
-export function badge(ctx, x, y, text, ts) {
+/** A count in a gold disc. `share`: what's left of the whole, shown as a ring around it that empties clockwise. */
+export function badge(ctx, x, y, text, ts, share) {
+    if (share !== undefined) {
+        ctx.lineWidth = ts * 0.07;
+        ctx.strokeStyle = "rgba(0,0,0,0.55)";
+        ctx.beginPath();
+        ctx.arc(x, y, ts * 0.25, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = "#ffd34d";
+        ctx.beginPath();
+        ctx.arc(x, y, ts * 0.25, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0, Math.min(1, share)));
+        ctx.stroke();
+    }
     ctx.fillStyle = "#ffd34d";
     ctx.beginPath();
     ctx.arc(x, y, ts * 0.2, 0, Math.PI * 2);
