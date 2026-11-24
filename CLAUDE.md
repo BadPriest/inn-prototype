@@ -8,7 +8,8 @@ only; phone layout isn't a concern.
 ## Start here
 
 1. [docs/status.md](docs/status.md): where things stand, what's next, the design agendas waiting on Bruno.
-2. The Kanzo board, project `inn` (`inn#N`). Every task has what was decided and what was built in its comments.
+2. The Kanzo board, project `inn` (`inn#N`, open at http://localhost:4242/#inn/N). Every task has what was decided and
+   what was built in its comments.
    Put anything left for later on the board, not in notes or chat.
 3. [README.md](README.md): the game as it is, and where each part of the code lives. [CHANGELOG.md](CHANGELOG.md):
    what each build changed.
@@ -34,7 +35,7 @@ isometric view first (the default); top-down still exists (V) and gets every dra
   commit and push. **Pushing `main` deploys to the playtest site.**
 - Commit or push only when Bruno asks ("commit", "ship", "deploy"). Stage files by name, never `git add -A` or `-u`.
 - Never stage `standalone.html`, `*recovery-codes*`, `.env*`, `assets/sounds/music/`, `assets/sounds/questionable/`,
-  `assets/art/` (Bruno's working material) or `.claude/` (local settings; the skills there are Bruno's to commit).
+  or `assets/art/` (Bruno's working material). The skills in `.claude/skills/` are committed; anything else that appears in `.claude/` (local settings) is not.
 - `dist/` is committed: commit the compiled `dist/*.js` with the `src/` change. After a build, `git status` shows every
   `dist` file; `git diff --stat` shows the real changes.
 - Never put Bruno's name, email or other personal details into anything sent outside (requests, URLs, headers).
