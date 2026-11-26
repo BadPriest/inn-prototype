@@ -38,6 +38,7 @@ import { P, screenDir } from "./ui/proj.js";
 import { initPad, padActive, padGlyphs, padText, pollPad } from "./gamepad.js";
 import { updateHud, initDebug, toggleDebug } from "./ui/hud.js";
 import { askChoice, back, initMenus, menuKey, menuOpen } from "./ui/menu.js";
+import { drawVeil, prepareVeil } from "./ui/veil.js";
 import { initSound, isMuted, soundscape, toggleMute, unlockAudio } from "./sound.js";
 import { setBusVolume } from "./sound/engine.js";
 import { updateWinding } from "./sound/gramophone.js";
@@ -56,7 +57,7 @@ const ctx = canvas.getContext("2d");
 let view = { ts: 24, ox: 0, oy: 0 };
 let target = null;
 let clickDest = null;
-initMenus(document.getElementById("menu"), (modal) => { g.modal = modal; }, () => g.bus.emit({ type: "Confirmed" }));
+initMenus(document.getElementById("menu"), (modal) => { g.modal = modal; document.getElementById("menu").classList.toggle("stops", modal); }, () => g.bus.emit({ type: "Confirmed" }));
 initDebug(g);
 initSound(g);
 initTalk(g);
@@ -830,7 +831,17 @@ try {
 }
 catch { /* defaults */ }
 settings.iso ??= true;
+if (settings.stoppedLook !== "dim")
+    settings.stoppedLook = "glass";
 let uiChoice = settings.ui ?? "auto";
+/** The look behind a menu that stops the clock (veil.ts). */
+const STOPPED_LOOKS = [{ id: "glass", name: "stained glass" }, { id: "dim", name: "dimmed" }];
+const applyStoppedLook = () => {
+    document.getElementById("menu").dataset.look = settings.stoppedLook;
+    if (settings.stoppedLook === "glass")
+        prepareVeil(canvas);
+};
+applyStoppedLook();
 function saveSettings() {
     settings.ui = uiChoice;
     try {
@@ -963,6 +974,7 @@ function openPause() {
         <button class="set-btn" data-pick="iso">${settings.iso ? "◆ Isometric view" : "▦ Top-down view"} <small>switch to ${settings.iso ? "top-down" : "isometric"} (V)</small></button>
         ${slider("zoom", "🔎", "Zoom", `${settings.iso ? "isometric" : "top-down"} view · wheel, pinch, [ ]`, Math.round(zoom() * 100), ZOOM_MIN * 100, ZOOM_MAX * 100, 5, `${Math.round(zoom() * 100)}%`)}
         ${settings.iso ? `<button class="set-btn" data-pick="turn">🧭 Looking from the ${CORNERS[settings.rot ?? 0]} <small>turn the camera ( , and . )</small></button>` : ""}
+        <button class="set-btn" data-pick="look">🪟 Behind menus: ${STOPPED_LOOKS.find((l) => l.id === settings.stoppedLook)?.name} <small>how the inn looks while a menu stops the clock</small></button>
         <button class="set-btn" data-pick="uiauto">${uiChoice === "auto" ? "☑" : "☐"} Automatic <small>size to fit the screen (${Math.round(autoUi() * 100)}% here)</small></button>
       </div>`;
         }
@@ -998,6 +1010,13 @@ function openPause() {
                 }
                 else if (k === "turn") {
                     turnCamera(1);
+                    redraw();
+                }
+                else if (k === "look") {
+                    const i = STOPPED_LOOKS.findIndex((l) => l.id === settings.stoppedLook);
+                    settings.stoppedLook = STOPPED_LOOKS[(i + 1) % STOPPED_LOOKS.length].id;
+                    saveSettings();
+                    applyStoppedLook();
                     redraw();
                 }
                 else if (k === "uiauto") {
@@ -1256,6 +1275,7 @@ function frame(now) {
     (view.iso ? drawIso : draw)(ctx, g, view, g.arranging ? null : target, clickDest);
     drawArrange(ctx, g, view);
     drawViewNote();
+    drawVeil(ctx, canvas, settings.stoppedLook ?? "glass", (g.modal || g.paused) && menuOpen(), realDt);
     updateTickets(g);
     hudTimer -= realDt;
     if (hudTimer <= 0) {

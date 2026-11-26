@@ -6,6 +6,11 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 129 · Nov 26, 2026 · deployed
+
+### Added
+- **Blue glass behind menus that stop the clock.** The pause screen, the desk's screens, the calendar, deliveries, arranging and yes/no questions now blur the inn behind them and lay a faint stained-glass window over it: large irregular panes in shades of blue, from navy to pale ice, with hairline lead, fading in over about a third of a second. The window is made once when the game starts, a different one each session. Menus that let the clock run keep the plain shade. Pause → Display → "Behind menus" switches back to the plain dimmed look.
+
 ## Build 128 · Nov 26, 2026 · deployed
 
 ### Fixed

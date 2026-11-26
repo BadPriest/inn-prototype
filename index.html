@@ -74,6 +74,9 @@
   .keys-row b { flex:0 0 46%; color:var(--ink); font-weight:600; }
   .keys-row span { color:#cdbda4; }
   #menu { position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.35); z-index:5; }
+  /* A menu that stops the clock, with the stained-glass window drawn behind it (veil.ts): only a light shade over that. */
+  #menu.stops[data-look="glass"] { background:rgba(20,15,12,.12); }
+  #menu > .menu { position:relative; z-index:1; }
   /* Never taller than the screen, at any UI size (zoom scales lengths, so divide it back out). The view
      (cards, tabs) scrolls; the title and the buttons stay in sight. */
   .menu { background:#2a211b; border:1px solid #5a4636; border-radius:8px; min-width:320px; max-width:520px; max-height:calc((100dvh - 24px) / var(--ui, 1)); overflow:auto; padding:14px 16px; box-shadow:0 10px 40px rgba(0,0,0,.5); box-sizing:border-box; display:flex; flex-direction:column; }
