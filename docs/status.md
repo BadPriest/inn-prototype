@@ -136,7 +136,7 @@ Get in what the big epics are missing, then polish and iron out.
 
 - **Finished the economy (builds 123–124, in review):** #81 wear; #65 hearth cooking and the shop in tiers; #66 equipment that wears in, breakdowns and the tinker, used hardware; #104 tables and seats
 - **Epics:** #101 mood · #100 weather through the full seasons (weather and climate, lighting) · #56 staff (soon) · #18 patron schedules (waits on #10) · #102 taproom card game · #103 taproom activities · #105 events · progression: #44 expansion and #45 reputation
-- **Later:** #87 advanced cooking (takes time); guests are good enough for now; day bookends (#40, #41) are for the future
+- **Later:** #87 advanced cooking (takes time), with #115 preservation (potted meat under butter) and #116 period dishes; guests are good enough for now; day bookends (#40, #41) are for the future
 - **Design sessions this week:** graded Delights (#92) and staff (#56); agendas below
 - **Weather and climate (#100, decided Nov 25):** #107 climate by location and calendar season, temperature in named steps through the day (first) · #108 snow as weather · #109 world tags (built, in review) · #110 a colder tavern on a cold day (later; heating as whole-building upgrades, to design) · #111 climate in trade (built, in review) · #112 day length, one curve
 
@@ -175,6 +175,12 @@ In build order. Each waits on the one it builds on.
 - Do they make mistakes, and are they funny ones, like wear?
 - Days off, falling ill, leaving.
 - The smallest first version for the prototype.
+
+**#110 A colder tavern on a cold day** (weather, #100)
+- **What's there now:** how cold a guest walks in depends on who they are (a dockworker, a traveller), not on the day; only rain adds to it (soaked). Inside, the cold eases by 0.05 an hour anywhere, plus up to 0.45 an hour by a lit fire, fading to nothing 6.5 tiles away. The fire carries less far the colder it is out: 60% of that on a freezing day, 75% cold, 90% cool. Warm dishes and drinks ease it too. On a hot day a lit fire drives off whoever sits near it (#109). Firewood burns 1.2 logs an hour whatever the weather. The door opens for every guest but lets nothing in; windows bring daylight and the sound of rain, nothing else.
+- **Decided (Nov 25–27, on the task):** one room warmth for the whole room. Building insulation runs from -2 to 2; a leaky start, with insulation and ventilation bought later as upgrades. The upgrades cost only their price, perhaps with days closed for the work; heaters burn fuel. A cold patch at the door flares to the outside temperature as guests come in; windows aren't cold. Cold guests shiver, may bring snow in, and mostly want to warm up, though some are used to the cold. A warm room draws them in and keeps them. Innsight shows the temperature in colour.
+- **MVP:** room temperature, cold and warm; the Innsight colours; guests reacting to outside and to inside; some heating hardware.
+- **Open:** which heaters (see the period list on the task); where heaters and upgrades are sold.
 
 **#46 Economy and suppliers**: held Nov 17 ([journal](design-session-journal_economy_nov-17.md)), filed as #58–#69 (see "Next" above). Open from it:
 - How progression is gated ("earn the chance, then buy it" isn't agreed; alternatives to come).
