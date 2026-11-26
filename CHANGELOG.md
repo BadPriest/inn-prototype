@@ -6,6 +6,12 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 128 · Nov 26, 2026 · deployed
+
+### Fixed
+- **The mouse wheel scrolls card screens again.** Over a card it did nothing, because the card the pointer is on is a larger copy laid over the menu, and the cards' tilt stopped the browser from passing the wheel through. Now the wheel over any card scrolls the cards.
+- **The card under the pointer is the one picked up after a scroll.** It used to stay on the card you'd been over, which then rode along with the scroll. With the pointer over empty space (after a scroll, or moving off a card), no card is picked up; before, the first card was.
+
 ## Build 127 · Nov 26, 2026 · deployed
 
 ### Added

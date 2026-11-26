@@ -65,6 +65,35 @@ const underCards = (u: BandTone[]): string => u.map((t, k) => `<i class="uc b-${
 // The feel of a card in the hand: it tilts towards the pointer with a sheen across it, and the one
 // picked up turns over to its back (F, right-click, R3 on a controller); the right stick tilts it.
 
+/**
+ * The mouse wheel over a card scrolls the cards. Chrome won't scroll past an element with a 3D
+ * transform, and the grown card lies over the menu outside its scrolling part, so the view is scrolled
+ * here (unless something inside the card can scroll that way itself).
+ */
+function scrollableY(el: HTMLElement, dy: number): boolean {
+  if (!/(auto|scroll)/.test(getComputedStyle(el).overflowY)) return false;
+  return dy > 0 ? el.scrollTop + el.clientHeight < el.scrollHeight - 1 : el.scrollTop > 0;
+}
+document.addEventListener("wheel", (e) => {
+  if (e.ctrlKey || !(e.target instanceof Element)) return;
+  const card = e.target.closest<HTMLElement>(".icard");
+  if (!card) return;
+  const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1);
+  let scroller: HTMLElement | null = null;
+  for (let el: HTMLElement | null = e.target as HTMLElement; el && !scroller; el = el.parentElement) {
+    if (!scrollableY(el, dy)) continue;
+    if (card.contains(el)) return;
+    scroller = el;
+  }
+  if (!scroller && card.classList.contains("zoomed")) {
+    const view = card.parentElement?.querySelector<HTMLElement>(".menu-view");
+    if (view && scrollableY(view, dy)) scroller = view;
+  }
+  if (!scroller) return;
+  e.preventDefault();
+  scroller.scrollTop += dy;
+}, { passive: false });
+
 /** Tilt a card: x and y from -1 to 1 (right, down), as the pointer or the right stick puts them. */
 function tilt(el: HTMLElement, x: number, y: number): void {
   el.style.setProperty("--ry", `${(x * 9).toFixed(2)}deg`);
@@ -155,7 +184,7 @@ export function grid(cards: CardSpec[], opts: { cols?: number; size?: "s" | "m" 
  * After a menu is drawn: every card in a grid as tall as the tallest, and the card under the cursor grown.
  * The grown card is a copy laid over the menu (outside its scrolling part, so it's never cut off): it
  * starts at the card's own size and place and grows around it, kept on screen, and its extra text fades
- * in. The mouse grows the card it's over; otherwise the keyboard's card is grown.
+ * in. The mouse grows the card it's over (none over a gap); the keys grow the card they choose.
  */
 export function settleCards(root: HTMLElement): void {
   root.querySelectorAll<HTMLElement>(".icard .face > .body").forEach((b) => b.classList.toggle("clipped", b.scrollHeight > b.clientHeight + 1));
@@ -229,8 +258,7 @@ export function settleCards(root: HTMLElement): void {
     el.addEventListener("mouseleave", (e) => {
       if (!pointerLive) return;
       turned = null; // put down: it lies face up again
-      const to = (e.relatedTarget as HTMLElement | null)?.closest?.(".cards .icard") as HTMLElement | null;
-      show(to ?? focused());
+      show((e.relatedTarget as HTMLElement | null)?.closest?.(".cards .icard") as HTMLElement | null);
     });
   };
   root.querySelectorAll<HTMLElement>(".cards .icard").forEach((c) => {
@@ -239,7 +267,16 @@ export function settleCards(root: HTMLElement): void {
     followPointer(c);
   });
   const view = root.querySelector<HTMLElement>(".menu-view");
-  if (view) view.onscroll = () => { const c = shown; shown = null; show(c?.isConnected ? c : focused(), false); };
+  // Scrolled: with the mouse in use, the card now under the pointer is the one picked up (or none, over a gap).
+  const inside = (r: DOMRect) => lastX >= r.left && lastX <= r.right && lastY >= r.top && lastY <= r.bottom;
+  const underPointer = () => (view && inside(view.getBoundingClientRect())
+    ? [...view.querySelectorAll<HTMLElement>(".cards .icard")].find((c) => inside(c.getBoundingClientRect())) ?? null : null);
+  if (view) view.onscroll = () => {
+    const c = shown;
+    shown = null;
+    if (pointerLive) show(underPointer(), false);
+    else show(c?.isConnected ? c : focused(), false);
+  };
   show(focused());
 }
 

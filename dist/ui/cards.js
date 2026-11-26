@@ -26,6 +26,41 @@ const underCards = (u) => u.map((t, k) => `<i class="uc b-${t}" style="--k:${k +
 // ---------------------------------------------------------------------------
 // The feel of a card in the hand: it tilts towards the pointer with a sheen across it, and the one
 // picked up turns over to its back (F, right-click, R3 on a controller); the right stick tilts it.
+/**
+ * The mouse wheel over a card scrolls the cards. Chrome won't scroll past an element with a 3D
+ * transform, and the grown card lies over the menu outside its scrolling part, so the view is scrolled
+ * here (unless something inside the card can scroll that way itself).
+ */
+function scrollableY(el, dy) {
+    if (!/(auto|scroll)/.test(getComputedStyle(el).overflowY))
+        return false;
+    return dy > 0 ? el.scrollTop + el.clientHeight < el.scrollHeight - 1 : el.scrollTop > 0;
+}
+document.addEventListener("wheel", (e) => {
+    if (e.ctrlKey || !(e.target instanceof Element))
+        return;
+    const card = e.target.closest(".icard");
+    if (!card)
+        return;
+    const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1);
+    let scroller = null;
+    for (let el = e.target; el && !scroller; el = el.parentElement) {
+        if (!scrollableY(el, dy))
+            continue;
+        if (card.contains(el))
+            return;
+        scroller = el;
+    }
+    if (!scroller && card.classList.contains("zoomed")) {
+        const view = card.parentElement?.querySelector(".menu-view");
+        if (view && scrollableY(view, dy))
+            scroller = view;
+    }
+    if (!scroller)
+        return;
+    e.preventDefault();
+    scroller.scrollTop += dy;
+}, { passive: false });
 /** Tilt a card: x and y from -1 to 1 (right, down), as the pointer or the right stick puts them. */
 function tilt(el, x, y) {
     el.style.setProperty("--ry", `${(x * 9).toFixed(2)}deg`);
@@ -118,7 +153,7 @@ export function grid(cards, opts = {}) {
  * After a menu is drawn: every card in a grid as tall as the tallest, and the card under the cursor grown.
  * The grown card is a copy laid over the menu (outside its scrolling part, so it's never cut off): it
  * starts at the card's own size and place and grows around it, kept on screen, and its extra text fades
- * in. The mouse grows the card it's over; otherwise the keyboard's card is grown.
+ * in. The mouse grows the card it's over (none over a gap); the keys grow the card they choose.
  */
 export function settleCards(root) {
     root.querySelectorAll(".icard .face > .body").forEach((b) => b.classList.toggle("clipped", b.scrollHeight > b.clientHeight + 1));
@@ -210,8 +245,7 @@ export function settleCards(root) {
             if (!pointerLive)
                 return;
             turned = null; // put down: it lies face up again
-            const to = e.relatedTarget?.closest?.(".cards .icard");
-            show(to ?? focused());
+            show(e.relatedTarget?.closest?.(".cards .icard"));
         });
     };
     root.querySelectorAll(".cards .icard").forEach((c) => {
@@ -222,8 +256,19 @@ export function settleCards(root) {
         followPointer(c);
     });
     const view = root.querySelector(".menu-view");
+    // Scrolled: with the mouse in use, the card now under the pointer is the one picked up (or none, over a gap).
+    const inside = (r) => lastX >= r.left && lastX <= r.right && lastY >= r.top && lastY <= r.bottom;
+    const underPointer = () => (view && inside(view.getBoundingClientRect())
+        ? [...view.querySelectorAll(".cards .icard")].find((c) => inside(c.getBoundingClientRect())) ?? null : null);
     if (view)
-        view.onscroll = () => { const c = shown; shown = null; show(c?.isConnected ? c : focused(), false); };
+        view.onscroll = () => {
+            const c = shown;
+            shown = null;
+            if (pointerLive)
+                show(underPointer(), false);
+            else
+                show(c?.isConnected ? c : focused(), false);
+        };
     show(focused());
 }
 /** How many cards fit in a row right now (the grid wraps to the screen). */

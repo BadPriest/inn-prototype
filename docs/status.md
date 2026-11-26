@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 26, 2026 · build 127 (deployed) · https://inn-prototype.vercel.app
+Updated Nov 26, 2026 · build 128 (deployed) · https://inn-prototype.vercel.app
 
 History by build: [../CHANGELOG.md](../CHANGELOG.md). What the prototype is and how to play: [../README.md](../README.md).
 
@@ -26,10 +26,10 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
 
-## Built and deployed (Nov 26, builds 125–127)
+## Built and deployed (Nov 26, builds 125–128)
 
+- Build 128: the mouse wheel scrolls card screens over the cards; after a scroll the card under the pointer is picked up, none over a gap
 - #111 climate in trade: the fire's heat carries less far the colder it is (60% of its reach when freezing); snow thins the street (blizzard 0.7 fewer); the carter comes by 8, and snow and the mountainside roads make him hours late or put him off a day (the paper and the slip say so); in review
-
 - Build 126: a blue-to-red thermometer on the status card beside the weather
 - #107 climate: each location's weather and temperature per calendar season; temperature in six steps through the day (status card, newspaper, the `cold` tag); the light turns blue and frosty when cold, golden when hot; muddy and wet prints from the door; in review
 - #112 day length: one smooth curve through the year (midsummer full daylight 7–18, midwinter 9:30–15:30); in review
