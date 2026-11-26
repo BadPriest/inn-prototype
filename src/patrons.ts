@@ -4,12 +4,12 @@ import { ECONOMY_DATA } from "./gamedata.gen.js";
 import { opennessOf, patienceOf, showFlip } from "./snacks.js";
 import { orderable } from "./readymade.js";
 import { chance, organic, pick, uid, weightedPick } from "./core.js";
-import { ARCHETYPES, CHATTER, NAMES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING, SHELTER, SEASONAL_TASTES, MARKET, SPECIFIC_ORDERS, VISITOR_TASTES, RARE_LOVE_CHANCE, type NeedId, type Archetype, type TasteSet, type ItemKind, type Regular, garnishesFor, garnishById } from "./data.js";
+import { WEATHER, ARCHETYPES, CHATTER, NAMES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING, SHELTER, SEASONAL_TASTES, MARKET, SPECIFIC_ORDERS, VISITOR_TASTES, RARE_LOVE_CHANCE, type NeedId, type Archetype, type TasteSet, type ItemKind, type Regular, garnishesFor, garnishById } from "./data.js";
 import type { Game, Group, Order, Patron, RegularState } from "./game.js";
 import { emptyTastes } from "./game.js";
 import { appeal, prepareVisit, sample, tagScore } from "./tastes.js";
 import { arrivalNeeds, closeAllStretches } from "./needs.js";
-import { cameIn, weatherTags } from "./weather.js";
+import { cameIn, snowyNow, weatherTags } from "./weather.js";
 import { marketDay } from "./newspaper.js";
 import { cutTipsForWalkout, payTips, priceLevel } from "./money.js";
 import { dist, type Seat, type Table, type Vec } from "./world.js";
@@ -68,9 +68,17 @@ function passerBy(g: Game): Archetype {
   return weightedPick(ARCHETYPES, (x) => x.weight * (g.loc.visitors[x.id] ?? 1))!;
 }
 
-/** How wet someone coming in now gets: the rain's intensity, give or take. */
+/** How wet someone coming in now gets: the rain's intensity, give or take; snow wets less, and melts later. */
 function soakedNow(g: Game): number {
-  return g.weather.sky === "rain" ? clamp01(g.weather.rain * organic(SOAKING.fromRain)) : 0;
+  const w = g.weather;
+  if (w.sky !== "rain") return 0;
+  return clamp01(w.rain * organic(SOAKING.fromRain) * (w.snow ? WEATHER.snow.soaks : 1));
+}
+
+/** Coming in wet or snowy: how wet they are, and how wet they'll be once the snow on them melts. */
+function arrivingWet(g: Game): { soaked: number; snowy: number; soon: number } {
+  const soaked = soakedNow(g), snowy = snowyNow(g);
+  return { soaked, snowy, soon: clamp01(soaked + snowy * WEATHER.snow.meltWets) };
 }
 
 /** Pick a seat: anyone, or for the soaked, one by a lit fire if they can. */
@@ -149,9 +157,9 @@ export function spawnPatron(g: Game, archetype?: Archetype, forced?: { seat: Sea
   const a = archetype ?? passerBy(g);
   const fussiness = clamp01(organic(a.fussiness));
   const needs = arrivalNeeds(a.needs);
-  const soaked = soakedNow(g);
-  needs.warmth = clamp01(needs.warmth + soaked * SOAKING.warmthOnArrival);
-  const seat = forced?.seat ?? chooseSeat(g, hungrier(needs, a.foodBias), fussiness, soaked);
+  const { soaked, snowy, soon } = arrivingWet(g);
+  needs.warmth = clamp01(needs.warmth + soon * SOAKING.warmthOnArrival);
+  const seat = forced?.seat ?? chooseSeat(g, hungrier(needs, a.foodBias), fussiness, soon);
   if (!seat) return null;
   const draw = (): TasteSet => {
     const love = a.rareLoves.length && chance(RARE_LOVE_CHANCE) ? [pick(a.rareLoves)] : sample(a.tastes.love, VISITOR_TASTES.love);
@@ -176,12 +184,13 @@ export function spawnPatron(g: Game, archetype?: Archetype, forced?: { seat: Sea
     stayUntil: g.minute + Math.max(20, organic(a.stay)),
     needs,
     soaked,
+    snowy,
     reason: reasonFor(g, needs),
     weatherTaste: a.weather,
     unmet: {},
     groupId: forced?.groupId,
   };
-  if (soaked > SOAKING.warmCraving) p.craving = { tag: "warm", honest: true };
+  if (soon > SOAKING.warmCraving) p.craving = { tag: "warm", honest: true };
   else if (chance(SEASONAL_TASTES.visitorCraving)) p.craving = { tag: pick(SEASONAL_TASTES.inSeason[g.date.season]), honest: true };
   return admit(g, p, seat);
 }
@@ -279,9 +288,9 @@ function processQueue(g: Game): void {
 
 export function spawnRegular(g: Game, def: Regular, st: RegularState): Patron | null {
   const needs = arrivalNeeds(def.needs);
-  const soaked = soakedNow(g);
-  needs.warmth = clamp01(needs.warmth + soaked * SOAKING.warmthOnArrival);
-  const seat = chooseSeat(g, hungrier(needs, def.foodBias), def.fussiness, soaked);
+  const { soaked, snowy, soon } = arrivingWet(g);
+  needs.warmth = clamp01(needs.warmth + soon * SOAKING.warmthOnArrival);
+  const seat = chooseSeat(g, hungrier(needs, def.foodBias), def.fussiness, soon);
   if (!seat) return null;
   const p: Patron = {
     ...basePatron(g, seat),
@@ -301,12 +310,13 @@ export function spawnRegular(g: Game, def: Regular, st: RegularState): Patron | 
     stayUntil: g.minute + Math.max(20, organic(def.stay)),
     needs,
     soaked,
+    snowy,
     reason: reasonFor(g, needs),
     weatherTaste: def.weather,
     unmet: {},
   };
   prepareVisit(p, def, st, g.date.season);
-  if (soaked > SOAKING.warmCraving && !p.craving) p.craving = { tag: "warm", honest: true };
+  if (soon > SOAKING.warmCraving && !p.craving) p.craving = { tag: "warm", honest: true };
   st.visits++;
   st.visitedToday = true;
   admit(g, p, seat);
@@ -690,11 +700,12 @@ export function initTalk(g: Game): void {
   g.bus.on((e) => {
     if (e.type === "WeatherChanged" && e.from === "rain") rainStopped(g);
     let lines: string[] | undefined;
+    const T = CHATTER.weatherTurns, snow = g.weather.snow;
     if (e.type === "WeatherChanged") {
-      if (e.to === "rain") lines = CHATTER.weatherTurns.rainStarts;
-      else if (e.from === "rain") lines = CHATTER.weatherTurns.rainStops;
-      else if (e.to === "clear") lines = CHATTER.weatherTurns.clears;
-    } else if (e.type === "RainBandChanged" && e.to === "storm") lines = CHATTER.weatherTurns.stormBreaks;
+      if (e.to === "rain") lines = snow ? T.snowStarts : T.rainStarts;
+      else if (e.from === "rain") lines = snow ? T.snowStops : T.rainStops;
+      else if (e.to === "clear") lines = T.clears;
+    } else if (e.type === "RainBandChanged" && e.to === "storm") lines = snow ? T.blizzard : T.stormBreaks;
     if (!lines) return;
     const seated = g.patrons.filter((p) => (p.state === "seated" || p.state === "waiting" || p.state === "consuming") && p.schema !== "reserved");
     const who = seated.sort(() => Math.random() - 0.5).slice(0, chance(0.5) ? 2 : 1);
@@ -844,7 +855,8 @@ export function updatePatrons(g: Game, simDt: number): void {
           p.state = "seated";
           p.nextThinkAt = g.minute + organic([2, 1.5]);
           // In from the rain: they might say so.
-          const from = p.cameIn?.band ? CHATTER.cameIn[p.cameIn.band] : undefined;
+          const c = p.cameIn;
+          const from = c?.snow === "after" ? CHATTER.cameIn["snow:after"] : c?.band ? CHATTER.cameIn[c.snow ? `snow:${c.band}` : c.band] : undefined;
           if (from && p.schema !== "reserved" && chance(0.5)) g.speak(p, pick(from));
         }
         break;

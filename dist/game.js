@@ -82,6 +82,7 @@ export class Game {
     pieSafe = [];
     dirt = new Map(); // table key "x,y" -> dirt units
     spills = [];
+    footprints = []; // from the front door, fading (tracks.ts)
     crates = [];
     /** Tag flips showing over guests' heads: the old tag turning over to the new (performance.now() start). */
     tagFlips = [];

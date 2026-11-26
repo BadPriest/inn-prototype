@@ -6,6 +6,19 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 125 · Nov 26, 2026 · deployed
+
+### Added
+- **Each place has its own climate.** Every location now has its own rain, storms and temperature for each calendar season. Dockside autumns and winters are wet and stormy but mild; the mountainside freezes most nights; the crossroads and the hill country get hot summer afternoons; the hill country's winters are cool and dry.
+- **Temperature.** It's outside in six steps (freezing, cold, cool, mild, warm, hot) and moves through the day: coldest before dawn, warmest mid-afternoon, colder on clear nights, cooler on grey and rainy days. Warm spells and cold snaps come and go every day or two. The status card shows it ("☀️ Clear · Freezing"), the keeper notices when it turns ("It's turning cold."), the waking line says it, and the newspaper forecasts it ("Cold morning, mild by the afternoon."). Guests feel the cold by the temperature now, not just by the calendar season.
+- **Light shows the temperature.** A cold day has a blue light, stronger by the windows; a hot one a golden haze. Cold nights are a deeper blue, frost creeps over the panes when it's freezing, and the fire's glow counts for more on a freezing day.
+- **Snow.** When it's cold enough, what falls is snow: flurries, snow or a blizzard, and a shower can turn from rain to snow as the day cools. For about three hours after it stops, guests still come in snowy. Snow on a guest shows as a white cap and flecks; it melts inside, faster by the fire, and the melt leaves them wet, so they shiver and look for the fire like guests in from the rain. Guests talk about it ("Look at me, I'm white all over."). Maren the baker loves a snowy day; Ysolde the courier hates blizzards. Snow falls most on the mountainside and at the crossroads in winter, now and then in town (mixed with rain), rarely at the docks, and not in the hill country. Snow light is brighter than rain light; flakes drift past the windows and the sills turn white. Until it has sounds of its own, snow is heard through the wind, and the street goes quiet.
+- **Guests bring the weather in.** Walking in from a wet road, guests leave a trail of muddy prints from the door (they fade over about 2½ hours); in the rain, wet ones (about 40 minutes); in snow, white prints that turn wet and fade, and flakes blow in at the open door. The road dries after rain, faster on a warm sunny day, and frozen ground leaves no mud. The prints are only a sign of the weather, not a mess to clean.
+
+### Changed
+- **Day length through the year.** Dawn and dusk move gradually day by day instead of jumping when the calendar season changes. Midsummer has full daylight from 7:00 to 18:00, midwinter from 9:30 to 15:30. A long winter, like the mountainside's, is a long dark stretch.
+- Debug: the weather line shows the temperature, the spell, how wet the ground is and the snow's aftermath; the weather picker has Flurries, Snow and Blizzard.
+
 ## Build 124 · Nov 23, 2026 · deployed
 
 ### Fixed

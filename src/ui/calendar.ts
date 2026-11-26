@@ -11,6 +11,7 @@ import { openMenu, replaceMenu, type CardScreen } from "./menu.js";
 function dayWeather(s: DayStats | undefined): string {
   const w = s?.weather;
   if (!w) return "";
+  if ((w.snowMinutes ?? 0) > w.rainMinutes) return w.storm ? WEATHER.snow.bands.storm.icon : WEATHER.snow.bands[(w.snowMinutes ?? 0) > 120 ? "rain" : "light-rain"].icon;
   if (w.storm) return WEATHER.bands[2].icon;
   if (w.rainMinutes > 120) return WEATHER.bands[1].icon;
   if (w.rainMinutes > 0) return WEATHER.bands[0].icon;
@@ -82,6 +83,7 @@ export function openCalendar(g: Game): void {
 function weatherName(s: DayStats | undefined): string {
   const w = s?.weather;
   if (!w) return "";
+  if ((w.snowMinutes ?? 0) > w.rainMinutes) return w.storm ? WEATHER.snow.bands.storm.name : WEATHER.snow.bands[(w.snowMinutes ?? 0) > 120 ? "rain" : "light-rain"].name;
   if (w.storm) return WEATHER.bands[2].name;
   if (w.rainMinutes > 120) return WEATHER.bands[1].name;
   if (w.rainMinutes > 0) return WEATHER.bands[0].name;

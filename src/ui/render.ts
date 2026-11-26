@@ -2,11 +2,12 @@ import { breadCaseKeys } from "../crafting.js";
 // Canvas drawing. Basic shapes only: rectangles for furniture, circles for people.
 
 import { have } from "../stock.js";
-import { RECIPES, SNACKS, SOAKING, TUNING, PIE_SAFE_CAPACITY } from "../data.js";
+import { RECIPES, SNACKS, SOAKING, TUNING, WEATHER, PIE_SAFE_CAPACITY } from "../data.js";
 import type { Game, Patron } from "../game.js";
 import { spotOf, type Target } from "../interact.js";
 import { iconFor, TRAY_COLOUR, trayLook } from "../serving.js";
 import { drawLight } from "./light.js";
+import { footprintsToDraw } from "../tracks.js";
 import { RING_TRACK, ringColor } from "./tickets.js";
 import { walkoutProgress } from "../patrons.js";
 import { worldGuide } from "../walkthrough.js";
@@ -151,6 +152,11 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
   for (const sp of g.spills) {
     ctx.fillStyle = "rgba(190,150,70,0.55)";
     ctx.beginPath(); ctx.ellipse(X(sp.x) + ts / 2, Y(sp.y) + ts / 2, ts * 0.32, ts * 0.2, 0.4, 0, Math.PI * 2); ctx.fill();
+  }
+
+  for (const fp of footprintsToDraw(g)) {
+    ctx.fillStyle = fp.color;
+    ctx.beginPath(); ctx.ellipse(X(fp.x), Y(fp.y), fp.flake ? ts * 0.05 : ts * 0.12, fp.flake ? ts * 0.05 : ts * 0.06, fp.angle, 0, Math.PI * 2); ctx.fill();
   }
 
   // Furniture pieces
@@ -412,6 +418,16 @@ function drawPatron(ctx: CanvasRenderingContext2D, g: Game, p: Patron, X: (n: nu
     ctx.globalAlpha = Math.min(0.9, wet + 0.2);
     const fall = (t * 1.4 + p.id * 0.37) % 1;
     ctx.beginPath(); ctx.arc(x + ts * 0.18, y + ts * (0.2 + fall * 0.3), ts * 0.05, 0, Math.PI * 2); ctx.fill();
+  }
+  const snow = p.snowy ?? 0;
+  if (snow > 0.04) {
+    ctx.fillStyle = WEATHER.snow.tint;
+    ctx.globalAlpha = Math.min(0.95, 0.35 + snow);
+    const flecks = Math.ceil(snow * 7);
+    for (let i = 0; i < flecks; i++) {
+      const a = ((p.id * 7 + i * 13) % 10) / 10 * Math.PI * 2, d = ((p.id * 3 + i * 29) % 10) / 10 * ts * 0.24;
+      ctx.beginPath(); ctx.arc(x + Math.cos(a) * d, y + Math.sin(a) * d, ts * 0.045, 0, Math.PI * 2); ctx.fill();
+    }
   }
   ctx.globalAlpha = 1;
   return;

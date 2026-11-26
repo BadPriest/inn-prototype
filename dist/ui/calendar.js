@@ -9,6 +9,8 @@ function dayWeather(s) {
     const w = s?.weather;
     if (!w)
         return "";
+    if ((w.snowMinutes ?? 0) > w.rainMinutes)
+        return w.storm ? WEATHER.snow.bands.storm.icon : WEATHER.snow.bands[(w.snowMinutes ?? 0) > 120 ? "rain" : "light-rain"].icon;
     if (w.storm)
         return WEATHER.bands[2].icon;
     if (w.rainMinutes > 120)
@@ -88,6 +90,8 @@ function weatherName(s) {
     const w = s?.weather;
     if (!w)
         return "";
+    if ((w.snowMinutes ?? 0) > w.rainMinutes)
+        return w.storm ? WEATHER.snow.bands.storm.name : WEATHER.snow.bands[(w.snowMinutes ?? 0) > 120 ? "rain" : "light-rain"].name;
     if (w.storm)
         return WEATHER.bands[2].name;
     if (w.rainMinutes > 120)

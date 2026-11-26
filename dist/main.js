@@ -21,6 +21,7 @@ import { updateCrafting } from "./crafting.js";
 import { initTalk, updatePatrons } from "./patrons.js";
 import { updateNeeds } from "./needs.js";
 import { updateWeather } from "./weather.js";
+import { updateTracks } from "./tracks.js";
 import { initLight, updateLamps } from "./ui/light.js";
 import { updateFrontDoor } from "./door.js";
 import { cancelPour, updatePour } from "./serving.js";
@@ -1234,6 +1235,7 @@ function frame(now) {
         updatePatrons(g, sim);
         updateNeeds(g, sim);
         updateWeather(g, sim);
+        updateTracks(g, sim);
         updateLamps(g);
         updateUpkeep(g, sim);
         updateTinker(g);

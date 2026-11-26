@@ -139,14 +139,15 @@ export interface SupplierFields {
 export interface SupplierData extends SupplierFields { id: string; name: string; icon: string; people: string[]; inventory: InventoryLine[] }
 export interface SuppliersData { suppliers: SupplierData[] }
 
+export type TemperatureId = "freezing" | "cold" | "cool" | "mild" | "warm" | "hot";
+export interface ClimateData { rain: number; storm: number; temperature: [coldest: TemperatureId, warmest: TemperatureId] }
+
 export interface LocationData {
   id: string;
   name: string;
   icon: string;
   seasonDays: [spring: number, summer: number, autumn: number, winter: number];
-  rainWeight: number;
-  stormWeight: number;
-  cold?: { seasons: CalendarSeasonId[]; nights: CalendarSeasonId[] };
+  climate: Record<CalendarSeasonId, ClimateData>;
   traffic: number;
   shelter: number;
   visitorWeights: Record<string, number>;

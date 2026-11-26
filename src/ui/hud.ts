@@ -168,8 +168,8 @@ export function initDebug(g: Game): void {
     setTimeout(() => { note.textContent = ""; }, 3000);
   };
   ($("dbg-weather-set") as HTMLButtonElement).onclick = () => {
-    const [sky, band] = ($("dbg-weather") as HTMLSelectElement).value.split(":") as [SkyId, RainBandId | undefined];
-    forceWeather(g, sky, band);
+    const [sky, band, snow] = ($("dbg-weather") as HTMLSelectElement).value.split(":") as [SkyId, RainBandId | undefined, string | undefined];
+    forceWeather(g, sky, band, snow === "snow");
   };
   const reset = $("dbg-reset") as HTMLButtonElement;
   let armed = false;
@@ -219,7 +219,7 @@ function updateDebug(g: Game): void {
       ${st && (st.locks.food.love.length + st.locks.food.dislike.length + st.locks.drink.love.length + st.locks.drink.dislike.length) ? `<div>locked: food ♥${st.locks.food.love.join(",")} ✗${st.locks.food.dislike.join(",")} · drink ♥${st.locks.drink.love.join(",")} ✗${st.locks.drink.dislike.join(",")}</div>` : ""}</div>`;
   }).join("") || `<div class="muted">Nobody inside.</div>`;
   const w = g.weather;
-  $("dbg-weather-now").textContent = `${weatherLabel(g)} · ${w.sky}${w.band ? ` ${w.rain.toFixed(2)} → ${w.target.toFixed(2)}${w.ending ? " (easing off)" : ""}` : ""} · ${w.hours.toFixed(1)}h · tags: ${weatherTags(g).join(", ") || "–"}`;
+  $("dbg-weather-now").textContent = `${weatherLabel(g)} · ${w.sky}${w.band ? ` ${w.rain.toFixed(2)} → ${w.target.toFixed(2)}${w.ending ? " (easing off)" : ""}` : ""} · ${w.hours.toFixed(1)}h${w.snow ? " · snow" : ""}${w.afterSnow > 0 ? ` · after ${w.afterSnow.toFixed(1)}h` : ""} · temp ${w.temp.toFixed(2)} (spell ${w.spell >= 0 ? "+" : ""}${w.spell.toFixed(2)}) · ground ${w.ground.toFixed(2)} · tags: ${weatherTags(g).join(", ") || "–"}`;
   const playing = voicesNow().filter((v) => v.gain > 0.01);
   $("dbg-sounds").textContent = playing.length ? playing.map((v) => `${v.key} ${v.gain.toFixed(2)}`).join(" · ") : (isMuted() ? "muted" : "nothing audible");
   const unmet = g.stats.unmet ?? [];

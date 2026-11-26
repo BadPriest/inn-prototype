@@ -4,7 +4,7 @@
 import type { DishEffect } from "./gamedata.js";
 import type { Organic } from "./core.js";
 import { DISHES_DATA, EQUIPMENT_DATA, INGREDIENTS_DATA, LOCATIONS_DATA } from "./gamedata.gen.js";
-import type { Container, DishData, EquipmentPiece } from "./gamedata.js";
+import type { ClimateData, Container, DishData, EquipmentPiece, TemperatureId } from "./gamedata.js";
 
 // ---------------------------------------------------------------------------
 // The map. One character per tile. See TILE_LEGEND below.
@@ -561,7 +561,7 @@ export const REGULARS: Regular[] = [
     fussiness: 0.2, patience: [50, 10], stay: [150, 30], consume: [18, 5], walk: [2.8, 0.3],
     foodBias: 0.55, garnishAsk: 0.3, messiness: 0.8 },
   { id: "maren", role: "Baker", name: "Maren", color: "#f0c05a", schema: "open", joinsOnDay: 3, habit: [15, 17],
-    weather: { love: ["sunny"], dislike: ["grey", "cold"] },
+    weather: { love: ["sunny", "snowy"], dislike: ["grey", "cold"] },
     needs: { hunger: [0.35, 0.1], thirst: [0.45, 0.1], warmth: [0.3, 0.1] },
     blurb: "Bakes for half the street. Hopeful about most things.",
     food: { love: ["sweet", "warm"], like: ["homely", "crisp"], dislike: ["bitter", "briny"] },
@@ -588,7 +588,7 @@ export const REGULARS: Regular[] = [
     fussiness: 0.1, patience: [70, 10], stay: [140, 30], consume: [15, 4], walk: [1.5, 0.2],
     foodBias: 0.6, garnishAsk: 0.1, messiness: 0.6 },
   { id: "ysolde", role: "Courier", name: "Ysolde", color: "#9db4ff", schema: "unformed", joinsOnDay: 9, habit: [16, 19],
-    weather: { love: ["sunny", "cold"], dislike: ["rain", "stormy"] },
+    weather: { love: ["sunny", "cold"], dislike: ["rain", "stormy", "heavy-snow"] },
     needs: { hunger: [0.55, 0.15], thirst: [0.5, 0.15], warmth: [0.4, 0.1] },
     blurb: "A courier between towns. Picky, or maybe just unsure.",
     food: { love: [], like: [], dislike: [] }, drink: { love: [], like: [], dislike: [] },
@@ -657,6 +657,20 @@ export const SHELTER = {
 
 // Soaked: guests in from the rain. How wet comes from the rain's intensity as they arrive; it fades as
 // they dry (faster by a lit fire). Wet guests get cold, want the fire and something warm, and drip.
+export type Tracks = "wet" | "mud" | "snow";
+
+/** Prints guests leave walking in from the door (tracks.ts): what the weather outside put on their boots. */
+export const TRACKS = {
+  stride: 0.42, // tiles between prints
+  side: 0.09, // tiles left or right of the line they walk
+  most: 90, // prints on the floor at once
+  kinds: {
+    mud: { prints: 12, minutes: 150, rgb: "92,62,36", alpha: 0.6 },
+    wet: { prints: 7, minutes: 40, rgb: "20,30,48", alpha: 0.35 },
+    snow: { prints: 10, minutes: 60, rgb: "240,246,255", alpha: 0.8, meltsTo: "wet" }, // white, turning to wet as it melts
+  } as Record<Tracks, { prints: number; minutes: number; rgb: string; alpha: number; meltsTo?: Tracks }>,
+};
+
 export const SOAKING = {
   fromRain: [1, 0.2] as Organic, // soaked = rain intensity × this: a drizzle dampens, a storm drenches
   warmthOnArrival: 0.35, // times soaked: added to the warmth need as they come in
@@ -752,9 +766,7 @@ export interface Location {
   blurb: string;
   back: string; // flavour on the back of its card
   days: [spring: number, summer: number, autumn: number, winter: number]; // sums to 112
-  rain: number; // more (> 1) or less rain: weights the sky toward rain, and rain lingers
-  storm: number; // how often a storm breaks, against the calendar season's own odds
-  cold?: { seasons: CalendarSeasonId[]; nights: CalendarSeasonId[] }; // instead of WEATHER's
+  climate: Record<CalendarSeasonId, ClimateData>; // rain, storms and temperature, per calendar season
   traffic: number; // passing traffic, times the hour's flow
   shelter: number; // how much rain drives passers-by indoors (used by flow, inn#22)
   visitors: Partial<Record<string, number>>; // archetype id -> times its usual weight
@@ -770,9 +782,7 @@ export const LOCATIONS: Location[] = LOCATIONS_DATA.locations.map((l) => ({
   blurb: l.text.card,
   back: l.text.back ?? "",
   days: l.seasonDays,
-  rain: l.rainWeight,
-  storm: l.stormWeight,
-  cold: l.cold,
+  climate: l.climate,
   traffic: l.traffic,
   shelter: l.shelter,
   visitors: l.visitorWeights,
@@ -896,6 +906,8 @@ export const CHATTER = {
     rain: ["Raining properly now.", "Wet out there.", "You'd want a good coat {now}."],
     stormy: ["Coming down in buckets out there.", "Listen to that wind.", "Nobody's crossing the river in this.", "Hope the roof holds."],
     cold: ["Bitter out.", "Cold enough to freeze your ears off.", "Good to be near a fire {now}."],
+    snowy: ["Snowing again.", "Pretty, the snow. From in here.", "It's settling on the sills.", "Kids'll be out in that tomorrow."],
+    "heavy-snow": ["Can't see the end of the street.", "Nobody's getting over the pass in this.", "Hope the carts make it."],
   } as Record<string, Line[]>,
   weatherChance: 0.3, // share of small talk that's about the weather
   /** Said on sitting down, by what they walked in from. */
@@ -903,6 +915,10 @@ export const CHATTER = {
     "light-rain": ["Only a bit of drizzle.", "Just spitting out there."],
     rain: ["Wet one out there.", "Mind the puddle by the door."],
     storm: ["Coming down in buckets out there!", "Blown in like a leaf, me."],
+    "snow:light-rain": ["Just a few flakes.", "Bit of snow about."],
+    "snow:rain": ["Snowing out there.", "Look at me, I'm white all over."],
+    "snow:storm": ["Couldn't see my own hand!", "Blizzard. A proper one."],
+    "snow:after": ["Snow's stopped, but you should see the street.", "Stamped off what I could."],
   } as Record<string, string[]>,
   /** A guest or two remarks when the weather changes. */
   weatherTurns: {
@@ -910,6 +926,9 @@ export const CHATTER = {
     stormBreaks: ["Listen to that!", "Hark at it now."],
     rainStops: ["Sounds like it's stopped.", "That's eased off."],
     clears: ["Sun's coming out."],
+    snowStarts: ["Is that snow?", "Here comes the snow."],
+    blizzard: ["Listen to that wind!", "It's a white-out."],
+    snowStops: ["Snow's stopped.", "That's the last of it, I think."],
   } as Record<string, string[]>,
   /** Weather tastes: {w} is the weather's name (WEATHER_NAMES), {W} the same with a capital. */
   weatherLove: ["Now this is my kind of weather.", "I do love a {w}.", "Nothing better than a {w}."],
@@ -934,6 +953,8 @@ export const WEATHER_NAMES: Record<string, { love: string; dislike: string }> = 
   rain: { love: "rainy day", dislike: "rain" },
   stormy: { love: "good storm", dislike: "storms" },
   cold: { love: "crisp cold day", dislike: "the cold" },
+  snowy: { love: "snowy day", dislike: "snow" },
+  "heavy-snow": { love: "proper blizzard", dislike: "blizzards" },
 };
 
 export const TALK_TUNING = {
@@ -1221,9 +1242,10 @@ export const UPGRADES: Upgrade[] = [
 
 // ---------------------------------------------------------------------------
 // Weather: a set of states with allowed transitions and a minimum time in each, never noise.
-// Rain has one continuous intensity (0..1) with named bands; a storm is a band of rain, not a state.
-// What everyone reads: tags (the sky's, the band's, and `cold` from the calendar season and hour),
-// and events: WeatherChanged, RainBandChanged, Thunder. Fog and snow come later.
+// What falls has one continuous intensity (0..1) with named bands; a storm is a band of rain, not a state.
+// When it's cold enough what falls is snow: flurries, snow, a blizzard (the same bands), and for a few hours
+// after it stops guests still come in snowy. What everyone reads: tags (the sky's, the band's, `cold` from
+// the temperature), and events: WeatherChanged, RainBandChanged, Thunder. Fog comes later.
 
 export type SkyId = "clear" | "cloudy" | "overcast" | "rain";
 export type RainBandId = "light-rain" | "rain" | "storm";
@@ -1251,8 +1273,41 @@ export const WEATHER = {
   stormJump: 0.3, // how far a storm breaking jumps the intensity, straight away
   stormLasts: [100, 35] as Organic, // game minutes a storm rages before the rain wanders again
   thunderPerHour: 3, // in the storm band
-  coldSeasons: ["winter"] as string[],
-  coldNightSeasons: ["autumn", "spring"] as string[], // cold in the evening and at night
+  /**
+   * Outdoor temperature, on a scale of steps (0 freezing … 5 hot). Each location's climate gives the
+   * coldest and warmest step of an ordinary day per calendar season; the weather and spells move it.
+   */
+  temperature: {
+    steps: [
+      { id: "freezing", name: "Freezing" }, { id: "cold", name: "Cold" }, { id: "cool", name: "Cool" },
+      { id: "mild", name: "Mild" }, { id: "warm", name: "Warm" }, { id: "hot", name: "Hot" },
+    ] as { id: TemperatureId; name: string }[],
+    coldestHour: 5,
+    warmestHour: 15,
+    // Steps added by day (weighted by how far into the warm part of the day) and by night, per sky.
+    sky: {
+      clear: { day: 0.2, night: -0.6 }, cloudy: { day: -0.1, night: 0.2 },
+      overcast: { day: -0.3, night: 0.4 }, rain: { day: -0.4, night: 0.3 },
+    } as Record<SkyId, { day: number; night: number }>,
+    rainPerIntensity: -0.3, // a downpour cools more than a drizzle
+    eveningFall: 0.7, // under 1: after the warmest hour it cools off sooner, then levels out overnight
+    easePerHour: 0.5, // steps per hour the temperature moves toward where it should be
+    hysteresis: 0.12, // past a step's edge by this much before it counts as the next step
+    spell: { size: 0.6, easePerHour: 0.08, everyHours: [30, 12] as Organic }, // warm spells and cold snaps: up to this many steps either way, and how often a new one sets in
+    coldTagAt: 1, // at or below this step, the weather tag `cold`
+    lines: {
+      up: { cold: "It's a little less bitter out.", cool: "The cold's easing off.", mild: "It's turning mild out.", warm: "It's warming up nicely.", hot: "It's getting hot out." },
+      down: { freezing: "It's freezing out there now.", cold: "It's turning cold.", cool: "There's a chill in the air.", mild: "The heat's going out of the day.", warm: "It's cooling off a little." },
+    } as { up: Partial<Record<TemperatureId, string>>; down: Partial<Record<TemperatureId, string>> },
+  },
+  /** How wet the ground outside is, 0..1: guests track mud in while it's wet, unless it's frozen. */
+  ground: {
+    wetPerHour: 0.5, // while raining, times the intensity (at least a drizzle's worth)
+    dryPerHour: { clear: 0.2, cloudy: 0.14, overcast: 0.09, rain: 0 } as Record<SkyId, number>,
+    dryPerStep: 0.25, // drying, times this per step above freezing (warm days dry the road faster)
+    muddyFrom: 0.3,
+    frozenBelow: 0.5, // temperature under this: the ground's hard, no mud
+  },
   /**
    * Per calendar season:
    *   start   odds of the sky on the first morning of a save
@@ -1290,6 +1345,29 @@ export const WEATHER = {
     start: Record<SkyId, number>; stay: Record<SkyId, number>; to: Record<SkyId, Partial<Record<SkyId, number>>>;
     rain: Organic; storm: number;
   }>,
+  /** Snow: what falls once the temperature is low enough, back to rain once it's warmer (the gap stops flicker). */
+  snow: {
+    below: 0.75, // temperature step: under this, what falls is snow
+    above: 1.05, // over this, it's rain again
+    bands: {
+      "light-rain": { name: "Flurries", icon: "🌨️", tags: ["snowy"] },
+      rain: { name: "Snow", icon: "🌨️", tags: ["snowy"] },
+      storm: { name: "Blizzard", icon: "❄️", tags: ["snowy", "heavy-snow"] },
+    } as Record<RainBandId, { name: string; icon: string; tags: string[] }>,
+    aftermathHours: [3, 1] as Organic, // after it stops: guests still come in snowy for this long, less as it goes
+    soaks: 0.25, // snow wets on arrival this much against rain; the rest is `snowy`, melting into wet inside
+    meltPerHour: 0.5, // snow on a guest melting, plus the fire's drying where they sit
+    meltWets: 0.6, // share of the melted snow that soaks them
+    doorFlakesPerMinute: 1.2, // snow blown in at the open door, times the intensity
+    tint: "#f4f8ff", // snow on a guest
+    lines: {
+      starts: "The first flakes are falling.", sudden: "A flurry blows in!",
+      heavier: { rain: "It's snowing properly now.", storm: "A blizzard's blowing in." } as Record<string, string>,
+      easing: { "light-rain": "The snow's easing to a few flakes.", rain: "The blizzard's dying down. Still snowing." } as Record<string, string>,
+      stops: "The snow has stopped. Everything's gone quiet.",
+      toSnow: "The rain's turning to snow.", toRain: "The snow's turning to sleet, then rain.",
+    },
+  },
   /** What the keeper notices, in the log. */
   lines: {
     sky: {
@@ -1311,8 +1389,11 @@ export const WEATHER = {
 export const LIGHT = {
   dawn: [5, 8] as [number, number], // daylight rises between these hours
   dusk: [17, 20.5] as [number, number], // and falls between these
-  seasonShift: { winter: 1.5, autumn: 0.5, spring: 0, summer: -1 } as Record<string, number>, // hours: later dawn, earlier dusk
+  // Hours later dawn and earlier dusk at midwinter (+) and midsummer (−), on a smooth curve through the year in
+  // between. It follows the location's calendar seasons, so a long winter is a long dark stretch.
+  yearShift: { midwinter: 1.5, midsummer: -1 },
   weather: { clear: 1, cloudy: 0.85, overcast: 0.65, rain: 0.6, rainPerIntensity: 0.3 } as Record<string, number> & { rainPerIntensity: number },
+  snow: { lets: 0.8, perIntensity: 0.35, flakes: 4, sill: 0.16 }, // snow light is brighter than rain's; flakes drifting past a pane; the white sill, as a share of the pane
   maxDark: 0.72, // how dark the inn gets with no light at all
   nightTint: "12,14,32", // the colour of the dark (r,g,b)
   lampsOnBelow: 0.45, // indoor light under this: the lamps go on
@@ -1324,6 +1405,18 @@ export const LIGHT = {
   candle: { reach: 2, strength: 0.75, warm: 0.1 },
   keeperCandle: { from: 0.12, reach: 2.6, strength: 0.8, warm: 0.13 }, // the candle the keeper carries, once it's this dark
   flash: { near: 0.55, far: 0.2, ms: 350 },
+  // The temperature outside colours the light: a cold blue or a warm gold over the daylight, stronger by the
+  // windows; a bluer dark on cold nights; frost or haze on the panes; the fire's glow counts for more in the cold.
+  temperature: {
+    coldBelow: 2.5, // temperature step under which the light turns cold, fully so at freezing
+    hotAbove: 3.5, // over which it turns warm, fully so at hot
+    coldCast: "150,185,235", coldCastMax: 0.13,
+    hotCast: "255,196,110", hotCastMax: 0.11,
+    windowPool: 0.35, // the cast in the daylight by a window, times its strength
+    nightCold: "8,16,44", nightWarm: "22,15,28", // the colour of the dark (r,g,b) on a freezing and a hot night
+    frostBelow: 1, // temperature under this: frost creeps over the panes, fully at 0
+    fireHazeCold: 0.5, // the fire's warm haze, up to this much more on a freezing day
+  },
   // Hanging lamps: each inn has its own (INNS[].lamps).
 };
 

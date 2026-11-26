@@ -8,7 +8,7 @@ Playtest build: https://inn-prototype.vercel.app (password-protected). What chan
 
 - **It's about people, not speed.** Nothing burns, nothing is ruined, and nobody shouts at you. Guests do run out of patience eventually, but the pressure is gentle. The skill is in noticing what people like.
 - **Tastes are hidden and learned by watching.** Everyone has likes and dislikes you can't see. You learn them from how a dish lands: delight, pleased, fulfilled, unfinished, complaints. Your journal records what happened, never the answer. Guests come in four kinds, by how readable they are: open, reserved, unformed and veiled.
-- **The world drives what people want.** The time of day, the calendar season, the weather, and each guest's hunger, thirst and warmth decide what they order. Rain brings passers-by in and soaks them, and wet guests head for the fire.
+- **The world drives what people want.** The time of day, the calendar season, the weather, and each guest's hunger, thirst and warmth decide what they order. Each place has its own climate through the year; rain brings passers-by in and soaks them, snow comes in on their coats and melts, and wet guests head for the fire.
 - **Believable as well as fun.** Anything that breaks the illusion of a living inn gets fixed, like guests saying "Evening" at breakfast.
 - **A prototype, not the game.** The finished game won't run in a browser. This one does so playtesters can open it anywhere. The final view is isometric, and it's the default here. Top-down stays for a while (press **V** to switch).
 
@@ -43,9 +43,9 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 
 ## What's in
 
-**Your day.** One time of day drives everything. The game has four calendar seasons of 28 days, weekdays and years. At the start you pick where the inn stands (town centre, dockside, mountainside, crossroads or hill country), which reshapes the year, the weather and who passes by. Then you pick your inn: a small tavern (two tables, a short bar, a used two-hob stove, one barrel; the easiest start, and the one picked unless you choose otherwise) or the big tavern (six tables, a long bar, an oven; busy enough to need staff). A morning newspaper brings the forecast, market days and town news, and there's a calendar screen. The clock stops whenever you're at the desk or in a menu.
+**Your day.** One time of day drives everything. The game has four calendar seasons of 28 days, weekdays and years. At the start you pick where the inn stands (town centre, dockside, mountainside, crossroads or hill country), which reshapes the year, its climate (rain, storms, snow and temperature by calendar season) and who passes by. The temperature moves through the day in six steps, from freezing to hot, and when it's cold enough what falls is snow. Then you pick your inn: a small tavern (two tables, a short bar, a used two-hob stove, one barrel; the easiest start, and the one picked unless you choose otherwise) or the big tavern (six tables, a long bar, an oven; busy enough to need staff). A morning newspaper brings the forecast, market days and town news, and there's a calendar screen. The clock stops whenever you're at the desk or in a menu.
 
-**Guests.** There are four kinds of passers-by (dockworkers, scholars, travellers, farmhands) and six named regulars with their own schedules and roles (ten are planned). Guests have hunger, thirst and warmth, and orders grow from those needs. Their tastes are hidden, follow one of four schemas, and shift with the calendar season. They chat, talk about the weather, and react to what you serve. They wait with growing impatience and leave if left too long. Soaked guests seek the fire. When the rain stops, each guest decides whether to stay. You learn their names over time, and a journal keeps notes on regulars and visitors.
+**Guests.** There are four kinds of passers-by (dockworkers, scholars, travellers, farmhands) and six named regulars with their own schedules and roles (ten are planned). Guests have hunger, thirst and warmth, and orders grow from those needs. Their tastes are hidden, follow one of four schemas, and shift with the calendar season. They chat, talk about the weather, and react to what you serve. They wait with growing impatience and leave if left too long. Soaked guests seek the fire; snowy ones melt into wet. They leave muddy, wet or snowy prints from the door. When the rain or snow stops, each guest decides whether to stay. You learn their names over time, and a journal keeps notes on regulars and visitors.
 
 **Innsight.** Hold L2 (Alt on the keyboard) to read the room: the camera eases in, the room greys out, and guests, who otherwise wear everyday clothes like yours, show their occupation's colour. A card under each guest gives their name (??? until they tell you) and role, how hungry, thirsty or cold they look, anything they said they fancy, and what you served them and how it went; their tastes stay unknown. Equipment shows what's cooking and how much is left, the tap how much ale, the fire whether it's lit. R2 (Shift+Alt) adds a debug layer with each guest's true tastes and exact needs.
 
@@ -77,7 +77,7 @@ Controls are listed in-game: press **H** (or the touchpad on a controller). A PS
 - Arrange the kitchen any time. The clock stops, and what's cooking moves with the piece.
 - Hobs take a pot or a pan. Tended dishes (fish, eggs, toast, a fry-up) need you at the stove, and go straight onto your tray when they're done if there's room. Put back what you picked up by mistake: a serving into any pot of the same dish made the same way, if it has room; a dish onto the shelf it came from. Empty a pot you don't need.
 
-**The inn.** Light changes with the hour, the calendar season and the weather. The keeper lights the lamps when it gets gloomy and carries a candle at night. The other parts of the inn:
+**The inn.** Light changes with the hour, the time of year and the weather, and the temperature colours it: blue and frosty when it's cold, golden when it's hot. Snow drifts past the windows and whitens the sills. The keeper lights the lamps when it gets gloomy and carries a candle at night. The other parts of the inn:
 - a fire to light and keep going
 - a gramophone with records and a spring that runs down (wound again, it carries on where it stopped)
 - background music when the gramophone has been quiet a while
@@ -127,7 +127,8 @@ The built `dist/` folder is committed, so a fresh clone runs with `npm start` wi
 | `src/tastes.ts` | Scoring and the taste schemas (open, reserved, unformed, veiled) |
 | `src/patrons.ts` | Arrivals, regulars, ordering, chatter, names, waiting, mess, leaving |
 | `src/needs.ts` | Hunger, thirst and warmth |
-| `src/weather.ts` | Weather states, rain and its effect on guests |
+| `src/weather.ts` | Weather states, rain and snow, temperature, the wet ground, and what guests walk in from |
+| `src/tracks.ts` | Prints from the front door, and snow blown in |
 | `src/calendar.ts` | Dates, calendar seasons, weekdays |
 | `src/newspaper.ts` | The morning paper |
 | `src/crafting.ts` | Stations and their slots, cooking, pots, shelves, putting back, emptying |

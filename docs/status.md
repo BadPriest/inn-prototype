@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 23, 2026 · build 124 (deployed) · https://inn-prototype.vercel.app
+Updated Nov 26, 2026 · build 125 (deployed) · https://inn-prototype.vercel.app
 
 History by build: [../CHANGELOG.md](../CHANGELOG.md). What the prototype is and how to play: [../README.md](../README.md).
 
@@ -25,6 +25,12 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - #9 gramophone: horn and turntable tone; winding has a progress bar; the spring runs ~4 min (short for testing) and sags the record when it gives out (per [specs/sound.md](specs/sound.md))
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
+
+## Built and deployed (Nov 26, build 125)
+
+- #107 climate: each location's weather and temperature per calendar season; temperature in six steps through the day (status card, newspaper, the `cold` tag); the light turns blue and frosty when cold, golden when hot; muddy and wet prints from the door; in review
+- #112 day length: one smooth curve through the year (midsummer full daylight 7–18, midwinter 9:30–15:30); in review
+- #108 snow: what falls is snow when it's cold enough (flurries, snow, blizzard); snowy guests melt into wet by the fire; white prints and flakes at the door; flakes and white sills at the windows; a few hours' aftermath; in review
 
 ## Built and deployed (Nov 23, builds 123–124)
 
@@ -126,6 +132,7 @@ Get in what the big epics are missing, then polish and iron out.
 - **Epics:** #101 mood · #100 weather through the full seasons (weather and climate, lighting) · #56 staff (soon) · #18 patron schedules (waits on #10) · #102 taproom card game · #103 taproom activities · #105 events · progression: #44 expansion and #45 reputation
 - **Later:** #87 advanced cooking (takes time); guests are good enough for now; day bookends (#40, #41) are for the future
 - **Design sessions this week:** graded Delights (#92) and staff (#56); agendas below
+- **Weather and climate (#100, decided Nov 25):** #107 climate by location and calendar season, temperature in named steps through the day (first) · #108 snow as weather · #109 world tags · #110 a colder tavern on a cold day (later; heating as whole-building upgrades, to design) · #111 climate in trade · #112 day length, one curve
 
 ## Next: the economy (from the Nov 17 session)
 
@@ -175,10 +182,7 @@ In build order. Each waits on the one it builds on.
 - #44 permits and the inspector; #45 reputation and crowds.
 - #47 holds the smaller seeds (keeper eats, pipes, board games, skills found, bathrooms…).
 
-**#10 Snow, and how patron schedules work** (unblocks #18 schedules, then #28 more regulars)
-- Snow: which calendar seasons and locations? Does it pile up and melt, or is it just weather?
-- What snow does to guests: cold, soaked when it melts, fewer passers-by, snowed in overnight?
-- How it looks and sounds inside (the windows, the door).
+**#10 How patron schedules work** (unblocks #18 schedules, then #28 more regulars; snow was settled Nov 25, see #108)
 - Schedules: does a regular keep fixed days ("the ferryman every market day"), habits with exceptions, or both?
 - Calendar season absences ("the ferryman scarce when the river freezes").
 - How the keeper learns a regular's days, and how the calendar (#30) shows that.
@@ -214,6 +218,7 @@ In build order. Each waits on the one it builds on.
 
 ### Sounds
 
+- **#113** weather and climate: cold and hot days through the door, boots at the entrance, snow (the list is on the task)
 - **#19** a base loop per calendar season (spring birdsong, summer insects, autumn wind and leaves, winter hush), maybe varied by time of day
 - optional: an outdoor storm loop (a storm through the open door uses the medium rain, louder)
 
@@ -222,7 +227,7 @@ In build order. Each waits on the one it builds on.
 - **#24** roof leaks: no bucket yet
 - fog: not for now
 - storms cutting the power: needs electricity as a system first
-- radio, coats in the coat hall, suppliers by calendar season, day length through the year, festivals: journal "Later"
+- radio, coats in the coat hall, suppliers by calendar season, festivals: journal "Later"
 
 ## Picking up in a new session
 

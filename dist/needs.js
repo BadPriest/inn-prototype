@@ -6,7 +6,7 @@
 import { bowlNeeds } from "./snacks.js";
 import { organic } from "./core.js";
 import { orderable } from "./readymade.js";
-import { NEED_IDS, NEEDS, RECIPES, SOAKING } from "./data.js";
+import { NEED_IDS, NEEDS, RECIPES, SOAKING, WEATHER } from "./data.js";
 import { dist } from "./world.js";
 const clamp01 = (n) => Math.max(0, Math.min(1, n));
 /** How hungry, thirsty and cold someone walks in. Weather will shift these on arrival, later. */
@@ -101,6 +101,12 @@ export function updateNeeds(g, simDt) {
         if (p.soaked > 0) {
             n.warmth += SOAKING.chillPerHour * p.soaked * hours;
             p.soaked = clamp01(p.soaked - (SOAKING.dryPerHour + SOAKING.fireDryPerHour * atFire) * hours);
+        }
+        // Snow on them melts, faster by the fire, and the melt soaks them.
+        if (p.snowy > 0) {
+            const melt = Math.min(p.snowy, (WEATHER.snow.meltPerHour + SOAKING.fireDryPerHour * atFire) * hours);
+            p.snowy -= melt;
+            p.soaked = clamp01(p.soaked + melt * WEATHER.snow.meltWets);
         }
         // A salty snack bowl on the table.
         const seat = g.world.seats.find((s) => s.id === p.seatId);

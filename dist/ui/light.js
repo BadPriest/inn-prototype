@@ -4,11 +4,18 @@
 // out of it, so the bodies dim while speech and orders, drawn after, stay readable. Tuning: LIGHT.
 import { hasLampOil } from "../upkeep.js";
 import { LIGHT, TUNING } from "../data.js";
+import { yearFraction } from "../calendar.js";
 const clamp01 = (n) => Math.max(0, Math.min(1, n));
-/** Daylight outside, 0 (night) to 1 (full day): dawn and dusk shift with the calendar season. */
+/** Hours later dawn and earlier dusk today: most at midwinter, least (negative) at midsummer. */
+export function dayShift(g) {
+    const { midwinter, midsummer } = LIGHT.yearShift;
+    const fromMidwinter = yearFraction(g.date, g.loc.days) - 0.875;
+    return (midwinter + midsummer) / 2 + ((midwinter - midsummer) / 2) * Math.cos(2 * Math.PI * fromMidwinter);
+}
+/** Daylight outside, 0 (night) to 1 (full day): dawn and dusk move through the year. */
 export function daylight(g) {
     const h = ((TUNING.dayStartHour * 60 + g.minute) / 60) % 24; // clock hour, with the minutes
-    const shift = LIGHT.seasonShift[g.date.season] ?? 0;
+    const shift = dayShift(g);
     const [d0, d1] = [LIGHT.dawn[0] - shift, LIGHT.dawn[1] - shift];
     const [k0, k1] = [LIGHT.dusk[0] + shift, LIGHT.dusk[1] + shift];
     if (h <= d0 || h >= k1)
@@ -22,6 +29,8 @@ export function daylight(g) {
 /** How much of the daylight the weather lets through. */
 function weatherDim(g) {
     const w = g.weather;
+    if (w.sky === "rain" && w.snow)
+        return clamp01(LIGHT.snow.lets - LIGHT.snow.perIntensity * w.rain);
     if (w.sky === "rain")
         return clamp01(LIGHT.weather.rain - LIGHT.weather.rainPerIntensity * w.rain);
     return LIGHT.weather[w.sky];
@@ -58,11 +67,48 @@ export function initLight(g) {
     });
 }
 let shade = null;
-/** A window pane's tint: pale with daylight, grey in the rain, dark blue at night. */
+const LT = LIGHT.temperature;
+/** How cold the light looks, 0..1 (1 at freezing). */
+function coldness(g) { return clamp01((LT.coldBelow - g.weather.temp) / LT.coldBelow); }
+/** How hot the light looks, 0..1 (1 at hot). */
+function heat(g) { return clamp01((g.weather.temp - LT.hotAbove) / (5 - LT.hotAbove)); }
+/** Snow at a window: flakes drifting past while it falls (by how hard), and a white sill while it falls and after. */
+export function snowAtWindow(g) {
+    const w = g.weather;
+    const falling = w.band && w.snow ? w.rain : 0;
+    return { flakes: falling > 0 ? Math.ceil(LIGHT.snow.flakes * (0.4 + falling)) : 0, sill: falling > 0 || w.afterSnow > 0 };
+}
+/** A flake's place on a pane, 0..1 across and down: drifting down and sideways, over and over. */
+export function flakeAt(i, seed) {
+    const t = performance.now() / 1000;
+    const d = (t * (0.25 + (i % 3) * 0.07) + i * 0.37 + seed * 0.13) % 1;
+    return { a: (((i * 0.29 + seed * 0.17) % 1) + Math.sin(t * 1.3 + i * 2) * 0.06 + 1) % 1, d };
+}
+/** Frost on the window panes, 0..1. */
+export function frost(g) { return clamp01((LT.frostBelow - g.weather.temp) / LT.frostBelow); }
+function mix(a, b, t) {
+    const x = a.split(",").map(Number), y = b.split(",").map(Number);
+    return x.map((v, i) => Math.round(v + (y[i] - v) * t)).join(",");
+}
+/** The cast the temperature puts over daylight: its colour and how strong. */
+function cast(g) {
+    const c = coldness(g), h = heat(g);
+    if (c > 0)
+        return { rgb: LT.coldCast, a: LT.coldCastMax * c };
+    if (h > 0)
+        return { rgb: LT.hotCast, a: LT.hotCastMax * h };
+    return null;
+}
+/** A window pane's tint: pale with daylight, grey in the rain, dark blue at night; frosted white when freezing, golden when hot. */
 export function windowColor(g) {
     const day = daylight(g);
-    const a = 0.15 + 0.45 * day * weatherDim(g);
-    return day > 0.05 ? (g.weather.sky === "rain" ? `rgba(170,185,200,${a})` : `rgba(225,238,248,${a})`) : "rgba(20,30,60,0.35)";
+    const f = frost(g), h = heat(g);
+    const a = 0.15 + 0.45 * day * weatherDim(g) + 0.35 * f;
+    if (day <= 0.05)
+        return f > 0 ? `rgba(150,170,205,${0.35 + 0.3 * f})` : "rgba(20,30,60,0.35)";
+    const w = g.weather;
+    const base = w.sky === "rain" ? (w.snow ? "232,238,246" : "170,185,200") : h > 0 ? mix("225,238,248", "255,232,180", h) : "225,238,248";
+    return `rgba(${f > 0 ? mix(base, "240,248,255", f) : base},${Math.min(0.9, a)})`;
 }
 /**
  * The darkness layer, with light cut out of it, and a warm haze around flames.
@@ -85,6 +131,22 @@ export function drawLight(ctx, g, P, unit, squash = 1, windows = true) {
                 ctx.fillStyle = windowColor(g);
                 const c = P(tile.x, tile.y);
                 ctx.fillRect(c.x + 3, c.y + 3, ts - 6, ts - 6);
+                const f = frost(g);
+                if (f > 0) {
+                    ctx.strokeStyle = `rgba(255,255,255,${0.7 * f})`;
+                    ctx.lineWidth = Math.max(1, ts * 0.08);
+                    ctx.strokeRect(c.x + 5, c.y + 5, ts - 10, ts - 10);
+                }
+                const sn = snowAtWindow(g);
+                ctx.fillStyle = "rgba(250,252,255,0.9)";
+                if (sn.sill)
+                    ctx.fillRect(c.x + 3, c.y + ts - 3 - (ts - 6) * LIGHT.snow.sill, ts - 6, (ts - 6) * LIGHT.snow.sill);
+                for (let i = 0; i < sn.flakes; i++) {
+                    const k = flakeAt(i, tile.x * 7 + tile.y);
+                    ctx.beginPath();
+                    ctx.arc(c.x + 4 + k.a * (ts - 8), c.y + 4 + k.d * (ts - 8), Math.max(1, ts * 0.04), 0, Math.PI * 2);
+                    ctx.fill();
+                }
             }
     const glows = [];
     // Daylight spills in at the windows.
@@ -125,7 +187,9 @@ export function drawLight(ctx, g, P, unit, squash = 1, windows = true) {
         const s = shade.getContext("2d");
         s.globalCompositeOperation = "source-over";
         s.clearRect(0, 0, W, H);
-        s.fillStyle = `rgba(${LIGHT.nightTint},${dark})`;
+        const c = coldness(g), h = heat(g);
+        const tint = c > 0 ? mix(LIGHT.nightTint, LT.nightCold, c) : h > 0 ? mix(LIGHT.nightTint, LT.nightWarm, h) : LIGHT.nightTint;
+        s.fillStyle = `rgba(${tint},${dark})`;
         s.fillRect(0, 0, W, H);
         // Light cuts the darkness away.
         s.globalCompositeOperation = "destination-out";
@@ -144,8 +208,29 @@ export function drawLight(ctx, g, P, unit, squash = 1, windows = true) {
         }
         ctx.drawImage(shade, 0, 0);
     }
-    // A warm haze around flames, stronger the darker it is.
-    const haze = 0.35 + 0.65 * (1 - inside);
+    // The temperature's colour over the daylight, and stronger in the pools of light by the windows.
+    const tc = cast(g);
+    if (tc && inside > 0.02) {
+        ctx.fillStyle = `rgba(${tc.rgb},${tc.a * inside})`;
+        ctx.fillRect(0, 0, W, H);
+        for (const row of g.world.tiles)
+            for (const tile of row) {
+                if (tile.def.name !== "Window")
+                    continue;
+                const c = P(tile.x + 0.5, tile.y + 0.5), r = LIGHT.windowReach * ts;
+                ctx.save();
+                ctx.translate(c.x, c.y);
+                ctx.scale(1, squash);
+                const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+                grad.addColorStop(0, `rgba(${tc.rgb},${LT.windowPool * (tc.a / Math.max(LT.coldCastMax, LT.hotCastMax)) * inside})`);
+                grad.addColorStop(1, `rgba(${tc.rgb},0)`);
+                ctx.fillStyle = grad;
+                ctx.fillRect(-r, -r, r * 2, r * 2);
+                ctx.restore();
+            }
+    }
+    // A warm haze around flames, stronger the darker it is, and the colder.
+    const haze = (0.35 + 0.65 * (1 - inside)) * (1 + LT.fireHazeCold * coldness(g));
     for (const gl of glows) {
         if (!gl.warm)
             continue;

@@ -36,6 +36,16 @@ export function dateOf(day: number, startSeason: number, lengths?: number[]): Ga
   };
 }
 
+/**
+ * How far through the year a date is, 0..1, by calendar season: each season is a quarter of the year however
+ * many days it runs, so 0.875 is always midwinter.
+ */
+export function yearFraction(date: GameDate, lengths?: number[]): number {
+  const len = lengthsOf(lengths);
+  const i = CALENDAR.seasons.findIndex((s) => s.id === date.season);
+  return (i + (date.dayOfSeason - 0.5) / len[i]) / CALENDAR.seasons.length;
+}
+
 /** A random calendar season to start a new save in (until the starting location decides). */
 export function randomStartSeason(): number {
   return Math.floor(Math.random() * CALENDAR.seasons.length);

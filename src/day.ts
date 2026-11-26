@@ -13,7 +13,7 @@ import { ageFood, finishAllJobs } from "./crafting.js";
 import { closeAllStretches } from "./needs.js";
 import { CALENDAR } from "./data.js";
 import { longDate, seasonTurned } from "./calendar.js";
-import { morningLine, passNight, type WeatherState } from "./weather.js";
+import { morningLine, passNight, settleWeather, type WeatherState } from "./weather.js";
 import { deliverPaper, marketDay } from "./newspaper.js";
 import { SKILLS_DATA, SUPPLIERS_DATA } from "./gamedata.gen.js";
 import { STEPS } from "./walkthrough.js";
@@ -97,6 +97,7 @@ export function startNextDay(g: Game): void {
   stormLastNight = stormy || g.weather.band === "storm";
   g.day++;
   g.minute = 0;
+  g.footprints = [];
   g.turnInPrompted = false;
   g.stats = emptyStats(g.day);
   ageFood(g);
@@ -238,6 +239,7 @@ export function load(g: Game): void {
     // Saves played before locations existed stand in the town centre; a brand-new save still has to pick.
     g.location = s.location ?? ((s.day ?? 1) > 1 || (s.history?.length ?? 0) > 0 ? "town" : undefined);
     if (s.weather) g.weather = s.weather;
+    settleWeather(g.weather, g.date.season, g.loc, g.minute);
     g.history = s.history ?? [];
     g.stats = emptyStats(g.day);
     for (const r of s.regulars ?? []) g.regulars.set(r.id, r);

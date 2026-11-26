@@ -7,6 +7,7 @@ import { startingLots, type Lot, type Taken } from "./stock.js";
 import { World, defaultLayout, type Placed, type Vec } from "./world.js";
 import { dateOf, randomStartSeason, type GameDate } from "./calendar.js";
 import { newWeather, type CameIn, type WeatherState } from "./weather.js";
+import type { Footprint } from "./tracks.js";
 import type { Paper } from "./newspaper.js";
 import type { WalkthroughState } from "./walkthrough.js";
 import { SKILLS_DATA } from "./gamedata.gen.js";
@@ -124,6 +125,8 @@ export interface Patron {
   waitingOut?: number;
   /** How wet they are, 0..1: from the rain they came in from, drying off inside. */
   soaked: number;
+  /** Snow on them, 0..1: melts inside (faster by the fire), and the melt soaks them. */
+  snowy: number;
   /** The weather they walked in from: sky, rain band and intensity. */
   cameIn?: CameIn;
   /** Full, but having one more drink anyway (the soft edge of full); and when they last did. */
@@ -204,7 +207,7 @@ export interface DayStats {
   wear?: number;
   mishaps?: { text: string; pence: number }[];
   /** The day's weather, while the keeper was up: minutes of rain, a storm or not, minutes per sky. */
-  weather?: { rainMinutes: number; storm: boolean; sky: Record<string, number> };
+  weather?: { rainMinutes: number; snowMinutes?: number; storm: boolean; sky: Record<string, number> };
 }
 
 export function emptyStats(day: number): DayStats {
@@ -319,6 +322,7 @@ export class Game {
   pieSafe: WholePie[] = [];
   dirt = new Map<string, number>(); // table key "x,y" -> dirt units
   spills: Spill[] = [];
+  footprints: Footprint[] = []; // from the front door, fading (tracks.ts)
   crates: Crate[] = [];
   /** Tag flips showing over guests' heads: the old tag turning over to the new (performance.now() start). */
   tagFlips: { patronId: number; from: string; to: string; at: number }[] = [];

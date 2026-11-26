@@ -9,12 +9,13 @@ import { breadCaseKeys } from "../crafting.js";
 // bowls, orders, speech) is drawn over the blocks, so a guest standing in front never hides it.
 
 import { have } from "../stock.js";
-import { RECIPES, SNACKS, SOAKING, TUNING, PIE_SAFE_CAPACITY } from "../data.js";
+import { RECIPES, SNACKS, SOAKING, TUNING, WEATHER, LIGHT, PIE_SAFE_CAPACITY } from "../data.js";
 import type { Game } from "../game.js";
 import { spotOf, type Target } from "../interact.js";
 import { iconFor, TRAY_COLOUR, trayLook } from "../serving.js";
 import type { Furniture, Tile, Vec } from "../world.js";
-import { drawLight, windowColor } from "./light.js";
+import { drawLight, flakeAt, frost, snowAtWindow, windowColor } from "./light.js";
+import { footprintsToDraw } from "../tracks.js";
 import { drawLevelUp } from "./levelup.js";
 import { coatColor, eyeColor, underColor } from "./wardrobe.js";
 import { drawEquipmentCards, drawGuestCard, flushCards, guestColor, guestHead, insightLayer } from "./innsight.js";
@@ -193,8 +194,8 @@ function boxFor(g: Game, v: View, s: Solid, all: Map<string, Solid>): Box {
 // ---------------------------------------------------------------------------
 // People
 
-/** `headColor`: the head, if not the body's colour. `bob`: how far the head is moved (a step's bounce, a lean). */
-function personBody(ctx: CanvasRenderingContext2D, v: View, pos: Vec, color: string, alpha: number, wet: number, seed: number, headColor?: string, bob?: Vec): void {
+/** `headColor`: the head, if not the body's colour. `bob`: how far the head is moved (a step's bounce, a lean). `snow`: snow on them, 0..1. */
+function personBody(ctx: CanvasRenderingContext2D, v: View, pos: Vec, color: string, alpha: number, wet: number, seed: number, headColor?: string, bob?: Vec, snow = 0): void {
   const ts = v.ts;
   const t = performance.now() / 1000;
   const shiver = wet > 0.08 ? Math.sin(t * 38 + seed) * ts * 0.035 * Math.min(1, wet * 1.5) : 0;
@@ -223,6 +224,17 @@ function personBody(ctx: CanvasRenderingContext2D, v: View, pos: Vec, color: str
     ctx.globalAlpha = Math.min(0.9, wet + 0.2);
     const fall = (t * 1.4 + seed * 0.37) % 1;
     ctx.beginPath(); ctx.arc(head.x + r * 0.7, head.y + r * (0.8 + fall * 1.6), ts * 0.05, 0, Math.PI * 2); ctx.fill();
+  }
+  if (snow > 0.04) {
+    ctx.fillStyle = WEATHER.snow.tint;
+    ctx.globalAlpha = alpha * Math.min(0.95, 0.35 + snow);
+    ctx.beginPath(); ctx.arc(head.x, head.y, r, Math.PI * 1.05, Math.PI * 1.95); ctx.closePath(); ctx.fill();
+    const flecks = Math.ceil(snow * 6);
+    for (let i = 0; i < flecks; i++) {
+      const f = ((seed * 7 + i * 13) % 10) / 10, h = ((seed * 3 + i * 29) % 10) / 10;
+      const x = foot.x + (head.x - foot.x) * h + (f - 0.5) * bw * 1.4 * (1 - h * 0.4), y = foot.y + (head.y - foot.y) * h;
+      ctx.beginPath(); ctx.arc(x, y, ts * 0.028, 0, Math.PI * 2); ctx.fill();
+    }
   }
   ctx.globalAlpha = 1;
 }
@@ -273,6 +285,12 @@ export function drawIso(ctx: CanvasRenderingContext2D, g: Game, v: View, target:
     ctx.fillStyle = "rgba(190,150,70,0.55)";
     ctx.beginPath(); ctx.ellipse(c.x, c.y, ts * 0.4, ts * 0.18, 0, 0, Math.PI * 2); ctx.fill();
   }
+  for (const fp of footprintsToDraw(g)) {
+    const c = P(v, fp.x, fp.y), d = P(v, fp.x + Math.cos(fp.angle), fp.y + Math.sin(fp.angle));
+    ctx.fillStyle = fp.color;
+    if (fp.flake) { ctx.beginPath(); ctx.ellipse(c.x, c.y, ts * 0.05, ts * 0.025, 0, 0, Math.PI * 2); ctx.fill(); continue; }
+    ctx.beginPath(); ctx.ellipse(c.x, c.y, ts * 0.1, ts * 0.045, Math.atan2(d.y - c.y, d.x - c.x), 0, Math.PI * 2); ctx.fill();
+  }
   if (clickDest) {
     const c = P(v, clickDest.x, clickDest.y);
     ctx.fillStyle = "rgba(255,224,138,0.5)";
@@ -286,7 +304,7 @@ export function drawIso(ctx: CanvasRenderingContext2D, g: Game, v: View, target:
   const byTile = new Map(solid.map((s) => [`${s.t.x},${s.t.y}`, s]));
   type Item = { d: number; pri: number; draw: () => void };
   const items: Item[] = solid.map((s) => ({ d: turnedTile(v, s.t.x, s.t.y).d, pri: 0, draw: () => drawSolid(ctx, g, v, s, byTile) }));
-  const guestBody = (p: (typeof g.patrons)[number]) => personBody(ctx, v, p.pos, guestColor(p), p.state === "leaving" ? 0.6 : 1, p.soaked ?? 0, p.id, guestHead(p), stepBob(v, p.pos, gaitOf(p.id), gaitOf(p.id).dir));
+  const guestBody = (p: (typeof g.patrons)[number]) => personBody(ctx, v, p.pos, guestColor(p), p.state === "leaving" ? 0.6 : 1, p.soaked ?? 0, p.id, guestHead(p), stepBob(v, p.pos, gaitOf(p.id), gaitOf(p.id).dir), p.snowy ?? 0);
   for (const p of g.patrons) {
     items.push({ d: depth(v, p.pos), pri: 1, draw: () => guestBody(p) });
   }
@@ -388,6 +406,18 @@ function drawSolid(ctx: CanvasRenderingContext2D, g: Game, v: View, s: Solid, by
     else if (s.z === TALL) poly(ctx, [Pt(v, u + 1, w + m, z1), Pt(v, u + 1, w + 1 - m, z1), Pt(v, u + 1, w + 1 - m, z0), Pt(v, u + 1, w + m, z0)]);
     else floorPath(ctx, v, t.x, t.y, 1, 1, 0.18, s.z);
     ctx.fill();
+    const f = frost(g);
+    if (f > 0) { ctx.strokeStyle = `rgba(255,255,255,${0.7 * f})`; ctx.lineWidth = Math.max(1, v.ts * 0.06); ctx.stroke(); }
+    // Snow past the glass, and on the sill.
+    const sn = snowAtWindow(g);
+    if (sn.sill || sn.flakes) {
+      const at = s.z !== TALL ? (a: number, d: number) => P(v, t.x + 0.18 + a * 0.64, t.y + 0.18 + d * 0.64, s.z)
+        : Math.round(w) === 0 ? (a: number, d: number) => Pt(v, u + m + a * (1 - 2 * m), w + 1, z1 - d * (z1 - z0))
+        : (a: number, d: number) => Pt(v, u + 1, w + m + a * (1 - 2 * m), z1 - d * (z1 - z0));
+      ctx.fillStyle = "rgba(250,252,255,0.9)";
+      if (sn.sill) { poly(ctx, [at(0, 1 - LIGHT.snow.sill), at(1, 1 - LIGHT.snow.sill), at(1, 1), at(0, 1)]); ctx.fill(); }
+      for (let i = 0; i < sn.flakes; i++) { const k = flakeAt(i, t.x * 7 + t.y), p = at(k.a, k.d); ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(1, v.ts * 0.035), 0, Math.PI * 2); ctx.fill(); }
+    }
   }
 }
 
