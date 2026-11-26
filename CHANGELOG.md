@@ -6,6 +6,15 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 130 · Nov 26, 2026 · deployed
+
+### Added
+- **The side panel folds away.** A small tab on the right edge of the map folds the whole side panel (the sign and prompt, Today, orders, trays, the hatch, the pie safe and the log) out of the way, and the map widens to fill the screen. The tab brings it back, and the game remembers which you chose.
+
+### Changed
+- **The thermometer stands upright.** It's a column at the right of the status card now, with the bulb at the bottom and the tube filling upwards, blue when freezing to red when hot. The temperature's name is back beside the weather ("☀️ Clear · Warm").
+- **The cards on the map go behind the glass too.** While a menu stops the clock, the status card, the Today card, the order tickets and the Offer unasked card blur and turn blue with the room behind the glass, and come back when the menu closes.
+
 ## Build 129 · Nov 26, 2026 · deployed
 
 ### Added

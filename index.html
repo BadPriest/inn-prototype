@@ -24,6 +24,8 @@
   #touchbar #tb-panel { display:none; }
   #card { position:absolute; right:12px; bottom:12px; width:74px; height:104px; border-radius:8px; border:2px solid #c9a24a; background:linear-gradient(#3a2c22,#2a1f18); color:var(--ink); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; cursor:pointer; z-index:2; box-shadow:0 4px 14px rgba(0,0,0,.5); font:12px/1.15 Georgia, serif; }
   #card:hover { transform:translateY(-3px); }
+  /* Behind the glass of a menu that stops the clock, like the room (veil.ts). */
+  body:has(#menu.stops[data-look="glass"]) :is(#card, #lefthud, #tickets) { filter:blur(4px) saturate(.7) brightness(.85) sepia(.15) hue-rotate(180deg); pointer-events:none; transition:filter .35s; }
   #card .card-ic { font-size:26px; }
   /* The controller: the card picked with the D-pad, and a nudge when you move along the hand. */
   #card.picked { outline:3px solid #ffd34d; outline-offset:3px; }
@@ -65,6 +67,12 @@
   /* A busy night: the orders scroll in their own box (the tickets show them too), so the log keeps its room. */
   #orders { max-height:20vh; overflow-y:auto; overscroll-behavior:contain; padding-right:4px; }
   #side > section:not(#logsec) { flex:none; }
+  /* The side panel folds away to the right (the tab on the map's edge); the map takes its room. */
+  #sidetab { position:absolute; right:0; top:50%; transform:translateY(-50%); z-index:3; width:22px; height:72px; padding:0; border:1px solid var(--line); border-right:none; border-radius:8px 0 0 8px; background:var(--panel); color:#c9a24a; font:16px system-ui; cursor:pointer; zoom:var(--ui,1); }
+  #sidetab:hover { color:var(--ink); border-color:#c9a24a; }
+  #sidetab::after { content:"▸"; }
+  body.side-folded #sidetab::after { content:"◂"; }
+  body.side-folded #side { display:none; }
   #help { font-size:11.5px; color:var(--muted); }
   #help b { color:var(--ink); font-weight:600; }
   /* The keys screen (H). */
@@ -415,11 +423,10 @@
   #status .st-time b { font:600 17px system-ui; letter-spacing:.02em; }
   #status .st-wx { font-size:13px; color:#d9cbb4; margin-left:4px; }
   /* The thermometer: freezing blue at the left to hot red at the right; --t is where it reads (0..1). */
-  #status .st-temp { --t:.5; --scale:linear-gradient(90deg, #4f8dff 0%, #7cc8f0 25%, #a9dc9a 45%, #f2d36b 62%, #f09a48 80%, #e2483c 100%); display:inline-flex; align-items:center; margin-left:6px; vertical-align:1px; font-size:13px; color:#d9cbb4; }
-  #status .th-bulb { width:10px; height:10px; border-radius:50%; background:var(--scale); background-size:2000% 100%; background-position:calc(var(--t) * 100%) 0; border:1px solid rgba(0,0,0,.55); box-shadow:0 0 6px rgba(255,255,255,.15); position:relative; z-index:1; }
-  #status .th-tube { position:relative; width:38px; height:6px; margin-left:-2px; border-radius:0 3px 3px 0; background:rgba(255,255,255,.1); border:1px solid rgba(0,0,0,.55); border-left:none; overflow:hidden; }
-  #status .th-fill { position:absolute; inset:0; background:var(--scale); clip-path:inset(0 calc((1 - var(--t)) * 100%) 0 0); transition:clip-path 1.5s; }
-  #status .th-name { margin-left:5px; }
+  #status .st-temp { --t:.5; --scale:linear-gradient(0deg, #4f8dff 0%, #7cc8f0 25%, #a9dc9a 45%, #f2d36b 62%, #f09a48 80%, #e2483c 100%); display:flex; flex-direction:column; align-items:center; align-self:stretch; justify-content:center; margin-left:2px; }
+  #status .th-tube { position:relative; width:6px; height:44px; margin-bottom:-2px; border-radius:3px 3px 0 0; background:rgba(255,255,255,.1); border:1px solid rgba(0,0,0,.55); border-bottom:none; overflow:hidden; }
+  #status .th-fill { position:absolute; inset:0; background:var(--scale); clip-path:inset(calc((1 - var(--t)) * 100%) 0 0 0); transition:clip-path 1.5s; }
+  #status .th-bulb { width:12px; height:12px; border-radius:50%; background:var(--scale); background-size:100% 2000%; background-position:0 calc((1 - var(--t)) * 100%); border:1px solid rgba(0,0,0,.55); box-shadow:0 0 6px rgba(255,255,255,.15); position:relative; z-index:1; }
   #status .st-money { display:flex; align-items:center; gap:8px; margin-top:3px; }
   #status .st-purse { font:600 14px system-ui; color:#f3e6cc; }
   #status .st-gain { font:700 13px system-ui; color:#ffe08a; opacity:0; transform:translateY(4px); transition:opacity .4s, transform .4s; text-shadow:0 0 8px rgba(255,211,77,.55); }
@@ -563,11 +570,12 @@
 <body>
 <div id="app">
   <div id="stage">
+    <button id="sidetab" title="Fold the side panel away, or open it"></button>
     <canvas id="view"></canvas>
     <div id="lefthud">
       <div id="status">
         <div class="st-face" title="The keeper. Their mood will show here.">🙂</div>
-        <div class="st-main"><div class="st-day"></div><div class="st-date"></div><div class="st-time"><b></b> <span class="st-wx"></span> <span class="st-temp"><span class="th-bulb"></span><span class="th-tube"><span class="th-fill"></span></span><span class="th-name"></span></span></div><div class="st-money"><span class="st-purse" title="Your purse: crowns, shillings and pence (10d = 1s, 10s = 1 crown)"></span><span class="st-gain"></span></div></div>
+        <div class="st-main"><div class="st-day"></div><div class="st-date"></div><div class="st-time"><b></b> <span class="st-wx"></span></div><div class="st-money"><span class="st-purse" title="Your purse: crowns, shillings and pence (10d = 1s, 10s = 1 crown)"></span><span class="st-gain"></span></div></div><div class="st-temp"><span class="th-tube"><span class="th-fill"></span></span><span class="th-bulb"></span></div>
       </div>
       <div id="quest" class="banner hidden"></div>
       <div id="warn" class="banner warn hidden"></div>

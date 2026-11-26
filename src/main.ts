@@ -689,8 +689,8 @@ function watchTrays(): void {
 const SETTINGS_KEY = "travelling-inn-settings";
 type UiChoice = "auto" | number;
 /** Volumes 0..1. `music` was an on/off switch before sliders; false still means silent. */
-/** `zoomFlat`/`zoomIso`: each view's zoom (1 = fit the inn). `rot`: the isometric camera's corner, in quarter turns. `stoppedLook`: how the inn looks behind a menu that stops the clock. */
-interface Settings { ui?: UiChoice; cues?: number; atmosphere?: number; music?: boolean | number; iso?: boolean; zoomFlat?: number; zoomIso?: number; rot?: number; stoppedLook?: StoppedLook }
+/** `zoomFlat`/`zoomIso`: each view's zoom (1 = fit the inn). `rot`: the isometric camera's corner, in quarter turns. `stoppedLook`: how the inn looks behind a menu that stops the clock. `sideFolded`: the side panel is folded away. */
+interface Settings { ui?: UiChoice; cues?: number; atmosphere?: number; music?: boolean | number; iso?: boolean; zoomFlat?: number; zoomIso?: number; rot?: number; stoppedLook?: StoppedLook; sideFolded?: boolean }
 let settings: Settings = {};
 try { settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) ?? "{}") as Settings; } catch { /* defaults */ }
 settings.iso ??= true;
@@ -703,6 +703,16 @@ const applyStoppedLook = () => {
   if (settings.stoppedLook === "glass") prepareVeil(canvas);
 };
 applyStoppedLook();
+
+document.body.classList.toggle("side-folded", !!settings.sideFolded);
+requestAnimationFrame(resize);
+document.getElementById("sidetab")!.addEventListener("click", (e) => {
+  settings.sideFolded = !settings.sideFolded;
+  document.body.classList.toggle("side-folded", settings.sideFolded);
+  (e.currentTarget as HTMLElement).blur();
+  saveSettings();
+  resize();
+});
 
 function saveSettings(): void {
   settings.ui = uiChoice;

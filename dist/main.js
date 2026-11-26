@@ -842,6 +842,15 @@ const applyStoppedLook = () => {
         prepareVeil(canvas);
 };
 applyStoppedLook();
+document.body.classList.toggle("side-folded", !!settings.sideFolded);
+requestAnimationFrame(resize);
+document.getElementById("sidetab").addEventListener("click", (e) => {
+    settings.sideFolded = !settings.sideFolded;
+    document.body.classList.toggle("side-folded", settings.sideFolded);
+    e.currentTarget.blur();
+    saveSettings();
+    resize();
+});
 function saveSettings() {
     settings.ui = uiChoice;
     try {
