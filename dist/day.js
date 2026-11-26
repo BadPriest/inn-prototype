@@ -2,8 +2,8 @@
 import { restockTinker } from "./used.js";
 import { payLicence } from "./upkeep.js";
 import { chargeWear } from "./wear.js";
-import { carterArrives } from "./shop.js";
-import { deliveriesArrive, placeStanding, supplierDays } from "./supplies.js";
+import { placeStanding, supplierDays } from "./supplies.js";
+import { carterSetsOut, roadsThisMorning } from "./roads.js";
 import { MEALS, TUNING, currentEquipmentId, pieceById, EQUIPMENT, currentDishId, RECIPES, DEFAULT_MENU } from "./data.js";
 import { emptyStats } from "./game.js";
 import { defaultLayout, setOnStove } from "./world.js";
@@ -117,9 +117,9 @@ export function startNextDay(g) {
         g.seasonNews = s.arrives;
         g.bus.emit({ type: "CalendarSeasonChanged", season: s.id });
     }
+    roadsThisMorning(g);
     beginDay(g);
-    carterArrives(g); // yesterday's orders
-    deliveriesArrive(g);
+    carterSetsOut(g); // yesterday's orders: by 8, unless the roads keep him
     placeStanding(g);
     payLicence(g);
     restockTinker(g);
@@ -154,7 +154,7 @@ export function save(g) {
         localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, calendarStart: g.calendarStart, location: g.location, inn: g.inn, weather: g.weather, history, regulars, visitorNotes: g.visitorNotes,
             menu: [...g.menu], menuChosen: g.menuChosen,
             layout: g.layout, mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives, walkthroughStep: g.walkthrough?.step, known: [...g.known], pointsSpent: g.pointsSpent, xp: g.xp, knacks: g.knacks, seasoning: g.seasoning, tinkerCalls: g.tinkerCalls, tinkerStock: g.tinkerStock, usedWaiting: g.usedWaiting, tinkerStockedDay: g.tinkerStockedDay, newSkills: g.newSkills, crates: g.crates, coat: g.coat, under: g.under, newGear: g.newGear,
-            purse: g.purse, priceLevel: g.priceLevel, onOrder: g.onOrder, toPlace: g.toPlace, lots: g.lots, slips: g.slips, lastSlips: g.lastSlips, deliveries: g.deliveries, standing: g.standing, standingSkips: g.standingSkips, deliveryLog: g.deliveryLog }));
+            purse: g.purse, priceLevel: g.priceLevel, onOrder: g.onOrder, toPlace: g.toPlace, lots: g.lots, slips: g.slips, lastSlips: g.lastSlips, deliveries: g.deliveries, standing: g.standing, standingSkips: g.standingSkips, deliveryLog: g.deliveryLog, roads: g.roads, carter: g.carter }));
     }
     catch { /* storage unavailable: carry on */ }
 }
@@ -261,6 +261,8 @@ export function load(g) {
         g.standingSkips = Array.isArray(st) ? s.standingSkips ?? [] : [];
         g.deliveryLog = s.deliveryLog ?? [];
         g.deliveries = s.deliveries ?? [];
+        g.roads = s.roads ? { shut: s.roads.shut, snow: s.roads.snow } : null;
+        g.carter = s.carter ?? null;
         g.onOrder = (s.onOrder ?? []).map(currentEquipmentId).filter((id) => pieceById(id));
         g.toPlace = [...g.toPlace, ...(s.toPlace ?? []).map(currentEquipmentId).filter((id) => pieceById(id))];
         g.day = s.day ?? 1;

@@ -46,10 +46,10 @@
     { "id": "mountainside", "name": "Mountainside", "icon": "🏔️",
       "seasonDays": [21, 21, 28, 42],
       "climate": {
-        "spring": { "rain": 1.2, "storm": 1, "temperature": ["freezing", "cool"] },
+        "spring": { "rain": 1.2, "storm": 1, "temperature": ["freezing", "cool"], "carterLate": 0.12 },
         "summer": { "rain": 1.1, "storm": 1.6, "temperature": ["cold", "mild"] },
-        "autumn": { "rain": 1.2, "storm": 1.2, "temperature": ["cold", "cool"] },
-        "winter": { "rain": 1.1, "storm": 0.6, "temperature": ["freezing", "cold"] }
+        "autumn": { "rain": 1.2, "storm": 1.2, "temperature": ["cold", "cool"], "carterLate": 0.12 },
+        "winter": { "rain": 1.1, "storm": 0.6, "temperature": ["freezing", "cold"], "carterLate": 0.25 }
       },
       "traffic": 0.6, "shelter": 0.6, "visitorWeights": { "traveller": 2, "farmer": 1.5, "dock": 0.3, "scholar": 0.6 },
       "streetSound": "streetCountry",

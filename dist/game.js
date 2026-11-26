@@ -60,6 +60,8 @@ export class Game {
     coinPops = [];
     /** Bought, coming with the carter tomorrow morning (equipment and goods ids). */
     onOrder = [];
+    roads = null; // bad roads today: the carter late, or not coming till tomorrow
+    carter = null; // the carter on his way today
     /** The pantry: units of each ingredient. */
     lots = startingLots(1); // the pantry, as batches by the day they came in
     /** Pencilled slips on the desk, one per supplier (item id -> packs); the last one sent to each; what's coming. */

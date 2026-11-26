@@ -26,11 +26,16 @@ function firePos(g: Game) {
   return g.world.furniture.find((f) => f.kind === "fireplace")?.center;
 }
 
+/** How far the fire's heat carries (tiles): less the colder it is out. */
+export function fireReach(g: Game): number {
+  return NEEDS.fire.radius * NEEDS.fireReachByTemperature[g.weather.tempStep];
+}
+
 /** 1 at the hearth, fading to 0 at the edge of the fire's reach. 0 when the fire is out. */
 function fireWarmth(g: Game, p: Patron): number {
   const at = firePos(g);
   if (!g.fireLit || !at) return 0;
-  return clamp01(1 - dist(p.pos, at) / NEEDS.fire.radius);
+  return clamp01(1 - dist(p.pos, at) / fireReach(g));
 }
 
 /** What's going on for this patron that bears on this need, right now. */
@@ -41,7 +46,7 @@ function circumstances(g: Game, p: Patron, need: NeedId): string[] {
   if (need === "warmth") {
     const at = firePos(g);
     if (!g.fireLit) out.push("fire out");
-    else if (at && dist(p.pos, at) > NEEDS.fire.radius) out.push("far from the fire");
+    else if (at && dist(p.pos, at) > fireReach(g)) out.push("far from the fire");
     if (p.soaked > 0.2) out.push("soaked");
     return out;
   }

@@ -8,6 +8,7 @@ import { pick } from "./core.js";
 import { NEWS, TUNING, WEATHER, timeOfDayAt, type TimeOfDay } from "./data.js";
 import type { Game } from "./game.js";
 import { foresee } from "./weather.js";
+import { roadsNews } from "./roads.js";
 
 export interface Paper { day: number; forecast: string; news: string[]; read: boolean }
 
@@ -68,6 +69,8 @@ export function deliverPaper(g: Game, stormLastNight: boolean): void {
   const news: string[] = [];
   if (marketDay(g)) news.push(NEWS.market);
   else if (g.loc.marketDay) news.push(NEWS.marketSoon.replace("{day}", g.loc.marketDay));
+  const roads = roadsNews(g);
+  if (roads) news.push(roads);
   if (stormLastNight) news.push(pick(NEWS.afterStorm));
   news.push(pick(NEWS.seasons[g.date.season]));
   const gossip = [...NEWS.gossip].sort(() => Math.random() - 0.5);

@@ -1,8 +1,8 @@
 (async () => {
   const g = window.game;
   const M = (n) => import(`inn:${n}.js`);
-  const [data, stock, sup, serving, crafting, patrons, day, upkeep, needs, weather, light] = await Promise.all(
-    ["data", "stock", "supplies", "serving", "crafting", "patrons", "day", "upkeep", "needs", "weather", "ui/light"].map(M));
+  const [data, stock, sup, serving, crafting, patrons, day, upkeep, needs, weather, light, roads] = await Promise.all(
+    ["data", "stock", "supplies", "serving", "crafting", "patrons", "day", "upkeep", "needs", "weather", "ui/light", "roads"].map(M));
   const { RECIPES, INGREDIENTS, TUNING } = data;
   const R = (id) => RECIPES.find((r) => r.id === id);
   const worth = (id) => INGREDIENTS.find((i) => i.id === id)?.worth ?? 0;
@@ -196,6 +196,8 @@
       weather.updateWeather(g, dt);
       light.updateLamps(g);
       upkeep.updateUpkeep(g, dt);
+      roads.updateCarter(g);
+      for (const c of [...g.crates]) if (g.crates.includes(c)) sup.unpackCrate(g, c);
       if (g.minute >= 1170 && !ordered) { ordered = true; restock(morning); }
       day.updateClock(g, dt, () => { turned = true; });
       if (++n % 2000 === 0) await new Promise((r) => setTimeout(r, 0));
@@ -207,7 +209,7 @@
       day: T.day, wd: T.weekday.slice(0, 3), purse0: Math.round(T.purse0), purse1: Math.round(g.purse),
       arrivals: st.arrivals, served: st.served, leftEarly: st.leftEarly, taken: Math.round(st.taken), tips: st.tips,
       supplies: Math.round(T.supplies ?? 0), upkeep: Math.round(st.upkeep ?? 0), wear: st.wear ?? 0, messy: st.messy ?? 0, pantry0: Math.round(pantry0), pantry1: Math.round(pantry1),
-      outcomes: st.outcomes, outs: T.outs, scrapped: T.scrapped, rain: Math.round(st.weather?.rainMinutes ?? 0),
+      outcomes: st.outcomes, outs: T.outs, scrapped: T.scrapped, rain: Math.round(st.weather?.rainMinutes ?? 0), snow: Math.round(st.weather?.snowMinutes ?? 0), roads: g.roads ? (g.roads.shut ? "shut" : "late") : "",
       util: Math.round(100 * busyTotal / Math.max(1, openMin)),
       byHour: T.byHour.map((x) => ({ arrivals: x.arrivals, turnedAway: x.turnedAway, inRoom: x.samples ? +(x.inRoom / x.samples).toFixed(1) : 0, served: x.served, delights: x.delights })),
     };

@@ -1,6 +1,6 @@
 // The autopilot keeper: runs the real game for some days in headless Chrome and reports the money,
 // the guests by hour, and how often serves delight.
-//   node tools/sim/run.mjs [--days 7] [--level cheap|fair|dear] [--keeper random|learner] [--walk 1] [--json out.json]
+//   node tools/sim/run.mjs [--days 7] [--level cheap|fair|dear] [--keeper random|learner] [--walk 1] [--location mountainside] [--season winter] [--json out.json]
 // Needs a fresh standalone.html (node tools/build.mjs --no-bump) and Chrome (CHROME=path to override).
 import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
@@ -43,8 +43,16 @@ await evaluate(`(async () => {
   navigator.getGamepads = () => [];
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const click = (t) => [...document.querySelectorAll("button")].find((b) => b.textContent.toLowerCase().includes(t))?.click();
-  click("start game"); await wait(600); click("settle here"); await wait(400); click("move in"); await wait(900);
+  click("start game"); await wait(600);
+  const place = ${JSON.stringify(String(args.location ?? "").toLowerCase())};
+  if (place) { [...document.querySelectorAll("[data-pick]")].find((b) => b.textContent.toLowerCase().includes(place))?.click(); await wait(300); }
+  click("settle here"); await wait(400); click("move in"); await wait(900);
 })()`);
+if (args.season) console.log(await evaluate(`(() => {
+  const g = window.game;
+  g.calendarStart = ["spring", "summer", "autumn", "winter"].indexOf(${JSON.stringify(args.season)});
+  return "at " + g.loc.name + ", " + g.date.season;
+})()`));
 await evaluate(`window.SIM_OPTS = ${JSON.stringify(opts)}; 1`);
 console.log(await evaluate(readFileSync(join(here, "keeper.js"), "utf8")));
 
@@ -62,10 +70,10 @@ try { rmSync(profile, { recursive: true, force: true }); } catch { /* Chrome may
 
 const pad = (v, n) => String(v).padStart(n);
 const sh = (pence) => `${(pence / 10).toFixed(1)}s`;
-console.log("\nday  guests served walked  taken  tips  supplies upkeep  wear(messy)  purse      delight");
+console.log("\nday  guests served walked  taken  tips  supplies upkeep  wear(messy)  purse      delight  snow  roads");
 for (const r of results) {
   const o = r.outcomes;
-  console.log(`${r.wd} ${pad(r.day, 2)} ${pad(r.arrivals, 5)} ${pad(r.served, 6)} ${pad(r.leftEarly, 6)} ${pad(sh(r.taken), 7)} ${pad(sh(r.tips), 6)} ${pad(sh(r.supplies), 8)} ${pad(sh(r.upkeep), 6)} ${pad(sh(r.wear), 6)}(${pad(r.messy, 2)})  ${pad(sh(r.purse0), 6)}→${pad(sh(r.purse1), 7)} ${pad(Math.round((100 * o.DELIGHT) / Math.max(1, r.served)), 4)}%`);
+  console.log(`${r.wd} ${pad(r.day, 2)} ${pad(r.arrivals, 5)} ${pad(r.served, 6)} ${pad(r.leftEarly, 6)} ${pad(sh(r.taken), 7)} ${pad(sh(r.tips), 6)} ${pad(sh(r.supplies), 8)} ${pad(sh(r.upkeep), 6)} ${pad(sh(r.wear), 6)}(${pad(r.messy, 2)})  ${pad(sh(r.purse0), 6)}→${pad(sh(r.purse1), 7)} ${pad(Math.round((100 * o.DELIGHT) / Math.max(1, r.served)), 4)}%  ${pad(r.snow ? Math.round(r.snow / 60) + "h" : "", 4)}  ${r.roads ?? ""}`);
 }
 if (results.length) {
   const k = results.length;

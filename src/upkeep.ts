@@ -37,8 +37,7 @@ export function updateUpkeep(g: Game, simMinutes: number): void {
   const h = simMinutes / 60;
   const wood = U.firewood.item;
   if (g.fireLit) {
-    const cold = g.date.season === "winter" || g.weather.rain > 0 ? U.firewood.coldOrWetFactor : 1;
-    if (!use(g, wood, U.firewood.fireLogsPerHour * cold * h)) {
+    if (!use(g, wood, U.firewood.fireLogsPerHour * h)) {
       g.fireLit = false;
       out(g, "fire", "🪵 The fire's burned down: there's no firewood left. Order some at the desk (Supplies).");
     }
@@ -83,10 +82,9 @@ export interface UpkeepWarning { item: string; name: string; out: boolean; left:
 
 /** Upkeep goods running low (under about a day's worth) or out: how long what's left lasts, and what's on its way. */
 export function upkeepWarnings(g: Game, comingOf: (item: string) => string | undefined): UpkeepWarning[] {
-  const cold = g.date.season === "winter" || g.weather.rain > 0 ? U.firewood.coldOrWetFactor : 1;
   const about = (n: number, one: string, many: string) => (n < 1 ? `less than ${one}` : `about ${Math.round(n)} ${Math.round(n) === 1 ? one.replace(/^an? /, "") : many}`);
   const goods = [
-    { item: U.firewood.item, name: "🪵 Firewood", lowBelow: 15, left: (n: number) => about(n / (U.firewood.fireLogsPerHour * cold), "an hour of fire", "hours of fire"), out: "the fire won't light; wood stoves won't cook", empty: !hasFirewood(g) },
+    { item: U.firewood.item, name: "🪵 Firewood", lowBelow: 15, left: (n: number) => about(n / U.firewood.fireLogsPerHour, "an hour of fire", "hours of fire"), out: "the fire won't light; wood stoves won't cook", empty: !hasFirewood(g) },
     { item: U.lampOil.item, name: "🛢️ Lamp oil", lowBelow: 1.5, left: (n: number) => about(n / U.lampOil.pintsPerHour, "an hour of light", "hours of light"), out: "the lamps won't light: fewer come in, none stay long", empty: !hasLampOil(g) },
     { item: U.sundries.item, name: "🧻 Sundries", lowBelow: 0.5, left: (n: number) => about(n / U.sundries.perGuest, "a guest", "guests"), out: "guests notice: tips are halved", empty: have(g, U.sundries.item) < U.sundries.perGuest },
   ];

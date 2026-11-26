@@ -3,8 +3,8 @@
 import { restockTinker } from "./used.js";
 import { payLicence } from "./upkeep.js";
 import { chargeWear } from "./wear.js";
-import { carterArrives } from "./shop.js";
-import { deliveriesArrive, placeStanding, supplierDays } from "./supplies.js";
+import { placeStanding, supplierDays } from "./supplies.js";
+import { carterSetsOut, roadsThisMorning } from "./roads.js";
 import { MEALS, TUNING, currentEquipmentId, pieceById, EQUIPMENT, currentDishId, RECIPES, DEFAULT_MENU } from "./data.js";
 import { emptyStats, type DayStats, type Game, type RegularState } from "./game.js";
 import { defaultLayout, setOnStove } from "./world.js";
@@ -112,9 +112,9 @@ export function startNextDay(g: Game): void {
     g.seasonNews = s.arrives;
     g.bus.emit({ type: "CalendarSeasonChanged", season: s.id });
   }
+  roadsThisMorning(g);
   beginDay(g);
-  carterArrives(g); // yesterday's orders
-  deliveriesArrive(g);
+  carterSetsOut(g); // yesterday's orders: by 8, unless the roads keep him
   placeStanding(g);
   payLicence(g);
   restockTinker(g);
@@ -148,7 +148,7 @@ export function save(g: Game): void {
     localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, calendarStart: g.calendarStart, location: g.location, inn: g.inn, weather: g.weather, history, regulars, visitorNotes: g.visitorNotes,
       menu: [...g.menu], menuChosen: g.menuChosen,
       layout: g.layout, mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives, walkthroughStep: g.walkthrough?.step, known: [...g.known], pointsSpent: g.pointsSpent, xp: g.xp, knacks: g.knacks, seasoning: g.seasoning, tinkerCalls: g.tinkerCalls, tinkerStock: g.tinkerStock, usedWaiting: g.usedWaiting, tinkerStockedDay: g.tinkerStockedDay, newSkills: g.newSkills, crates: g.crates, coat: g.coat, under: g.under, newGear: g.newGear,
-      purse: g.purse, priceLevel: g.priceLevel, onOrder: g.onOrder, toPlace: g.toPlace, lots: g.lots, slips: g.slips, lastSlips: g.lastSlips, deliveries: g.deliveries, standing: g.standing, standingSkips: g.standingSkips, deliveryLog: g.deliveryLog }));
+      purse: g.purse, priceLevel: g.priceLevel, onOrder: g.onOrder, toPlace: g.toPlace, lots: g.lots, slips: g.slips, lastSlips: g.lastSlips, deliveries: g.deliveries, standing: g.standing, standingSkips: g.standingSkips, deliveryLog: g.deliveryLog, roads: g.roads, carter: g.carter }));
   } catch { /* storage unavailable: carry on */ }
 }
 
@@ -158,7 +158,7 @@ export function load(g: Game): void {
     if (!raw) { save(g); return; } // a new save: keep the calendar season it starts in, even before day 1 ends
     const s = JSON.parse(raw) as { day: number; calendarStart?: number; location?: Game["location"]; inn?: Game["inn"]; weather?: WeatherState; history: DayStats[]; regulars?: RegularState[]; visitorNotes?: Game["visitorNotes"];
       menu?: string[]; menuChosen?: boolean; layout?: Game["layout"]; mealMode?: boolean; meals?: unknown; betweenMenu?: string[]; upgrades?: string[]; totalServed?: number; showObjectives?: boolean; walkthroughStep?: number; known?: string[]; pointsSpent?: number; xp?: number; knacks?: Game["knacks"]; newSkills?: boolean; crates?: Game["crates"]; coat?: string; under?: string; newGear?: string[]; seasoning?: Game["seasoning"]; tinkerCalls?: Game["tinkerCalls"]; tinkerStock?: Game["tinkerStock"]; usedWaiting?: Game["usedWaiting"]; tinkerStockedDay?: number;
-      purse?: number; priceLevel?: Game["priceLevel"]; onOrder?: string[]; toPlace?: string[]; stock?: Record<string, number>; lots?: Game["lots"]; slips?: Game["slips"]; lastSlips?: Game["lastSlips"]; deliveries?: Game["deliveries"]; standing?: Game["standing"]; standingSkips?: string[]; standingPaused?: string[]; deliveryLog?: Game["deliveryLog"] };
+      purse?: number; priceLevel?: Game["priceLevel"]; onOrder?: string[]; toPlace?: string[]; stock?: Record<string, number>; lots?: Game["lots"]; slips?: Game["slips"]; lastSlips?: Game["lastSlips"]; deliveries?: Game["deliveries"]; standing?: Game["standing"]; standingSkips?: string[]; standingPaused?: string[]; deliveryLog?: Game["deliveryLog"]; roads?: Game["roads"]; carter?: Game["carter"] };
     const dishes = (ids: string[]) => new Set(ids.map(currentDishId).filter((id) => RECIPES.some((r) => r.id === id)));
     if (s.menu) g.menu = dishes(s.menu);
     g.menuChosen = !!s.menuChosen;
@@ -232,6 +232,8 @@ export function load(g: Game): void {
     g.standingSkips = Array.isArray(st) ? s.standingSkips ?? [] : [];
     g.deliveryLog = s.deliveryLog ?? [];
     g.deliveries = s.deliveries ?? [];
+    g.roads = s.roads ? { shut: s.roads.shut, snow: s.roads.snow } : null;
+    g.carter = s.carter ?? null;
     g.onOrder = (s.onOrder ?? []).map(currentEquipmentId).filter((id) => pieceById(id));
     g.toPlace = [...g.toPlace, ...(s.toPlace ?? []).map(currentEquipmentId).filter((id) => pieceById(id))];
     g.day = s.day ?? 1;

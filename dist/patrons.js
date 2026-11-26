@@ -36,14 +36,14 @@ function hungrier(needs, foodBias) {
 }
 /**
  * How many more come in because of the weather: rain pulls passers-by indoors (by the location's
- * shelter), a storm thins the street. 1 on a dry day.
+ * shelter), a storm or heavy snow thins the street. 1 on a dry day.
  */
 export function shelterFactor(g) {
     const w = g.weather;
     if (w.sky !== "rain")
         return 1;
     const pull = 1 + g.loc.shelter * Math.min(1, w.rain / SHELTER.fullAt);
-    const out = w.band === "storm" ? 1 - SHELTER.stormThins : 1;
+    const out = w.snow ? 1 - (SHELTER.snowThins[w.band ?? ""] ?? 0) : w.band === "storm" ? 1 - SHELTER.stormThins : 1;
     return pull * out;
 }
 /** Why someone's coming in: the extra rush from the rain is shelter; otherwise what they need most. */

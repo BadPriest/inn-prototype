@@ -9,6 +9,7 @@ import { dateOf, randomStartSeason, type GameDate } from "./calendar.js";
 import { newWeather, type CameIn, type WeatherState } from "./weather.js";
 import type { Footprint } from "./tracks.js";
 import type { Paper } from "./newspaper.js";
+import type { CarterRound, Roads } from "./roads.js";
 import type { WalkthroughState } from "./walkthrough.js";
 import { SKILLS_DATA } from "./gamedata.gen.js";
 import type { KnackId } from "./gamedata.js";
@@ -300,6 +301,8 @@ export class Game {
   coinPops: { x: number; y: number; paid: number; tip: number; at: number }[] = [];
   /** Bought, coming with the carter tomorrow morning (equipment and goods ids). */
   onOrder: string[] = [];
+  roads: Roads | null = null; // bad roads today: the carter late, or not coming till tomorrow
+  carter: CarterRound | null = null; // the carter on his way today
   /** The pantry: units of each ingredient. */
   lots: Record<string, Lot[]> = startingLots(1); // the pantry, as batches by the day they came in
   /** Pencilled slips on the desk, one per supplier (item id -> packs); the last one sent to each; what's coming. */

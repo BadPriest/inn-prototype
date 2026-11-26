@@ -23,6 +23,7 @@ import { initTalk, updatePatrons } from "./patrons.js";
 import { updateNeeds } from "./needs.js";
 import { updateWeather } from "./weather.js";
 import { updateTracks } from "./tracks.js";
+import { updateCarter } from "./roads.js";
 import { initLight, updateLamps } from "./ui/light.js";
 import { updateFrontDoor } from "./door.js";
 import { cancelPour, updatePour } from "./serving.js";
@@ -1040,6 +1041,7 @@ function frame(now: number): void {
     updateTracks(g, sim);
     updateLamps(g);
     updateUpkeep(g, sim);
+    updateCarter(g);
     updateTinker(g);
     updateFrontDoor(g, now);
     updateClock(g, sim, () => forcedTurnIn(g));

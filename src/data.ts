@@ -616,6 +616,7 @@ export const NEEDS = {
   indoorWarmthPerHour: 0.05, // just being out of the weather eases the cold a little
   // The fire: full effect at the hearth, fading to nothing at the edge of the radius (tiles).
   fire: { radius: 6.5, warmthPerHour: 0.45 }, // reaches the nearest tables
+  fireReachByTemperature: [0.6, 0.75, 0.9, 1, 1, 1], // the fire's radius times this, by the outdoor step (freezing … hot): an old, draughty building lets the heat go
   // A serving eases needs over the time it takes to eat or drink it.
   serving: {
     food: { hunger: 0.5, thirst: 0.05, warmth: 0 },
@@ -642,6 +643,7 @@ export const NEEDS = {
 export const SHELTER = {
   fullAt: 0.45, // rain intensity at which the pull indoors is at its strongest
   stormThins: 0.5, // in the storm band, the street has this much fewer people on it
+  snowThins: { "light-rain": 0, rain: 0.3, storm: 0.7 } as Record<string, number>, // in snow, by band (flurries, snow, blizzard): this much fewer people out
   waitOut: [150, 50] as Organic, // game minutes past their usual stay they'll wait for the rain to stop
   checkEvery: [20, 8] as Organic, // game minutes between looking out (and maybe ordering again)
   waitLines: ["I'll wait till it eases.", "Not going out in that.", "Might as well stay put."],
@@ -676,7 +678,7 @@ export const SOAKING = {
   warmthOnArrival: 0.35, // times soaked: added to the warmth need as they come in
   chillPerHour: 0.12, // times soaked: wet clothes keep them cold
   dryPerHour: 0.3, // drying off indoors: a drenched guest is dry in about three hours
-  fireDryPerHour: 0.9, // at the hearth, fading to nothing at the edge of the fire's reach (NEEDS.fire.radius)
+  fireDryPerHour: 0.9, // at the hearth, fading to nothing at the edge of the fire's reach (NEEDS.fire.radius, less in the cold)
   dripPerHour: 2, // times soaked: drips that leave a puddle near them
   fireSeatPull: 4, // soaked guests weigh a seat by a lit fire up to this much more
   fireSeatRange: 7, // tiles from the fire that count as "by the fire" for choosing a seat
@@ -827,6 +829,32 @@ export const BGM = {
 export const MARKET = { from: 9, to: 15, flow: 1.5 };
 
 /** The morning paper's town news (newspaper.ts). */
+// The carter and the roads (inn#111): he comes by 8 in the morning; snow, and a location's own bad roads
+// (climate carterLate), can make him a few hours late, or keep him away till the next morning.
+export const ROADS = {
+  onTime: [75, 25] as Organic, // game minutes after waking that he comes on an ordinary morning
+  earliest: 20,
+  onTimeBy: 8, // the hour he's there by on an ordinary morning
+  snow: { "light-rain": 0.15, rain: 0.55, storm: 0.9 } as Record<string, number>, // chance he's late while it snows, by band (flurries, snow, blizzard)
+  afterSnow: 0.35, // in the hours after snow has stopped
+  tomorrow: { blizzard: 0.6, otherwise: 0.2 }, // when late: chance he doesn't come till the next morning
+  hoursLate: [3, 1.2] as Organic, // past 8, when the roads are slow
+  latestHour: 16, // a late carter comes by then
+  said: {
+    late: ["🛻 No carter yet: the roads are bad. He'll be along later.", "🛻 The carter's late this morning; the roads are slow."],
+    tomorrow: ["🛻 No carter today: the roads are shut. What's due comes tomorrow morning."],
+  },
+  paper: {
+    snow: ["Snow on the roads: carts expected late.", "Carters report slow going in the snow."],
+    roads: ["The pass road is bad again: carts expected late.", "Ice on the high road; carters are going slow."],
+    tomorrow: ["Roads closed by snow: no carts today."],
+  },
+  slipNote: {
+    plain: "The carter comes by 8 in the morning. Snow on the roads can make him a few hours late, or keep him away until the next morning; the paper will say when the roads are bad.",
+    pass: "The carter comes by 8 in the morning, up the pass road. In the colder months the pass is slow and he's sometimes late, and snow can keep him away until the next morning; the paper will say when the roads are bad.",
+  },
+};
+
 export const NEWS = {
   market: "Market day today: stalls on the square from nine. Expect a busy midday.",
   marketSoon: "Market day is {day}, as ever.",

@@ -67,10 +67,11 @@ function receive(g: Game, id: string): void {
 }
 
 /** Morning: the carter brings yesterday's orders. Goods are put away; pieces wait to be placed. */
-export function carterArrives(g: Game): void {
-  if (!g.onOrder.length) return;
-  const came = [...g.onOrder];
-  g.onOrder = [];
+/** The carter brings what's on order: the first `pieces` of it (what was ordered before he set out), or all of it. */
+export function carterArrives(g: Game, pieces = g.onOrder.length): void {
+  if (!g.onOrder.length || pieces <= 0) return;
+  const came = g.onOrder.slice(0, pieces);
+  g.onOrder = g.onOrder.slice(pieces);
   for (const id of came) receive(g, id);
   const list = came.map((id) => nameOf(id).toLowerCase()).join(", ");
   const gear = came.filter((id) => pieceById(id)?.type === "gear");

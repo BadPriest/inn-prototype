@@ -6,6 +6,17 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 127 · Nov 26, 2026 · deployed
+
+### Added
+- **The cold keeps the fire's heat close.** The colder it is outside, the less far the fire warms the room in the old building: on a freezing day it reaches about 60% as far (cold 75%, cool 90%, full from mild up). Guests by the hearth still get warm and dry; the far tables stay chilly. Guests in from the rain or snow already head for the table nearest the fire.
+- **Snow thins the street.** Fewer people are out in snow (30% fewer) and far fewer in a blizzard (70% fewer). Those who are out still come in to shelter.
+- **The carter and the roads.** The carter now comes by 8 in the morning (usually around 7:15), not the moment you wake. Snow on the roads, or just fallen, can make him a few hours late, or in a blizzard keep him away until the next morning; on the mountainside the pass road also slows him now and then in spring, autumn and winter. The log says when he's late, the paper prints a roads line ("Snow on the roads: carts expected late."), and a delivery put off a day moves on the calendar. Each supplier's slip says when he comes and that the roads can hold him up.
+
+### Changed
+- **Firewood burns at the same rate in any weather** (1.2 logs an hour in the hearth). It used to burn 1.4 times as fast in winter or rain.
+- Debug: the autopilot (`tools/sim/run.mjs`) takes `--location` and `--season`, and lists snow hours and bad roads by day.
+
 ## Build 126 · Nov 26, 2026 · deployed
 
 ### Added

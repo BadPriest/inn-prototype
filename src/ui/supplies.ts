@@ -11,6 +11,7 @@ import {
   canFetchFrom, deliveryDaysText, fetchSlip, linesOf, nextDeliveryDay, packContents, packPrice, sendSlip, slipEmpty, slipOf, slipTotal,
   suppliersHere, whenText, inSeason, backIn, seasonsText, sendStanding, stopStanding, pauseStanding, standingWhen, supplierDays, dayName, toggleStandingDay,
 } from "../supplies.js";
+import { roadsNote } from "../roads.js";
 import { back, closeAll, openMenu, replaceMenu, type CardScreen, type MenuSpec } from "./menu.js";
 import { grid, stageTone, type CardSpec, heading } from "./cards.js";
 
@@ -155,6 +156,7 @@ export function openSupplies(g: Game): void {
             ? `<span class="slip-line"><b>${slip[l.item]}</b> × ${l.pack.name} of ${ing(l.item).name.toLowerCase()}</span>`
             : `<span class="slip-line gone"><s><b>${slip[l.item]}</b> × ${l.pack.name} of ${ing(l.item).name.toLowerCase()}</s> <em>only in ${seasonsText(l.item)}</em></span>`).join("") : `<span class="slip-empty">Nothing pencilled in yet: pick their goods below.</span>`}</div>
           <div class="meta">${terms}</div>
+          ${s.deliveryDays ? `<div class="meta roads">🛻 ${roadsNote(g)}</div>` : ""}
         </div>
       </div>`;
     const summary = ed ? editBox(ed) : page === "slip" ? slipBox : "";
@@ -189,7 +191,7 @@ export function openSupplies(g: Game): void {
         title: `Send the order to ${s.name}`,
         subtitle: `${fmtMoney(total)} · how should it come?`,
         items: [
-          { label: "🛻 Delivery", sub: day !== undefined ? `the carter brings it ${whenText(g, day)} · a few pence a morning` : "they don't deliver",
+          { label: "🛻 Delivery", sub: day !== undefined ? `the carter brings it ${whenText(g, day)}, by 8 if the roads are clear · a few pence a morning` : "they don't deliver",
             disabled: day === undefined, action: () => { back(); if (sendSlip(g, s)) { g.bus.emit({ type: "MenuSound", sound: "coins" }); refresh(); } } },
           ...(fetchable ? [{ label: "🚶 Fetch it yourself", sub: canFetchFrom(g, s) ? `you're out ${s.distanceInMinutes} min; no carter's fee` : "only while the inn is shut and empty, and they're open",
             disabled: !canFetchFrom(g, s), action: () => { back(); if (fetchSlip(g, s)) { g.bus.emit({ type: "MenuSound", sound: "coins" }); closeAll(); } } }] : []),

@@ -15,7 +15,8 @@
       "properties": {
         "rain": { "type": "number", "exclusiveMinimum": 0, "description": "Above 1: more rain than the calendar season usually brings, and it lingers. Below 1: less." },
         "storm": { "type": "number", "minimum": 0, "description": "How often a storm breaks, times the calendar season's own odds." },
-        "temperature": { "type": "array", "items": { "$ref": "#/definitions/temperature" }, "minItems": 2, "maxItems": 2, "description": "[coldest, warmest]: just before dawn and mid-afternoon on an ordinary day." }
+        "temperature": { "type": "array", "items": { "$ref": "#/definitions/temperature" }, "minItems": 2, "maxItems": 2, "description": "[coldest, warmest]: just before dawn and mid-afternoon on an ordinary day." },
+        "carterLate": { "type": "number", "minimum": 0, "maximum": 1, "description": "Chance the carter is held up on the roads on any morning, whatever the weather; 0 when missing." }
       }
     },
     "temperature": { "enum": ["freezing", "cold", "cool", "mild", "warm", "hot"] },

@@ -82,7 +82,7 @@ export interface EconomyData {
   deliveryFee: Pence;
   upkeep: {
     licence: { pence: Pence; weekday: string };
-    firewood: { item: string; fireLogsPerHour: number; stoveLogsPerHour: number; coldOrWetFactor: number };
+    firewood: { item: string; fireLogsPerHour: number; stoveLogsPerHour: number };
     lampOil: { item: string; pintsPerHour: number; darkFlow: number; darkPatience: number };
     sundries: { item: string; perGuest: number; tipShareWithout: number };
   };
@@ -140,7 +140,7 @@ export interface SupplierData extends SupplierFields { id: string; name: string;
 export interface SuppliersData { suppliers: SupplierData[] }
 
 export type TemperatureId = "freezing" | "cold" | "cool" | "mild" | "warm" | "hot";
-export interface ClimateData { rain: number; storm: number; temperature: [coldest: TemperatureId, warmest: TemperatureId] }
+export interface ClimateData { rain: number; storm: number; temperature: [coldest: TemperatureId, warmest: TemperatureId]; carterLate?: number }
 
 export interface LocationData {
   id: string;

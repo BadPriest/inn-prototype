@@ -6,6 +6,7 @@
 import { pick } from "./core.js";
 import { NEWS, TUNING, WEATHER, timeOfDayAt } from "./data.js";
 import { foresee } from "./weather.js";
+import { roadsNews } from "./roads.js";
 const PARTS = [
     { id: "morning", name: "in the morning" }, { id: "midday", name: "around midday" }, { id: "afternoon", name: "in the afternoon" },
     { id: "evening", name: "in the evening" }, { id: "night", name: "overnight" },
@@ -81,6 +82,9 @@ export function deliverPaper(g, stormLastNight) {
         news.push(NEWS.market);
     else if (g.loc.marketDay)
         news.push(NEWS.marketSoon.replace("{day}", g.loc.marketDay));
+    const roads = roadsNews(g);
+    if (roads)
+        news.push(roads);
     if (stormLastNight)
         news.push(pick(NEWS.afterStorm));
     news.push(pick(NEWS.seasons[g.date.season]));
