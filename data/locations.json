@@ -20,6 +20,11 @@
         { "id": "generalStore", "priceFactor": 1.0, "distanceInMinutes": 30, "deliveryDays": ["mon", "thu"] },
         { "id": "carter" }, { "id": "tinker" }, { "id": "catalogue" }
       ],
+      "history": [
+        { "yearsAgo": 1, "lines": ["Since they lit the electric lamps on the high street, {ago}, nobody goes to bed.", "Electric lamps on the high street. Went up {ago}, and I still stop and stare."] },
+        { "yearsAgo": 12, "lines": ["The new mill went up {ago}. Flour's never been so cheap."] },
+        { "yearsAgo": 40, "lines": ["My gran saw the great fire, {ago}. Took half of Weaver's Row."] }
+      ],
       "text": { "cardChips": ["busy", "rain rush"], "card": "On the market square. Busy all year; when it rains, half the street comes in.", "back": "Carts rattle past from first light. On market day the square is all elbows and baskets, and every one of them is thirsty by noon." } },
 
     { "id": "dockside", "name": "Dockside", "icon": "⚓",
@@ -41,6 +46,11 @@
         { "id": "generalStore" },
         { "id": "carter" }, { "id": "tinker" }, { "id": "catalogue" }
       ],
+      "history": [
+        { "yearsAgo": 3, "lines": ["The steam ferry started {ago}. Noisy thing, but it keeps time.", "Remember before the steam ferry? {Ago} we still rowed the far bank."] },
+        { "yearsAgo": 11, "lines": ["In the great flood, {ago}, the water came up to the second step."] },
+        { "yearsAgo": 25, "lines": ["The Margaret went down off the point {ago}. They still find her timbers."] }
+      ],
       "text": { "cardChips": ["dockworkers", "wet", "stormy"], "card": "By the harbour, where the boats come in. Thirsty dockworkers, wet weather, the odd storm off the sea.", "back": "Tar, rope and gulls. The tide decides when the boats come in, and the boats decide when your door swings open." } },
 
     { "id": "mountainside", "name": "Mountainside", "icon": "🏔️",
@@ -60,6 +70,11 @@
         { "id": "drinksMerchant", "distanceInMinutes": 180 },
         { "id": "generalStore", "distanceInMinutes": 150 },
         { "id": "carter" }, { "id": "tinker" }, { "id": "catalogue" }
+      ],
+      "history": [
+        { "yearsAgo": 2, "lines": ["The telegraph wire reached the pass {ago}. News gets here before the carter now."] },
+        { "yearsAgo": 9, "lines": ["The avalanche took the old toll house {ago}. Nobody was in it, thank the stars."] },
+        { "yearsAgo": 60, "lines": ["They cut the pass road {ago}. Before that it was mules and prayers."] }
       ],
       "text": { "cardChips": ["long winter", "quiet", "cold"], "card": "On the pass road, high up. Long winters, few passers-by, and everyone who comes in is glad of the fire.", "back": "The last warm room before the pass. Travellers stamp the snow off their boots and stay longer than they meant to." } },
 
@@ -81,6 +96,11 @@
         { "id": "generalStore" },
         { "id": "carter" }, { "id": "tinker" }, { "id": "catalogue", "priceFactor": 0.95 }
       ],
+      "history": [
+        { "yearsAgo": 1, "lines": ["Surveyors came through {ago}, measuring for a railway. Not a peep since."] },
+        { "yearsAgo": 30, "lines": ["The old coaching inn burned down {ago}. Nobody's rebuilt it."] },
+        { "yearsAgo": 100, "lines": ["The midsummer fair's been held at the crossroads for a hundred years and more."] }
+      ],
       "text": { "cardChips": ["travellers", "quiet"], "card": "Where the roads meet, out among the fields. Travellers passing through; rain or shine, much the same.", "back": "Four roads, one signpost, and your lantern in the window. Most folk are passing through; a few will remember the stew." } },
 
     { "id": "hills", "name": "Hill country", "icon": "🌳",
@@ -100,6 +120,11 @@
         { "id": "drinksMerchant", "distanceInMinutes": 120 },
         { "id": "generalStore" },
         { "id": "carter" }, { "id": "tinker" }, { "id": "catalogue" }
+      ],
+      "history": [
+        { "yearsAgo": 2, "lines": ["The big house up the hill got electric light {ago}. You can see it glow at night."] },
+        { "yearsAgo": 7, "lines": ["In the dry summer, {ago}, every well in the valley ran low."] },
+        { "yearsAgo": 15, "lines": ["Old Tam's ram took the county prize {ago}. He's not stopped talking about it."] }
       ],
       "text": { "cardChips": ["long summer", "gentle", "farmers"], "card": "Among green hills and smallholdings. Long, gentle springs and summers; soft rain, hardly ever a storm.", "back": "Sheep on every slope and a farmer at every table. The summers are long, the rain is soft, and nobody's in a hurry." } }
   ]

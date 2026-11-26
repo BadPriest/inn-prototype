@@ -277,6 +277,8 @@ export function weatherTags(g: Game): string[] {
   const tags = w.band && w.snow ? [] : [...WEATHER.skies[w.sky].tags];
   tags.push(...(shownBand(w)?.tags ?? []));
   if (w.tempStep <= T.coldTagAt) tags.push("cold");
+  if (w.tempStep <= T.freezingTagAt) tags.push("freezing");
+  if (w.tempStep >= T.hotTagAt) tags.push("hot");
   return tags;
 }
 

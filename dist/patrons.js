@@ -3,12 +3,13 @@ import { ECONOMY_DATA } from "./gamedata.gen.js";
 import { opennessOf, patienceOf, showFlip } from "./snacks.js";
 import { orderable } from "./readymade.js";
 import { chance, organic, pick, uid, weightedPick } from "./core.js";
-import { WEATHER, ARCHETYPES, CHATTER, NAMES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING, SHELTER, SEASONAL_TASTES, MARKET, SPECIFIC_ORDERS, VISITOR_TASTES, RARE_LOVE_CHANCE, garnishesFor, garnishById } from "./data.js";
+import { WEATHER, ARCHETYPES, CHATTER, NAMES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING, SHELTER, SEASONAL_TASTES, HOT_FIRE, MARKET, SPECIFIC_ORDERS, VISITOR_TASTES, RARE_LOVE_CHANCE, garnishesFor, garnishById } from "./data.js";
 import { emptyTastes } from "./game.js";
 import { appeal, prepareVisit, sample, tagScore } from "./tastes.js";
-import { arrivalNeeds, closeAllStretches } from "./needs.js";
+import { arrivalNeeds, closeAllStretches, overheated } from "./needs.js";
 import { cameIn, snowyNow, weatherTags } from "./weather.js";
 import { marketDay } from "./newspaper.js";
+import { favouredTags, worldLine } from "./worldtags.js";
 import { cutTipsForWalkout, payTips, priceLevel } from "./money.js";
 import { dist } from "./world.js";
 function clamp01(n) {
@@ -71,9 +72,13 @@ function arrivingWet(g) {
     const soaked = soakedNow(g), snowy = snowyNow(g);
     return { soaked, snowy, soon: clamp01(soaked + snowy * WEATHER.snow.meltWets) };
 }
-/** Pick a seat: anyone, or for the soaked, one by a lit fire if they can. */
+/** A hot day out: a lit fire is too much (HOT_FIRE). */
+const tooHotForFire = (g) => weatherTags(g).includes("hot");
+/** Pick a seat: anyone, or for the soaked, one by a lit fire if they can; on a hot day, away from a lit fire. */
 function pickSeat(g, seats, soaked) {
     const fire = g.world.furniture.find((f) => f.kind === "fireplace")?.center;
+    if (fire && g.fireLit && tooHotForFire(g))
+        return weightedPick(seats, (s) => 1 - HOT_FIRE.seatAvoid * Math.max(0, 1 - dist(s.tile, fire) / SOAKING.fireSeatRange)) ?? pick(seats);
     if (!fire || !g.fireLit || soaked < 0.15)
         return pick(seats);
     return weightedPick(seats, (s) => 1 + SOAKING.fireSeatPull * soaked * Math.max(0, 1 - dist(s.tile, fire) / SOAKING.fireSeatRange)) ?? pick(seats);
@@ -189,7 +194,7 @@ export function spawnPatron(g, archetype, forced) {
     if (soon > SOAKING.warmCraving)
         p.craving = { tag: "warm", honest: true };
     else if (chance(SEASONAL_TASTES.visitorCraving))
-        p.craving = { tag: pick(SEASONAL_TASTES.inSeason[g.date.season]), honest: true };
+        p.craving = { tag: pick(favouredTags(g)), honest: true };
     return admit(g, p, seat);
 }
 // ---------------------------------------------------------------------------
@@ -204,7 +209,7 @@ function emptyTableFor(g, size, soaked = 0) {
     // Clean tables first; then a party in from the rain heads for the fire, if it's lit; else the
     // smallest table that fits.
     const fire = g.world.furniture.find((f) => f.kind === "fireplace")?.center;
-    const toFire = (t) => (fire && g.fireLit && soaked >= 0.15 ? dist(t.tile, fire) : 0);
+    const toFire = (t) => (fire && g.fireLit ? (tooHotForFire(g) ? -dist(t.tile, fire) : soaked >= 0.15 ? dist(t.tile, fire) : 0) : 0);
     const dirty = (t) => ((g.dirt.get(t.key) ?? 0) >= TUNING.tableDirtyAt ? 1 : 0);
     fits.sort((a, b) => dirty(a) - dirty(b) || toFire(a) - toFire(b) || a.chairs.length - b.chairs.length);
     return fits[0];
@@ -320,7 +325,7 @@ export function spawnRegular(g, def, st) {
         weatherTaste: def.weather,
         unmet: {},
     };
-    prepareVisit(p, def, st, g.date.season);
+    prepareVisit(p, def, st, favouredTags(g));
     if (soon > SOAKING.warmCraving && !p.craving)
         p.craving = { tag: "warm", honest: true };
     st.visits++;
@@ -393,6 +398,7 @@ function placeOrder(g, p) {
     }
     const t = p.tastes[kind];
     // Mostly what sounds good to them, sometimes a risky order. A craving pulls hard.
+    const favoured = favouredTags(g);
     const recipe = wanted ?? inspired ?? weightedPick(menu, (r) => {
         let w = Math.exp(0.7 * appeal(r.baseTags, t)) + 0.25;
         if (p.craving && (r.baseTags.includes(p.craving.tag) || r.options.some((o) => INGREDIENTS.find((i) => i.id === o)?.tags.includes(p.craving.tag))))
@@ -400,8 +406,8 @@ function placeOrder(g, p) {
         // Cold (or wet through): something warm appeals more.
         if (r.baseTags.includes("warm"))
             w *= 1 + SOAKING.warmOrderPull * p.needs.warmth;
-        // What's in season sounds good.
-        w *= 1 + SEASONAL_TASTES.orderPull * r.baseTags.filter((tag) => SEASONAL_TASTES.inSeason[g.date.season].includes(tag)).length;
+        // What's in season, or right for the weather, sounds good.
+        w *= 1 + SEASONAL_TASTES.orderPull * r.baseTags.filter((tag) => favoured.includes(tag)).length;
         return w;
     });
     let wantGarnish;
@@ -562,7 +568,7 @@ function wantsMore(g, p) {
     if (strongest > 0)
         return chance(strongest);
     const graceReady = g.minute - (p.lastGraceAt ?? -Infinity) >= NEEDS.graceEvery;
-    if (graceReady && chance(NEEDS.graceChance)) {
+    if (graceReady && chance(NEEDS.graceChance * (1 - HOT_FIRE.grace * overheated(g, p)))) {
         p.graceDrink = true;
         return true;
     }
@@ -659,8 +665,9 @@ function chatter(g, p) {
     if (p.schema === "reserved" && chance(0.8))
         return;
     const hint = chance(TALK_TUNING.hintChance) ? tasteLine(p) : null;
-    const weather = !hint && chance(CHATTER.weatherChance) ? weatherLine(g, p) : null;
-    const text = hint ?? weather?.text ?? g.pickLine(CHATTER.small);
+    const world = hint ? null : worldLine(g, p);
+    const weather = !hint && !world && chance(CHATTER.weatherChance) ? weatherLine(g, p) : null;
+    const text = hint ?? world ?? weather?.text ?? g.pickLine(CHATTER.small);
     if (weather?.taste && dist(g.keeper.pos, p.pos) <= TALK_TUNING.overhearRange)
         g.journal(p, `overheard: “${weather.text}”`, "said");
     g.speak(p, text);

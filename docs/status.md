@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 26, 2026 · build 130 (deployed) · https://inn-prototype.vercel.app
+Updated Nov 26, 2026 · build 131 (deployed) · https://inn-prototype.vercel.app
 
 History by build: [../CHANGELOG.md](../CHANGELOG.md). What the prototype is and how to play: [../README.md](../README.md).
 
@@ -26,8 +26,9 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
 
-## Built and deployed (Nov 26, builds 125–130)
+## Built and deployed (Nov 26, builds 125–131)
 
+- #109 world tags (now, happenings, history; renown later from #45): cravings, orders and serves lean with the weather as with the season; a lit fire on a hot day costs patience, stay and enjoyment near it, and guests sit away from it; guests talk about market day, the paper and each place's written history; in review
 - Build 130: the side panel folds away (tab on the map's edge); the thermometer stands upright; the cards on the map go behind the glass too
 - Build 129: menus that stop the clock blur the inn behind a faint blue stained-glass window (Display: or plain dimmed)
 - Build 128: the mouse wheel scrolls card screens over the cards; after a scroll the card under the pointer is picked up, none over a gap
@@ -137,7 +138,7 @@ Get in what the big epics are missing, then polish and iron out.
 - **Epics:** #101 mood · #100 weather through the full seasons (weather and climate, lighting) · #56 staff (soon) · #18 patron schedules (waits on #10) · #102 taproom card game · #103 taproom activities · #105 events · progression: #44 expansion and #45 reputation
 - **Later:** #87 advanced cooking (takes time); guests are good enough for now; day bookends (#40, #41) are for the future
 - **Design sessions this week:** graded Delights (#92) and staff (#56); agendas below
-- **Weather and climate (#100, decided Nov 25):** #107 climate by location and calendar season, temperature in named steps through the day (first) · #108 snow as weather · #109 world tags · #110 a colder tavern on a cold day (later; heating as whole-building upgrades, to design) · #111 climate in trade (built, in review) · #112 day length, one curve
+- **Weather and climate (#100, decided Nov 25):** #107 climate by location and calendar season, temperature in named steps through the day (first) · #108 snow as weather · #109 world tags (built, in review) · #110 a colder tavern on a cold day (later; heating as whole-building upgrades, to design) · #111 climate in trade (built, in review) · #112 day length, one curve
 
 ## Next: the economy (from the Nov 17 session)
 

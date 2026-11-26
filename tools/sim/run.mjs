@@ -14,6 +14,7 @@ const args = Object.fromEntries(process.argv.slice(2).join(" ").split("--").filt
 const days = Number(args.days ?? 7);
 const opts = { level: args.level ?? "fair", keeper: args.keeper ?? "random", walk: Number(args.walk ?? 1) };
 if (args.menu) opts.menu = String(args.menu).split(",");
+if (args.fireWhenHot) opts.fireWhenHot = true;
 
 const chromePath = process.env.CHROME ?? "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const profile = mkdtempSync(join(tmpdir(), "inn-sim-"));

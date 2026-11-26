@@ -4,8 +4,10 @@
 //   score         how a serve scores (the veiled add noise here)
 //   afterServe    what a strong reaction changes (locks, breakthroughs, opening up)
 import { chance, pick, weightedPick } from "./core.js";
-import { SCHEMA_TUNING, SEASONAL_TASTES, SPECIFIC_ORDERS, TASTE_POOL, TUNING, garnishById } from "./data.js";
+import { HOT_FIRE, SCHEMA_TUNING, SEASONAL_TASTES, SPECIFIC_ORDERS, TASTE_POOL, TUNING, garnishById } from "./data.js";
 import { emptyTastes } from "./game.js";
+import { overheated } from "./needs.js";
+import { favouredTags } from "./worldtags.js";
 export function tagScore(tags, t) {
     const s = TUNING.scoring;
     let score = 0;
@@ -48,16 +50,15 @@ export function effectiveSchema(def, st) {
 }
 // ---------------------------------------------------------------------------
 // prepareVisit
-/** Does this serve have a tag in season that they don't dislike? */
-export function inSeason(season, tags, t) {
-    return tags.some((tag) => SEASONAL_TASTES.inSeason[season].includes(tag) && !t.dislike.includes(tag));
+/** Does this serve have a tag the world favours now (in season, or for the weather) that they don't dislike? */
+export function inFavour(favoured, tags, t) {
+    return tags.some((tag) => favoured.includes(tag) && !t.dislike.includes(tag));
 }
-/** Pick a craving from a list, leaning toward what's in season. */
-function seasonalPick(season, tags) {
-    const now = SEASONAL_TASTES.inSeason[season];
-    return weightedPick(tags, (t) => (now.includes(t) ? SEASONAL_TASTES.cravingPull : 1)) ?? pick(tags);
+/** Pick a craving from a list, leaning toward what the world favours now (favouredTags). */
+function favouredPick(favoured, tags) {
+    return weightedPick(tags, (t) => (favoured.includes(t) ? SEASONAL_TASTES.cravingPull : 1)) ?? pick(tags);
 }
-export function prepareVisit(p, def, st, season) {
+export function prepareVisit(p, def, st, favoured) {
     const schema = effectiveSchema(def, st);
     p.schema = schema;
     if (def.schema === "unformed") {
@@ -87,10 +88,10 @@ export function prepareVisit(p, def, st, season) {
             p.craving = { tag: pick(pool), honest };
         }
         else if (def.schema === "unformed" && !st.resolved) {
-            p.craving = { tag: season ? seasonalPick(season, def.cravings) : pick(def.cravings), honest: false };
+            p.craving = { tag: favoured ? favouredPick(favoured, def.cravings) : pick(def.cravings), honest: false };
         }
         else {
-            p.craving = { tag: season ? seasonalPick(season, def.cravings) : pick(def.cravings), honest: true };
+            p.craving = { tag: favoured ? favouredPick(favoured, def.cravings) : pick(def.cravings), honest: true };
         }
     }
 }
@@ -150,8 +151,9 @@ export function judge(g, p, item, order) {
     if (hitCraving)
         score += SCHEMA_TUNING.cravingBonus;
     // In season: a little better, unless it's something they dislike.
-    if (inSeason(g.date.season, item.tags, truth))
+    if (inFavour(favouredTags(g), item.tags, truth))
         score += SEASONAL_TASTES.scoreBonus;
+    score -= HOT_FIRE.score * overheated(g, p);
     let missingGarnish = false;
     const wrongOption = !!order?.wantOption && !item.options?.includes(order.wantOption);
     if (wrongOption)

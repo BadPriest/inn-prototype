@@ -58,6 +58,16 @@
             }
           }
         },
+        "history": {
+          "type": "array", "description": "What happened here before the keeper came: the past guests talk about.",
+          "items": {
+            "type": "object", "additionalProperties": false, "required": ["yearsAgo", "lines"],
+            "properties": {
+              "yearsAgo": { "type": "number", "minimum": 0, "description": "How long before the first day it happened, in years." },
+              "lines": { "type": "array", "minItems": 1, "items": { "type": "string" }, "description": "What a guest says about it. {ago} is how long ago it is now (\"three years back\"); {Ago} the same with a capital." }
+            }
+          }
+        },
         "text": {
           "type": "object", "additionalProperties": false, "required": ["cardChips", "card"],
           "properties": {

@@ -458,6 +458,32 @@ export const SEASONAL_TASTES = {
     visitorCraving: 0.25, // chance a passing visitor craves something in season
 };
 /**
+ * Weather tastes (inn#109): what the weather makes people want, read like the seasonal tastes above
+ * (cravings, what they order, a little better when served). By weather tag (weatherTags).
+ */
+export const WEATHER_TASTES = {
+    hot: ["cold", "crisp", "tart"],
+    cold: ["warm", "hearty"],
+    freezing: ["warm", "hearty", "rich"],
+    "light-rain": ["warm"],
+    rain: ["warm"],
+    stormy: ["warm", "hearty"],
+    snowy: ["warm", "hearty"],
+};
+/**
+ * A lit fire on a hot day (inn#109): too much for whoever sits near it. Measured like the fire's warmth
+ * (full at the hearth, nothing at the edge of its reach), it costs them patience, shortens their stay,
+ * makes one more round less likely and a serve land a little worse; and they'd sooner sit away from it.
+ */
+export const HOT_FIRE = {
+    patience: 0.4, // at the hearth, patience is this much shorter
+    stayLostPerHour: 40, // game minutes of their stay lost per hour at the hearth
+    grace: 1, // one more round: this much less likely at the hearth (1: never)
+    score: 1.5, // taken off a serve's score at the hearth
+    seatAvoid: 0.85, // a seat right by the fire is this much less likely to be chosen
+    grumbleFrom: 0.3, // this hot and over, they may grumble about it
+};
+/**
  * Asking for it by name: some guests order a particular leaf or bean ("Mint tea", "Coffee, dark roast"):
  * regulars who know their own mind, and fussy strangers now and then. They ask for what they truly like
  * best. Serve another and it lands like a missing garnish.
@@ -508,6 +534,7 @@ export const LOCATIONS = LOCATIONS_DATA.locations.map((l) => ({
     visitors: l.visitorWeights,
     marketDay: l.marketDay,
     street: l.streetSound,
+    history: l.history ?? [],
 }));
 /** The gramophone (sound/gramophone.ts): its records, and how many play per winding. */
 export const GRAMOPHONE = {
@@ -634,6 +661,8 @@ export const CHATTER = {
         rain: ["Raining properly now.", "Wet out there.", "You'd want a good coat {now}."],
         stormy: ["Coming down in buckets out there.", "Listen to that wind.", "Nobody's crossing the river in this.", "Hope the roof holds."],
         cold: ["Bitter out.", "Cold enough to freeze your ears off.", "Good to be near a fire {now}."],
+        freezing: ["Freezing out there. My fingers have gone.", "The pump's frozen solid.", "Ice on the inside of the windows, this morning."],
+        hot: ["Hot one {now}.", "Too hot to work, this.", "The road's all dust in this heat.", "Something cold wouldn't go amiss."],
         snowy: ["Snowing again.", "Pretty, the snow. From in here.", "It's settling on the sills.", "Kids'll be out in that tomorrow."],
         "heavy-snow": ["Can't see the end of the street.", "Nobody's getting over the pass in this.", "Hope the carts make it."],
     },
@@ -659,6 +688,15 @@ export const CHATTER = {
         snowStops: ["Snow's stopped.", "That's the last of it, I think."],
     },
     /** Weather tastes: {w} is the weather's name (WEATHER_NAMES), {W} the same with a capital. */
+    /** Near a lit fire on a hot day. */
+    heat: ["Who lights a fire on a day like this?", "I'm cooking over here.", "Could do without the fire today.", "It's like an oven by that hearth.", "Phew. Can we sit somewhere else?"],
+    /** World tags (worldtags.ts): market day, today's paper ({news}), and the place's history. */
+    world: {
+        market: ["Square's heaving today.", "Got a good price at the market.", "Market day. Half the valley's in town.", "Couldn't move for baskets on the square."],
+        paper: ["Did you see the paper? “{news}”", "It's in the paper: “{news}”", "Says here: “{news}”"],
+    },
+    worldChance: 0.18, // share of small talk about the world (market day, the paper, the old days)
+    historyChance: 0.35, // of that, the share about the old days (doubled for regulars)
     weatherLove: ["Now this is my kind of weather.", "I do love a {w}.", "Nothing better than a {w}."],
     weatherDislike: ["Can't stand {w}.", "{W}. Just my luck.", "I could do without {w}."],
     love: ["Nothing beats something {tag}.", "I'd walk a mile for anything {tag}.", "Give me {tag} any day."],
@@ -681,6 +719,8 @@ export const WEATHER_NAMES = {
     rain: { love: "rainy day", dislike: "rain" },
     stormy: { love: "good storm", dislike: "storms" },
     cold: { love: "crisp cold day", dislike: "the cold" },
+    freezing: { love: "proper frost", dislike: "this freezing cold" },
+    hot: { love: "hot day", dislike: "the heat" },
     snowy: { love: "snowy day", dislike: "snow" },
     "heavy-snow": { love: "proper blizzard", dislike: "blizzards" },
 };
@@ -925,13 +965,13 @@ export const WEATHER = {
         clear: { name: "Clear", icon: "☀️", nightIcon: "🌙", minHours: 3, tags: ["sunny"] },
         cloudy: { name: "Cloudy", icon: "⛅", nightIcon: "☁️", minHours: 1.5, tags: [] },
         overcast: { name: "Overcast", icon: "☁️", nightIcon: "☁️", minHours: 2, tags: ["grey"] },
-        rain: { name: "Rain", icon: "🌧️", nightIcon: "🌧️", minHours: 1, tags: ["wet"] },
+        rain: { name: "Rain", icon: "🌧️", nightIcon: "🌧️", minHours: 1, tags: [] },
     },
     /** Bands of rain intensity, in order. A band is entered at `from` and left `hysteresis` below it. */
     bands: [
         { id: "light-rain", name: "Light rain", icon: "🌦️", from: 0, tags: ["light-rain"] },
         { id: "rain", name: "Rain", icon: "🌧️", from: 0.35, tags: ["rain"] },
-        { id: "storm", name: "Storm", icon: "⛈️", from: 0.7, tags: ["heavy-rain", "stormy"] },
+        { id: "storm", name: "Storm", icon: "⛈️", from: 0.7, tags: ["stormy"] },
     ],
     hysteresis: 0.06,
     bandMinMinutes: 30, // a band holds at least this long before easing or building again (a storm breaking doesn't wait)
@@ -965,6 +1005,8 @@ export const WEATHER = {
         hysteresis: 0.12, // past a step's edge by this much before it counts as the next step
         spell: { size: 0.6, easePerHour: 0.08, everyHours: [30, 12] }, // warm spells and cold snaps: up to this many steps either way, and how often a new one sets in
         coldTagAt: 1, // at or below this step, the weather tag `cold`
+        freezingTagAt: 0, // at or below this step, also `freezing`
+        hotTagAt: 4, // at or above this step, the weather tag `hot` (warm or hot out)
         lines: {
             up: { cold: "It's a little less bitter out.", cool: "The cold's easing off.", mild: "It's turning mild out.", warm: "It's warming up nicely.", hot: "It's getting hot out." },
             down: { freezing: "It's freezing out there now.", cold: "It's turning cold.", cool: "There's a chill in the air.", mild: "The heat's going out of the day.", warm: "It's cooling off a little." },

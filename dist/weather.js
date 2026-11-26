@@ -287,6 +287,10 @@ export function weatherTags(g) {
     tags.push(...(shownBand(w)?.tags ?? []));
     if (w.tempStep <= T.coldTagAt)
         tags.push("cold");
+    if (w.tempStep <= T.freezingTagAt)
+        tags.push("freezing");
+    if (w.tempStep >= T.hotTagAt)
+        tags.push("hot");
     return tags;
 }
 /** "🌧️ Rain", "❄️ Blizzard", "🌙 Clear". */

@@ -6,6 +6,15 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 131 · Nov 26, 2026 · deployed
+
+### Added
+- **The weather changes what people want.** Like the calendar season, the weather now leans guests' cravings, what they order, and how well a dish lands: cold, crisp and tart things on a hot day; warm and hearty in the cold, the rain and the snow; warm, hearty and rich when it's freezing.
+- **Mind the fire on a hot day.** On a warm or hot day a lit fire is too much. Guests sit away from the hearth if they can, and those near it lose patience (up to 40% at the hearth), leave sooner, won't stay for one more round, enjoy their food less, and grumble ("Who lights a fire on a day like this?"). The log warns you when the fire's lit on a hot day, or the day turns hot with it lit. Innsight shows "too hot by the fire".
+- **Each place has a past.** Three bits of history per location (the town's new electric lamps, last year; the new mill, twelve years back; the great fire, forty years back), which guests bring up now and then, regulars more often. They age as the years go by.
+- **Guests talk about the world.** Market day ("Square's heaving today."), today's paper ("Did you see the paper? “Lost: one grey cat…”"), and the old days. New weather talk for hot and freezing days.
+- Debug: the autopilot keeper doesn't light the fire on hot days (`--fireWhenHot 1` keeps it lit, to compare).
+
 ## Build 130 · Nov 26, 2026 · deployed
 
 ### Added

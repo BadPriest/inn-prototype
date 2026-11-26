@@ -24,6 +24,7 @@ import { updateNeeds } from "./needs.js";
 import { updateWeather } from "./weather.js";
 import { updateTracks } from "./tracks.js";
 import { updateCarter } from "./roads.js";
+import { updateWorld } from "./worldtags.js";
 import { initLight, updateLamps } from "./ui/light.js";
 import { updateFrontDoor } from "./door.js";
 import { cancelPour, updatePour } from "./serving.js";
@@ -1068,6 +1069,7 @@ function frame(now: number): void {
     updateLamps(g);
     updateUpkeep(g, sim);
     updateCarter(g);
+    updateWorld(g);
     updateTinker(g);
     updateFrontDoor(g, now);
     updateClock(g, sim, () => forcedTurnIn(g));

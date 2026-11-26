@@ -3,10 +3,11 @@
 // patience (a share longer), hunger and thirst (added per game hour), openness, and flipTag (a tag
 // on what they're served counts as another). Ale and cider's openness reaches whoever drinks them.
 
-import { SNACKS, dishData } from "./data.js";
+import { HOT_FIRE, SNACKS, dishData } from "./data.js";
 import type { DishEffect } from "./gamedata.js";
 import { ECONOMY_DATA } from "./gamedata.gen.js";
 import type { Game, Patron } from "./game.js";
+import { overheated } from "./needs.js";
 import { tagScore } from "./tastes.js";
 
 /** The bowl a guest is eating from, if any: on their table, not empty, and to their taste. */
@@ -28,7 +29,7 @@ export function bowlEffects(g: Game, p: Patron): DishEffect[] {
 const sum = (effects: DishEffect[], k: "patience" | "hunger" | "thirst" | "openness") => effects.reduce((a, e) => a + (e[k] ?? 0), 0);
 
 /** How long they'll wait, with the bowl's patience. */
-export const patienceOf = (g: Game, p: Patron): number => p.patience * (1 + sum(bowlEffects(g, p), "patience")) * (g.dark ? ECONOMY_DATA.upkeep.lampOil.darkPatience : 1);
+export const patienceOf = (g: Game, p: Patron): number => p.patience * (1 + sum(bowlEffects(g, p), "patience")) * (g.dark ? ECONOMY_DATA.upkeep.lampOil.darkPatience : 1) * (1 - HOT_FIRE.patience * overheated(g, p));
 /** Hunger and thirst the bowl adds, per game hour. */
 export const bowlNeeds = (g: Game, p: Patron) => { const e = bowlEffects(g, p); return { hunger: sum(e, "hunger"), thirst: sum(e, "thirst") }; };
 /** Their openness: their own, the bowl's, and what they've drunk this visit. */

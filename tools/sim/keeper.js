@@ -179,7 +179,9 @@
       if (g.open && !g.lastCall && g.minute >= (OPT.lastCallAt ?? 1110)) day.toggleInn(g);
       if (g.lastCall && g.patrons.length === 0 && g.minute > 1110) day.toggleInn(g);
       const coldOrWet = g.date.season === "winter" || g.weather.rain > 0;
-      if (!g.fireLit && g.open && upkeep.hasFirewood(g) && (coldOrWet || g.hour >= 17 || g.hour < 2)) g.fireLit = true;
+      const hot = weather.weatherTags(g).includes("hot");
+      if (!g.fireLit && g.open && !hot && upkeep.hasFirewood(g) && (coldOrWet || g.hour >= 17 || g.hour < 2)) g.fireLit = true;
+      if (g.fireLit && hot && !OPT.fireWhenHot) g.fireLit = false;
       if (g.fireLit && !g.open) g.fireLit = false;
       act();
       if (g.open) openMin += dt;

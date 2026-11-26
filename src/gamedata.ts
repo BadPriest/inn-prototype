@@ -154,6 +154,7 @@ export interface LocationData {
   marketDay?: string;
   streetSound: "streetTown" | "streetCountry";
   suppliers: ({ id: string } & SupplierFields)[];
+  history?: { yearsAgo: number; lines: string[] }[];
   text: { cardChips: string[]; card: string; back?: string };
 }
 export interface LocationsData { locations: LocationData[] }

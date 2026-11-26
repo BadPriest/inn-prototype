@@ -7,7 +7,7 @@
 import { bowlNeeds } from "./snacks.js";
 import { organic } from "./core.js";
 import { orderable } from "./readymade.js";
-import { NEED_IDS, NEEDS, RECIPES, SNACKS, SOAKING, WEATHER, type NeedId, type NeedLevels } from "./data.js";
+import { HOT_FIRE, NEED_IDS, NEEDS, RECIPES, SNACKS, SOAKING, WEATHER, type NeedId, type NeedLevels } from "./data.js";
 import type { Game, Patron, UnmetStretch } from "./game.js";
 import { dist } from "./world.js";
 
@@ -38,6 +38,11 @@ function fireWarmth(g: Game, p: Patron): number {
   return clamp01(1 - dist(p.pos, at) / fireReach(g));
 }
 
+/** A lit fire on a hot day (HOT_FIRE): 1 at the hearth, fading to 0 at the edge of its reach; 0 on a day that isn't hot. */
+export function overheated(g: Game, p: Patron): number {
+  return g.weather.tempStep >= WEATHER.temperature.hotTagAt ? fireWarmth(g, p) : 0;
+}
+
 /** What's going on for this patron that bears on this need, right now. */
 function circumstances(g: Game, p: Patron, need: NeedId): string[] {
   const out: string[] = [];
@@ -46,6 +51,7 @@ function circumstances(g: Game, p: Patron, need: NeedId): string[] {
   if (need === "warmth") {
     const at = firePos(g);
     if (!g.fireLit) out.push("fire out");
+    else if (overheated(g, p) > 0) out.push("too hot by the fire");
     else if (at && dist(p.pos, at) > fireReach(g)) out.push("far from the fire");
     if (p.soaked > 0.2) out.push("soaked");
     return out;
@@ -95,6 +101,7 @@ export function updateNeeds(g: Game, simDt: number): void {
     for (const need of NEED_IDS) n[need] += NEEDS.risePerHour[need] * hours;
     const atFire = fireWarmth(g, p);
     n.warmth -= (NEEDS.indoorWarmthPerHour + NEEDS.fire.warmthPerHour * atFire) * hours;
+    p.stayUntil -= HOT_FIRE.stayLostPerHour * overheated(g, p) * hours;
     // Wet through: they dry off (fast by the fire), and until then the wet keeps them cold.
     if (p.soaked > 0) {
       n.warmth += SOAKING.chillPerHour * p.soaked * hours;
