@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 26, 2026 · build 125 (deployed) · https://inn-prototype.vercel.app
+Updated Nov 26, 2026 · build 126 (deployed) · https://inn-prototype.vercel.app
 
 History by build: [../CHANGELOG.md](../CHANGELOG.md). What the prototype is and how to play: [../README.md](../README.md).
 
@@ -26,7 +26,9 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
 
-## Built and deployed (Nov 26, build 125)
+## Built and deployed (Nov 26, builds 125–126)
+
+- Build 126: a blue-to-red thermometer on the status card beside the weather
 
 - #107 climate: each location's weather and temperature per calendar season; temperature in six steps through the day (status card, newspaper, the `cold` tag); the light turns blue and frosty when cold, golden when hot; muddy and wet prints from the door; in review
 - #112 day length: one smooth curve through the year (midsummer full daylight 7–18, midwinter 9:30–15:30); in review

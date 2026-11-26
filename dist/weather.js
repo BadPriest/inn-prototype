@@ -289,14 +289,23 @@ export function weatherTags(g) {
         tags.push("cold");
     return tags;
 }
-/** "🌧️ Rain · Cool", "❄️ Blizzard · Freezing", "🌙 Clear · Cold". */
-export function weatherLabel(g) {
+/** "🌧️ Rain", "❄️ Blizzard", "🌙 Clear". */
+export function skyLabel(g) {
     const w = g.weather;
     const b = shownBand(w);
     if (b)
-        return `${b.icon} ${b.name} · ${temperatureName(g)}`;
+        return `${b.icon} ${b.name}`;
     const s = WEATHER.skies[w.sky];
-    return `${g.timeOfDay === "night" ? s.nightIcon : s.icon} ${s.name} · ${temperatureName(g)}`;
+    return `${g.timeOfDay === "night" ? s.nightIcon : s.icon} ${s.name}`;
+}
+/** "🌧️ Rain · Cool", "❄️ Blizzard · Freezing", "🌙 Clear · Cold". */
+export function weatherLabel(g) {
+    return `${skyLabel(g)} · ${temperatureName(g)}`;
+}
+/** Where the outdoor temperature sits from freezing (0) to hot (1), each step a sixth of the way. */
+export function temperatureLevel(g) {
+    const w = g.weather, lo = w.tempStep - 0.5, hi = w.tempStep + 0.5;
+    return (Math.max(lo, Math.min(hi, w.temp)) + 0.5) / T.steps.length;
 }
 /** What the keeper sees on waking. */
 export function morningLine(g) {

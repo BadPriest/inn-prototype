@@ -6,6 +6,11 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 126 · Nov 26, 2026 · deployed
+
+### Added
+- **A thermometer on the status card.** Beside the weather, a small thermometer shows the temperature at a glance: the bulb is blue when it's freezing and red when it's hot, and the tube fills from left to right. Each of the six steps takes a sixth of the tube, and within a step the level follows the actual temperature, so you can watch it climb through the morning. The step's name stays beside it.
+
 ## Build 125 · Nov 26, 2026 · deployed
 
 ### Added

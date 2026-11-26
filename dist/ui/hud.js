@@ -5,7 +5,7 @@ import { ARCHETYPES, MEALS, NEED_IDS, REGULARS, TIME_WORDS, TUNING } from "../da
 import { unmetLogText } from "../needs.js";
 import { isMuted, voicesNow } from "../sound/engine.js";
 import { compactDate, shortDate } from "../calendar.js";
-import { forceWeather, weatherLabel, weatherTags } from "../weather.js";
+import { forceWeather, skyLabel, temperatureLevel, temperatureName, weatherLabel, weatherTags } from "../weather.js";
 import { shelterFactor, spawnRegular, spawnVisitors } from "../patrons.js";
 import { emptyTastes } from "../game.js";
 import { resetSave } from "../day.js";
@@ -89,7 +89,11 @@ function updateStatus(g) {
     el.querySelector(".st-day").textContent = d.weekday;
     el.querySelector(".st-date").textContent = shortDate(d);
     el.querySelector(".st-time b").textContent = g.clockText();
-    el.querySelector(".st-wx").textContent = weatherLabel(g);
+    el.querySelector(".st-wx").textContent = skyLabel(g);
+    const temp = el.querySelector(".st-temp");
+    temp.style.setProperty("--t", temperatureLevel(g).toFixed(3));
+    temp.title = `Outside: ${temperatureName(g).toLowerCase()}`;
+    temp.querySelector(".th-name").textContent = temperatureName(g);
     // Redrawn only when the purse changes (it's HTML now: the coins).
     const purse = el.querySelector(".st-purse");
     if (purse.dataset.v !== String(g.purse)) {
