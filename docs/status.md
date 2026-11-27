@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 27, 2026 · build 132 (deployed) · https://inn-prototype.vercel.app
+Updated Nov 27, 2026 · build 133 (deployed) · https://inn-prototype.vercel.app
 
 History by build: [../CHANGELOG.md](../CHANGELOG.md). What the prototype is and how to play: [../README.md](../README.md).
 
@@ -26,7 +26,9 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
 
-## Built and deployed (Nov 27, build 132)
+## Built and deployed (Nov 27, builds 132–133)
+
+- #117 airing and building work: open and close any window (the warmth goes out, the draught cools; the log says when it's stuffy); Building Work at the desk books draught-proofing, lath and plaster, storm windows in order (insulation -1 → 2; the bigger jobs shut the inn a day); in review. The weather basics are tagged `weather-basics-finalized`
 
 - #110 a colder tavern: the room has its own temperature (outside, the leaky building at insulation -1, the fire, heaters, the crowd); a cold patch at the door that flares as it opens; guests arrive colder, chill or warm by the room against what they're used to, shiver, seek warm seats; a warm room draws people in on cold days and keeps them; too hot anywhere roasts; brazier, pot-belly and parlour stove in Hearth and heating; Innsight washes the floor blue to amber; in review
 
@@ -142,7 +144,7 @@ Get in what the big epics are missing, then polish and iron out.
 - **Epics:** #101 mood · #100 weather through the full seasons (weather and climate, lighting) · #56 staff (soon) · #18 patron schedules (waits on #10) · #102 taproom card game · #103 taproom activities · #105 events · progression: #44 expansion and #45 reputation
 - **Later:** #87 advanced cooking (takes time), with #115 preservation (potted meat under butter) and #116 period dishes; guests are good enough for now; day bookends (#40, #41) are for the future
 - **Design sessions this week:** graded Delights (#92) and staff (#56); agendas below
-- **Weather and climate (#100, decided Nov 25):** #107 climate by location and calendar season, temperature in named steps through the day (first) · #108 snow as weather · #109 world tags (built, in review) · #110 a colder tavern on a cold day (room warmth, heaters, Innsight colours: built, in review; upgrades in #117, snow on boots in #118) · #111 climate in trade (built, in review) · #112 day length, one curve
+- **Weather and climate (#100, decided Nov 25):** #107 climate by location and calendar season, temperature in named steps through the day (first) · #108 snow as weather · #109 world tags (built, in review) · #110 a colder tavern on a cold day (room warmth, heaters, Innsight colours: built, in review) · #117 open windows and building work (built, in review) · #111 climate in trade (built, in review) · #112 day length, one curve
 
 ## Next: the economy (from the Nov 17 session)
 
@@ -179,12 +181,6 @@ In build order. Each waits on the one it builds on.
 - Do they make mistakes, and are they funny ones, like wear?
 - Days off, falling ill, leaving.
 - The smallest first version for the prototype.
-
-**#117 Insulation and ventilation** (the building upgrades left from #110)
-- **What's there now:** the room's warmth reads the building's insulation, -2 leaky … 2 snug; every inn starts at -1 and nothing changes it yet. Heaters (a brazier, a pot-belly stove, a parlour stove) are sold in the shop's Hearth and heating tab.
-- Where upgrades are sold: there are already many buying screens. The shop, a builder who calls, or with expansion (#44)?
-- Which come first: draught-proofing, insulation, ventilation; skins and blankets on the tables?
-- Days closed for the work: how many, and how the keeper chooses when.
 
 **#46 Economy and suppliers**: held Nov 17 ([journal](design-session-journal_economy_nov-17.md)), filed as #58–#69 (see "Next" above). Open from it:
 - How progression is gated ("earn the chance, then buy it" isn't agreed; alternatives to come).

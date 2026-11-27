@@ -55,6 +55,8 @@ export class World {
   seats: Seat[] = [];
   tables: Table[] = [];
   frontDoor: Vec = { x: 0, y: 0 };
+  /** Window tiles in the walls, which the keeper can open and close. */
+  windows: Vec[] = [];
   bedSide: Vec = { x: 2, y: 2 };
 
   /** Which inn this is (its map). */
@@ -74,6 +76,7 @@ export class World {
         return { x, y, ch, def, keeperWalk, patronWalk, base: ch };
       }),
     );
+    for (const row of this.tiles) for (const t of row) if (t.def.name === "Window") this.windows.push({ x: t.x, y: t.y });
     this.placeEquipment(placed);
     this.buildFurniture();
     this.buildSeats();

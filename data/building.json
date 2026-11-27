@@ -1,0 +1,11 @@
+{
+  "$schema": "./schemas/building.schema.json",
+  "upgrades": [
+    { "id": "draughtProofing", "name": "Draught-proofing", "icon": "🪟", "price": 150, "insulation": 0, "daysClosed": 0,
+      "text": "Felt strips round the doors and fresh putty in every gap of the window frames. The builder's done by morning; the inn needn't shut." },
+    { "id": "limePlaster", "name": "Lath and plaster", "icon": "🧱", "price": 600, "insulation": 1, "daysClosed": 1,
+      "text": "The bare boards lined with lath and lime plaster, the cracks stopped with horsehair. The builders need the inn for a day." },
+    { "id": "stormWindows", "name": "Storm windows", "icon": "🏠", "price": 1200, "insulation": 2, "daysClosed": 1,
+      "text": "A second sash outside every window, and a felted inner door. The warmth stays in, the heat of summer stays out, and the windows still open. The builders need the inn for a day." }
+  ]
+}

@@ -1,6 +1,6 @@
 // The autopilot keeper: runs the real game for some days in headless Chrome and reports the money,
 // the guests by hour, and how often serves delight.
-//   node tools/sim/run.mjs [--days 7] [--level cheap|fair|dear] [--keeper random|learner] [--walk 1] [--location mountainside] [--season winter] [--heater potBellyStove] [--json out.json]
+//   node tools/sim/run.mjs [--days 7] [--level cheap|fair|dear] [--keeper random|learner] [--walk 1] [--location mountainside] [--season winter] [--heater potBellyStove] [--windows] [--json out.json]
 // Needs a fresh standalone.html (node tools/build.mjs --no-bump) and Chrome (CHROME=path to override).
 import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
@@ -16,6 +16,7 @@ const opts = { level: args.level ?? "fair", keeper: args.keeper ?? "random", wal
 if (args.menu) opts.menu = String(args.menu).split(",");
 if (args.fireWhenHot) opts.fireWhenHot = true;
 if (args.heater) opts.heater = String(args.heater);
+if (args.windows) opts.windows = true;
 
 const chromePath = process.env.CHROME ?? "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const profile = mkdtempSync(join(tmpdir(), "inn-sim-"));

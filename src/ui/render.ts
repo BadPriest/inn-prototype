@@ -6,7 +6,7 @@ import { RECIPES, SNACKS, SOAKING, TUNING, WEATHER, PIE_SAFE_CAPACITY } from "..
 import type { Game, Patron } from "../game.js";
 import { spotOf, type Target } from "../interact.js";
 import { iconFor, TRAY_COLOUR, trayLook } from "../serving.js";
-import { drawLight } from "./light.js";
+import { OPEN_WINDOW, drawLight } from "./light.js";
 import { footprintsToDraw } from "../tracks.js";
 import { RING_TRACK, ringColor } from "./tickets.js";
 import { walkoutProgress } from "../patrons.js";
@@ -71,6 +71,11 @@ export function draw(ctx: CanvasRenderingContext2D, g: Game, v: View, target: Ta
         ctx.moveTo(X(t.x) + 3, Y(t.y) + ts / 2); ctx.lineTo(X(t.x) + ts - 3, Y(t.y) + ts / 2);
         ctx.stroke();
         ctx.lineWidth = 1;
+        if (g.windowsOpen.has(`${t.x},${t.y}`)) {
+          // Open: the lower sash pushed up, the air beyond showing through.
+          ctx.fillStyle = OPEN_WINDOW;
+          ctx.fillRect(X(t.x) + 4, Y(t.y) + ts / 2 + 1, ts - 8, ts / 2 - 5);
+        }
       }
       if (t.def.kind !== "wall") {
         ctx.strokeStyle = "rgba(0,0,0,0.08)";

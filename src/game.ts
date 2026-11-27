@@ -286,6 +286,11 @@ export class Game {
   heatersLit = new Set<string>();
   /** How well the building keeps its warmth: -2 leaky … 2 snug (ROOM.insulation). */
   insulation = ROOM.insulation.start;
+  /** Building work finished (building.json ids), and the work booked or under way: the days the builders are in. */
+  buildingDone: string[] = [];
+  works: { id: string; from: number; until: number } | null = null;
+  /** Windows standing open now, by tile ("x,y"). */
+  windowsOpen = new Set<string>();
   /** The room's warmth in temperature steps (null until first worked out), and the cold rushing in at the door (1 just opened, 0 settled). */
   room = { temp: null as number | null, flare: 0 };
   noFirewood = false; // a wood stove wants wood and there's none: its cooking stops

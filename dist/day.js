@@ -4,6 +4,7 @@ import { payLicence } from "./upkeep.js";
 import { chargeWear } from "./wear.js";
 import { placeStanding, supplierDays } from "./supplies.js";
 import { carterSetsOut, roadsThisMorning } from "./roads.js";
+import { shutForWork, worksThisMorning } from "./building.js";
 import { MEALS, TUNING, currentEquipmentId, pieceById, EQUIPMENT, currentDishId, RECIPES, DEFAULT_MENU } from "./data.js";
 import { emptyStats } from "./game.js";
 import { defaultLayout, setOnStove } from "./world.js";
@@ -61,6 +62,10 @@ export function updateClock(g, simDt, onTurnIn) {
     }
 }
 export function toggleInn(g) {
+    if (!g.open && shutForWork(g)) {
+        g.say("🔨 The builders are in today: the inn can't open until they're done.");
+        return;
+    }
     if (!g.open) {
         g.open = true;
         g.lastCall = false;
@@ -118,6 +123,8 @@ export function startNextDay(g) {
         g.bus.emit({ type: "CalendarSeasonChanged", season: s.id });
     }
     roadsThisMorning(g);
+    g.windowsOpen.clear();
+    worksThisMorning(g);
     beginDay(g);
     carterSetsOut(g); // yesterday's orders: by 8, unless the roads keep him
     placeStanding(g);
@@ -153,7 +160,7 @@ export function save(g) {
         const history = g.history.map((d, i) => (i < g.history.length - 14 ? { ...d, unmet: undefined } : d));
         localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, calendarStart: g.calendarStart, location: g.location, inn: g.inn, weather: g.weather, history, regulars, visitorNotes: g.visitorNotes,
             menu: [...g.menu], menuChosen: g.menuChosen,
-            layout: g.layout, mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives, walkthroughStep: g.walkthrough?.step, known: [...g.known], pointsSpent: g.pointsSpent, xp: g.xp, knacks: g.knacks, seasoning: g.seasoning, tinkerCalls: g.tinkerCalls, tinkerStock: g.tinkerStock, usedWaiting: g.usedWaiting, tinkerStockedDay: g.tinkerStockedDay, newSkills: g.newSkills, crates: g.crates, coat: g.coat, under: g.under, newGear: g.newGear, insulation: g.insulation,
+            layout: g.layout, mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives, walkthroughStep: g.walkthrough?.step, known: [...g.known], pointsSpent: g.pointsSpent, xp: g.xp, knacks: g.knacks, seasoning: g.seasoning, tinkerCalls: g.tinkerCalls, tinkerStock: g.tinkerStock, usedWaiting: g.usedWaiting, tinkerStockedDay: g.tinkerStockedDay, newSkills: g.newSkills, crates: g.crates, coat: g.coat, under: g.under, newGear: g.newGear, insulation: g.insulation, buildingDone: g.buildingDone, works: g.works,
             purse: g.purse, priceLevel: g.priceLevel, onOrder: g.onOrder, toPlace: g.toPlace, lots: g.lots, slips: g.slips, lastSlips: g.lastSlips, deliveries: g.deliveries, standing: g.standing, standingSkips: g.standingSkips, deliveryLog: g.deliveryLog, roads: g.roads, carter: g.carter }));
     }
     catch { /* storage unavailable: carry on */ }
@@ -228,6 +235,8 @@ export function load(g) {
         g.under = s.under ?? "linen";
         g.newGear = Array.isArray(s.newGear) ? s.newGear : [];
         g.insulation = typeof s.insulation === "number" ? s.insulation : ROOM.insulation.start;
+        g.buildingDone = Array.isArray(s.buildingDone) ? s.buildingDone : [];
+        g.works = s.works ?? null;
         g.seasoning = s.seasoning ?? {};
         g.tinkerCalls = s.tinkerCalls ?? [];
         g.tinkerStock = s.tinkerStock ?? [];

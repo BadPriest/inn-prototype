@@ -11,7 +11,7 @@ import { have } from "../stock.js";
 import { RECIPES, SNACKS, SOAKING, TUNING, WEATHER, LIGHT, PIE_SAFE_CAPACITY } from "../data.js";
 import { spotOf } from "../interact.js";
 import { iconFor, TRAY_COLOUR, trayLook } from "../serving.js";
-import { drawLight, flakeAt, frost, snowAtWindow, windowColor } from "./light.js";
+import { OPEN_WINDOW, drawLight, flakeAt, frost, snowAtWindow, windowColor } from "./light.js";
 import { footprintsToDraw } from "../tracks.js";
 import { drawLevelUp } from "./levelup.js";
 import { coatColor, eyeColor, underColor } from "./wardrobe.js";
@@ -458,6 +458,18 @@ function drawSolid(ctx, g, v, s, byTile) {
         else
             floorPath(ctx, v, t.x, t.y, 1, 1, 0.18, s.z);
         ctx.fill();
+        if (g.windowsOpen.has(`${t.x},${t.y}`)) {
+            // Open: the lower sash pushed up, the air beyond showing through.
+            const zm = (z0 + z1) / 2;
+            ctx.fillStyle = OPEN_WINDOW;
+            if (s.z === TALL && Math.round(w) === 0)
+                poly(ctx, [Pt(v, u + m, w + 1, zm), Pt(v, u + 1 - m, w + 1, zm), Pt(v, u + 1 - m, w + 1, z0), Pt(v, u + m, w + 1, z0)]);
+            else if (s.z === TALL)
+                poly(ctx, [Pt(v, u + 1, w + m, zm), Pt(v, u + 1, w + 1 - m, zm), Pt(v, u + 1, w + 1 - m, z0), Pt(v, u + 1, w + m, z0)]);
+            else
+                floorPath(ctx, v, t.x, t.y, 1, 1, 0.3, s.z);
+            ctx.fill();
+        }
         const f = frost(g);
         if (f > 0) {
             ctx.strokeStyle = `rgba(255,255,255,${0.7 * f})`;

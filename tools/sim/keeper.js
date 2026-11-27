@@ -196,6 +196,11 @@
         if (g.open && !hot && room < 2.3 && upkeep.hasFirewood(g)) g.heatersLit.add("simHeater");
         if (!g.open || hot || room > 3.2) g.heatersLit.delete("simHeater");
       }
+      if (OPT.windows) {
+        const room = warmth.roomTemp(g);
+        if (room >= 4 && !g.windowsOpen.size) for (const w of g.world.windows) g.windowsOpen.add(`${w.x},${w.y}`);
+        if (room < 3 || !g.open) g.windowsOpen.clear();
+      }
       if (g.open) { T.roomSum += warmth.roomTemp(g); T.outSum += g.weather.temp; T.roomN++; const inside = g.patrons.filter((p) => p.state !== "leaving"); T.guestN += inside.length; T.shiverN += inside.filter((p) => warmth.shiverOf(p) > 0).length; }
       act();
       if (g.open) openMin += dt;

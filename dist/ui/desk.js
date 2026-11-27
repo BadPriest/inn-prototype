@@ -12,6 +12,8 @@ import { openNewspaper } from "./newspaper.js";
 import { openCalendar } from "./calendar.js";
 import { openSupplies } from "./supplies.js";
 import { openDeliveries } from "./deliveries.js";
+import { openBuildingWork } from "./building.js";
+import { insulationName, nextWork } from "../building.js";
 import { whenText } from "../supplies.js";
 import { SUPPLIERS_DATA } from "../gamedata.gen.js";
 import { ingredientsHtml } from "./cook.js";
@@ -80,6 +82,12 @@ export function openDeskScreen(g, openJournal) {
                 tone: g.toPlace.length ? "warn" : undefined,
                 body: `<div class="desc">Move, place or sell back.</div>`, detail: `Move your equipment, place what came, or sell a piece back for ${SELL_BACK_SHARE_WORDS} its price. The clock stops.`,
                 cta: "Arrange" },
+            { pick: "building", icon: "🔨", name: "Building Work",
+                fact: g.works ? (g.day >= g.works.from ? "The builders are in" : "🔨 Builders booked") : nextWork(g) ? `Next: ${nextWork(g).name}` : "All done",
+                status: `The building is ${insulationName(g.insulation)}`,
+                tone: g.works ? "good" : undefined,
+                body: `<div class="desc">Make the old place snugger.</div>`, detail: `Work on the inn itself: draught-proofing, plaster, storm windows. A snugger building keeps the warmth in.`,
+                cta: "See the work" },
             { pick: "skills", icon: "📚", name: "Skills", warn: pointsLeft(g) > 0,
                 fact: pointsLeft(g) ? `✦ ${n(pointsLeft(g), "point")} to spend` : `Level ${levelOf(g)} · ${n(g.known.size, "recipe")}`,
                 status: `Next point: ${Math.floor((progress.have / Math.max(1, progress.need)) * 100)}% there`,
@@ -118,6 +126,10 @@ export function openDeskScreen(g, openJournal) {
             else if (v === "arrange") {
                 closeAll();
                 startArranging(g);
+            }
+            else if (v === "building") {
+                g.bus.emit({ type: "MenuSound", sound: "penClick" });
+                openBuildingWork(g);
             }
             else if (v === "skills") {
                 g.bus.emit({ type: "MenuSound", sound: "penClick" });

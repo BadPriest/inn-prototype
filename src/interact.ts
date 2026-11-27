@@ -2,7 +2,7 @@
 
 import { have } from "./stock.js";
 import { hasFirewood } from "./upkeep.js";
-import { roomName } from "./warmth.js";
+import { roomName, stepName, toggleWindow } from "./warmth.js";
 import { setOut } from "./readymade.js";
 import { organic } from "./core.js";
 import { knack } from "./skills.js";
@@ -33,11 +33,12 @@ export type Target =
   | { type: "patron"; p: Patron }
   | { type: "spill"; s: Spill }
   | { type: "tray"; t: SetDownTray }
-  | { type: "crate"; c: Crate };
+  | { type: "crate"; c: Crate }
+  | { type: "window"; x: number; y: number };
 
 /** Where a spill, set-down tray or crate is: its tile's centre. */
 export const spotOf = (t: Target): { x: number; y: number } | null =>
-  t.type === "spill" ? { x: t.s.x + 0.5, y: t.s.y + 0.5 } : t.type === "tray" ? { x: t.t.x + 0.5, y: t.t.y + 0.5 } : t.type === "crate" ? { x: t.c.x + 0.5, y: t.c.y + 0.5 } : null;
+  t.type === "spill" ? { x: t.s.x + 0.5, y: t.s.y + 0.5 } : t.type === "tray" ? { x: t.t.x + 0.5, y: t.t.y + 0.5 } : t.type === "crate" ? { x: t.c.x + 0.5, y: t.c.y + 0.5 } : t.type === "window" ? { x: t.x + 0.5, y: t.y + 0.5 } : null;
 
 export function targetId(t: Target | null): string | null {
   if (!t) return null;
@@ -45,11 +46,12 @@ export function targetId(t: Target | null): string | null {
   if (t.type === "spill") return `spill:${t.s.id}`;
   if (t.type === "tray") return `tray:${t.t.id}`;
   if (t.type === "crate") return `crate:${t.c.id}`;
+  if (t.type === "window") return `window:${t.x},${t.y}`;
   return `patron:${t.p.id}`;
 }
 
 export function targetName(t: Target): string {
-  return t.type === "furniture" ? (t.part ? `${t.f.name}: ${t.part.name.toLowerCase()}` : t.f.name) : t.type === "spill" ? "Spill" : t.type === "tray" ? "Tray" : t.type === "crate" ? "Crate of supplies" : t.p.name;
+  return t.type === "furniture" ? (t.part ? `${t.f.name}: ${t.part.name.toLowerCase()}` : t.f.name) : t.type === "spill" ? "Spill" : t.type === "tray" ? "Tray" : t.type === "crate" ? "Crate of supplies" : t.type === "window" ? "Window" : t.p.name;
 }
 
 /** How many people at this table are waiting on an order. */
@@ -119,6 +121,7 @@ export function findTargets(g: Game): Target[] {
   // Set-down trays win over the table or counter they sit on.
   for (const t of g.setDown) consider({ type: "tray", t }, { x: t.x + 0.45, y: t.y + 0.45 }, 1.5);
   for (const c of g.crates) consider({ type: "crate", c }, { x: c.x + 0.5, y: c.y + 0.5 }, 1.4);
+  for (const w of g.world.windows) consider({ type: "window", x: w.x, y: w.y }, { x: w.x + 0.5, y: w.y + 0.5 }, FURNITURE_RANGE, 0.05);
   found.sort((a, b) => a.s - b.s);
   // Uninteresting furniture (walls of the room, as it were) doesn't crowd the choice.
   const quiet = new Set(["wardrobe", "coats"]);
@@ -140,6 +143,7 @@ export function promptFor(g: Game, t: Target | null): string {
     return `Space: pick up the tray (${t.t.tray.items.map((i) => i.name).join(", ")})`;
   }
   if (t.type === "crate") return "Space: unpack the crate into the pantry";
+  if (t.type === "window") return `${g.windowsOpen.has(`${t.x},${t.y}`) ? "Space: close the window" : "Space: open the window"} · room ${roomName(g)}, outside ${stepName(g.weather.temp)}`;
   if (t.type === "spill") return g.cleaning ? `Mopping… ${Math.floor((g.cleaning.progress / g.cleaning.total) * 100)}%` : "Hold Space or the mouse: mop up the spill";
   if (t.type === "patron") {
     const o = g.order(t.p.orderId);
@@ -222,6 +226,7 @@ export function interact(g: Game, t: Target | null): void {
   if (!t) return;
   if (t.type === "spill") return; // cleaning is a hold, handled each frame
   if (t.type === "crate") { unpackCrate(g, t.c); return; }
+  if (t.type === "window") { toggleWindow(g, t.x, t.y); return; }
   if (t.type === "tray") {
     // A tray on a table where people are waiting: serve them from it. Otherwise pick it up.
     const table = g.world.tableAt(t.t.x, t.t.y);

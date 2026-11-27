@@ -174,3 +174,6 @@ export interface SkillsData {
   recipes: { dish: string; points: number }[];
   knacks: Knack[];
 }
+
+export interface BuildingUpgrade { id: string; name: string; icon: string; price: Pence; insulation: number; daysClosed: number; text: string }
+export interface BuildingData { upgrades: BuildingUpgrade[] }

@@ -512,6 +512,12 @@ export const ROOM = {
     draw: { outsideBelow: 2.5, perStep: 0.08, most: 0.25 }, // a cold day: passers-by come in for the warmth, by how much warmer the room is than outside
     cosy: { outsideBelow: 2.5, stayPerHour: 20 }, // a cold day, warm where they sit: game minutes of stay added per hour
     seekWarmth: 1.2, // a cold guest leans towards a seat this much more for each step warmer it is
+    windows: {
+        perWindow: 0.25, // airing from each open window, up to 1
+        heatLost: 0.6, // fully aired: this share of the warmth from what's lit and from the guests goes out of the windows
+        breeze: 0.8, // fully aired: the draught makes the room feel this many steps cooler
+        stuffyFrom: 4.3, // the room this warm or over, with every window shut: the keeper's told to air it (once a day)
+    },
 };
 /**
  * Asking for it by name: some guests order a particular leaf or bean ("Mint tea", "Coffee, dark roast"):

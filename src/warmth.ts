@@ -28,11 +28,34 @@ export function heatSources(g: Game): HeatSource[] {
 
 const guestsInside = (g: Game) => g.patrons.filter((p) => p.state !== "leaving").length;
 
-/** Where the room is heading: the outside pulled towards comfortable, what's lit (kept by the insulation), the guests. */
+/** How aired the room is: 0 with every window shut, 1 with enough of them open. */
+export const airing = (g: Game): number => Math.min(1, g.windowsOpen.size * ROOM.windows.perWindow);
+
+/**
+ * Where the room is heading: the outside pulled towards comfortable, what's lit (kept by the insulation), the guests.
+ * Open windows let the outside in, let the warmth out, and the draught cools.
+ */
 export function roomTarget(g: Game): number {
-  const i = insulationIndex(g), out = g.weather.temp;
-  const heat = heatSources(g).reduce((a, s) => a + s.room, 0);
-  return out + (ROOM.comfortable - out) * ROOM.insulation.pull[i] + heat * ROOM.insulation.keep[i] + Math.min(ROOM.guestsMost, ROOM.perGuest * guestsInside(g));
+  const i = insulationIndex(g), out = g.weather.temp, air = airing(g);
+  const heat = heatSources(g).reduce((a, s) => a + s.room, 0) * ROOM.insulation.keep[i] + Math.min(ROOM.guestsMost, ROOM.perGuest * guestsInside(g));
+  return out + (ROOM.comfortable - out) * ROOM.insulation.pull[i] * (1 - air) + heat * (1 - ROOM.windows.heatLost * air) - ROOM.windows.breeze * air;
+}
+
+/** Open a window, or close it. */
+export function toggleWindow(g: Game, x: number, y: number): void {
+  const key = `${x},${y}`;
+  if (g.windowsOpen.delete(key)) { g.say("You close the window."); return; }
+  g.windowsOpen.add(key);
+  const out = g.weather.temp;
+  g.say(out < ROOM.comfortable - 1 ? "You open the window. Cold air pours in." : out > ROOM.comfortable ? "You open the window. Air moves through the room." : "You open the window. Fresh air comes in.");
+}
+
+let saidStuffy = -1;
+/** Every frame: the keeper is told once a day when the room's stuffy with every window shut. */
+export function stuffyRoom(g: Game): void {
+  if (saidStuffy === g.day || g.windowsOpen.size || roomTemp(g) < ROOM.windows.stuffyFrom) return;
+  saidStuffy = g.day;
+  g.say("🪟 It's getting stuffy in here. Open a window or two to let the air through.");
 }
 
 export const roomTemp = (g: Game): number => g.room.temp ?? roomTarget(g);
@@ -47,7 +70,7 @@ export const roomName = (g: Game): string => stepName(roomTemp(g));
 /** Every frame the clock runs: the room settles towards its target; the cold at the door flares while it's open. */
 export function updateRoom(g: Game, simMinutes: number): void {
   const target = roomTarget(g);
-  g.room.temp = g.room.temp === null ? target : g.room.temp + (target - g.room.temp) * Math.min(1, simMinutes / 60 / ROOM.insulation.settleHours[insulationIndex(g)]);
+  g.room.temp = g.room.temp === null ? target : g.room.temp + (target - g.room.temp) * Math.min(1, simMinutes / 60 / (ROOM.insulation.settleHours[insulationIndex(g)] * (1 - 0.5 * airing(g))));
   g.room.flare = g.frontDoor.open ? 1 : Math.max(0, g.room.flare - simMinutes / ROOM.door.flareMinutes);
 }
 

@@ -24,7 +24,7 @@ import { updateWeather } from "./weather.js";
 import { updateTracks } from "./tracks.js";
 import { updateCarter } from "./roads.js";
 import { updateWorld } from "./worldtags.js";
-import { updateRoom } from "./warmth.js";
+import { stuffyRoom, updateRoom } from "./warmth.js";
 import { initLight, updateLamps } from "./ui/light.js";
 import { updateFrontDoor } from "./door.js";
 import { cancelPour, updatePour } from "./serving.js";
@@ -325,6 +325,17 @@ function clickAt(p, slop = 0) {
     if (sp) {
         if (dist(g.keeper.pos, { x: tx + 0.5, y: ty + 0.5 }) > 1.1)
             walkTo({ x: tx, y: ty }, null);
+        return true;
+    }
+    if (g.world.windows.some((w) => w.x === tx && w.y === ty)) {
+        if (dist(g.keeper.pos, { x: tx + 0.5, y: ty + 0.5 }) <= 1.45) {
+            faceTowards({ x: tx + 0.5, y: ty + 0.5 });
+            use({ type: "window", x: tx, y: ty });
+            return true;
+        }
+        const spot = nearestReachable({ x: tx + 0.5, y: ty + 0.5 }, 1.3);
+        if (spot)
+            go(spot, `window:${tx},${ty}`);
         return true;
     }
     // On a touch screen a finger is less exact than a mouse: a tap just off a table's edge counts as on it.
@@ -654,6 +665,8 @@ function inReach(t) {
         return dist({ x: t.c.x + 0.5, y: t.c.y + 0.5 }, k) <= 1.4;
     if (t.type === "spill")
         return dist({ x: t.s.x + 0.5, y: t.s.y + 0.5 }, k) <= 1.2;
+    if (t.type === "window")
+        return dist({ x: t.x + 0.5, y: t.y + 0.5 }, k) <= 1.45;
     return t.f.tiles.some((tt) => dist({ x: tt.x + 0.5, y: tt.y + 0.5 }, k) <= 1.45);
 }
 function targetPos(t) {
@@ -785,6 +798,10 @@ function moveKeeper(dt) {
     }
 }
 function resolveTarget(id) {
+    if (id.startsWith("window:")) {
+        const [x, y] = id.slice(7).split(",").map(Number);
+        return g.world.windows.some((w) => w.x === x && w.y === y) ? { type: "window", x, y } : null;
+    }
     if (id.startsWith("spill:")) {
         const sp = g.spills.find((x) => x.id === Number(id.slice(6)));
         return sp ? { type: "spill", s: sp } : null;
@@ -1270,6 +1287,7 @@ function frame(now) {
         updateLamps(g);
         updateUpkeep(g, sim);
         updateRoom(g, sim);
+        stuffyRoom(g);
         updateCarter(g);
         updateWorld(g);
         updateTinker(g);

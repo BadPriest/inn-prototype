@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Building",
+  "description": "Work on the inn itself, bought at the desk (Building work). Each upgrade raises the building's insulation, which the room's warmth reads; they come in order, each after the one before.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["upgrades"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "upgrades": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "name", "icon", "price", "insulation", "daysClosed", "text"],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/definitions/id" },
+          "name": { "type": "string" },
+          "icon": { "type": "string" },
+          "price": { "$ref": "common.schema.json#/definitions/pence", "description": "What the work costs." },
+          "insulation": { "type": "integer", "minimum": -2, "maximum": 2, "description": "The building's insulation once it's done: -2 leaky … 2 snug." },
+          "daysClosed": { "type": "integer", "minimum": 0, "description": "Days the inn can't open while the builders work, starting the morning after it's bought." },
+          "text": { "type": "string", "description": "What the work is, for the card's back." }
+        }
+      }
+    }
+  }
+}

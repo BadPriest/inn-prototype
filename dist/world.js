@@ -8,6 +8,8 @@ export class World {
     seats = [];
     tables = [];
     frontDoor = { x: 0, y: 0 };
+    /** Window tiles in the walls, which the keeper can open and close. */
+    windows = [];
     bedSide = { x: 2, y: 2 };
     /** Which inn this is (its map). */
     inn;
@@ -23,6 +25,10 @@ export class World {
             const patronWalk = ["floor", "front", "stool", "chair", "bench"].includes(k);
             return { x, y, ch, def, keeperWalk, patronWalk, base: ch };
         }));
+        for (const row of this.tiles)
+            for (const t of row)
+                if (t.def.name === "Window")
+                    this.windows.push({ x: t.x, y: t.y });
         this.placeEquipment(placed);
         this.buildFurniture();
         this.buildSeats();

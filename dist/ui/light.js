@@ -100,6 +100,8 @@ function cast(g) {
     return null;
 }
 /** A window pane's tint: pale with daylight, grey in the rain, dark blue at night; frosted white when freezing, golden when hot. */
+/** What shows through an open window: the air beyond, darker than the glass. */
+export const OPEN_WINDOW = "rgba(14,22,32,0.85)";
 export function windowColor(g) {
     const day = daylight(g);
     const f = frost(g), h = heat(g);

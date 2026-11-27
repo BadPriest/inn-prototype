@@ -6,6 +6,17 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 133 · Nov 27, 2026 · deployed
+
+### Added
+- **Open the windows.** Walk up to any window (or click it) to open or close it; an open one shows the lower sash pushed up. Open windows air the room: its warmth from the fire, the heaters and the guests goes out of them (up to 60% with four or more open), the draught makes it feel up to most of a step cooler, and it settles twice as fast. On a hot day that's how you cool the place down; in winter it costs you the warmth. When the room gets stuffy with every window shut, the log says so, once a day. Windows are closed again each morning.
+- **Building work.** A new card at the desk, 🔨 Building Work, books the builders for work on the inn itself, one job after another. Each makes the building snugger, so it keeps more of the warmth in and more of the summer heat out:
+  - 🪟 **Draught-proofing**, 1 cr 5s: felt strips and fresh putty. Done overnight; the inn opens as usual. The building goes from draughty to fair.
+  - 🧱 **Lath and plaster**, 6 cr: the inn stays shut for a day while the builders are in. Fair to snug.
+  - 🏠 **Storm windows**, 12 cr: shut for a day. Snug to very snug.
+  While the builders are in, the front door won't open. The desk card says how snug the building is.
+- Debug: the autopilot can air the room when it gets warm (`--windows`).
+
 ## Build 132 · Nov 27, 2026 · deployed
 
 ### Added
@@ -15,8 +26,8 @@ From build 92 on, every build that changes the game gets an entry here, with the
 - **A warm room brings them in and keeps them.** On a cold day, a room warmer than the street draws more passers-by (up to 30% more), and a guest sitting comfortably warm stays about 20 minutes longer for every hour.
 - **Heaters.** Three to buy in the shop's Hearth and heating tab, placed on the taproom or entry floor (Arrange) and lit or put out by walking up to them. They burn firewood and glow while lit:
   - 🏮 **Brazier**, 6s: warms the tables right round it. 0.4 logs an hour.
-  - ♨️ **Pot-belly stove**, 22s: warms the room, and the tables beside it bake. 0.8 logs an hour.
-  - ♨️ **Parlour stove**, 48s: warms the whole room evenly. 0.7 logs an hour.
+  - ♨️ **Pot-belly stove**, 2 cr 2s: warms the room, and the tables beside it bake. 0.8 logs an hour.
+  - ♨️ **Parlour stove**, 4 cr 8s: warms the whole room evenly. 0.7 logs an hour.
 - **The temperature in Innsight.** Holding Innsight washes the taproom and entry floor blue where it's cold and amber to red where it's warm. The fireplace card says how warm the room is and how cold it is outside ("room cool · outside freezing"); heater cards say whether they're lit and the wood they burn; guest cards say when someone's too warm.
 - Debug: the autopilot can place and light a heater (`--heater potBellyStove`) and reports the room's warmth and how many guests are shivering.
 
