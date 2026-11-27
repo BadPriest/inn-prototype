@@ -1,6 +1,6 @@
 # Travelling Inn prototype: where we are
 
-Updated Nov 26, 2026 · build 131 (deployed) · https://inn-prototype.vercel.app
+Updated Nov 27, 2026 · build 132 (deployed) · https://inn-prototype.vercel.app
 
 History by build: [../CHANGELOG.md](../CHANGELOG.md). What the prototype is and how to play: [../README.md](../README.md).
 
@@ -25,6 +25,10 @@ Tasks live on the Kanzo board, project **inn** (`inn#N` below), with what was do
 - #9 gramophone: horn and turntable tone; winding has a progress bar; the spring runs ~4 min (short for testing) and sags the record when it gives out (per [specs/sound.md](specs/sound.md))
 - sound settings: Cues and Atmosphere volume, Music on/off (pause screen)
 - #34 tea: boil the kettle for 2–4 cups; guests ask for a leaf or bean by name
+
+## Built and deployed (Nov 27, build 132)
+
+- #110 a colder tavern: the room has its own temperature (outside, the leaky building at insulation -1, the fire, heaters, the crowd); a cold patch at the door that flares as it opens; guests arrive colder, chill or warm by the room against what they're used to, shiver, seek warm seats; a warm room draws people in on cold days and keeps them; too hot anywhere roasts; brazier, pot-belly and parlour stove in Hearth and heating; Innsight washes the floor blue to amber; in review
 
 ## Built and deployed (Nov 26, builds 125–131)
 
@@ -138,7 +142,7 @@ Get in what the big epics are missing, then polish and iron out.
 - **Epics:** #101 mood · #100 weather through the full seasons (weather and climate, lighting) · #56 staff (soon) · #18 patron schedules (waits on #10) · #102 taproom card game · #103 taproom activities · #105 events · progression: #44 expansion and #45 reputation
 - **Later:** #87 advanced cooking (takes time), with #115 preservation (potted meat under butter) and #116 period dishes; guests are good enough for now; day bookends (#40, #41) are for the future
 - **Design sessions this week:** graded Delights (#92) and staff (#56); agendas below
-- **Weather and climate (#100, decided Nov 25):** #107 climate by location and calendar season, temperature in named steps through the day (first) · #108 snow as weather · #109 world tags (built, in review) · #110 a colder tavern on a cold day (later; heating as whole-building upgrades, to design) · #111 climate in trade (built, in review) · #112 day length, one curve
+- **Weather and climate (#100, decided Nov 25):** #107 climate by location and calendar season, temperature in named steps through the day (first) · #108 snow as weather · #109 world tags (built, in review) · #110 a colder tavern on a cold day (room warmth, heaters, Innsight colours: built, in review; upgrades in #117, snow on boots in #118) · #111 climate in trade (built, in review) · #112 day length, one curve
 
 ## Next: the economy (from the Nov 17 session)
 
@@ -176,11 +180,11 @@ In build order. Each waits on the one it builds on.
 - Days off, falling ill, leaving.
 - The smallest first version for the prototype.
 
-**#110 A colder tavern on a cold day** (weather, #100)
-- **What's there now:** how cold a guest walks in depends on who they are (a dockworker, a traveller), not on the day; only rain adds to it (soaked). Inside, the cold eases by 0.05 an hour anywhere, plus up to 0.45 an hour by a lit fire, fading to nothing 6.5 tiles away. The fire carries less far the colder it is out: 60% of that on a freezing day, 75% cold, 90% cool. Warm dishes and drinks ease it too. On a hot day a lit fire drives off whoever sits near it (#109). Firewood burns 1.2 logs an hour whatever the weather. The door opens for every guest but lets nothing in; windows bring daylight and the sound of rain, nothing else.
-- **Decided (Nov 25–27, on the task):** one room warmth for the whole room. Building insulation runs from -2 to 2; a leaky start, with insulation and ventilation bought later as upgrades. The upgrades cost only their price, perhaps with days closed for the work; heaters burn fuel. A cold patch at the door flares to the outside temperature as guests come in; windows aren't cold. Cold guests shiver, may bring snow in, and mostly want to warm up, though some are used to the cold. A warm room draws them in and keeps them. Innsight shows the temperature in colour.
-- **MVP:** room temperature, cold and warm; the Innsight colours; guests reacting to outside and to inside; some heating hardware.
-- **Open:** which heaters (see the period list on the task); where heaters and upgrades are sold.
+**#117 Insulation and ventilation** (the building upgrades left from #110)
+- **What's there now:** the room's warmth reads the building's insulation, -2 leaky … 2 snug; every inn starts at -1 and nothing changes it yet. Heaters (a brazier, a pot-belly stove, a parlour stove) are sold in the shop's Hearth and heating tab.
+- Where upgrades are sold: there are already many buying screens. The shop, a builder who calls, or with expansion (#44)?
+- Which come first: draught-proofing, insulation, ventilation; skins and blankets on the tables?
+- Days closed for the work: how many, and how the keeper chooses when.
 
 **#46 Economy and suppliers**: held Nov 17 ([journal](design-session-journal_economy_nov-17.md)), filed as #58–#69 (see "Next" above). Open from it:
 - How progression is gated ("earn the chance, then buy it" isn't agreed; alternatives to come).

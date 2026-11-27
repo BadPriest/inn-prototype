@@ -4,11 +4,12 @@ import { ECONOMY_DATA } from "./gamedata.gen.js";
 import { opennessOf, patienceOf, showFlip } from "./snacks.js";
 import { orderable } from "./readymade.js";
 import { chance, organic, pick, uid, weightedPick } from "./core.js";
-import { WEATHER, ARCHETYPES, CHATTER, NAMES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING, SHELTER, SEASONAL_TASTES, HOT_FIRE, MARKET, SPECIFIC_ORDERS, VISITOR_TASTES, RARE_LOVE_CHANCE, type NeedId, type Archetype, type TasteSet, type ItemKind, type Regular, garnishesFor, garnishById } from "./data.js";
+import { WEATHER, ARCHETYPES, CHATTER, NAMES, INGREDIENTS, RECIPES, REGULARS, SNACKS, TALK_TUNING, TUNING, WEATHER_NAMES, NEEDS, SOAKING, SHELTER, SEASONAL_TASTES, TOO_HOT, ROOM, MARKET, SPECIFIC_ORDERS, VISITOR_TASTES, RARE_LOVE_CHANCE, type NeedId, type Archetype, type TasteSet, type ItemKind, type Regular, garnishesFor, garnishById } from "./data.js";
 import type { Game, Group, Order, Patron, RegularState } from "./game.js";
 import { emptyTastes } from "./game.js";
 import { appeal, prepareVisit, sample, tagScore } from "./tastes.js";
-import { arrivalNeeds, closeAllStretches, overheated } from "./needs.js";
+import { arrivalNeeds, closeAllStretches } from "./needs.js";
+import { arrivalChill, tooHot, warmthAppeal, warmthDraw, type Seeker } from "./warmth.js";
 import { cameIn, snowyNow, weatherTags } from "./weather.js";
 import { marketDay } from "./newspaper.js";
 import { favouredTags, worldLine } from "./worldtags.js";
@@ -82,27 +83,24 @@ function arrivingWet(g: Game): { soaked: number; snowy: number; soon: number } {
   return { soaked, snowy, soon: clamp01(soaked + snowy * WEATHER.snow.meltWets) };
 }
 
-/** A hot day out: a lit fire is too much (HOT_FIRE). */
-const tooHotForFire = (g: Game) => weatherTags(g).includes("hot");
-
-/** Pick a seat: anyone, or for the soaked, one by a lit fire if they can; on a hot day, away from a lit fire. */
-function pickSeat(g: Game, seats: Seat[], soaked: number): Seat {
-  const fire = g.world.furniture.find((f) => f.kind === "fireplace")?.center;
-  if (fire && g.fireLit && tooHotForFire(g)) return weightedPick(seats, (s) => 1 - HOT_FIRE.seatAvoid * Math.max(0, 1 - dist(s.tile, fire) / SOAKING.fireSeatRange)) ?? pick(seats);
-  if (!fire || !g.fireLit || soaked < 0.15) return pick(seats);
-  return weightedPick(seats, (s) => 1 + SOAKING.fireSeatPull * soaked * Math.max(0, 1 - dist(s.tile, fire) / SOAKING.fireSeatRange)) ?? pick(seats);
+/** Pick a seat: the cold and the wet lean towards the warm ones; nobody picks one that would roast them. */
+function pickSeat(g: Game, seats: Seat[], who: Seeker): Seat {
+  return weightedPick(seats, (s) => warmthAppeal(g, { x: s.tile.x + 0.5, y: s.tile.y + 0.5 }, who)) ?? pick(seats);
 }
 
-function chooseSeat(g: Game, wantsFood: boolean, fussiness: number, soaked = 0): Seat | undefined {
+/** Who's choosing a seat, from how cold and wet they come in and what they feel right at. */
+const seeker = (warmth: number, soaked: number, comfort: number): Seeker => ({ cold: Math.max(warmth, soaked), comfort });
+
+function chooseSeat(g: Game, wantsFood: boolean, fussiness: number, who: Seeker): Seat | undefined {
   const free = g.world.seats.filter((s) => s.occupant === null && s.kind !== "bench" && !(s.table && g.reservations.has(tableKey(s.table))));
   const stools = free.filter((s) => s.kind === "stool");
   // Dirty tables are skipped while a clean one is free; the fussy mind more.
   const chairsAll = free.filter((s) => s.kind === "chair");
   const clean = chairsAll.filter((s) => !tableDirty(g, s));
   const chairs = clean.length ? clean : fussiness > 0.6 ? [] : chairsAll;
-  if (!wantsFood && stools.length && chance(0.6)) return pickSeat(g, stools, soaked);
-  if (chairs.length) return pickSeat(g, chairs, soaked);
-  if (stools.length) return pickSeat(g, stools, soaked);
+  if (!wantsFood && stools.length && chance(0.6)) return pickSeat(g, stools, who);
+  if (chairs.length) return pickSeat(g, chairs, who);
+  if (stools.length) return pickSeat(g, stools, who);
   return undefined;
 }
 
@@ -161,10 +159,11 @@ export function maybeIntroduce(g: Game, p: Patron): void {
 export function spawnPatron(g: Game, archetype?: Archetype, forced?: { seat: Seat; groupId: number }): Patron | null {
   const a = archetype ?? passerBy(g);
   const fussiness = clamp01(organic(a.fussiness));
-  const needs = arrivalNeeds(a.needs);
+  const comfort = organic(a.comfort);
+  const needs = arrivalNeeds(a.needs, arrivalChill(g, comfort));
   const { soaked, snowy, soon } = arrivingWet(g);
   needs.warmth = clamp01(needs.warmth + soon * SOAKING.warmthOnArrival);
-  const seat = forced?.seat ?? chooseSeat(g, hungrier(needs, a.foodBias), fussiness, soon);
+  const seat = forced?.seat ?? chooseSeat(g, hungrier(needs, a.foodBias), fussiness, seeker(needs.warmth, soon, comfort));
   if (!seat) return null;
   const draw = (): TasteSet => {
     const love = a.rareLoves.length && chance(RARE_LOVE_CHANCE) ? [pick(a.rareLoves)] : sample(a.tastes.love, VISITOR_TASTES.love);
@@ -188,6 +187,7 @@ export function spawnPatron(g: Game, archetype?: Archetype, forced?: { seat: Sea
     garnishAsk: a.garnishAsk,
     stayUntil: g.minute + Math.max(20, organic(a.stay)),
     needs,
+    comfort,
     soaked,
     snowy,
     reason: reasonFor(g, needs),
@@ -209,14 +209,13 @@ function rollGroupSize(g: Game): number {
   return weightedPick(sizes, (x) => x.w)?.n ?? 1;
 }
 
-function emptyTableFor(g: Game, size: number, soaked = 0): Table | undefined {
+function emptyTableFor(g: Game, size: number, who: Seeker): Table | undefined {
   const fits = g.world.tables.filter((t) => t.chairs.length >= size && !g.reservations.has(t.key) && t.chairs.every((c) => c.occupant === null));
-  // Clean tables first; then a party in from the rain heads for the fire, if it's lit; else the
+  // Clean tables first; then the warmest a cold party can find, and not one that would roast them; else the
   // smallest table that fits.
-  const fire = g.world.furniture.find((f) => f.kind === "fireplace")?.center;
-  const toFire = (t: Table) => (fire && g.fireLit ? (tooHotForFire(g) ? -dist(t.tile, fire) : soaked >= 0.15 ? dist(t.tile, fire) : 0) : 0);
+  const appeal = (t: Table) => Math.round(warmthAppeal(g, { x: t.tile.x + 0.5, y: t.tile.y + 0.5 }, who) * 4) / 4;
   const dirty = (t: Table) => ((g.dirt.get(t.key) ?? 0) >= TUNING.tableDirtyAt ? 1 : 0);
-  fits.sort((a, b) => dirty(a) - dirty(b) || toFire(a) - toFire(b) || a.chairs.length - b.chairs.length);
+  fits.sort((a, b) => dirty(a) - dirty(b) || appeal(b) - appeal(a) || a.chairs.length - b.chairs.length);
   return fits[0];
 }
 
@@ -230,7 +229,7 @@ export function spawnVisitors(g: Game, archetype?: Archetype): boolean {
   const size = rollGroupSize(g);
   if (size === 1 && spawnPatron(g, a)) return true;
   const group: Group = { id: uid(), members: [], waiting: false };
-  const table = size > 1 ? emptyTableFor(g, size, soakedNow(g)) : undefined;
+  const table = size > 1 ? emptyTableFor(g, size, seeker(a.needs.warmth[0] + arrivalChill(g, a.comfort[0]), soakedNow(g), a.comfort[0])) : undefined;
   let seats: Seat[];
   if (table) {
     seats = table.chairs.slice(0, size);
@@ -292,10 +291,11 @@ function processQueue(g: Game): void {
 }
 
 export function spawnRegular(g: Game, def: Regular, st: RegularState): Patron | null {
-  const needs = arrivalNeeds(def.needs);
+  const comfort = organic(def.comfort ?? ROOM.comfort);
+  const needs = arrivalNeeds(def.needs, arrivalChill(g, comfort));
   const { soaked, snowy, soon } = arrivingWet(g);
   needs.warmth = clamp01(needs.warmth + soon * SOAKING.warmthOnArrival);
-  const seat = chooseSeat(g, hungrier(needs, def.foodBias), def.fussiness, soon);
+  const seat = chooseSeat(g, hungrier(needs, def.foodBias), def.fussiness, seeker(needs.warmth, soon, comfort));
   if (!seat) return null;
   const p: Patron = {
     ...basePatron(g, seat),
@@ -314,6 +314,7 @@ export function spawnRegular(g: Game, def: Regular, st: RegularState): Patron | 
     garnishAsk: def.garnishAsk,
     stayUntil: g.minute + Math.max(20, organic(def.stay)),
     needs,
+    comfort,
     soaked,
     snowy,
     reason: reasonFor(g, needs),
@@ -547,7 +548,7 @@ function wantsMore(g: Game, p: Patron): boolean {
   const strongest = Math.min(1, Math.max(f, d));
   if (strongest > 0) return chance(strongest);
   const graceReady = g.minute - (p.lastGraceAt ?? -Infinity) >= NEEDS.graceEvery;
-  if (graceReady && chance(NEEDS.graceChance * (1 - HOT_FIRE.grace * overheated(g, p)))) { p.graceDrink = true; return true; }
+  if (graceReady && chance(NEEDS.graceChance * (1 - TOO_HOT.grace * tooHot(g, p)))) { p.graceDrink = true; return true; }
   return false;
 }
 
@@ -830,7 +831,7 @@ export function updatePatrons(g: Game, simDt: number): void {
   // Visitors arrive at the flow rate.
   if (g.open && !g.lastCall && g.minute >= g.nextArrivalAt) {
     const market = marketDay(g) && g.hour >= MARKET.from && g.hour < MARKET.to ? MARKET.flow : 1;
-    const rate = TUNING.flowByHour[g.hour] * g.loc.traffic * shelterFactor(g) * market * g.flowMultiplier * priceLevel(g).flow * (g.dark ? ECONOMY_DATA.upkeep.lampOil.darkFlow : 1); // per hour
+    const rate = TUNING.flowByHour[g.hour] * g.loc.traffic * shelterFactor(g) * warmthDraw(g) * market * g.flowMultiplier * priceLevel(g).flow * (g.dark ? ECONOMY_DATA.upkeep.lampOil.darkFlow : 1); // per hour
     if (rate > 0.01) {
       spawnVisitors(g);
       g.nextArrivalAt = g.minute + Math.max(3, organic([60 / rate, 30 / rate]));

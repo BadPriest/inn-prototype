@@ -5,7 +5,8 @@
 
 import type { Outcome } from "../core.js";
 import type { Game, Patron } from "../game.js";
-import { RECIPES } from "../data.js";
+import { ROOM, RECIPES } from "../data.js";
+import { roomName, stepName, tempAt, tooHot } from "../warmth.js";
 import { have } from "../stock.js";
 import { COATS } from "./wardrobe.js";
 import { PLATE } from "./render.js";
@@ -68,11 +69,30 @@ export function insightLayer(room: HTMLCanvasElement): CanvasRenderingContext2D 
   return c;
 }
 
+const WASH = { cold: [70, 130, 230], warm: [240, 150, 60], hot: [225, 70, 40], perStep: 0.3, most: 0.6 };
+
+/** The room's warmth as a wash over the taproom and entry floor: blue where it's cold, amber to red where it's warm. */
+export function drawWarmthWash(ctx: CanvasRenderingContext2D, g: Game, tilePath: (x: number, y: number) => void): void {
+  if (mix < 0.05) return;
+  ctx.save();
+  for (const row of g.world.tiles) for (const t of row) {
+    if (t.base !== "." && t.base !== ";" && t.def.kind !== "front") continue;
+    const temp = tempAt(g, { x: t.x + 0.5, y: t.y + 0.5 });
+    const off = temp - ROOM.comfortable;
+    const [r, gr, b] = off < 0 ? WASH.cold : temp >= ROOM.comfortable + ROOM.hot.over ? WASH.hot : WASH.warm;
+    ctx.fillStyle = `rgba(${r},${gr},${b},${Math.min(WASH.most, Math.abs(off) * WASH.perStep) * mix})`;
+    tilePath(t.x, t.y);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
 const FACE: Record<Outcome, string> = { DELIGHT: "😍", PLEASED: "🙂", FULFILLED: "😐", UNFINISHED: "😕", COMPLAINS: "😠", LEAVING: "🚪" };
 
-function needWords(p: Patron): string {
+function needWords(p: Patron, heat: number): string {
   const band = (v: number, mild: string, strong: string) => (v >= 0.66 ? strong : v >= 0.36 ? mild : "");
   const out = [band(p.needs.hunger, "🍽 peckish", "🍽 hungry"), band(p.needs.thirst, "💧 a bit dry", "💧 thirsty"), band(p.needs.warmth, "❄ chilly", "❄ cold")].filter(Boolean);
+  if (heat >= 0.5) out.push("🥵 too hot"); else if (heat > 0) out.push("🥵 warm");
   return out.length ? out.join(" · ") : "content";
 }
 
@@ -83,7 +103,7 @@ function lines(g: Game, p: Patron, debug: boolean): Row[] {
   const knowName = p.trueName ? p.name === p.trueName : def ? !def.role || !!st?.nameKnown : false;
   const who = role ? `${knowName ? (p.trueName ?? def?.name ?? p.name) : "???"} · ${role}` : p.name;
   const out: Row[] = [{ text: who, bold: true, color: "#fff3d6" }];
-  out.push({ text: needWords(p), color: "#d8ccb8" });
+  out.push({ text: needWords(p, tooHot(g, p)), color: "#d8ccb8" });
   if (p.craving && p.ordersPlaced >= 1 && p.schema !== "reserved") out.push({ text: `said: “something ${p.craving.tag}”`, color: "#e8d9a8" });
   const before = (st?.served ?? []).filter((s) => s.day < g.day).slice(-4).map((s) => `${s.icon}${FACE[s.outcome]}`);
   const now = (p.served ?? []).map((s) => `${s.icon}${FACE[s.outcome]}`);
@@ -93,7 +113,7 @@ function lines(g: Game, p: Patron, debug: boolean): Row[] {
     const t = p.tastes;
     const set = (k: "food" | "drink") => `${k} ♥ ${t[k].love.join(", ") || "–"} · + ${t[k].like.join(", ") || "–"} · ✗ ${t[k].dislike.join(", ") || "–"}`;
     out.push({ text: set("food"), color: "#ffb3c7" }, { text: set("drink"), color: "#9fd0ff" });
-    out.push({ text: `hunger ${p.needs.hunger.toFixed(2)} thirst ${p.needs.thirst.toFixed(2)} cold ${p.needs.warmth.toFixed(2)} · ${p.schema} · fuss ${p.fussiness.toFixed(2)}${p.craving ? ` · craving ${p.craving.tag}${p.craving.honest ? "" : " (noise)"}` : ""}`, color: "#c9c9c9" });
+    out.push({ text: `hunger ${p.needs.hunger.toFixed(2)} thirst ${p.needs.thirst.toFixed(2)} cold ${p.needs.warmth.toFixed(2)} · here ${tempAt(g, p.pos).toFixed(1)}, right at ${p.comfort.toFixed(1)} · ${p.schema} · fuss ${p.fussiness.toFixed(2)}${p.craving ? ` · craving ${p.craving.tag}${p.craving.honest ? "" : " (noise)"}` : ""}`, color: "#c9c9c9" });
   }
   return out;
 }
@@ -168,7 +188,14 @@ export function drawEquipmentCards(_ctx: CanvasRenderingContext2D, g: Game, at: 
       rows.push({ text: `${s.name}: ${text}`, color: pot || job ? "#f0e6d2" : "#9c8f7c" });
     }
     if (f.tap) { const r = RECIPES.find((x) => x.id === f.tap); if (r?.boughtAs) rows.push({ text: `${r.name}: ${Math.floor(have(g, r.boughtAs))} left`, color: "#f0e6d2" }); }
-    if (f.kind === "fireplace") rows.push({ text: g.fireLit ? `🔥 lit · firewood ${Math.floor(have(g, "firewood"))}` : `fire out · firewood ${Math.floor(have(g, "firewood"))}`, color: g.fireLit ? "#ffcf8a" : "#9c8f7c" });
+    if (f.kind === "fireplace") {
+      rows.push({ text: g.fireLit ? `🔥 lit · firewood ${Math.floor(have(g, "firewood"))}` : `fire out · firewood ${Math.floor(have(g, "firewood"))}`, color: g.fireLit ? "#ffcf8a" : "#9c8f7c" });
+      rows.push({ text: `🌡 room ${roomName(g)} · outside ${stepName(g.weather.temp)}`, color: "#cfe0f0" });
+    }
+    if (f.kind === "heater") {
+      const lit = g.heatersLit.has(f.id);
+      rows.push({ text: `${f.name}: ${lit ? `🔥 lit · ${f.equip?.heat?.logsPerHour ?? 0} logs an hour` : "out"}`, color: lit ? "#ffcf8a" : "#9c8f7c" });
+    }
     if (!rows.length) continue;
     const xs = f.tiles.map((t) => t.x + 0.5), ys = f.tiles.map((t) => t.y + 0.5);
     const c = at(xs.reduce((a, b) => a + b, 0) / xs.length, ys.reduce((a, b) => a + b, 0) / ys.length);

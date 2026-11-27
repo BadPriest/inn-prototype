@@ -94,6 +94,7 @@ export function arrangeClick(g: Game, p: Vec): void {
     g.say(seat === "stool" ? "A stool goes against the bar, with room for guests to get to it."
       : seat === "bench" ? "It won't go there: a bench needs taproom or entry floor, and room for everyone to get past."
       : seat ? "It won't go there: it needs taproom floor, and room for guests to reach every seat."
+      : eqOf(h.type).kind === "heater" ? "It won't go there: a heater needs taproom or entry floor, and room for everyone to get past."
       : "It won't go there: it needs kitchen floor, and room to get at everything.");
     return;
   }
@@ -245,7 +246,7 @@ function bar(g: Game): void {
   const waiting = g.toPlace.length;
   el.innerHTML = `<span>🛠 <b>Arranging the kitchen</b> · the clock's stopped · ${h
     ? `${k.click === "click" ? "click" : padText("✕")} where the ${what} should go · ${k.esc} ${h.isNew ? "sets it aside for now" : "puts it back"} · ${k.del} sells it for ${moneyHtml(sellBackPrice(h.type, g.seasoning[h.uid]?.paid))}`
-    : `${k.click} a stove, oven, barrel, pie safe, table or seat to move it; a stove's kettle comes off from there`}</span>${!h && waiting
+    : `${k.click} a stove, oven, barrel, pie safe, table, seat or heater to move it; a stove's kettle comes off from there`}</span>${!h && waiting
     ? `<button class="ghost" data-act="another">📦 Place what the carter brought (${waiting}) <small>${k.another}</small></button>` : ""}<button class="ghost" data-act="buy">🛒 Buy <small>${k.buy}</small></button><button data-act="done">Done${pad ? " <small>○</small>" : ""}</button>`;
   const act: Record<string, () => void> = { done: () => stopArranging(g), buy: () => arrangeBuy(g), another: () => arrangeAnother(g) };
   el.querySelectorAll<HTMLButtonElement>("button[data-act]").forEach((b) => { b.onclick = () => act[b.dataset.act!](); });

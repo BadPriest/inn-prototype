@@ -1,5 +1,5 @@
 // Upkeep (inn#60): the cost of keeping the inn open, each something you can see (economy.json upkeep).
-// Firewood burns in the hearth and the wood stoves, lamp oil in the lamps, sundries go with each
+// Firewood burns in the hearth, the heaters and the wood stoves, lamp oil in the lamps, sundries go with each
 // guest served; all three are pantry goods, ordered like any other. The licence is paid weekly.
 import { ECONOMY_DATA } from "./gamedata.gen.js";
 import { INGREDIENTS } from "./data.js";
@@ -38,6 +38,11 @@ export function updateUpkeep(g, simMinutes) {
             out(g, "fire", "🪵 The fire's burned down: there's no firewood left. Order some at the desk (Supplies).");
         }
     }
+    const heaters = g.world.furniture.filter((f) => f.kind === "heater" && g.heatersLit.has(f.id));
+    if (heaters.length && !use(g, wood, heaters.reduce((a, f) => a + (f.equip?.heat?.logsPerHour ?? 0), 0) * h)) {
+        g.heatersLit.clear();
+        out(g, "heaters", "🪵 The heaters have burned down: there's no firewood left. Order some at the desk (Supplies).");
+    }
     const stoves = stovesBurning(g);
     g.noFirewood = stoves > 0 && !use(g, wood, U.firewood.stoveLogsPerHour * stoves * h);
     if (g.noFirewood)
@@ -49,6 +54,7 @@ export function updateUpkeep(g, simMinutes) {
     if (have(g, wood) > 0) {
         saidOut.delete("fire");
         saidOut.delete("stove");
+        saidOut.delete("heaters");
     }
     if (have(g, U.lampOil.item) > 0)
         saidOut.delete("oil");

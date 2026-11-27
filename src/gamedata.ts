@@ -92,7 +92,8 @@ export interface EconomyData {
   suppliers: { priceFactor: number };
 }
 
-export type EquipmentType = "crafting" | "storage" | "gear" | "utensil" | "tray" | "furniture";
+export type EquipmentType = "crafting" | "storage" | "gear" | "utensil" | "tray" | "furniture" | "heater";
+export interface Heat { room: number; local: number; reach: number; logsPerHour: number }
 export interface EquipmentPiece {
   id: string;
   name: string;
@@ -120,6 +121,7 @@ export interface EquipmentPiece {
   capacity?: { batches?: number; servings?: number };
   serveSeconds?: Organic;
   traySlots?: number;
+  heat?: Heat;
   text?: { shopCard?: string };
 }
 export interface SeasoningTrait { id: string; name: string; text: string; weight: number; speed?: number; servings?: number; batchesOnly?: boolean; tag?: string; fits?: string[]; usedOnly?: boolean }

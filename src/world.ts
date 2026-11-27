@@ -155,10 +155,11 @@ export class World {
   }
 
   /** Where a piece may stand: kitchen gear in the kitchen and behind the bar; tables and seats on the taproom floor
-   * (a bench in the entry too, a stool only against the bar). */
+   * (a bench or a heater in the entry too, a stool only against the bar). */
   placeableAt(eq: Equipment, x: number, y: number): boolean {
     const t = this.tile(x, y);
     if (!t) return false;
+    if (eq.kind === "heater") return t.base === "." || t.base === ";";
     if (!eq.seat) return PLACEABLE_ON.includes(t.base);
     if (eq.seat === "bench") return t.base === "." || t.base === ";";
     if (t.base !== ".") return false;
@@ -198,7 +199,7 @@ export class World {
     const reached = (v: Vec) => seen.has(v.y * trial.w + v.x);
     for (const f of trial.furniture) if (!trial.approachTiles(f).some(reached)) return false;
     for (const row of trial.tiles) for (const t of row) if ((t.def.kind === "door" || t.def.kind === "front") && !reached(t)) return false;
-    if (eq.seat && !trial.seatsReachable()) return false;
+    if ((eq.seat || eq.kind === "heater") && !trial.seatsReachable()) return false;
     return true;
   }
 

@@ -13,7 +13,7 @@ import type { CarterRound, Roads } from "./roads.js";
 import type { WalkthroughState } from "./walkthrough.js";
 import { SKILLS_DATA } from "./gamedata.gen.js";
 import type { KnackId } from "./gamedata.js";
-import { TIME_WORDS, TUNING, timeOfDayAt, type Archetype, type ItemKind, type Line, type NeedId, type Regular, type SchemaId, type TasteSet, type TimeOfDay, type WeatherTaste, type Location, type LocationId, type MealId, MEALS, RECIPES, innOf, type Inn, type InnId } from "./data.js";
+import { ROOM, TIME_WORDS, TUNING, timeOfDayAt, type Archetype, type ItemKind, type Line, type NeedId, type Regular, type SchemaId, type TasteSet, type TimeOfDay, type WeatherTaste, type Location, type LocationId, type MealId, MEALS, RECIPES, innOf, type Inn, type InnId } from "./data.js";
 
 export interface Item {
   id: number;
@@ -137,6 +137,8 @@ export interface Patron {
   weatherTaste: WeatherTaste;
   /** 0 = fully met, 1 = desperate. Measured only, for now: nothing reacts to them yet. */
   needs: Record<NeedId, number>;
+  /** The temperature step they feel right at indoors (ROOM). */
+  comfort: number;
   /** Needs currently unmet, with when it started and what was going on meanwhile. */
   unmet: Partial<Record<NeedId, { since: number; peak: number; while: Set<string> }>>;
 }
@@ -280,6 +282,12 @@ export class Game {
   open = false;
   lastCall = false;
   fireLit = false;
+  /** Heaters lit now, by their placed id. */
+  heatersLit = new Set<string>();
+  /** How well the building keeps its warmth: -2 leaky … 2 snug (ROOM.insulation). */
+  insulation = ROOM.insulation.start;
+  /** The room's warmth in temperature steps (null until first worked out), and the cold rushing in at the door (1 just opened, 0 settled). */
+  room = { temp: null as number | null, flare: 0 };
   noFirewood = false; // a wood stove wants wood and there's none: its cooking stops
   noSundries = false; // the last guest served had no napkins: tips suffer
   lampsLit = false;

@@ -4,9 +4,9 @@
 // own system, inn#45, still to come).
 
 import { pick } from "./core.js";
-import { CHATTER, HOT_FIRE, SEASONAL_TASTES, WEATHER_TASTES } from "./data.js";
+import { CHATTER, TOO_HOT, SEASONAL_TASTES, WEATHER_TASTES } from "./data.js";
 import type { Game, Patron } from "./game.js";
-import { overheated } from "./needs.js";
+import { tooHot } from "./warmth.js";
 import { marketDay } from "./newspaper.js";
 import { weatherTags } from "./weather.js";
 
@@ -50,7 +50,7 @@ function agoText(years: number): string {
  * then market day, today's paper, or the old days (regulars more often than strangers).
  */
 export function worldLine(g: Game, p: Patron): string | null {
-  if (overheated(g, p) >= HOT_FIRE.grumbleFrom && Math.random() < 0.5) return g.pickLine(CHATTER.heat);
+  if (tooHot(g, p) >= TOO_HOT.grumbleFrom && Math.random() < 0.5) return g.pickLine(CHATTER.heat);
   if (Math.random() >= CHATTER.worldChance) return null;
   const tags = worldTags(g);
   const history = tags.filter((t) => t.kind === "history");
@@ -65,9 +65,9 @@ export function worldLine(g: Game, p: Patron): string | null {
 }
 
 let wasTooHot = false;
-/** Every frame: the keeper is told when a lit fire meets a hot day (lit on one, or the day turning hot). */
+/** Every frame: the keeper is told when a lit fire or heater meets a hot day (lit on one, or the day turning hot). */
 export function updateWorld(g: Game): void {
-  const tooHot = g.fireLit && weatherTags(g).includes("hot");
-  if (tooHot && !wasTooHot) g.say("🔥 It's hot out, and the fire's lit: anyone sitting near it will be roasting. They won't stay long.");
-  wasTooHot = tooHot;
+  const roasting = (g.fireLit || g.heatersLit.size > 0) && weatherTags(g).includes("hot");
+  if (roasting && !wasTooHot) g.say(`🔥 It's hot out, and the ${g.fireLit ? "fire's" : "heater's"} lit: anyone sitting near it will be roasting. They won't stay long.`);
+  wasTooHot = roasting;
 }

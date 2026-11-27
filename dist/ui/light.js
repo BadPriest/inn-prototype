@@ -162,6 +162,13 @@ export function drawLight(ctx, g, P, unit, squash = 1, windows = true) {
         const flicker = 1 + 0.06 * Math.sin(t * 7.3) + 0.04 * Math.sin(t * 13.1);
         glows.push({ x: fire.x, y: fire.y, r: LIGHT.fire.reach * flicker, strength: LIGHT.fire.strength, warm: LIGHT.fire.warm });
     }
+    // Lit heaters glow a little.
+    for (const f of g.world.furniture) {
+        if (f.kind !== "heater" || !g.heatersLit.has(f.id))
+            continue;
+        const flicker = 1 + 0.04 * Math.sin(t * 6.1 + f.center.x);
+        glows.push({ x: f.center.x, y: f.center.y, r: LIGHT.heater.reach * flicker, strength: LIGHT.heater.strength, warm: LIGHT.heater.warm });
+    }
     // Lamps and table candles, when lit.
     if (g.lampsLit) {
         for (const l of g.innDef.lamps)

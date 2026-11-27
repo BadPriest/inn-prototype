@@ -212,6 +212,18 @@
 
     {"id":  "settle", "name":  "Settle", "icon":  "🛋️", "type":  "furniture", "seat":  "bench", "line":  "bench", "tier":  2, "shape":  ["#"], "shopTab":  "taproom", "price":  80, "comfort":  2, "feel":  1, "text":  {"shopCard":  "A high-backed settle that keeps the draught off. Anywhere in the taproom or the entry."}},
 
+    {"id":  "brazier", "name":  "Brazier", "icon":  "🏮", "type":  "heater", "label":  "Brazier", "shape":  ["#"], "shopTab":  "hearth", "price":  60, "fuel":  "wood",
+      "heat":  {"room":  0.2, "local":  1.6, "reach":  2.5, "logsPerHour":  0.4},
+      "text":  {"shopCard":  "An iron basket of embers on three legs. Cheap, and easy on the wood: it warms the tables right round it and hardly the rest of the room."}},
+
+    {"id":  "potBellyStove", "name":  "Pot-belly stove", "icon":  "♨️", "type":  "heater", "label":  "Pot-belly", "shape":  ["#"], "shopTab":  "hearth", "price":  220, "fuel":  "wood",
+      "heat":  {"room":  1.0, "local":  1.8, "reach":  3, "logsPerHour":  0.8},
+      "text":  {"shopCard":  "A round cast-iron stove on legs, with a pipe up through the roof. It gets red-hot: it warms the whole room, and the tables beside it bake."}},
+
+    {"id":  "parlourStove", "name":  "Parlour stove", "icon":  "♨️", "type":  "heater", "label":  "Parlour", "shape":  ["#"], "shopTab":  "hearth", "price":  480, "fuel":  "wood",
+      "heat":  {"room":  1.6, "local":  0.8, "reach":  3, "logsPerHour":  0.7},
+      "text":  {"shopCard":  "A tall iron stove with mica windows and a nickel rail. It spreads its heat evenly through the room, and goes easy on the wood."}},
+
     { "id": "plainTray", "name": "Plain tray", "icon": "🍽️", "type": "tray", "line": "tray", "tier": 1,
       "shopTab": "serving", "price": 0, "traySlots": 4,
       "text": { "shopCard": "A plain wooden tray: four slots." } },

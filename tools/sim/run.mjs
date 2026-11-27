@@ -1,6 +1,6 @@
 // The autopilot keeper: runs the real game for some days in headless Chrome and reports the money,
 // the guests by hour, and how often serves delight.
-//   node tools/sim/run.mjs [--days 7] [--level cheap|fair|dear] [--keeper random|learner] [--walk 1] [--location mountainside] [--season winter] [--json out.json]
+//   node tools/sim/run.mjs [--days 7] [--level cheap|fair|dear] [--keeper random|learner] [--walk 1] [--location mountainside] [--season winter] [--heater potBellyStove] [--json out.json]
 // Needs a fresh standalone.html (node tools/build.mjs --no-bump) and Chrome (CHROME=path to override).
 import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
@@ -15,6 +15,7 @@ const days = Number(args.days ?? 7);
 const opts = { level: args.level ?? "fair", keeper: args.keeper ?? "random", walk: Number(args.walk ?? 1) };
 if (args.menu) opts.menu = String(args.menu).split(",");
 if (args.fireWhenHot) opts.fireWhenHot = true;
+if (args.heater) opts.heater = String(args.heater);
 
 const chromePath = process.env.CHROME ?? "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const profile = mkdtempSync(join(tmpdir(), "inn-sim-"));
@@ -71,10 +72,10 @@ try { rmSync(profile, { recursive: true, force: true }); } catch { /* Chrome may
 
 const pad = (v, n) => String(v).padStart(n);
 const sh = (pence) => `${(pence / 10).toFixed(1)}s`;
-console.log("\nday  guests served walked  taken  tips  supplies upkeep  wear(messy)  purse      delight  snow  roads");
+console.log("\nday  guests served walked  taken  tips  supplies upkeep  wear(messy)  purse      delight  out  room shiver  snow  roads");
 for (const r of results) {
   const o = r.outcomes;
-  console.log(`${r.wd} ${pad(r.day, 2)} ${pad(r.arrivals, 5)} ${pad(r.served, 6)} ${pad(r.leftEarly, 6)} ${pad(sh(r.taken), 7)} ${pad(sh(r.tips), 6)} ${pad(sh(r.supplies), 8)} ${pad(sh(r.upkeep), 6)} ${pad(sh(r.wear), 6)}(${pad(r.messy, 2)})  ${pad(sh(r.purse0), 6)}→${pad(sh(r.purse1), 7)} ${pad(Math.round((100 * o.DELIGHT) / Math.max(1, r.served)), 4)}%  ${pad(r.snow ? Math.round(r.snow / 60) + "h" : "", 4)}  ${r.roads ?? ""}`);
+  console.log(`${r.wd} ${pad(r.day, 2)} ${pad(r.arrivals, 5)} ${pad(r.served, 6)} ${pad(r.leftEarly, 6)} ${pad(sh(r.taken), 7)} ${pad(sh(r.tips), 6)} ${pad(sh(r.supplies), 8)} ${pad(sh(r.upkeep), 6)} ${pad(sh(r.wear), 6)}(${pad(r.messy, 2)})  ${pad(sh(r.purse0), 6)}→${pad(sh(r.purse1), 7)} ${pad(Math.round((100 * o.DELIGHT) / Math.max(1, r.served)), 4)}%  ${pad(r.outside, 4)} ${pad(r.room, 4)} ${pad(r.shiver + "%", 6)}  ${pad(r.snow ? Math.round(r.snow / 60) + "h" : "", 4)}  ${r.roads ?? ""}`);
 }
 if (results.length) {
   const k = results.length;

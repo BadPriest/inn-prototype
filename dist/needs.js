@@ -6,34 +6,16 @@
 import { bowlNeeds } from "./snacks.js";
 import { organic } from "./core.js";
 import { orderable } from "./readymade.js";
-import { HOT_FIRE, NEED_IDS, NEEDS, RECIPES, SOAKING, WEATHER } from "./data.js";
-import { dist } from "./world.js";
+import { NEED_IDS, NEEDS, RECIPES, SOAKING, TOO_HOT, WEATHER } from "./data.js";
+import { byTheHeat, chillPerHour, cosyPerHour, isByTheDoor, roomName, tooHot } from "./warmth.js";
 const clamp01 = (n) => Math.max(0, Math.min(1, n));
-/** How hungry, thirsty and cold someone walks in. Weather will shift these on arrival, later. */
-export function arrivalNeeds(levels) {
+/** How hungry, thirsty and cold someone walks in: their kind's, plus the chill of the day (`chill`). */
+export function arrivalNeeds(levels, chill = 0) {
     return {
         hunger: clamp01(organic(levels.hunger)),
         thirst: clamp01(organic(levels.thirst)),
-        warmth: clamp01(organic(levels.warmth)),
+        warmth: clamp01(organic(levels.warmth) + chill),
     };
-}
-function firePos(g) {
-    return g.world.furniture.find((f) => f.kind === "fireplace")?.center;
-}
-/** How far the fire's heat carries (tiles): less the colder it is out. */
-export function fireReach(g) {
-    return NEEDS.fire.radius * NEEDS.fireReachByTemperature[g.weather.tempStep];
-}
-/** 1 at the hearth, fading to 0 at the edge of the fire's reach. 0 when the fire is out. */
-function fireWarmth(g, p) {
-    const at = firePos(g);
-    if (!g.fireLit || !at)
-        return 0;
-    return clamp01(1 - dist(p.pos, at) / fireReach(g));
-}
-/** A lit fire on a hot day (HOT_FIRE): 1 at the hearth, fading to 0 at the edge of its reach; 0 on a day that isn't hot. */
-export function overheated(g, p) {
-    return g.weather.tempStep >= WEATHER.temperature.hotTagAt ? fireWarmth(g, p) : 0;
 }
 /** What's going on for this patron that bears on this need, right now. */
 function circumstances(g, p, need) {
@@ -42,13 +24,13 @@ function circumstances(g, p, need) {
     if (p.state === "queued")
         out.push("waiting for a table");
     if (need === "warmth") {
-        const at = firePos(g);
+        out.push(`room ${roomName(g)}`);
         if (!g.fireLit)
             out.push("fire out");
-        else if (overheated(g, p) > 0)
-            out.push("too hot by the fire");
-        else if (at && dist(p.pos, at) > fireReach(g))
-            out.push("far from the fire");
+        if (tooHot(g, p) > 0)
+            out.push("too hot where they sit");
+        if (isByTheDoor(g, p.pos))
+            out.push("by the door");
         if (p.soaked > 0.2)
             out.push("soaked");
         return out;
@@ -105,9 +87,9 @@ export function updateNeeds(g, simDt) {
         // Slow drift.
         for (const need of NEED_IDS)
             n[need] += NEEDS.risePerHour[need] * hours;
-        const atFire = fireWarmth(g, p);
-        n.warmth -= (NEEDS.indoorWarmthPerHour + NEEDS.fire.warmthPerHour * atFire) * hours;
-        p.stayUntil -= HOT_FIRE.stayLostPerHour * overheated(g, p) * hours;
+        const atFire = byTheHeat(g, p.pos);
+        n.warmth += chillPerHour(g, p) * hours;
+        p.stayUntil += (cosyPerHour(g, p) - TOO_HOT.stayLostPerHour * tooHot(g, p)) * hours;
         // Wet through: they dry off (fast by the fire), and until then the wet keeps them cold.
         if (p.soaked > 0) {
             n.warmth += SOAKING.chillPerHour * p.soaked * hours;

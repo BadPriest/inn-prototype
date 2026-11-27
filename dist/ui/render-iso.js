@@ -15,7 +15,8 @@ import { drawLight, flakeAt, frost, snowAtWindow, windowColor } from "./light.js
 import { footprintsToDraw } from "../tracks.js";
 import { drawLevelUp } from "./levelup.js";
 import { coatColor, eyeColor, underColor } from "./wardrobe.js";
-import { drawEquipmentCards, drawGuestCard, flushCards, guestColor, guestHead, insightLayer } from "./innsight.js";
+import { drawEquipmentCards, drawGuestCard, drawWarmthWash, flushCards, guestColor, guestHead, insightLayer } from "./innsight.js";
+import { shiverOf } from "../warmth.js";
 import { gaitOf, keeperGait } from "../sound/footsteps.js";
 import { ISO, P, Pt, floorPath, turn, turnedSize, unproject, unturn } from "./proj.js";
 import { badge, barLabel, drawBowlFlip, drawTagFlips, crateCounts, drawEyes, busyWord, jobWord, drawCoinPops, drawGuide, drawPatronWords, drawSpeech, say } from "./render.js";
@@ -26,7 +27,7 @@ const LOW_WALL = 0.3;
 const HEAD_Z = 0.62, HEAD_R = 0.26;
 const KIND_HEIGHT = { counter: 0.5, table: 0.42, chair: 0.2, bench: 0.22, stool: 0.24 };
 const PIECE_HEIGHT = {
-    bed: 0.32, desk: 0.45, wardrobe: 1.1, station: 0.5, hatch: 0.55, tap: 0.62, fireplace: 0.9, pantry: 1.0,
+    bed: 0.32, desk: 0.45, wardrobe: 1.1, station: 0.5, hatch: 0.55, tap: 0.62, fireplace: 0.9, heater: 0.7, pantry: 1.0,
     coats: 0.9, piesafe: 0.8, bin: 0.35, gramophone: 0.55, table: 0.42,
 };
 const PIECE_COLOR = {
@@ -155,6 +156,8 @@ function colorOf(g, t, f) {
         return "#4e3826";
     if (f?.kind === "fireplace")
         return g.fireLit ? "#d2691e" : "#3a3330";
+    if (f?.kind === "heater")
+        return g.heatersLit.has(f.id) ? "#b4501c" : "#2e2a28";
     return (f && PIECE_COLOR[f.kind]) ?? "#3d2d22";
 }
 function solids(g, v) {
@@ -189,10 +192,11 @@ function boxFor(g, v, s, all) {
 // ---------------------------------------------------------------------------
 // People
 /** `headColor`: the head, if not the body's colour. `bob`: how far the head is moved (a step's bounce, a lean). `snow`: snow on them, 0..1. */
-function personBody(ctx, v, pos, color, alpha, wet, seed, headColor, bob, snow = 0) {
+function personBody(ctx, v, pos, color, alpha, wet, seed, headColor, bob, snow = 0, cold = 0) {
     const ts = v.ts;
     const t = performance.now() / 1000;
-    const shiver = wet > 0.08 ? Math.sin(t * 38 + seed) * ts * 0.035 * Math.min(1, wet * 1.5) : 0;
+    const shake = Math.max(wet > 0.08 ? Math.min(1, wet * 1.5) : 0, cold);
+    const shiver = shake > 0 ? Math.sin(t * 38 + seed) * ts * 0.035 * shake : 0;
     const foot = P(v, pos.x, pos.y), head = P(v, pos.x, pos.y, HEAD_Z);
     foot.x += shiver;
     head.x += shiver + (bob?.x ?? 0);
@@ -327,7 +331,7 @@ export function drawIso(ctx, g, v, target, clickDest) {
     const solid = solids(g, v);
     const byTile = new Map(solid.map((s) => [`${s.t.x},${s.t.y}`, s]));
     const items = solid.map((s) => ({ d: turnedTile(v, s.t.x, s.t.y).d, pri: 0, draw: () => drawSolid(ctx, g, v, s, byTile) }));
-    const guestBody = (p) => personBody(ctx, v, p.pos, guestColor(p), p.state === "leaving" ? 0.6 : 1, p.soaked ?? 0, p.id, guestHead(p), stepBob(v, p.pos, gaitOf(p.id), gaitOf(p.id).dir), p.snowy ?? 0);
+    const guestBody = (p) => personBody(ctx, v, p.pos, guestColor(p), p.state === "leaving" ? 0.6 : 1, p.soaked ?? 0, p.id, guestHead(p), stepBob(v, p.pos, gaitOf(p.id), gaitOf(p.id).dir), p.snowy ?? 0, shiverOf(p));
     for (const p of g.patrons) {
         items.push({ d: depth(v, p.pos), pri: 1, draw: () => guestBody(p) });
     }
@@ -353,6 +357,7 @@ export function drawIso(ctx, g, v, target, clickDest) {
     const layer = insightLayer(ctx.canvas);
     if (layer) {
         ctx = layer;
+        drawWarmthWash(ctx, g, (x, y) => floorPath(ctx, v, x, y, 1, 1));
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         for (const p of [...g.patrons].sort((a, b) => depth(v, a.pos) - depth(v, b.pos)))

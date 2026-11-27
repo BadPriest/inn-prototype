@@ -4,9 +4,9 @@
 //   score         how a serve scores (the veiled add noise here)
 //   afterServe    what a strong reaction changes (locks, breakthroughs, opening up)
 import { chance, pick, weightedPick } from "./core.js";
-import { HOT_FIRE, SCHEMA_TUNING, SEASONAL_TASTES, SPECIFIC_ORDERS, TASTE_POOL, TUNING, garnishById } from "./data.js";
+import { TOO_HOT, SCHEMA_TUNING, SEASONAL_TASTES, SPECIFIC_ORDERS, TASTE_POOL, TUNING, garnishById } from "./data.js";
 import { emptyTastes } from "./game.js";
-import { overheated } from "./needs.js";
+import { tooHot } from "./warmth.js";
 import { favouredTags } from "./worldtags.js";
 export function tagScore(tags, t) {
     const s = TUNING.scoring;
@@ -153,7 +153,7 @@ export function judge(g, p, item, order) {
     // In season: a little better, unless it's something they dislike.
     if (inFavour(favouredTags(g), item.tags, truth))
         score += SEASONAL_TASTES.scoreBonus;
-    score -= HOT_FIRE.score * overheated(g, p);
+    score -= TOO_HOT.score * tooHot(g, p);
     let missingGarnish = false;
     const wrongOption = !!order?.wantOption && !item.options?.includes(order.wantOption);
     if (wrongOption)

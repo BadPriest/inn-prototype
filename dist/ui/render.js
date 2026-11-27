@@ -12,7 +12,8 @@ import { worldGuide } from "../walkthrough.js";
 import { P } from "./proj.js";
 import { drawLevelUp } from "./levelup.js";
 import { coatColor, eyeColor, underColor } from "./wardrobe.js";
-import { drawEquipmentCards, drawGuestCard, flushCards, guestColor, insightLayer, insightMix } from "./innsight.js";
+import { drawEquipmentCards, drawGuestCard, drawWarmthWash, flushCards, guestColor, insightLayer, insightMix } from "./innsight.js";
+import { shiverOf } from "../warmth.js";
 import { gaitOf, keeperGait } from "../sound/footsteps.js";
 import { COINS, coinParts } from "../money.js";
 /** Fit the whole inn if it's big enough to read; otherwise zoom in and follow the keeper. */
@@ -206,12 +207,14 @@ export function draw(ctx, g, v, target, clickDest) {
             fill = "#6e7a3a";
         if (f.kind === "fireplace")
             fill = g.fireLit ? "#d2691e" : "#3a3330";
+        if (f.kind === "heater")
+            fill = g.heatersLit.has(f.id) ? "#b4501c" : "#2e2a28";
         if (f.kind === "bed")
             fill = "#8a5a5a";
         ctx.fillStyle = fill;
         ctx.fillRect(px, py, pw, ph);
-        if (f.kind === "fireplace" && g.fireLit) {
-            const glow = ctx.createRadialGradient(X(f.center.x), Y(f.center.y), ts * 0.3, X(f.center.x), Y(f.center.y), ts * 4);
+        if ((f.kind === "fireplace" && g.fireLit) || (f.kind === "heater" && g.heatersLit.has(f.id))) {
+            const glow = ctx.createRadialGradient(X(f.center.x), Y(f.center.y), ts * 0.3, X(f.center.x), Y(f.center.y), ts * (f.kind === "heater" ? 2 : 4));
             glow.addColorStop(0, "rgba(255,160,60,0.25)");
             glow.addColorStop(1, "rgba(255,160,60,0)");
             ctx.fillStyle = glow;
@@ -423,6 +426,7 @@ export function draw(ctx, g, v, target, clickDest) {
     const layer = insightLayer(ctx.canvas);
     if (layer) {
         ctx = layer;
+        drawWarmthWash(ctx, g, (x, y) => { ctx.beginPath(); ctx.rect(X(x), Y(y), ts, ts); });
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         for (const p of g.patrons)
@@ -480,10 +484,11 @@ export function draw(ctx, g, v, target, clickDest) {
 }
 /** "body": the circle (dimmed by the light, drawn after). "words": name, dish, order, marker, speech. */
 function drawPatron(ctx, g, p, X, Y, ts, part) {
-    // Soaked: a shiver, a cold tint, a drop falling. All fade as they dry.
+    // Soaked: a shiver, a cold tint, a drop falling. All fade as they dry. Cold through: a shiver.
     const wet = p.soaked ?? 0;
     const t = performance.now() / 1000;
-    const shiver = wet > 0.08 ? Math.sin(t * 38 + p.id) * ts * 0.035 * Math.min(1, wet * 1.5) : 0;
+    const shake = Math.max(wet > 0.08 ? Math.min(1, wet * 1.5) : 0, shiverOf(p));
+    const shiver = shake > 0 ? Math.sin(t * 38 + p.id) * ts * 0.035 * shake : 0;
     const gait = gaitOf(p.id);
     const lean = 0.05 * gait.amount;
     const x = X(p.pos.x + gait.dir.x * lean) + shiver, y = Y(p.pos.y + gait.dir.y * lean);

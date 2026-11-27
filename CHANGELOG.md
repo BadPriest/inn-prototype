@@ -6,6 +6,24 @@ From build 92 on, every build that changes the game gets an entry here, with the
 
 ---
 
+## Build 132 · Nov 27, 2026 · deployed
+
+### Added
+- **The room has a temperature.** The taproom has one warmth of its own, on the same steps as outside (freezing to hot). Left unheated, the old, leaky building sits barely above the outside. The fire and any lit heater warm it, each guest adds a little, and it takes the best part of an hour to settle. On a freezing day the small tavern is freezing with nothing lit, cold with the fire, and cool with the fire and a pot-belly stove. Where you sit adds what's near: the fire or a heater close by.
+- **The cold at the door.** The tiles round the front door sit closer to the outside temperature, and when the door opens they go all the way, settling back over about 8 minutes.
+- **Guests feel the cold, and some are used to it.** On a cold day guests walk in colder. Sitting in a room colder than they like, they get colder; in a warm one, they warm up. Cold enough, they shiver. Dockworkers and farmhands mind the cold least, scholars most; the ferryman hardly notices it and Old Wil feels every draught. Cold and wet guests head for the warmest seats.
+- **A warm room brings them in and keeps them.** On a cold day, a room warmer than the street draws more passers-by (up to 30% more), and a guest sitting comfortably warm stays about 20 minutes longer for every hour.
+- **Heaters.** Three to buy in the shop's Hearth and heating tab, placed on the taproom or entry floor (Arrange) and lit or put out by walking up to them. They burn firewood and glow while lit:
+  - 🏮 **Brazier**, 6s: warms the tables right round it. 0.4 logs an hour.
+  - ♨️ **Pot-belly stove**, 22s: warms the room, and the tables beside it bake. 0.8 logs an hour.
+  - ♨️ **Parlour stove**, 48s: warms the whole room evenly. 0.7 logs an hour.
+- **The temperature in Innsight.** Holding Innsight washes the taproom and entry floor blue where it's cold and amber to red where it's warm. The fireplace card says how warm the room is and how cold it is outside ("room cool · outside freezing"); heater cards say whether they're lit and the wood they burn; guest cards say when someone's too warm.
+- Debug: the autopilot can place and light a heater (`--heater potBellyStove`) and reports the room's warmth and how many guests are shivering.
+
+### Changed
+- **Too hot isn't only the fire.** Being too hot is now measured where each guest sits against what they like, so a lit fire on a warm day, a heater, or a packed room on a hot day can all roast someone, with the same effects as before (less patience, a shorter stay, no one more round, food enjoyed less). Innsight says "too hot where they sit".
+- **The fire warms the whole room,** as well as the tables near it. The shop tab "Hearth" is now "Hearth and heating".
+
 ## Build 131 · Nov 26, 2026 · deployed
 
 ### Added

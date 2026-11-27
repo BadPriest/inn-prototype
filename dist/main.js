@@ -24,6 +24,7 @@ import { updateWeather } from "./weather.js";
 import { updateTracks } from "./tracks.js";
 import { updateCarter } from "./roads.js";
 import { updateWorld } from "./worldtags.js";
+import { updateRoom } from "./warmth.js";
 import { initLight, updateLamps } from "./ui/light.js";
 import { updateFrontDoor } from "./door.js";
 import { cancelPour, updatePour } from "./serving.js";
@@ -1268,6 +1269,7 @@ function frame(now) {
         updateTracks(g, sim);
         updateLamps(g);
         updateUpkeep(g, sim);
+        updateRoom(g, sim);
         updateCarter(g);
         updateWorld(g);
         updateTinker(g);

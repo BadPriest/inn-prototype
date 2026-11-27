@@ -10,7 +10,7 @@ import { defaultLayout, setOnStove } from "./world.js";
 import { callLastOrders, clearPatrons, scheduleRegulars, unlockRegulars } from "./patrons.js";
 import { ageFood, finishAllJobs } from "./crafting.js";
 import { closeAllStretches } from "./needs.js";
-import { CALENDAR } from "./data.js";
+import { CALENDAR, ROOM } from "./data.js";
 import { longDate, seasonTurned } from "./calendar.js";
 import { morningLine, passNight, settleWeather } from "./weather.js";
 import { deliverPaper, marketDay } from "./newspaper.js";
@@ -153,7 +153,7 @@ export function save(g) {
         const history = g.history.map((d, i) => (i < g.history.length - 14 ? { ...d, unmet: undefined } : d));
         localStorage.setItem(SAVE_KEY, JSON.stringify({ day: g.day, calendarStart: g.calendarStart, location: g.location, inn: g.inn, weather: g.weather, history, regulars, visitorNotes: g.visitorNotes,
             menu: [...g.menu], menuChosen: g.menuChosen,
-            layout: g.layout, mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives, walkthroughStep: g.walkthrough?.step, known: [...g.known], pointsSpent: g.pointsSpent, xp: g.xp, knacks: g.knacks, seasoning: g.seasoning, tinkerCalls: g.tinkerCalls, tinkerStock: g.tinkerStock, usedWaiting: g.usedWaiting, tinkerStockedDay: g.tinkerStockedDay, newSkills: g.newSkills, crates: g.crates, coat: g.coat, under: g.under, newGear: g.newGear,
+            layout: g.layout, mealMode: g.mealMode, meals: g.meals.map((m) => ({ id: m.id, from: m.from, to: m.to, menu: [...m.menu] })), betweenMenu: [...g.betweenMenu], upgrades: [...g.upgrades], totalServed: g.totalServed, showObjectives: g.showObjectives, walkthroughStep: g.walkthrough?.step, known: [...g.known], pointsSpent: g.pointsSpent, xp: g.xp, knacks: g.knacks, seasoning: g.seasoning, tinkerCalls: g.tinkerCalls, tinkerStock: g.tinkerStock, usedWaiting: g.usedWaiting, tinkerStockedDay: g.tinkerStockedDay, newSkills: g.newSkills, crates: g.crates, coat: g.coat, under: g.under, newGear: g.newGear, insulation: g.insulation,
             purse: g.purse, priceLevel: g.priceLevel, onOrder: g.onOrder, toPlace: g.toPlace, lots: g.lots, slips: g.slips, lastSlips: g.lastSlips, deliveries: g.deliveries, standing: g.standing, standingSkips: g.standingSkips, deliveryLog: g.deliveryLog, roads: g.roads, carter: g.carter }));
     }
     catch { /* storage unavailable: carry on */ }
@@ -227,6 +227,7 @@ export function load(g) {
         g.coat = s.coat ?? "slate";
         g.under = s.under ?? "linen";
         g.newGear = Array.isArray(s.newGear) ? s.newGear : [];
+        g.insulation = typeof s.insulation === "number" ? s.insulation : ROOM.insulation.start;
         g.seasoning = s.seasoning ?? {};
         g.tinkerCalls = s.tinkerCalls ?? [];
         g.tinkerStock = s.tinkerStock ?? [];

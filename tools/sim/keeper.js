@@ -1,8 +1,8 @@
 (async () => {
   const g = window.game;
   const M = (n) => import(`inn:${n}.js`);
-  const [data, stock, sup, serving, crafting, patrons, day, upkeep, needs, weather, light, roads] = await Promise.all(
-    ["data", "stock", "supplies", "serving", "crafting", "patrons", "day", "upkeep", "needs", "weather", "ui/light", "roads"].map(M));
+  const [data, stock, sup, serving, crafting, patrons, day, upkeep, needs, weather, light, roads, warmth] = await Promise.all(
+    ["data", "stock", "supplies", "serving", "crafting", "patrons", "day", "upkeep", "needs", "weather", "ui/light", "roads", "warmth"].map(M));
   const { RECIPES, INGREDIENTS, TUNING } = data;
   const R = (id) => RECIPES.find((r) => r.id === id);
   const worth = (id) => INGREDIENTS.find((i) => i.id === id)?.worth ?? 0;
@@ -15,6 +15,14 @@
   const MENU = (OPT.menu ?? ["stew", "porridge", "tea", "ale"]).filter((id) => g.canMake(id));
   g.menu = new Set(MENU); g.menuChosen = true; g.mealMode = false;
 
+  if (OPT.heater && !g.layout.some((p) => p.uid === "simHeater")) {
+    const tb = g.world.tables[0].tile;
+    const near = [];
+    for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) near.push({ x: tb.x + dx, y: tb.y + dy });
+    near.sort((a, b) => Math.hypot(a.x - tb.x, a.y - tb.y) - Math.hypot(b.x - tb.x, b.y - tb.y));
+    const spot = near.find((t) => g.world.canPlace(OPT.heater, t.x, t.y, null, g.layout, g.keeper.pos));
+    if (spot) { g.layout.push({ uid: "simHeater", type: OPT.heater, x: spot.x, y: spot.y }); g.rebuildWorld(); }
+  }
   const slots = g.world.furniture.flatMap((f) => f.slots ?? []);
   const hobs = slots.filter((s) => s.kinds.includes("stove"));
   const kettle = slots.find((s) => s.kinds.includes("kettle"));
@@ -163,7 +171,7 @@
   }
 
   async function runDay() {
-    T = { day: g.day, weekday: g.date.weekday, purse0: g.purse, outs: {}, scrapped: 0,
+    T = { day: g.day, weekday: g.date.weekday, purse0: g.purse, outs: {}, scrapped: 0, roomSum: 0, outSum: 0, roomN: 0, guestN: 0, shiverN: 0,
       byHour: Array.from({ length: 24 }, () => ({ arrivals: 0, turnedAway: 0, inRoom: 0, samples: 0, served: 0, delights: 0 })) };
     busy = 0; busyTotal = 0; openMin = 0;
     for (const k in lastWanted) delete lastWanted[k];
@@ -183,6 +191,12 @@
       if (!g.fireLit && g.open && !hot && upkeep.hasFirewood(g) && (coldOrWet || g.hour >= 17 || g.hour < 2)) g.fireLit = true;
       if (g.fireLit && hot && !OPT.fireWhenHot) g.fireLit = false;
       if (g.fireLit && !g.open) g.fireLit = false;
+      if (OPT.heater) {
+        const room = warmth.roomTemp(g);
+        if (g.open && !hot && room < 2.3 && upkeep.hasFirewood(g)) g.heatersLit.add("simHeater");
+        if (!g.open || hot || room > 3.2) g.heatersLit.delete("simHeater");
+      }
+      if (g.open) { T.roomSum += warmth.roomTemp(g); T.outSum += g.weather.temp; T.roomN++; const inside = g.patrons.filter((p) => p.state !== "leaving"); T.guestN += inside.length; T.shiverN += inside.filter((p) => warmth.shiverOf(p) > 0).length; }
       act();
       if (g.open) openMin += dt;
       const h = T.byHour[g.hour];
@@ -198,6 +212,7 @@
       weather.updateWeather(g, dt);
       light.updateLamps(g);
       upkeep.updateUpkeep(g, dt);
+      warmth.updateRoom(g, dt);
       roads.updateCarter(g);
       for (const c of [...g.crates]) if (g.crates.includes(c)) sup.unpackCrate(g, c);
       if (g.minute >= 1170 && !ordered) { ordered = true; restock(morning); }
@@ -213,6 +228,7 @@
       supplies: Math.round(T.supplies ?? 0), upkeep: Math.round(st.upkeep ?? 0), wear: st.wear ?? 0, messy: st.messy ?? 0, pantry0: Math.round(pantry0), pantry1: Math.round(pantry1),
       outcomes: st.outcomes, outs: T.outs, scrapped: T.scrapped, rain: Math.round(st.weather?.rainMinutes ?? 0), snow: Math.round(st.weather?.snowMinutes ?? 0), roads: g.roads ? (g.roads.shut ? "shut" : "late") : "",
       util: Math.round(100 * busyTotal / Math.max(1, openMin)),
+      room: (T.roomSum / Math.max(1, T.roomN)).toFixed(1), outside: (T.outSum / Math.max(1, T.roomN)).toFixed(1), shiver: Math.round((100 * T.shiverN) / Math.max(1, T.guestN)),
       byHour: T.byHour.map((x) => ({ arrivals: x.arrivals, turnedAway: x.turnedAway, inRoom: x.samples ? +(x.inRoom / x.samples).toFixed(1) : 0, served: x.served, delights: x.delights })),
     };
   }

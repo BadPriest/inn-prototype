@@ -73,7 +73,16 @@
         "id": { "$ref": "common.schema.json#/definitions/id" },
         "name": { "type": "string" },
         "icon": { "type": "string" },
-        "type": { "enum": ["crafting", "storage", "gear", "utensil", "tray", "furniture"], "description": "crafting: things are made at it. storage: finished things are kept and served from it. gear: set on a crafting slot of a listed kind, where it shows. utensil: never placed; a crafting slot of a listed kind uses the best one owned. tray: carried by the keeper, one in each hand; the best one owned counts. furniture: tables and seats in the taproom." },
+        "type": { "enum": ["crafting", "storage", "gear", "utensil", "tray", "furniture", "heater"], "description": "crafting: things are made at it. storage: finished things are kept and served from it. gear: set on a crafting slot of a listed kind, where it shows. utensil: never placed; a crafting slot of a listed kind uses the best one owned. tray: carried by the keeper, one in each hand; the best one owned counts. furniture: tables and seats in the taproom. heater: stands on the taproom or entry floor and warms the room while lit." },
+        "heat": {
+          "type": "object", "additionalProperties": false, "required": ["room", "local", "reach", "logsPerHour"], "description": "Heaters: the warmth it gives while lit, in temperature steps.",
+          "properties": {
+            "room": { "type": "number", "minimum": 0, "description": "Steps added to the whole room, before the building's insulation." },
+            "local": { "type": "number", "minimum": 0, "description": "Steps added right beside it, fading to nothing at its reach." },
+            "reach": { "type": "number", "exclusiveMinimum": 0, "description": "Tiles its local warmth carries." },
+            "logsPerHour": { "type": "number", "minimum": 0, "description": "Firewood it burns per game hour while lit." }
+          }
+        },
         "comfort": { "type": "number", "minimum": 0, "description": "Seats: how comfortable it is. Not used yet." },
         "feel": { "type": "number", "minimum": 0, "description": "Furniture: what it adds to the room's feel. Not used yet." },
         "seats": { "type": "integer", "minimum": 0, "description": "Tables: chairs set against it that seat a guest at it; any more don't count." },
@@ -121,7 +130,8 @@
         { "if": { "properties": { "type": { "const": "crafting" } } }, "then": { "required": ["label", "shape", "slots", "craftingSpeed"] } },
         { "if": { "properties": { "type": { "const": "storage" } } }, "then": { "required": ["label", "shape", "holds"] } },
         { "if": { "properties": { "type": { "enum": ["gear", "utensil"] } } }, "then": { "required": ["usedIn", "line", "tier"] } },
-        { "if": { "properties": { "type": { "const": "tray" } } }, "then": { "required": ["traySlots", "line", "tier"] } }
+        { "if": { "properties": { "type": { "const": "tray" } } }, "then": { "required": ["traySlots", "line", "tier"] } },
+        { "if": { "properties": { "type": { "const": "heater" } } }, "then": { "required": ["label", "shape", "heat", "fuel"] } }
       ]
     }
   }

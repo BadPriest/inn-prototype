@@ -7,7 +7,7 @@ import { World, defaultLayout } from "./world.js";
 import { dateOf, randomStartSeason } from "./calendar.js";
 import { newWeather } from "./weather.js";
 import { SKILLS_DATA } from "./gamedata.gen.js";
-import { TIME_WORDS, TUNING, timeOfDayAt, MEALS, RECIPES, innOf } from "./data.js";
+import { ROOM, TIME_WORDS, TUNING, timeOfDayAt, MEALS, RECIPES, innOf } from "./data.js";
 export function emptyStats(day) {
     return {
         day, arrivals: 0, orders: 0, served: 0, taken: 0, tips: 0, spent: 0, leftEarly: 0, leftUnserved: 0, crafted: 0, garnished: 0, cleaned: 0,
@@ -39,6 +39,12 @@ export class Game {
     open = false;
     lastCall = false;
     fireLit = false;
+    /** Heaters lit now, by their placed id. */
+    heatersLit = new Set();
+    /** How well the building keeps its warmth: -2 leaky … 2 snug (ROOM.insulation). */
+    insulation = ROOM.insulation.start;
+    /** The room's warmth in temperature steps (null until first worked out), and the cold rushing in at the door (1 just opened, 0 settled). */
+    room = { temp: null, flare: 0 };
     noFirewood = false; // a wood stove wants wood and there's none: its cooking stops
     noSundries = false; // the last guest served had no napkins: tips suffer
     lampsLit = false;

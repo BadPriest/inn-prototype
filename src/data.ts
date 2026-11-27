@@ -4,7 +4,7 @@
 import type { DishEffect } from "./gamedata.js";
 import type { Organic } from "./core.js";
 import { DISHES_DATA, EQUIPMENT_DATA, INGREDIENTS_DATA, LOCATIONS_DATA } from "./gamedata.gen.js";
-import type { ClimateData, Container, DishData, EquipmentPiece, TemperatureId } from "./gamedata.js";
+import type { ClimateData, Container, DishData, EquipmentPiece, Heat, TemperatureId } from "./gamedata.js";
 
 // ---------------------------------------------------------------------------
 // The map. One character per tile. See TILE_LEGEND below.
@@ -48,7 +48,7 @@ export interface TileDef {
 
 export type InteractKind =
   | "bed" | "desk" | "wardrobe" | "station" | "hatch" | "tap" | "garnish"
-  | "frontdoor" | "fireplace" | "pantry" | "coats" | "table" | "piesafe" | "urn" | "breadcase" | "bin" | "snacks" | "gramophone";
+  | "frontdoor" | "fireplace" | "heater" | "pantry" | "coats" | "table" | "piesafe" | "urn" | "breadcase" | "bin" | "snacks" | "gramophone";
 
 const C = {
   wall: "#2a211d",
@@ -124,7 +124,9 @@ export interface Equipment {
   gear?: boolean;
   /** Hot-drink slots a stove has for gear. */
   hotSlots?: number;
-  kind?: "piesafe" | "tap" | "urn" | "breadcase" | "fireplace" | "table";
+  kind?: "piesafe" | "tap" | "urn" | "breadcase" | "fireplace" | "table" | "heater";
+  /** Heaters: the warmth it gives while lit. */
+  heat?: Heat;
   /** Furniture in the taproom: a table or a seat. */
   seat?: "table" | "chair" | "stool" | "bench";
   /** Tables: chairs that count, and guests who stand at it. */
@@ -144,7 +146,7 @@ export interface Equipment {
 export type EquipGroup = "stoves" | "hearth" | "cookware" | "drinks" | "storage" | "serving" | "taproom";
 export const EQUIP_GROUPS: { id: EquipGroup; name: string; icon: string }[] = [
   { id: "stoves", name: "Stoves and ovens", icon: "🍳" },
-  { id: "hearth", name: "Hearth", icon: "🔥" },
+  { id: "hearth", name: "Hearth and heating", icon: "🔥" },
   { id: "cookware", name: "Pots and pans", icon: "🍲" },
   { id: "drinks", name: "Drinks", icon: "🍺" },
   { id: "storage", name: "Storage", icon: "🗄️" },
@@ -165,7 +167,7 @@ function placedPiece(e: EquipmentPiece): Equipment {
     e.type === "crafting" ? (e.slots ?? []).filter((sl) => !isHotDrinkSlot(sl))
     : e.type === "gear" ? [{ name: e.name, kinds: e.usedIn ?? [] }]
     : [];
-  const kind = e.hearth ? "fireplace" : e.seat === "table" ? "table" : STORAGE_KIND[holds[0] ?? ""];
+  const kind = e.hearth ? "fireplace" : e.type === "heater" ? "heater" : e.seat === "table" ? "table" : STORAGE_KIND[holds[0] ?? ""];
   return {
     id: e.id, name: e.name, label: e.label ?? e.name, icon: e.icon,
     w: shape[0].length, h: shape.length, slots, blurb: e.text?.shopCard ?? "",
@@ -174,13 +176,13 @@ function placedPiece(e: EquipmentPiece): Equipment {
     hotSlots: (e.slots ?? []).filter(isHotDrinkSlot).length || undefined,
     kind, tap: kind === "tap" ? holds[0] : undefined,
     group: e.shopTab, fuel: e.fuel,
-    hearth: e.hearth, hearthOnly: e.hearthOnly, line: e.line, tier: e.tier, seat: e.seat, seats: e.seats, standing: e.standing,
+    hearth: e.hearth, hearthOnly: e.hearthOnly, line: e.line, tier: e.tier, seat: e.seat, seats: e.seats, standing: e.standing, heat: e.heat,
   };
 }
 
 export const EQUIPMENT_PIECES: EquipmentPiece[] = EQUIPMENT_DATA.equipment;
 export const EQUIPMENT: Equipment[] = EQUIPMENT_PIECES
-  .filter((e) => e.type === "crafting" || e.type === "storage" || e.type === "gear" || e.type === "furniture")
+  .filter((e) => e.type === "crafting" || e.type === "storage" || e.type === "gear" || e.type === "furniture" || e.type === "heater")
   .map(placedPiece);
 /** Owned and used, never placed: utensils and trays. */
 export const CARRIED: EquipmentPiece[] = EQUIPMENT_PIECES.filter((e) => e.type === "utensil" || e.type === "tray");
@@ -441,6 +443,7 @@ export interface Archetype {
   /** 0..1: how readily one of them gives their name (a chance at each hello and each serve). */
   openness: number;
   needs: NeedLevels; // how hungry, thirsty and cold they tend to arrive
+  comfort: Organic; // the temperature step they feel right at indoors (ROOM); lower for those used to the cold
   weather: WeatherTaste; // weather they love or dislike (by weather tag)
   tastes: TasteSet; // what each visitor's own tastes are drawn from (VISITOR_TASTES: how many of each)
   extraLikes: string[]; // drawn from with the likes
@@ -461,6 +464,7 @@ export const RARE_LOVE_CHANCE = 0.2;
 
 export const ARCHETYPES: Archetype[] = [
   { id: "dock", openness: 0.45, name: "Dockworker", color: "#b5651d", weight: 3,
+    comfort: [2.3, 0.3],
     weather: { love: [], dislike: ["stormy", "cold"] },
     needs: { hunger: [0.5, 0.15], thirst: [0.75, 0.15], warmth: [0.3, 0.15] },
     tastes: { love: ["rich", "hearty"], like: ["smoky", "savoury", "bitter", "salty"], dislike: ["light", "fragrant"] },
@@ -468,6 +472,7 @@ export const ARCHETYPES: Archetype[] = [
     fussiness: [0.5, 0.2], patience: [40, 10], stay: [120, 40], consume: [22, 6], walk: [2.6, 0.4],
     foodBias: 0.6, garnishAsk: 0.15, messiness: [0.7, 0.2] },
   { id: "scholar", openness: 0.2, name: "Scholar", color: "#5b7fb5", weight: 2,
+    comfort: [3.2, 0.3],
     weather: { love: ["rain", "light-rain"], dislike: ["sunny"] },
     needs: { hunger: [0.35, 0.15], thirst: [0.45, 0.15], warmth: [0.4, 0.15] },
     tastes: { love: ["fragrant"], like: ["mild", "homely", "bright"], dislike: ["fiery", "smoky", "salty"] },
@@ -475,6 +480,7 @@ export const ARCHETYPES: Archetype[] = [
     fussiness: [0.7, 0.15], patience: [32, 8], stay: [100, 30], consume: [26, 6], walk: [2.0, 0.3],
     foodBias: 0.4, garnishAsk: 0.4, messiness: [0.15, 0.1] },
   { id: "traveller", openness: 0.55, name: "Traveller", color: "#6f9e5a", weight: 3,
+    comfort: [2.5, 0.4],
     weather: { love: ["sunny"], dislike: ["rain", "stormy"] },
     needs: { hunger: [0.75, 0.15], thirst: [0.5, 0.15], warmth: [0.45, 0.15] },
     tastes: { love: ["hearty", "savoury", "sweet"], like: ["warm", "homely", "crisp"], dislike: ["bitter", "briny"] },
@@ -482,6 +488,7 @@ export const ARCHETYPES: Archetype[] = [
     fussiness: [0.2, 0.15], patience: [55, 15], stay: [90, 30], consume: [20, 5], walk: [2.4, 0.4],
     foodBias: 0.55, garnishAsk: 0.2, messiness: [0.4, 0.2] },
   { id: "farmer", openness: 0.7, name: "Farmhand", color: "#a89a3c", weight: 2,
+    comfort: [2.3, 0.3],
     weather: { love: ["light-rain"], dislike: ["cold"] },
     needs: { hunger: [0.6, 0.15], thirst: [0.55, 0.15], warmth: [0.3, 0.15] },
     tastes: { love: ["earthy"], like: ["homely", "tart", "crisp"], dislike: ["sweet", "briny"] },
@@ -525,6 +532,7 @@ export interface Regular {
   joinsOnDay: number; // starts visiting from this day
   habit: [fromHour: number, toHour: number]; // when they tend to arrive
   needs: NeedLevels; // how hungry, thirsty and cold they tend to arrive
+  comfort?: Organic; // the temperature step they feel right at indoors; ROOM.comfort when absent
   weather: WeatherTaste; // weather they love or dislike (by weather tag)
   food: TasteSet; // true tastes (for unformed: ignored; see target)
   drink: TasteSet;
@@ -570,6 +578,7 @@ export const REGULARS: Regular[] = [
     fussiness: 0.3, patience: [50, 10], stay: [80, 20], consume: [20, 5], walk: [2.2, 0.3],
     foodBias: 0.5, garnishAsk: 0.4, messiness: 0.3 },
   { id: "ferryman", name: "The ferryman", color: "#4f8a8b", schema: "veiled", joinsOnDay: 5, habit: [20, 22],
+    comfort: [2, 0.1],
     weather: { love: ["stormy"], dislike: ["sunny"] }, // secretly loves a good storm
     needs: { hunger: [0.6, 0.1], thirst: [0.55, 0.1], warmth: [0.65, 0.1] },
     blurb: "Takes the night crossing. Hard to read.",
@@ -579,6 +588,7 @@ export const REGULARS: Regular[] = [
     fussiness: 0.55, patience: [40, 8], stay: [120, 30], consume: [20, 5], walk: [2.0, 0.3],
     foodBias: 0.6, garnishAsk: 0.2, messiness: 0.4 },
   { id: "wil", role: "Old-timer", name: "Old Wil", color: "#b0b0a0", schema: "open", joinsOnDay: 7, habit: [9, 11],
+    comfort: [3.4, 0.1],
     weather: { love: [], dislike: ["cold"] },
     needs: { hunger: [0.65, 0.1], thirst: [0.6, 0.1], warmth: [0.4, 0.1] },
     blurb: "Eats anything, says so loudly. Hard to surprise.",
@@ -613,9 +623,7 @@ export type NeedLevels = Record<NeedId, Organic>;
 export const NEEDS = {
   // Drift while inside, per game hour.
   risePerHour: { hunger: 0.08, thirst: 0.12, warmth: 0 } as Record<NeedId, number>,
-  indoorWarmthPerHour: 0.05, // just being out of the weather eases the cold a little
-  // The fire: full effect at the hearth, fading to nothing at the edge of the radius (tiles).
-  fire: { radius: 6.5, warmthPerHour: 0.45 }, // reaches the nearest tables
+  fire: { radius: 6.5 }, // tiles the fire's own warmth carries on a mild day (ROOM.fire.local)
   fireReachByTemperature: [0.6, 0.75, 0.9, 1, 1, 1], // the fire's radius times this, by the outdoor step (freezing … hot): an old, draughty building lets the heat go
   // A serving eases needs over the time it takes to eat or drink it.
   serving: {
@@ -678,10 +686,8 @@ export const SOAKING = {
   warmthOnArrival: 0.35, // times soaked: added to the warmth need as they come in
   chillPerHour: 0.12, // times soaked: wet clothes keep them cold
   dryPerHour: 0.3, // drying off indoors: a drenched guest is dry in about three hours
-  fireDryPerHour: 0.9, // at the hearth, fading to nothing at the edge of the fire's reach (NEEDS.fire.radius, less in the cold)
+  fireDryPerHour: 0.9, // right by the fire or a heater, fading to nothing at the edge of its reach
   dripPerHour: 2, // times soaked: drips that leave a puddle near them
-  fireSeatPull: 4, // soaked guests weigh a seat by a lit fire up to this much more
-  fireSeatRange: 7, // tiles from the fire that count as "by the fire" for choosing a seat
   warmCraving: 0.5, // soaked past this: they crave something warm (if they had no craving)
   warmOrderPull: 2, // times the warmth need: how much more a warm dish appeals
   tint: "#7fb0e0",
@@ -720,17 +726,46 @@ export const WEATHER_TASTES: Record<string, string[]> = {
 };
 
 /**
- * A lit fire on a hot day (inn#109): too much for whoever sits near it. Measured like the fire's warmth
- * (full at the hearth, nothing at the edge of its reach), it costs them patience, shortens their stay,
- * makes one more round less likely and a serve land a little worse; and they'd sooner sit away from it.
+ * Too hot where they sit (inn#109, inn#110): from 0 (fine) to 1 (roasting), by how far the warmth at their seat
+ * is over what they feel right at (ROOM.hot). It costs them patience, shortens their stay, makes one more round
+ * less likely and a serve land a little worse; and they'd sooner sit somewhere cooler.
  */
-export const HOT_FIRE = {
-  patience: 0.4, // at the hearth, patience is this much shorter
-  stayLostPerHour: 40, // game minutes of their stay lost per hour at the hearth
-  grace: 1, // one more round: this much less likely at the hearth (1: never)
-  score: 1.5, // taken off a serve's score at the hearth
-  seatAvoid: 0.85, // a seat right by the fire is this much less likely to be chosen
+export const TOO_HOT = {
+  patience: 0.4, // roasting: patience is this much shorter
+  stayLostPerHour: 40, // game minutes of their stay lost per hour, roasting
+  grace: 1, // one more round: this much less likely, roasting (1: never)
+  score: 1.5, // taken off a serve's score, roasting
+  seatAvoid: 0.85, // a seat that would roast them is this much less likely to be chosen
   grumbleFrom: 0.3, // this hot and over, they may grumble about it
+};
+
+/**
+ * The room's warmth (inn#110), in the outdoor temperature's steps (0 freezing … 5 hot). Unheated, the room is
+ * the outside pulled a little towards `comfortable`; what's lit adds to it, kept by the building's insulation
+ * (-2 leaky … 2 snug); every guest adds a little. It settles towards that over time. Where someone sits adds what's
+ * near them: the fire or a heater close by, the cold by the door.
+ */
+export const ROOM = {
+  comfortable: 3,
+  insulation: {
+    start: -1,
+    pull: [0.05, 0.15, 0.25, 0.35, 0.45], // by insulation, -2 … 2: how far towards `comfortable` the unheated room sits
+    keep: [0.6, 0.75, 0.9, 1.05, 1.2], // by insulation: times the room warmth from what's lit
+    settleHours: [0.5, 0.7, 1, 1.3, 1.6], // by insulation: about how long the room takes to settle
+  },
+  fire: { room: 1, local: 3 }, // the fireplace, as a heater (its reach: NEEDS.fire; its wood: economy.json)
+  perGuest: 0.03, // steps of warmth from each guest inside
+  guestsMost: 0.6, // at most this much from a crowd
+  door: { radius: 2.5, chill: 0.35, flareMinutes: 8 }, // tiles round the front door; how far towards the outside it sits; when it opens, all the way, settling back over this many game minutes
+  comfort: [2.8, 0.3] as Organic, // the step a guest feels right at, when their kind doesn't say
+  coldPerStepHour: 0.18, // the warmth need, per game hour, for each step colder than they feel right at
+  indoorRelief: 0.05, // per game hour: out of the wind, the cold eases a little anyway
+  arrivalPerStep: 0.08, // the warmth need on arrival, for each step the outside is colder than they feel right at
+  hot: { over: 2, span: 1.2 }, // too hot from this many steps over what they feel right at, roasting this many steps later
+  shiverAt: 0.6, // this cold or over, they shiver
+  draw: { outsideBelow: 2.5, perStep: 0.08, most: 0.25 }, // a cold day: passers-by come in for the warmth, by how much warmer the room is than outside
+  cosy: { outsideBelow: 2.5, stayPerHour: 20 }, // a cold day, warm where they sit: game minutes of stay added per hour
+  seekWarmth: 1.2, // a cold guest leans towards a seat this much more for each step warmer it is
 };
 
 /**
@@ -1475,6 +1510,7 @@ export const LIGHT = {
   lampWarm: 0.12,
   windowReach: 3.5, // tiles of daylight around a window
   fire: { reach: 6, strength: 0.95, warm: 0.22 },
+  heater: { reach: 2.5, strength: 0.45, warm: 0.2 },
   candle: { reach: 2, strength: 0.75, warm: 0.1 },
   keeperCandle: { from: 0.12, reach: 2.6, strength: 0.8, warm: 0.13 }, // the candle the keeper carries, once it's this dark
   flash: { near: 0.55, far: 0.2, ms: 350 },

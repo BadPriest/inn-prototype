@@ -309,6 +309,13 @@ export function openBillOfFare(g: Game): void {
 
 let shopTab: EquipGroup | "used" = "stoves"; // the shop opens where you left it
 
+/** A heater's warmth in a few words, for the card's face. */
+function heatWords(id: string): string {
+  const h = pieceById(id)?.heat;
+  if (!h) return "";
+  return `🌡 ${h.room >= 1.4 ? "Whole room" : h.room >= 0.8 ? "Hot nearby" : "Nearby tables"}`;
+}
+
 /** Where a piece goes once you have it: a few words for the card's face, and a sentence for its back. */
 function whereItGoes(id: string): { short: string; long: string } {
   const p = pieceById(id);
@@ -321,6 +328,7 @@ function whereItGoes(id: string): { short: string; long: string } {
     if (p.seat === "chair") return { short: "Against a table", long: `Stands on the taproom floor; against a table, it seats a guest there.${empty}` };
     return { short: p.standing ? `${p.standing} stand at it` : `Seats ${p.seats}`, long: `Stands on the taproom floor.${p.standing ? ` ${p.standing} guests stand beside it.` : ` Chairs against it seat up to ${p.seats}.`}${empty}` };
   }
+  if (p.type === "heater") return { short: "Taproom or entry", long: `Burns ${p.heat?.logsPerHour} logs of firewood an hour while it's lit. Stands anywhere on the taproom or entry floor, with room for everyone to get past. Place it from the desk (Arrange the kitchen); walk up to it to light it or put it out.` };
   if (p.hearth) return { short: "In the fireplace", long: "Built into the fireplace in the taproom. Buying it replaces the hooks you have now." };
   if (p.type === "crafting") return { short: "Stands in the kitchen", long: "Stands on the kitchen floor. Place it from the desk: Arrange the kitchen." };
   if (p.type === "storage") return { short: "Behind the bar or in the kitchen", long: "Stands behind the bar, in a nook in the counter, or in the kitchen. Place it from the desk: Arrange the kitchen." };
@@ -441,7 +449,7 @@ export function openShop(g: Game): void {
         status, tone: done || coming ? "good" : short > 0 ? "warn" : undefined,
         have: it.goods ? 0 : owned, on: done, off: !done && short > 0,
         tags: [...(it.tier && all.some((x) => x.line === it.line && x.id !== it.id) ? [`tier ${ROMAN[it.tier]}`] : []), ...(fuel ? [`${fuel.icon} ${fuel.name}`] : [])],
-        body: whereItGoes(it.id).short ? `<div class="desc">📍 ${whereItGoes(it.id).short}</div>` : undefined,
+        body: [heatWords(it.id), whereItGoes(it.id).short ? `📍 ${whereItGoes(it.id).short}` : ""].filter(Boolean).map((t) => `<div class="desc">${t}</div>`).join("") || undefined,
         detail: `${it.blurb} ${whereItGoes(it.id).long}`,
         does: done ? (owned ? (isBest(it.id) ? "You have this" : "You have a better one") : "It's on the carter's cart") : short > 0 ? `You need ${fmtMoney(short)} more` : owned ? "Buy another: order it or fetch it" : "Buy it: order it or fetch it",
       };

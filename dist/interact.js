@@ -1,6 +1,7 @@
 // What happens when the keeper interacts with something. Menus live here.
 import { have } from "./stock.js";
 import { hasFirewood } from "./upkeep.js";
+import { roomName } from "./warmth.js";
 import { setOut } from "./readymade.js";
 import { organic } from "./core.js";
 import { knack } from "./skills.js";
@@ -163,6 +164,10 @@ export function promptFor(g, t) {
             if (cleanable(g, t))
                 return `${tap} · hold to wipe${tableDirt(g, f) >= TUNING.tableDirtyAt ? " (it's dirty)" : ""}`;
             return n && !trayItems(g).length ? `${n} waiting here · ${tap}` : tap;
+        }
+        case "heater": {
+            const lit = g.heatersLit.has(f.id);
+            return `${lit ? `Space: put out the ${f.name.toLowerCase()}` : hasFirewood(g) ? `Space: light the ${f.name.toLowerCase()}` : `No firewood to light the ${f.name.toLowerCase()}`} · room ${roomName(g)} · 🪵 ${Math.floor(have(g, "firewood"))} logs`;
         }
         case "fireplace":
             if (!t.part)
@@ -354,6 +359,21 @@ export function interact(g, t) {
         case "frontdoor":
             toggleInn(g);
             return;
+        case "heater": {
+            const name = f.name.toLowerCase();
+            if (g.heatersLit.has(f.id)) {
+                g.heatersLit.delete(f.id);
+                g.say(`You put out the ${name}.`);
+                return;
+            }
+            if (!hasFirewood(g)) {
+                g.say(`🪵 No firewood to light the ${name} with. Order some at the desk (Supplies).`);
+                return;
+            }
+            g.heatersLit.add(f.id);
+            g.say(`The ${name} catches. The room's ${roomName(g)} now; it warms up over the next hour.`);
+            return;
+        }
         case "fireplace": {
             if (t.part) {
                 usePart(g, f, t.part);
